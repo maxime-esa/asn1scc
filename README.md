@@ -17,11 +17,7 @@ Just open Asn1.sln and build the 'Asn1f2' project.
 1. Make sure you have installed MonoDevelop and xbuild.
 2. Checkout and compile the Open Source F# compiler:
 
-    git clone https://github.com/fsharp/fsharp
-    cd fsharp
-    ./configure
-    make
-    sudo make install 
+    git clone https://github.com/fsharp/fsharp ; cd fsharp ; ./configure ; make ; sudo make install 
 
 3. Execute ./build.sh - it will tell you what to do next.
 
