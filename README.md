@@ -30,6 +30,6 @@ The compiler has many features - it is documented in [Chapter 11 of the TASTE ma
 
 You can also read about how the compiler has been used in the TASTE project, via a [showcase](http://www.semantix.gr/assert/) - or in the official [TASTE project site](http://taste.tuxfamily.org).
 
-
-George Mamais (gmamais@gmail.com)
-Thanassis Tsiodras (ttsiodras@gmail.com)
+Credits
+=======
+George Mamais (gmamais@gmail.com), Thanassis Tsiodras (ttsiodras@gmail.com)
