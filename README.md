@@ -14,7 +14,7 @@ Just open Asn1.sln and build the 'Asn1f2' project.
 
 ## Under Linux / OSX
 
-1. Make sure you have installed MonoDevelop and xbuild.
+1. Make sure you have installed MonoDevelop and xbuild. We have successfully built the compiler with versions of the tools from Debian Stable (as of 2013/06) - i.e. MonoDevelop 3.0.3.2 and xbuild 2.10.8.1.
 
 2. Your MonoDevelop must learn about F# - so go to...
 
