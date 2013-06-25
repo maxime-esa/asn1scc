@@ -31,6 +31,7 @@ grep PreBuildEvent Asn1f2.csproj >/dev/null && grep -v TargetFrameworkProfile As
 echo ====================================================
 echo ====================================================
 echo 1. Spawn Monodevelop, and open 'Asn1.sln'.
+echo "   (Ignore the warning about .vcxproj)"
 echo 2. Then change 'Debug' to 'Debug|Mixed Platforms'
 echo 3. Return here, 'cd Antlr ; xbuild'
 echo 4. Go back to Monodevelop
