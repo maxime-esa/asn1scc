@@ -28,61 +28,62 @@
 
 void CalculateMantissaAndExponent(double d, int* exp, asn1SccUint* mantissa)
 {
-	//double dman = frexp(d,exp);
-	//*mantissa = (asn1SccUint)(MANTISSA_FACTOR*dman);
-	//(*exp) -= EXPONENET_FACTOR;
+    //double dman = frexp(d,exp);
+    //*mantissa = (asn1SccUint)(MANTISSA_FACTOR*dman);
+    //(*exp) -= EXPONENET_FACTOR;
 
 
-	asn1SccUint *pl = NULL;
-	asn1SccUint ll = 0;
+    asn1SccUint *pl = NULL;
+    asn1SccUint ll = 0;
 
-	*exp = 0;
-	*mantissa = 0;
+    *exp = 0;
+    *mantissa = 0;
 
-	pl = (asn1SccUint*)&d;
+    pl = (asn1SccUint*)&d;
 
-	ll = *pl;
+    ll = *pl;
 
 
-	*exp = ((ll & ExpoBitMask)>>52) - 1023 - 52;
+    *exp = (int)(((ll & ExpoBitMask)>>52) - 1023 - 52);
 
-	*mantissa = ll & MantBitMask;
-	(*mantissa) |= 0x0010000000000000ULL;
+    *mantissa = ll & MantBitMask;
+    (*mantissa) |= 0x0010000000000000ULL;
 
 }
 
 double GetDoubleByMantissaAndExp(asn1SccUint mantissa, int exp)
 {
-	volatile double ret = 0.0;
-	volatile asn1SccUint *pl = NULL;
-	asn1SccUint ll = 0;
-	asn1SccUint exp2 = 0; 
+    union {
+        double ret;
+        asn1SccUint u64;
+    } u;
+   
+    asn1SccUint ll = 0;
+    asn1SccUint exp2 = 0; 
 
-	if (mantissa == 0)
-		return ret;
-
-
-	while ( (mantissa & MantBitMask2)>0) {
-		mantissa>>=1;
-		exp += 1;
-	}
-	while ( (mantissa & 0x0010000000000000ULL) == 0) {
-		mantissa<<=1;
-		exp += -1;
-	}
+    if (mantissa == 0)
+        return 0.0;
 
 
-	exp2 = exp + 1023 + 52;
+    while ( (mantissa & MantBitMask2)>0) {
+        mantissa>>=1;
+        exp += 1;
+    }
+    while ( (mantissa & 0x0010000000000000ULL) == 0) {
+        mantissa<<=1;
+        exp += -1;
+    }
 
 
-	ll |= mantissa & MantBitMask;
-	ll |= (exp2<<52);
+    exp2 = (asn1SccUint)(exp + 1023 + 52);
 
 
-	pl = (asn1SccUint*)&ret;
-	*pl = ll;
+    ll |= mantissa & MantBitMask;
+    ll |= (exp2<<52);
 
-	return ret;
+    u.u64 = ll;
+
+    return u.ret;
 }
 
 
@@ -355,85 +356,85 @@ double negpow2[] = {
 //int GetNumberOfBitsForNonNegativeInteger(asn1SccUint v) 
 int mylog2(double v)
 {
-	if (v<2) {
-		v=1.0/v;
-		return -GetNumberOfBitsForNonNegativeInteger((asn1SccUint)v);
-	}
+    if (v<2) {
+        v=1.0/v;
+        return -GetNumberOfBitsForNonNegativeInteger((asn1SccUint)v);
+    }
 
-	return GetNumberOfBitsForNonNegativeInteger((asn1SccUint)v);
+    return GetNumberOfBitsForNonNegativeInteger((asn1SccUint)v);
 }
 
 
 double log2(double v) 
 {
-	return log(v)/log(2.0);
+    return log(v)/log(2.0);
 }
 
 double mypow2(int exp)
 {
-	asn1SccUint ret=1;
-	if (exp>=0) {
-/*		while(exp) 
-		{
-			ret<<=1;
-			exp--;
-		}*/
-		return pospow2[exp];
-	} else {
-		exp = -exp;
-/*		while(exp) 
-		{
-			ret<<=1;
-			exp--;
-		}
-		return 1.0/(double)ret;*/
-		return negpow2[exp];
-	}
+    asn1SccUint ret=1;
+    if (exp>=0) {
+/*      while(exp) 
+        {
+            ret<<=1;
+            exp--;
+        }*/
+        return pospow2[exp];
+    } else {
+        exp = -exp;
+/*      while(exp) 
+        {
+            ret<<=1;
+            exp--;
+        }
+        return 1.0/(double)ret;*/
+        return negpow2[exp];
+    }
 }
 
 double pow2(double v)
 {
-	return pow(2.0, v);
+    return pow(2.0, v);
 }
 
 double myReal(asn1SccUint* mantissa, int exp) 
 {
-	return (*mantissa) * mypow2(exp);
-//	return (*mantissa) * pow2(exp);
+    return (*mantissa) * mypow2(exp);
+//  return (*mantissa) * pow2(exp);
 }
 
 
 void CalculateMantissaAndExponent(double d, int* exp, asn1SccUint* mantissa)
 {
-	double error;
-	double dmantissa;
-	int nCount=100;
+    double error;
+    double dmantissa;
+    int nCount=100;
 
-	assert(d>0.0);
+    assert(d>0.0);
 
     /*
-	Let mantissa be 1
+    Let mantissa be 1
     then exponent is the logarithm of the input value.
     However, since we need the exponent to be stored in an INT we get the Floor 
     Floor return the largest integer less than or equal to the specified double-precision floating-point number
-	*/
+    */
     *exp = mylog2(d);
 
-	/*
-		Since exponent was 'Floored' mantissa is not 1 anymore but the following value
-		now mantissa has a value in the range [1..base)
-	*/
-	dmantissa = d/mypow2(*exp);
-	*mantissa = (asn1SccUint)dmantissa;
+    /*
+        Since exponent was 'Floored' mantissa is not 1 anymore but the following value
+        now mantissa has a value in the range [1..base)
+    */
+    dmantissa = d/mypow2(*exp);
+    *mantissa = (asn1SccUint)dmantissa;
 
-	error = fabs((double)(d-myReal(mantissa,*exp)))/d;
+    error = fabs((double)(d-myReal(mantissa,*exp)))/d;
     while ( (*mantissa <= MAX_MANTISSA) && (error > DBL_EPSILON) && nCount--)
     {
-		dmantissa *=2;
-		*mantissa = (asn1SccUint)dmantissa;
-		(*exp)--;
-		error = fabs((double)(d-myReal(mantissa,*exp)))/d;
-	}
+        dmantissa *=2;
+        *mantissa = (asn1SccUint)dmantissa;
+        (*exp)--;
+        error = fabs((double)(d-myReal(mantissa,*exp)))/d;
+    }
 
 
 
