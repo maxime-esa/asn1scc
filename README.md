@@ -21,7 +21,7 @@ Just open Asn1.sln and build the 'Asn1f2' project.
 
 3. Execute ./build.sh - it will tell you what to do next.
 
-*This process can be streamlined more - ideally, just requiring an invocation of **xbuild** - when we find the portable workarounds for the Windows-specific build rules used in the various .??proj files. For now, bear with us :-) *)
+*This process can be streamlined more - ideally, just requiring an invocation of xbuild - when we find the portable workarounds for the Windows-specific build rules used in the various .??proj files. For now, bear with us :-) *)
 
 Usage
 =====
