@@ -77,6 +77,7 @@ let rec CreateType (astRoot:list<ITree>) (tree:ITree) (fileTokens:array<IToken>)
         | asn1Parser.SET_TYPE           -> Sequence(CreateSequenceChild  astRoot typeNode fileTokens alreadyTakenComments )
         | asn1Parser.ENUMERATED_TYPE    -> Enumerated(CreateNamedItems astRoot  typeNode fileTokens alreadyTakenComments)
         | asn1Parser.BIT_STRING_TYPE    -> BitString
+        | asn1Parser.UTF8String         -> OctetString
         | asn1Parser.OCTECT_STING       -> OctetString
         | asn1Parser.IA5String          -> IA5String
         | asn1Parser.NumericString      -> NumericString
