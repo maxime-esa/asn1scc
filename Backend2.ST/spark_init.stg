@@ -1,0 +1,55 @@
+group spark_init;
+
+
+
+
+CHOICE_setters_body_child(sTasName, sName, sType, sNamePresent) ::= <<
+FUNCTION <sTasName>_<sName>_get(val:<sTasName>) RETURN <sType>
+IS --# hide <sTasName>_<sName>_get;
+BEGIN
+    RETURN val.<sName>;
+END <sTasName>_<sName>_get;
+
+FUNCTION <sTasName>_<sName>_set(itm:<sType>) RETURN <sTasName>
+IS --# hide <sTasName>_<sName>_set;
+BEGIN
+    RETURN <sTasName>'(kind => <sNamePresent>, <sName> => itm);
+END <sTasName>_<sName>_set;
+>>
+
+
+CHOICE_setters_body(sTasName, arrsChildren) ::= <<
+FUNCTION <sTasName>_kind(val:<sTasName>) RETURN <sTasName>_selection 
+IS --# hide <sTasName>_kind;
+BEGIN
+    return val.kind;
+END <sTasName>_kind;
+
+<arrsChildren; separator="\n">
+
+
+>>
+
+
+
+PrintTypeAssignment(sName, sInitBody, bContainsChoice) ::= <<
+FUNCTION <sName>_Init return <sName>
+IS <if(bContainsChoice)>--#hide <sName>_Init;<endif>
+BEGIN
+    RETURN <sInitBody>;
+END <sName>_Init;
+>>
+
+/* E Q U A L*/
+
+PrimitiveEqual(p1,p2) ::= "<p1> = <p2>"
+
+
+
+PrintTypeAssignment_Equal(sName, sBody) ::= <<
+FUNCTION <sName>_Equal(val1, val2: in <sName>) return Boolean
+IS 
+BEGIN
+    RETURN <sBody>;
+END <sName>_Equal;
+>>

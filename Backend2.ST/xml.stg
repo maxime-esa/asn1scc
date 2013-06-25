@@ -1,0 +1,128 @@
+group xml;
+
+//delimiters "$", "$"
+
+
+RootXml(arrsFiles) ::= <<
+<?xml version="1.0" encoding="utf-8"?>
+<ASN1AST>
+    $arrsFiles;separator="\n"$
+</ASN1AST>
+>>
+
+
+
+FileXml(sFileName, arrsModules) ::= <<
+<Asn1File FileName="$sFileName$">
+    $arrsModules;separator="\n"$
+</Asn1File>
+>>
+
+ModuleXml(sName, arrsImportedModules, arrsExpTypes, arrsExpVars, arrsTases) ::=<<
+<Asn1Module ID="$sName$">
+<ExportedTypes>
+    $arrsExpTypes:{x|<ExportedType Name="$x$" />};separator="\n"$ 
+</ExportedTypes>
+<ExportedVariables>
+    $arrsExpVars:{x|<ExportedVariable Name="$x$" />};separator="\n"$ 
+</ExportedVariables>
+<ImportedModules>
+    $arrsImportedModules;separator="\n"$
+</ImportedModules>
+<TypeAssignments>
+    $arrsTases;separator="\n"$
+</TypeAssignments>
+</Asn1Module >
+>>
+
+ImportedMod(sName, arrsTypes, arrsVars) ::= <<
+<ImportedModule ID="$sName$">
+    <ImportedTypes>
+        $arrsTypes:{t|<ImportedType Name="$t$" />};separator="\n"$
+    </ImportedTypes>
+    <ImportedVariables>
+        $arrsVars:{t|<ImportedVariable Name="$t$" />};separator="\n"$
+    </ImportedVariables>
+</ImportedModule>
+>>
+
+TasXml(sName, nLine, nPos, sType) ::= <<
+<TypeAssignment Name="$sName$" Line="$nLine$" CharPositionInLine="$nPos$">
+    $sType$
+</TypeAssignment>
+>>
+
+TypeGeneric(nLine, nPos, sSubType) ::= <<
+<Type Line="$nLine$" CharPositionInLine="$nPos$">
+    $sSubType$
+</Type>
+>>
+
+
+MinMaxType(sName, sMin, sMax) ::= <<
+<$sName$ Min="$sMin$" Max="$sMax$"/>
+>>
+
+MinMaxType2(sName, sMin, sMax) ::= <<
+<$sName$ Min="$sMin$" Max="$sMax$">
+</$sName$>
+>>
+
+
+BooleanType () ::= "<BooleanType />"
+
+NullType () ::= "<NullType />"
+
+
+EnumItem (sName, nVal, nLine, nPos, sCID) ::= <<
+<EnumValue StringValue="$sName$" IntValue="$nVal$" Line="$nLine$" CharPositionInLine="$nPos$" EnumID ="$sCID$" />
+>>
+
+EnumType(arrsItems) ::= <<
+<EnumeratedType Extensible="False" ValuesAutoCalculated="False">
+    <EnumValues>
+        $arrsItems;separator="\n"$
+    </EnumValues>
+</EnumeratedType>
+>>
+
+
+ChoiceChild(sName, nLine, nPos, sChildContent, sNamePresent ) ::= <<
+<ChoiceChild VarName="$sName$" Line="$nLine$" CharPositionInLine="$nPos$" EnumID ="$sNamePresent$">
+    $sChildContent$
+</ChoiceChild>
+>>
+
+ChoiceType(arrsChildren) ::= <<
+<ChoiceType>
+    $arrsChildren;separator="\n"$
+</ChoiceType>
+>>
+
+
+SequenceChild(sName, bOptional, sDefVal, nLine, nPos, sChildContent ) ::= <<
+<SequenceOrSetChild VarName="$sName$" Optional="$bOptional$"$if(sDefVal)$ DefaultValue="$sDefVal$"$endif$ Line="$nLine$" CharPositionInLine="$nPos$">
+    $sChildContent$
+</SequenceOrSetChild>
+>>
+
+SequenceType(arrsChildren) ::= <<
+<SequenceType>
+    $arrsChildren;separator="\n"$
+</SequenceType>
+>>
+
+
+SequenceOfType(sMin, sMax, sChild) ::= <<
+<SequenceOfType Min="$sMin$" Max="$sMax$">
+    $sChild$
+</SequenceOfType>
+>>
+
+RefTypeMinMax(sMin, sMax, sName, sModName) ::= <<
+<ReferenceType ReferencedTypeName="$sName$" Min="$sMin$" Max="$sMax$"$if(sModName)$ ReferencedModName="$sModName$"$endif$/>
+>>
+
+RefType(sName, sModName) ::= <<
+<ReferenceType ReferencedTypeName="$sName$"$if(sModName)$ ReferencedModName="$sModName$"$endif$/>
+>>

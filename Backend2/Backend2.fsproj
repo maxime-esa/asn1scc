@@ -1,0 +1,98 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <PropertyGroup>
+    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
+    <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
+    <ProductVersion>8.0.30703</ProductVersion>
+    <SchemaVersion>2.0</SchemaVersion>
+    <ProjectGuid>{000896ae-1e52-4120-8394-0e5e07a8f194}</ProjectGuid>
+    <OutputType>Library</OutputType>
+    <RootNamespace>Backend2</RootNamespace>
+    <AssemblyName>Backend2</AssemblyName>
+    <TargetFrameworkVersion>v4.0</TargetFrameworkVersion>
+    <Name>Backend2</Name>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
+    <DebugSymbols>true</DebugSymbols>
+    <DebugType>full</DebugType>
+    <Optimize>false</Optimize>
+    <Tailcalls>false</Tailcalls>
+    <OutputPath>bin\Debug\</OutputPath>
+    <DefineConstants>DEBUG;TRACE</DefineConstants>
+    <WarningLevel>3</WarningLevel>
+    <DocumentationFile>bin\Debug\Backend2.XML</DocumentationFile>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
+    <DebugType>pdbonly</DebugType>
+    <Optimize>true</Optimize>
+    <Tailcalls>true</Tailcalls>
+    <OutputPath>bin\Release\</OutputPath>
+    <DefineConstants>TRACE</DefineConstants>
+    <WarningLevel>3</WarningLevel>
+    <DocumentationFile>bin\Release\Backend2.XML</DocumentationFile>
+  </PropertyGroup>
+  <ItemGroup>
+    <Reference Include="antlr.runtime">
+      <HintPath>..\Antlr\antlr313\antlr.runtime.dll</HintPath>
+    </Reference>
+    <Reference Include="Antlr3.Runtime">
+      <HintPath>..\Antlr\antlr313\Antlr3.Runtime.dll</HintPath>
+    </Reference>
+    <Reference Include="Antlr3.Utility">
+      <HintPath>..\Antlr\antlr313\Antlr3.Utility.dll</HintPath>
+    </Reference>
+    <Reference Include="mscorlib" />
+    <Reference Include="FSharp.Core" />
+    <Reference Include="StringTemplate">
+      <HintPath>..\Antlr\antlr313\StringTemplate.dll</HintPath>
+    </Reference>
+    <Reference Include="System" />
+    <Reference Include="System.Core" />
+    <Reference Include="System.Numerics" />
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Include="spark_utils.fs" />
+    <Compile Include="acn_backend_logic.fs" />
+    <Compile Include="PrintAsn1.fs" />
+    <None Include="Script.fsx" />
+    <Compile Include="spark_variables.fs" />
+    <Compile Include="spark_spec.fs" />
+    <Compile Include="spark_init.fs" />
+    <Compile Include="spark_validate.fs" />
+    <Compile Include="spark_uper.fs" />
+    <Compile Include="spark_acn.fs" />
+    <Compile Include="spark_body.fs" />
+    <Compile Include="spark_automatic_test_cases.fs" />
+    <Compile Include="spark_main.fs" />
+    <Compile Include="XmlAst.fs" />
+    <Compile Include="icdUper.fs" />
+    <Compile Include="genericBackend.fs" />
+    <Compile Include="icdAcn.fs" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\Antlr\Antlr.csproj">
+      <Name>Antlr</Name>
+      <Project>{a1882f1d-5185-407c-8227-1e2b69baade9}</Project>
+      <Private>True</Private>
+    </ProjectReference>
+    <ProjectReference Include="..\Ast\Ast.fsproj">
+      <Name>Ast</Name>
+      <Project>{3b67372a-65c7-439e-849f-ce1a1d2fcc69}</Project>
+      <Private>True</Private>
+    </ProjectReference>
+    <ProjectReference Include="..\Backend2.ST\Backend2.ST.fsproj">
+      <Name>Backend2.ST</Name>
+      <Project>{d451f135-4104-4441-99c1-5c1a6b7c2f91}</Project>
+      <Private>True</Private>
+    </ProjectReference>
+  </ItemGroup>
+  <Import Project="$(MSBuildExtensionsPath32)\FSharp\1.0\Microsoft.FSharp.Targets" Condition="!Exists('$(MSBuildBinPath)\Microsoft.Build.Tasks.v4.0.dll')" />
+  <Import Project="$(MSBuildExtensionsPath32)\..\Microsoft F#\v4.0\Microsoft.FSharp.Targets" Condition=" Exists('$(MSBuildBinPath)\Microsoft.Build.Tasks.v4.0.dll')" />
+  <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
+	     Other similar extension points exist, see Microsoft.Common.targets.
+	<Target Name="BeforeBuild">
+	</Target>
+	<Target Name="AfterBuild">
+	</Target>
+	-->
+</Project>

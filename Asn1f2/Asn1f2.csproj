@@ -1,0 +1,155 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <PropertyGroup>
+    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
+    <Platform Condition=" '$(Platform)' == '' ">x86</Platform>
+    <ProductVersion>8.0.30703</ProductVersion>
+    <SchemaVersion>2.0</SchemaVersion>
+    <ProjectGuid>{9FC95EBA-A745-4C0D-BF4E-53497E066D1C}</ProjectGuid>
+    <OutputType>Exe</OutputType>
+    <AppDesignerFolder>Properties</AppDesignerFolder>
+    <RootNamespace>Asn1f2</RootNamespace>
+    <AssemblyName>Asn1f2</AssemblyName>
+    <TargetFrameworkVersion>v4.0</TargetFrameworkVersion>
+    <TargetFrameworkProfile>Client</TargetFrameworkProfile>
+    <FileAlignment>512</FileAlignment>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|x86' ">
+    <PlatformTarget>x86</PlatformTarget>
+    <DebugSymbols>true</DebugSymbols>
+    <DebugType>full</DebugType>
+    <Optimize>false</Optimize>
+    <OutputPath>bin\Debug\</OutputPath>
+    <DefineConstants>DEBUG;TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|x86' ">
+    <PlatformTarget>x86</PlatformTarget>
+    <DebugType>pdbonly</DebugType>
+    <Optimize>true</Optimize>
+    <OutputPath>bin\Release\</OutputPath>
+    <DefineConstants>TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+  </PropertyGroup>
+  <ItemGroup>
+    <Reference Include="antlr.runtime">
+      <HintPath>..\Antlr\antlr313\antlr.runtime.dll</HintPath>
+    </Reference>
+    <Reference Include="Antlr3.Runtime, Version=3.1.3.42154, Culture=neutral, PublicKeyToken=3a9cab8f8d22bfb7, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\Antlr\antlr313\Antlr3.Runtime.dll</HintPath>
+    </Reference>
+    <Reference Include="Antlr3.Utility">
+      <HintPath>..\Antlr\antlr313\Antlr3.Utility.dll</HintPath>
+    </Reference>
+    <Reference Include="FSharp.Core, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL" />
+    <Reference Include="StringTemplate">
+      <HintPath>..\Antlr\antlr313\StringTemplate.dll</HintPath>
+    </Reference>
+    <Reference Include="System" />
+    <Reference Include="System.Core" />
+    <Reference Include="System.Xml.Linq" />
+    <Reference Include="System.Data.DataSetExtensions" />
+    <Reference Include="Microsoft.CSharp" />
+    <Reference Include="System.Data" />
+    <Reference Include="System.Xml" />
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Include="CmdLineArgs.cs" />
+    <Compile Include="Program.cs" />
+    <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="Resource1.Designer.cs">
+      <AutoGen>True</AutoGen>
+      <DesignTime>True</DesignTime>
+      <DependentUpon>Resource1.resx</DependentUpon>
+    </Compile>
+    <Compile Include="SvnVersion.cs" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\Antlr\Antlr.csproj">
+      <Project>{A1882F1D-5185-407C-8227-1E2B69BAADE9}</Project>
+      <Name>Antlr</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\Ast\Ast.fsproj">
+      <Project>{3B67372A-65C7-439E-849F-CE1A1D2FCC69}</Project>
+      <Name>Ast</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\Backend.c.ST\Backend.c.ST.fsproj">
+      <Project>{821BE302-634C-465E-9F9A-19DDCA139C9F}</Project>
+      <Name>Backend.c.ST</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\Backend.c\Backend.c.fsproj">
+      <Project>{62BFC3E2-6DC8-4EEE-BCD6-F5634369E57B}</Project>
+      <Name>Backend.c</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\Backend2.ST\Backend2.ST.fsproj">
+      <Project>{D451F135-4104-4441-99C1-5C1A6B7C2F91}</Project>
+      <Name>Backend2.ST</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\Backend2\Backend2.fsproj">
+      <Project>{000896AE-1E52-4120-8394-0E5E07A8F194}</Project>
+      <Name>Backend2</Name>
+    </ProjectReference>
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="Resource1.resx">
+      <Generator>ResXFileCodeGenerator</Generator>
+      <LastGenOutput>Resource1.Designer.cs</LastGenOutput>
+      <SubType>Designer</SubType>
+    </EmbeddedResource>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\adaasn1rtl.adb" />
+    <None Include="Resources\adaasn1rtl.ads" />
+    <None Include="Resources\gnat.cfg" />
+    <None Include="Resources\GPS_project.gpr" />
+    <None Include="Resources\IgnoredExaminerWarnings.wrn" />
+    <None Include="Resources\run.sh" />
+    <None Include="Resources\spark_asn1_rtl.adb" />
+    <None Include="Resources\spark_asn1_rtl.ads" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\asn1crt.c" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\real.c" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\asn1crt.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\Acn.c" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\ber.c" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\xer.c" />
+  </ItemGroup>
+  <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
+  <PropertyGroup>
+    <PreBuildEvent>copy /Y $(SolutionDir)SPARK_RTL\adaasn1rtl.* $(ProjectDir)\Resources\
+copy /Y $(SolutionDir)SPARK_RTL\IgnoredExaminerWarnings.wrn $(ProjectDir)\Resources\
+copy /Y $(SolutionDir)SPARK_RTL\gnat.cfg $(ProjectDir)\Resources\
+copy /Y $(SolutionDir)SPARK_RTL\run.sh $(ProjectDir)\Resources\
+copy /Y $(SolutionDir)SPARK_RTL\GPS_project.gpr $(ProjectDir)\Resources\
+copy /Y $(SolutionDir)asn1crt\asn1crt.c  $(ProjectDir)\Resources\
+copy /Y $(SolutionDir)asn1crt\asn1crt.h  $(ProjectDir)\Resources\
+copy /Y $(SolutionDir)asn1crt\Acn.c $(ProjectDir)\Resources\
+copy /Y $(SolutionDir)asn1crt\ber.c $(ProjectDir)\Resources\
+copy /Y $(SolutionDir)asn1crt\xer.c $(ProjectDir)\Resources\
+copy /Y $(SolutionDir)asn1crt\real.c $(ProjectDir)\Resources\
+cd $(ProjectDir) &amp;&amp; GetVersion.bat
+
+</PreBuildEvent>
+  </PropertyGroup>
+  <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
+       Other similar extension points exist, see Microsoft.Common.targets.
+  <Target Name="BeforeBuild">
+  </Target>
+  <Target Name="AfterBuild">
+  </Target>
+  -->
+</Project>

@@ -1,0 +1,109 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <PropertyGroup>
+    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
+    <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
+    <ProductVersion>8.0.30703</ProductVersion>
+    <SchemaVersion>2.0</SchemaVersion>
+    <ProjectGuid>{d451f135-4104-4441-99c1-5c1a6b7c2f91}</ProjectGuid>
+    <OutputType>Library</OutputType>
+    <RootNamespace>Backend2.ST</RootNamespace>
+    <AssemblyName>Backend2.ST</AssemblyName>
+    <TargetFrameworkVersion>v4.0</TargetFrameworkVersion>
+    <Name>Backend2.ST</Name>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
+    <DebugSymbols>true</DebugSymbols>
+    <DebugType>full</DebugType>
+    <Optimize>false</Optimize>
+    <Tailcalls>false</Tailcalls>
+    <OutputPath>bin\Debug\</OutputPath>
+    <DefineConstants>DEBUG;TRACE</DefineConstants>
+    <WarningLevel>3</WarningLevel>
+    <DocumentationFile>bin\Debug\Backend2.ST.XML</DocumentationFile>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
+    <DebugType>pdbonly</DebugType>
+    <Optimize>true</Optimize>
+    <Tailcalls>true</Tailcalls>
+    <OutputPath>bin\Release\</OutputPath>
+    <DefineConstants>TRACE</DefineConstants>
+    <WarningLevel>3</WarningLevel>
+    <DocumentationFile>bin\Release\Backend2.ST.XML</DocumentationFile>
+  </PropertyGroup>
+  <Import Project="$(MSBuildExtensionsPath32)\FSharp\1.0\Microsoft.FSharp.Targets" Condition="!Exists('$(MSBuildBinPath)\Microsoft.Build.Tasks.v4.0.dll')" />
+  <Import Project="$(MSBuildExtensionsPath32)\..\Microsoft F#\v4.0\Microsoft.FSharp.Targets" Condition=" Exists('$(MSBuildBinPath)\Microsoft.Build.Tasks.v4.0.dll')" />
+  <PropertyGroup>
+    <PreBuildEvent>$(ProjectDir)..\parseStg2\bin\Debug\parseStg2.exe $(ProjectDir)backends.xml</PreBuildEvent>
+  </PropertyGroup>
+  <ItemGroup>
+    <None Include="Script.fsx" />
+    <Content Include="backends.xml" />
+    <None Include="ACN.stg" />
+    <Compile Include="ACN.fs" />
+    <None Include="ASN.stg" />
+    <Compile Include="ASN.fs" />
+    <None Include="spark_spec.stg" />
+    <Compile Include="spark_spec.gen.fs" />
+    <None Include="spark_init.stg" />
+    <Compile Include="spark_init.gen.fs" />
+    <None Include="spark_validate.stg" />
+    <Compile Include="spark_validate.gen.fs" />
+    <None Include="spark_variables.stg" />
+    <Compile Include="spark_variables.gen.fs" />
+    <None Include="spark_uper.stg" />
+    <Compile Include="spark_uper.gen.fs" />
+    <None Include="spark_main.stg" />
+    <Compile Include="spark_main.gen.fs" />
+    <None Include="spark_acn.stg" />
+    <Compile Include="spark_acn.gen.fs" />
+    <None Include="spark_acn_int.stg" />
+    <Compile Include="spark_acn_int.gen.fs" />
+    <None Include="spark_automatic_test_cases.stg" />
+    <Compile Include="spark_automatic_test_cases.gen.fs" />
+    <None Include="xml.stg" />
+    <Compile Include="xml.gen.fs" />
+    <None Include="icd_uper.stg" />
+    <Compile Include="icd_uper.gen.fs" />
+    <Compile Include="generic.gen.fs" />
+    <None Include="generic.stg" />
+    <Compile Include="icd_acn.gen.fs" />
+    <None Include="icd_acn.stg" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\ST\ST.fsproj">
+      <Name>ST</Name>
+      <Project>{94495d92-b615-4745-b26b-a5ec73a6a462}</Project>
+      <Private>True</Private>
+    </ProjectReference>
+    <Reference Include="antlr.runtime">
+      <HintPath>..\Antlr\antlr313\antlr.runtime.dll</HintPath>
+    </Reference>
+    <Reference Include="Antlr3.Runtime">
+      <HintPath>..\Antlr\antlr313\Antlr3.Runtime.dll</HintPath>
+    </Reference>
+    <Reference Include="Antlr3.Utility">
+      <HintPath>..\Antlr\antlr313\Antlr3.Utility.dll</HintPath>
+    </Reference>
+    <Reference Include="mscorlib" />
+    <Reference Include="FSharp.Core" />
+    <Reference Include="StringTemplate">
+      <HintPath>..\Antlr\antlr313\StringTemplate.dll</HintPath>
+    </Reference>
+    <Reference Include="System" />
+    <Reference Include="System.Core" />
+    <Reference Include="System.Numerics" />
+    <ProjectReference Include="..\Ast\Ast.fsproj">
+      <Name>Ast</Name>
+      <Project>{3b67372a-65c7-439e-849f-ce1a1d2fcc69}</Project>
+      <Private>True</Private>
+    </ProjectReference>
+  </ItemGroup>
+  <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
+	     Other similar extension points exist, see Microsoft.Common.targets.
+	<Target Name="BeforeBuild">
+	</Target>
+	<Target Name="AfterBuild">
+	</Target>
+	-->
+</Project>

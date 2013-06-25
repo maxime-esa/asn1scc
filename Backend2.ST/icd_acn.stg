@@ -1,0 +1,496 @@
+group icd_acn;
+
+//delimiters "$", "$"
+
+
+
+
+EmitSequenceOrChoice(sColor, sTasName, sTasNameC, bHasAcnDef, sAsn1Kinf, sMinBytes, sMaxBytes, sMaxBitsExplained, sCommentLine, arrsChildren, arrsParams) ::= <<
+<a name="ICD_$sTasNameC$"></a> 
+<table border="0" width="100%" >
+<tbody>
+
+<tr  bgcolor="$sColor$">
+<td height="35" colspan="4"  >
+<font face="Verdana" color="#FFFFFF" size="4">$sTasName$</font><font face="Verdana" color="#FFFFFF" size="2">($sAsn1Kinf$) </font>
+<font face="Verdana" color="#FFFFFF" size="2"><a href="#ASN1_$sTasNameC$">ASN.1</a>$if(bHasAcnDef)$  <a href="#ACN_$sTasNameC$">ACN</a>$endif$</font>
+</td>
+
+<td height="35" colspan="2" align="center">
+    <font face="Verdana" color="#FFFFFF" size="2">min = $sMinBytes$ bytes</font>
+</td>
+
+<td height="35" colspan="2" align="center">
+    <font face="Verdana" color="#FFFFFF" size="2">max = $sMaxBytes$ bytes$sMaxBitsExplained$</font>
+</td>
+</tr>
+
+$if(sCommentLine)$
+<tr class="CommentRow">
+<td class="comment2" colspan="8">$sCommentLine$</td>
+</tr>
+$endif$
+
+
+
+$if(arrsParams)$
+<tr class="paramrHeaderRow">
+<td class="hrNo" >No</td>
+<td class="hrParamName2" colspan="6">ACN Parameters<a href="#ACN_PARAMS_EXPLAINED123"><span style="vertical-align: super">what is this?</span></a></td>
+<td class="hrMax2">Type</td>
+</tr>
+$arrsParams$
+$endif$
+
+<tr class="headerRow">
+<td class="hrNo">No</td>
+<td class="hrField">Field</td>
+<td class="hrComment">Comment</td>
+<td class="hrOptional">Present</td>
+<td class="hrType">Type</td>
+<td class="hrconstraint">Constraint</td>
+<td class="hrMin">Min Length (bits)</td>
+<td class="hrMax">Max Length (bits)</td>
+</tr>
+
+$arrsChildren;separator="\n"$
+
+</tbody>
+</table>
+>>
+
+
+EmmitSeqOrChoiceRow(sCssClass, nIndex, sName, sComment, sPresentWhen, sType, sConstraint, sMin, sMax) ::= <<
+<tr class="$sCssClass$">
+<td class="no">$nIndex$</td>
+<td class="field">$sName$</td>
+<td class="comment">$sComment$</td>
+<td class="optional">$sPresentWhen$</td>
+<td class="type">$sType$</td>
+<td class="constraint">$sConstraint$</td>
+<td class="min">$sMin$</td>
+<td class="max">$sMax$</td>
+</tr>
+>>
+
+
+EmmitSequencePreambleComment() ::= <<
+Special field used by ACN to indicate the presence/absence of optional fields that do not have the present when property.
+>>
+
+EmmitChoiceIndexComment() ::= <<
+Special field used by ACN to indicate which choice alternative is present.
+>>
+
+
+
+
+EmitPrimitiveType(sColor, sTasName, sTasNameC, bHasAcnDef, sAsnKindName, sMinBytes, sMaxBytes, sMaxBitsExplained, sCommentLine, sAsn1Constraints, sMinBits, sMaxBits, arrsParams) ::= <<
+<a name="ICD_$sTasNameC$"></a> 
+<table border="0" width="100%" >
+<tbody>
+
+<tr  bgcolor="$sColor$">
+<td height="35" colspan="2"  >
+<font face="Verdana" color="#FFFFFF" size="4">$sTasName$</font><font face="Verdana" color="#FFFFFF" size="2">($sAsnKindName$) </font>
+<font face="Verdana" color="#FFFFFF" size="2"><a href="#ASN1_$sTasNameC$">ASN.1</a>$if(bHasAcnDef)$  <a href="#ACN_$sTasNameC$">ACN</a>$endif$</font>
+</td>
+
+<td height="35" align="center">
+    <font face="Verdana" color="#FFFFFF" size="2">min = $sMinBytes$ bytes</font>
+</td>
+
+<td height="35" align="center">
+    <font face="Verdana" color="#FFFFFF" size="2">max = $sMaxBytes$ bytes$sMaxBitsExplained$</font>
+</td>
+</tr>
+
+$if(sCommentLine)$
+<tr class="CommentRow">
+<td class="comment2" colspan="4">$sCommentLine$</td>
+</tr>
+
+$endif$
+
+$if(arrsParams)$
+<tr class="paramrHeaderRow">
+<td class="hrNo" colspan="1">No</td>
+<td class="hrconstraint2" colspan="2">ACN Parameters<a href="#ACN_PARAMS_EXPLAINED123"><span style="vertical-align: super">what is this?</span></a></td>
+<td class="hrMax2">Type</td>
+</tr>
+$arrsParams$
+$endif$
+
+<tr class="headerRow">
+<td class="hrconstraint2" colspan="2">Constraints</td>
+<td class="hrMin2">Min Length (bits)</td>
+<td class="hrMax2">Max Length (bits)</td>
+</tr>
+
+<tr class="OddRow">
+    <td class="constraint" colspan="2">$sAsn1Constraints$</td>
+    <td class="min" >$sMinBits$</td>
+    <td class="max" >$sMaxBits$$sMaxBitsExplained$</td>
+</tr>
+
+</tbody>
+</table>
+>>
+
+
+/* *********** SEQUENCE OF, OCTET STRING etc ********** */
+EmitSizeable(sColor, sTasName, sTasNameC, bHasAcnDef, sKind, sMinBytes, sMaxBytes, sMaxBitsExplained, sCommentLine, arrsRows, arrsParams) ::= <<
+<a name="ICD_$sTasNameC$"></a> 
+<table border="0" width="100%" >
+<tbody>
+
+<tr  bgcolor="$sColor$">
+<td height="35" colspan="4"  >
+<font face="Verdana" color="#FFFFFF" size="4">$sTasName$</font><font face="Verdana" color="#FFFFFF" size="2">($sKind$) </font>
+<font face="Verdana" color="#FFFFFF" size="2"><a href="#ASN1_$sTasNameC$">ASN.1</a>$if(bHasAcnDef)$  <a href="#ACN_$sTasNameC$">ACN</a>$endif$</font>
+</td>
+
+<td height="35" colspan="2" align="center">
+    <font face="Verdana" color="#FFFFFF" size="2">min = $sMinBytes$ bytes</font>
+</td>
+
+<td height="35" colspan="2" align="center">
+    <font face="Verdana" color="#FFFFFF" size="2">max = $sMaxBytes$ bytes$sMaxBitsExplained$</font>
+</td>
+</tr>
+
+$if(sCommentLine)$
+<tr class="CommentRow">
+<td class="comment2" colspan="8">$sCommentLine$</td>
+</tr>
+$endif$
+
+$if(arrsParams)$
+<tr class="paramrHeaderRow">
+<td class="hrNo" colspan="1">No</td>
+<td class="hrconstraint2" colspan="5">ACN Parameters<a href="#ACN_PARAMS_EXPLAINED123"><span style="vertical-align: super">what is this?</span></a></td>
+<td class="hrMax2">Type</td>
+</tr>
+$arrsParams$
+$endif$
+
+
+<tr class="headerRow">
+<td class="hrNo">No</td>
+<td class="hrField">Field</td>
+<td class="hrComment">Comment</td>
+<td class="hrType">Type</td>
+<td class="hrconstraint">Constraint</td>
+<td class="hrMin">Min Length (bits)</td>
+<td class="hrMax">Max Length (bits)</td>
+</tr>
+
+$arrsRows;separator="\n"$
+
+</tbody>
+</table>
+>>
+
+
+
+PrintParam(nIndex, sName, sType, nColSpan) ::= <<
+<tr class="OddRow">
+    <td class="no" >$nIndex$</td>
+    <td class="constraint" colspan="$nColSpan$">$sName$</td>
+    <td class="field" >$sType$</td>
+</tr>
+>>
+
+RootHtml(arrsFiles1, arrsFiles2, bAcnParamsMustBeExplained, arrsFiles3) ::= <<
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"        "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" >
+<head>
+    <title>ICD</title>
+    <style type="text/css"> 
+.headerRow
+{
+    background-color: #BBBBBB;
+}
+
+.paramrHeaderRow
+{
+    background-color:#DDCCEE;
+}
+
+
+.hrNo
+{
+    text-align: center;
+    font-family: Verdana;
+    color: white;
+    font-size: 10pt;
+    width: 3%;
+}
+.hrField
+{
+    text-align: center;
+    font-family: Verdana;
+    color: white;
+    font-size: 10pt;
+    width:15%;
+}
+
+.hrComment
+{
+    text-align: center;
+    font-family: Verdana;
+    color: white;
+    font-size: 10pt;
+}
+
+.hrType
+{
+    text-align: center;
+    font-family: Verdana;
+    color: white;
+    font-size: 10pt;
+    width:10%;
+}
+
+.hrconstraint
+{
+    text-align: center;
+    font-family: Verdana;
+    color: white;
+    font-size: 10pt;
+    width:10%;
+}
+
+.hrconstraint2
+{
+    text-align: center;
+    font-family: Verdana;
+    color: white;
+    font-size: 10pt;
+}
+
+.hrOptional
+{
+    text-align: center;
+    font-family: Verdana;
+    color: white;
+    font-size: 10pt;
+    width:10%;
+}
+.hrMin
+{
+    text-align: center;
+    font-family: Verdana;
+    color: white;
+    font-size: 10pt;
+    width:10%;
+}
+.hrMax
+{
+    text-align: center;
+    font-family: Verdana;
+    color: white;
+    font-size: 10pt;
+    width:10%;
+}
+
+.hrMin2
+{
+    text-align: center;
+    font-family: Verdana;
+    color: white;
+    font-size: 10pt;
+    width:20%;
+}
+.hrMax2
+{
+    text-align: center;
+    font-family: Verdana;
+    color: white;
+    font-size: 10pt;
+    width:20%;
+}
+
+.hrParamName2
+{
+    text-align: center;
+    font-family: Verdana;
+    color: white;
+    font-size: 10pt;
+    whidth:70%;
+}
+
+.CommentRow
+{
+    background-color: #e9e9e9;
+    height:25px;
+}
+
+.OddRow
+{
+    background-color: #e9e9e9;
+    height:25px;
+}
+
+.EvenRow
+{
+    background-color: #DBDBDB;
+    height:25px;
+}
+
+
+.no
+{
+    text-align:  center;
+    font-family: Verdana;
+    color: black;
+    font-size: 9pt;
+/*    width:30pt;*/
+}
+
+.field
+{
+    text-align: center;
+    font-family: Verdana;
+    color: black;
+    font-size: 9pt;
+/*    width:15%;*/
+}
+
+.field2
+{
+    text-align: center;
+    font-family: Verdana;
+    color: black;
+    font-size: 9pt;
+}
+
+.comment
+{
+    color: black;
+/*    width:25%;*/
+    font-family: Verdana;
+    font-size: 9pt;
+    text-align:left;
+}
+
+.comment2
+{
+    color: black;
+    font-family: Verdana;
+    font-size: 9pt;
+    text-align:left;
+}
+
+.threeDots
+{
+    color: black;
+    font-family: Verdana;
+    font-size: 9pt;
+    text-align:center;
+}
+
+.type
+{
+    text-align: center;
+    font-family: Verdana;
+    color: black;
+    font-size: 9pt;
+/*    width:10%;*/
+}
+
+.type2
+{
+    text-align: center;
+    font-family: Verdana;
+    color: black;
+    font-size: 9pt;
+}
+
+.constraint
+{
+    text-align: center;
+    font-family: Verdana;
+    color: black;
+    font-size: 9pt;
+}
+
+.optional
+{
+    text-align: center;
+    font-family: Verdana;
+    color: black;
+    font-size: 9pt;
+/*    width:10%;*/
+}
+.min
+{
+    text-align: center;
+    font-family: Verdana;
+    color: black;
+    font-size: 9pt;
+/*    width:70pt;*/
+}
+.max
+{
+    text-align: center;
+    font-family: Verdana;
+    color: black;
+    font-size: 9pt;
+/*    width:70pt;*/
+}
+
+.min2
+{
+    text-align: center;
+    font-family: Verdana;
+    color: black;
+    font-size: 9pt;
+}
+.max2
+{
+    text-align: center;
+    font-family: Verdana;
+    color: black;
+    font-size: 9pt;
+}
+
+
+h1
+{
+    font-family: Verdana, Tahoma;
+    color: #033a7a;
+    font-size: 14pt;
+}
+
+h2
+{
+    font-family: Verdana, Tahoma;
+    color: #033a7a;
+    font-size: 12pt;
+}
+ </style>
+</head>
+<body>
+<em>The following tables describe the binary encodings of the data model using the ACN Encoding Rules.
+</em><br/><br/>
+  $arrsFiles1;separator="\n"$
+
+  <hr />
+$if(bAcnParamsMustBeExplained)$
+    <a name="ACN_PARAMS_EXPLAINED123"></a>
+    <em>ACN Parameters</em><br/>
+    In the standard ASN.1 encodings such as uPER, BER etc, the encoding and decoding of any type has no external dependencies. For example, the encoded data for a SEQUENCE OF depends on the number of items in the SEQUENCE OF (the length determinant) and the type of item contained in the SEQUENCE. On the other hand, ACN allows types to be parameterized. For instance, the length of a SEQUENCE OF may be determined by the value of an external field. In this case, the SEQUENCE OF is parameterized and the input parameter is the field providing the length.
+  <hr />
+    <br/>
+$endif$
+
+  $arrsFiles2;separator="\n"$
+
+  $arrsFiles3;separator="\n"$
+
+</body>
+</html>
+>>
+
+

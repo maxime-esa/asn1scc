@@ -1,0 +1,32 @@
+﻿group c_lib;
+
+PrintArrayPostfix(nLength) ::= "[<nLength>]"
+
+String_get_count(p) ::= "(int)strlen(<p>)"
+
+Sizeable_get_count(p) ::= "<p>nCount"
+
+SetCount(p, v, bFixedSize) ::= <<
+<if(!bFixedSize)>
+<p>nCount = <v>;
+
+<endif>
+>>
+
+PrintLocalVariable(sTypeDecl, sName, sInitialValue) ::= "<sTypeDecl> <sName> = <sInitialValue>;"
+
+PrintLocalVariable_array(sTypeDecl, sName, nLengrh) ::= "<sTypeDecl> <sName>[<nLengrh>];"
+
+
+
+PrintLocalType(sTypeDeclaration, sTypeVarName) ::= <<
+<sTypeDeclaration> <sTypeVarName>;
+>>
+
+
+Read_Something(func) ::= /*nogen*/<<
+if (!<func>) {
+	*pErrCode = ERR_INSUFFICIENT_DATA;
+	return FALSE;
+}
+>>
