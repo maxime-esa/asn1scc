@@ -77,11 +77,10 @@ let rec CreateType (astRoot:list<ITree>) (tree:ITree) (fileTokens:array<IToken>)
         | asn1Parser.SET_TYPE           -> Sequence(CreateSequenceChild  astRoot typeNode fileTokens alreadyTakenComments )
         | asn1Parser.ENUMERATED_TYPE    -> Enumerated(CreateNamedItems astRoot  typeNode fileTokens alreadyTakenComments)
         | asn1Parser.BIT_STRING_TYPE    -> BitString
-        | asn1Parser.UTF8String         -> OctetString
         | asn1Parser.OCTECT_STING       -> OctetString
         | asn1Parser.IA5String          -> IA5String
         | asn1Parser.NumericString      -> NumericString
-        | asn1Parser.OBJECT_TYPE        -> raise (BugErrorException "OBJECT IDs not supported")
+        | asn1Parser.OBJECT_TYPE        -> raise (SemanticError (tree.Location, "OBJECT IDs not supported"))
         | asn1Parser.NULL               -> NullType
         | asn1Parser.REFERENCED_TYPE    
         | asn1Parser.PREFERENCED_TYPE   -> 
@@ -98,6 +97,7 @@ let rec CreateType (astRoot:list<ITree>) (tree:ITree) (fileTokens:array<IToken>)
             ReferenceType(md, ts, templateArgs)
         | asn1Parser.SEQUENCE_OF_TYPE   -> SequenceOf(CreateType  astRoot (getChildByType (typeNode, asn1Parser.TYPE_DEF)) fileTokens alreadyTakenComments )
         | asn1Parser.SET_OF_TYPE        -> SequenceOf(CreateType  astRoot (getChildByType (typeNode, asn1Parser.TYPE_DEF)) fileTokens alreadyTakenComments )
+        | asn1Parser.UTF8String         -> raise (SemanticError (tree.Location, "UTF8String is not supported"))
         | _                             -> raise (BugErrorException("Bug in CreateType"))
     {
         Asn1Type.Kind = asn1Kind
