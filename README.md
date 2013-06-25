@@ -15,13 +15,20 @@ Just open Asn1.sln and build the 'Asn1f2' project.
 ## Under Linux / OSX
 
 1. Make sure you have installed MonoDevelop and xbuild.
-2. Checkout and compile the Open Source F# compiler:
+
+2. Your MonoDevelop must learn about F# - so go to...
+
+    Tools / Add-in Manager / Gallery / Language Bindinds / F# Language Binding 
+
+   ...and click on 'Install'.
+
+3. Checkout and compile the Open Source F# compiler:
 
     git clone https://github.com/fsharp/fsharp && cd fsharp && ./configure && make && sudo make install 
 
-3. Execute ./build.sh - it will tell you what to do next.
+4. Execute ASN1SCC's ./build.sh - it will tell you what to do next.
 
-This process can be streamlined more - ideally, just requiring an invocation of xbuild - when we find the portable workarounds for the Windows-specific build rules used in the various .vcproj/.fsproj files. For now, bear with us :-)
+This process can be streamlined more - ideally, just requiring an invocation of xbuild - when we find time to replace the Windows-specific build rules with portable workarounds (in the various .vcproj/.fsproj files). For now, bear with us :-)
 
 Usage
 =====
