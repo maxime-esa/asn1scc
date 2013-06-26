@@ -29,17 +29,18 @@ namespace Asn1f2 { public class Svn    { public const string Version = "$SVNVERS
 OEF
 fi
 grep PreBuildEvent Asn1f2.csproj >/dev/null && grep -v TargetFrameworkProfile Asn1f2.csproj | awk 'BEGIN{i=0} /<PreBuildEvent/{i=1;}  {if (i== 0) { print $0; }}  /<\/PreBuildEvent?/{i=0;}' > a && mv a Asn1f2.csproj
+cd ../Antlr
+xbuild
+cd -
 echo ====================================================
 echo ====================================================
 echo 1. Spawn Monodevelop, and open 'Asn1.sln'.
 echo "   (Ignore the warning about .vcxproj)"
 echo 2. Then change 'Debug' to 'Debug|Mixed Platforms'
-echo 3. Return here, 'cd Antlr ; xbuild'
-echo 4. Go back to Monodevelop
-echo 4. Right-click on Asn1f2, and click Set As Startup project
-echo 5, Then right-click it again, and choose Build.
-echo 6. It should work - the Asn1f2/bin/Debug must contain the .exe/.dlls
-echo 7. It also needs the .stg - hit ENTER here and I will copy them there.
+echo 3. Right-click on Asn1f2, and click Set As Startup project
+echo 4, Then right-click it again, and choose Build.
+echo 5. It should work - the Asn1f2/bin/Debug must contain the .exe/.dlls
+echo 6. It also needs the .stg - hit ENTER here and I will copy them there.
 read ANS
 cp ../*/*.stg bin/Debug/
 echo .stg copied, your compiler is ready, inside 
