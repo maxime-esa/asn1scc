@@ -9,6 +9,7 @@ cp XER.stg xer.stg
 cd ../Backend2.ST/
 ../parseStg2/bin/Debug/parseStg2.exe backends.xml
 cd ../
+mkdir -p ./Asn1f2//Resources/
 cp SPARK_RTL/adaasn1rtl.* ./Asn1f2//Resources/
 cp SPARK_RTL/IgnoredExaminerWarnings.wrn ./Asn1f2//Resources/
 cp SPARK_RTL/gnat.cfg ./Asn1f2//Resources/
