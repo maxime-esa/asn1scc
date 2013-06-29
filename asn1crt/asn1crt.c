@@ -512,8 +512,9 @@ void BitStream_EncodeConstraintWholeNumber(BitStream* pBitStrm, asn1SccSint v, a
 {
     int nRangeBits;
     int nBits;
+    asn1SccUint range;
     assert(min<=max);
-    asn1SccUint range = (asn1SccUint)(max-min);
+    range = (asn1SccUint)(max-min);
     if(!range)
         return;
     nRangeBits = GetNumberOfBitsForNonNegativeInteger(range);
@@ -554,8 +555,9 @@ flag BitStream_DecodeConstraintWholeNumber(BitStream* pBitStrm, asn1SccSint* v, 
      
 void BitStream_EncodeSemiConstraintWholeNumber(BitStream* pBitStrm, asn1SccSint v, asn1SccSint min)
 {
+    int nBytes;
     assert(v>=min);
-    int nBytes = GetLengthInBytesOfUInt((asn1SccUint)(v - min));
+    nBytes = GetLengthInBytesOfUInt((asn1SccUint)(v - min));
     
     /* encode length */
     BitStream_EncodeConstraintWholeNumber(pBitStrm, nBytes, 0, 255); /*8 bits, first bit is always 0*/
