@@ -42,6 +42,7 @@ echo 4, Then right-click it again, and choose Build.
 echo 5. It should work - the Asn1f2/bin/Debug must contain the .exe/.dlls
 echo 6. It also needs the .stg - hit ENTER here and I will copy them there.
 read ANS
+mkdir -p bin/Debug/
 cp ../*/*.stg bin/Debug/
 echo .stg copied, your compiler is ready:
 echo "   " $(pwd)/bin/Debug/Asn1f2.exe
