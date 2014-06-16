@@ -69,6 +69,8 @@
     <None Include="generic.stg" />
     <Compile Include="icd_acn.gen.fs" />
     <None Include="icd_acn.stg" />
+    <Compile Include="python.gen.fs" />
+    <None Include="python.stg" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\ST\ST.fsproj">

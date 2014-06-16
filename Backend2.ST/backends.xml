@@ -90,4 +90,10 @@
         <modName>icd_acn</modName>
         <lang>html</lang>
     </run>
+    <run mode="single">
+        <input>python.stg</input>
+        <output>python.gen.fs</output>
+        <modName>python</modName>
+        <lang>python</lang>
+    </run>
 </Settings>
