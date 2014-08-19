@@ -5,7 +5,7 @@
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
     <ProductVersion>8.0.30703</ProductVersion>
     <SchemaVersion>2.0</SchemaVersion>
-    <ProjectGuid>{94495d92-b615-4745-b26b-a5ec73a6a462}</ProjectGuid>
+    <ProjectGuid>{94495D92-B615-4745-B26B-A5EC73A6A462}</ProjectGuid>
     <OutputType>Library</OutputType>
     <RootNamespace>ST</RootNamespace>
     <AssemblyName>ST</AssemblyName>
@@ -63,8 +63,7 @@
   <ItemGroup>
     <ProjectReference Include="..\Ast\Ast.fsproj">
       <Name>Ast</Name>
-      <Project>{3b67372a-65c7-439e-849f-ce1a1d2fcc69}</Project>
-      <Private>True</Private>
+      <Project>{3B67372A-65C7-439E-849F-CE1A1D2FCC69}</Project>
     </ProjectReference>
   </ItemGroup>
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
