@@ -45,11 +45,11 @@ types["$sName$"] = type("$sName$", (object,), {
 >>
 
 VasXml(sName, nLine, nPos, sType) ::= <<
-variables["$sName$"] = {
-    "Line": $nLine$, "CharPositionInLine": $nPos$, "type": {
+variables["$sName$"] = type("$sName$", (object,), {
+    "Line": $nLine$, "CharPositionInLine": $nPos$, "type": type("$sName$_type", (object,), {
         $sType$
-    }
-}
+    })
+})
 
 >>
 
