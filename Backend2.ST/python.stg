@@ -20,7 +20,7 @@ asn1Files.append("$sFileName$")
 $arrsModules;separator="\n"$
 >>
 
-ModuleXml(sName, arrsImportedModules, arrsExpTypes, arrsExpVars, arrsTases) ::=<<
+ModuleXml(sName, arrsImportedModules, arrsExpTypes, arrsExpVars, arrsTases, arrsVases) ::=<<
 asn1Modules.append("$sName$")
 exportedTypes["$sName$"] = [$arrsExpTypes:{x|"$x$"};separator=", "$]
 exportedVariables["$sName$"] = [$arrsExpVars:{x|"$x$"};separator=", "$]
