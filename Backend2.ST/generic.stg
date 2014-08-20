@@ -12,6 +12,7 @@ exportedTypes = {}
 exportedVariables = {}
 importedModules = {}
 types = {}
+variables = {}
 $arrsFiles;separator="\n"$
 >>
 
@@ -26,6 +27,7 @@ exportedTypes["$sName$"] = [$arrsExpTypes:{x|"$x$"};separator=", "$]
 exportedVariables["$sName$"] = [$arrsExpVars:{x|"$x$"};separator=","$]
 importedModules["$sName$"] = [$arrsImportedModules;separator=","$]
 $arrsTases;separator="\n"$
+$arrsVases;separator="\n"$
 >>
 
 ImportedMod(sName, arrsTypes, arrsVars) ::= <<
@@ -41,6 +43,14 @@ types["$sName$"] = {
 
 >>
 
+VasXml(sName, nLine, nPos, sType) ::= <<
+variables["$sName$"] = {
+    "Line": $nLine$, "CharPositionInLine": $nPos$, "type": {
+        $sType$
+    }
+}
+
+>>
 TypeGeneric(nLine, nPos, sSubType) ::= <<
 "Line": $nLine$, "CharPositionInLine": $nPos$, $sSubType$
 >>
