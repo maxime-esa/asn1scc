@@ -11,6 +11,7 @@ exportedTypes = {}
 exportedVariables = {}
 importedModules = {}
 types = {}
+variables = {}
 $arrsFiles;separator="\n"$
 >>
 
@@ -24,7 +25,10 @@ asn1Modules.append("$sName$")
 exportedTypes["$sName$"] = [$arrsExpTypes:{x|"$x$"};separator=", "$]
 exportedVariables["$sName$"] = [$arrsExpVars:{x|"$x$"};separator=", "$]
 importedModules["$sName$"] = [$arrsImportedModules:{x|$x$};separator=", "$]
+
 $arrsTases;separator="\n"$
+
+$arrsVases;separator="\n"$
 >>
 
 ImportedMod(sName, arrsTypes, arrsVars) ::= <<
@@ -37,6 +41,15 @@ types["$sName$"] = type("$sName$", (object,), {
         $sType$
     })
 })
+
+>>
+
+VasXml(sName, nLine, nPos, sType) ::= <<
+variables["$sName$"] = {
+    "Line": $nLine$, "CharPositionInLine": $nPos$, "type": {
+        $sType$
+    }
+}
 
 >>
 
