@@ -36,14 +36,10 @@
     <Reference Include="antlr.runtime">
       <HintPath>..\Antlr\antlr313\antlr.runtime.dll</HintPath>
     </Reference>
-    <Reference Include="Antlr3.Runtime, Version=3.1.3.42154, Culture=neutral, PublicKeyToken=3a9cab8f8d22bfb7, processorArchitecture=MSIL">
-      <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\Antlr\antlr313\Antlr3.Runtime.dll</HintPath>
-    </Reference>
     <Reference Include="Antlr3.Utility">
       <HintPath>..\Antlr\antlr313\Antlr3.Utility.dll</HintPath>
     </Reference>
-    <Reference Include="FSharp.Core, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL" />
+    <Reference Include="FSharp.Core, Version=4.3.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL" />
     <Reference Include="StringTemplate">
       <HintPath>..\Antlr\antlr313\StringTemplate.dll</HintPath>
     </Reference>
@@ -54,6 +50,9 @@
     <Reference Include="Microsoft.CSharp" />
     <Reference Include="System.Data" />
     <Reference Include="System.Xml" />
+    <Reference Include="Antlr3.Runtime">
+      <HintPath>..\Antlr\antlr313\Antlr3.Runtime.dll</HintPath>
+    </Reference>
   </ItemGroup>
   <ItemGroup>
     <Compile Include="CmdLineArgs.cs" />
@@ -129,20 +128,6 @@
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <PropertyGroup>
-    <PreBuildEvent>copy /Y $(SolutionDir)SPARK_RTL\adaasn1rtl.* $(ProjectDir)\Resources\
-copy /Y $(SolutionDir)SPARK_RTL\IgnoredExaminerWarnings.wrn $(ProjectDir)\Resources\
-copy /Y $(SolutionDir)SPARK_RTL\gnat.cfg $(ProjectDir)\Resources\
-copy /Y $(SolutionDir)SPARK_RTL\run.sh $(ProjectDir)\Resources\
-copy /Y $(SolutionDir)SPARK_RTL\GPS_project.gpr $(ProjectDir)\Resources\
-copy /Y $(SolutionDir)asn1crt\asn1crt.c  $(ProjectDir)\Resources\
-copy /Y $(SolutionDir)asn1crt\asn1crt.h  $(ProjectDir)\Resources\
-copy /Y $(SolutionDir)asn1crt\Acn.c $(ProjectDir)\Resources\
-copy /Y $(SolutionDir)asn1crt\ber.c $(ProjectDir)\Resources\
-copy /Y $(SolutionDir)asn1crt\xer.c $(ProjectDir)\Resources\
-copy /Y $(SolutionDir)asn1crt\real.c $(ProjectDir)\Resources\
-cd $(ProjectDir) &amp;&amp; GetVersion.bat
-
-</PreBuildEvent>
   </PropertyGroup>
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
        Other similar extension points exist, see Microsoft.Common.targets.

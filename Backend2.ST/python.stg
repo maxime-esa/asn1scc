@@ -11,6 +11,7 @@ exportedTypes = {}
 exportedVariables = {}
 importedModules = {}
 types = {}
+variables = {}
 $arrsFiles;separator="\n"$
 >>
 
@@ -19,12 +20,15 @@ asn1Files.append("$sFileName$")
 $arrsModules;separator="\n"$
 >>
 
-ModuleXml(sName, arrsImportedModules, arrsExpTypes, arrsExpVars, arrsTases) ::=<<
+ModuleXml(sName, arrsImportedModules, arrsExpTypes, arrsExpVars, arrsTases, arrsVases) ::=<<
 asn1Modules.append("$sName$")
 exportedTypes["$sName$"] = [$arrsExpTypes:{x|"$x$"};separator=", "$]
 exportedVariables["$sName$"] = [$arrsExpVars:{x|"$x$"};separator=", "$]
 importedModules["$sName$"] = [$arrsImportedModules:{x|$x$};separator=", "$]
+
 $arrsTases;separator="\n"$
+
+$arrsVases;separator="\n"$
 >>
 
 ImportedMod(sName, arrsTypes, arrsVars) ::= <<
@@ -33,6 +37,15 @@ ImportedMod(sName, arrsTypes, arrsVars) ::= <<
 
 TasXml(sName, nLine, nPos, sType) ::= <<
 types["$sName$"] = type("$sName$", (object,), {
+    "Line": $nLine$, "CharPositionInLine": $nPos$, "type": type("$sName$_type", (object,), {
+        $sType$
+    })
+})
+
+>>
+
+VasXml(sName, nLine, nPos, sType) ::= <<
+variables["$sName$"] = type("$sName$", (object,), {
     "Line": $nLine$, "CharPositionInLine": $nPos$, "type": type("$sName$_type", (object,), {
         $sType$
     })
