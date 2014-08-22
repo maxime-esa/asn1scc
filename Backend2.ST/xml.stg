@@ -52,6 +52,12 @@ TasXml(sName, nLine, nPos, sType) ::= <<
 </TypeAssignment>
 >>
 
+VasXml(sName, nLine, nPos, sType) ::= <<
+<VariableAssignment Name="$sName$" Line="$nLine$" CharPositionInLine="$nPos$">
+    $sType$
+</VariableAssignment>
+>>
+
 TypeGeneric(nLine, nPos, sSubType) ::= <<
 <Type Line="$nLine$" CharPositionInLine="$nPos$">
     $sSubType$
