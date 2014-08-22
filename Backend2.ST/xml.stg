@@ -18,7 +18,7 @@ FileXml(sFileName, arrsModules) ::= <<
 </Asn1File>
 >>
 
-ModuleXml(sName, arrsImportedModules, arrsExpTypes, arrsExpVars, arrsTases) ::=<<
+ModuleXml(sName, arrsImportedModules, arrsExpTypes, arrsExpVars, arrsTases, arrsVases) ::=<<
 <Asn1Module ID="$sName$">
 <ExportedTypes>
     $arrsExpTypes:{x|<ExportedType Name="$x$" />};separator="\n"$ 
