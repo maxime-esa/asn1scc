@@ -5,7 +5,7 @@
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
     <ProductVersion>8.0.30703</ProductVersion>
     <SchemaVersion>2.0</SchemaVersion>
-    <ProjectGuid>{db416047-7207-4816-8db6-2182be2e1104}</ProjectGuid>
+    <ProjectGuid>{DB416047-7207-4816-8DB6-2182BE2E1104}</ProjectGuid>
     <OutputType>Library</OutputType>
     <RootNamespace>AntlrUtils</RootNamespace>
     <AssemblyName>AntlrUtils</AssemblyName>

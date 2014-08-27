@@ -5,7 +5,7 @@
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
     <ProductVersion>8.0.30703</ProductVersion>
     <SchemaVersion>2.0</SchemaVersion>
-    <ProjectGuid>{d451f135-4104-4441-99c1-5c1a6b7c2f91}</ProjectGuid>
+    <ProjectGuid>{D451F135-4104-4441-99C1-5C1A6B7C2F91}</ProjectGuid>
     <OutputType>Library</OutputType>
     <RootNamespace>Backend2.ST</RootNamespace>
     <AssemblyName>Backend2.ST</AssemblyName>
@@ -75,8 +75,7 @@
   <ItemGroup>
     <ProjectReference Include="..\ST\ST.fsproj">
       <Name>ST</Name>
-      <Project>{94495d92-b615-4745-b26b-a5ec73a6a462}</Project>
-      <Private>True</Private>
+      <Project>{94495D92-B615-4745-B26B-A5EC73A6A462}</Project>
     </ProjectReference>
     <Reference Include="antlr.runtime">
       <HintPath>..\Antlr\antlr313\antlr.runtime.dll</HintPath>
@@ -97,8 +96,7 @@
     <Reference Include="System.Numerics" />
     <ProjectReference Include="..\Ast\Ast.fsproj">
       <Name>Ast</Name>
-      <Project>{3b67372a-65c7-439e-849f-ce1a1d2fcc69}</Project>
-      <Private>True</Private>
+      <Project>{3B67372A-65C7-439E-849F-CE1A1D2FCC69}</Project>
     </ProjectReference>
   </ItemGroup>
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 

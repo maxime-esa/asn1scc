@@ -5,7 +5,7 @@
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
     <ProductVersion>8.0.30703</ProductVersion>
     <SchemaVersion>2.0</SchemaVersion>
-    <ProjectGuid>{62bfc3e2-6dc8-4eee-bcd6-f5634369e57b}</ProjectGuid>
+    <ProjectGuid>{62BFC3E2-6DC8-4EEE-BCD6-F5634369E57B}</ProjectGuid>
     <OutputType>Library</OutputType>
     <RootNamespace>Backend.c</RootNamespace>
     <AssemblyName>Backend.c</AssemblyName>
@@ -67,18 +67,15 @@
   <ItemGroup>
     <ProjectReference Include="..\Ast\Ast.fsproj">
       <Name>Ast</Name>
-      <Project>{3b67372a-65c7-439e-849f-ce1a1d2fcc69}</Project>
-      <Private>True</Private>
+      <Project>{3B67372A-65C7-439E-849F-CE1A1D2FCC69}</Project>
     </ProjectReference>
     <ProjectReference Include="..\Backend.c.ST\Backend.c.ST.fsproj">
       <Name>Backend.c.ST</Name>
-      <Project>{821be302-634c-465e-9f9a-19ddca139c9f}</Project>
-      <Private>True</Private>
+      <Project>{821BE302-634C-465E-9F9A-19DDCA139C9F}</Project>
     </ProjectReference>
     <ProjectReference Include="..\Backend2\Backend2.fsproj">
       <Name>Backend2</Name>
-      <Project>{000896ae-1e52-4120-8394-0e5e07a8f194}</Project>
-      <Private>True</Private>
+      <Project>{000896AE-1E52-4120-8394-0E5E07A8F194}</Project>
     </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildExtensionsPath32)\FSharp\1.0\Microsoft.FSharp.Targets" Condition="!Exists('$(MSBuildBinPath)\Microsoft.Build.Tasks.v4.0.dll')" />

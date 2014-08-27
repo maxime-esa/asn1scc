@@ -42,14 +42,33 @@ END <sName>_Init;
 
 /* E Q U A L*/
 
-PrimitiveEqual(p1,p2) ::= "<p1> = <p2>"
+PrimitiveEqual(p1,p2) ::= "RETURN <p1> = <p2>;"
 
+/* OCTET STRING EQUAL - Check the length */
+isEqual_OctetString(p1,p2,bIsFixedSize, nFixedSize) ::= <<
+<if(!bIsFixedSize)>
+IF <p1>.Length = <p2>.Length THEN
+    FOR x in 1 .. <p1>.Length LOOP
+        IF INTEGER(<p1>.Data(x)) /= INTEGER(<p2>.Data(x)) THEN
+            RETURN FALSE;
+        END IF;
+    END LOOP;
+    RETURN TRUE;
+ELSE
+    RETURN FALSE;
+END IF;
+
+<else>
+RETURN <p1> = <p2>;
+
+<endif>	
+>>
 
 
 PrintTypeAssignment_Equal(sName, sBody) ::= <<
 FUNCTION <sName>_Equal(val1, val2: in <sName>) return Boolean
 IS 
 BEGIN
-    RETURN <sBody>;
+    <sBody>
 END <sName>_Equal;
 >>
