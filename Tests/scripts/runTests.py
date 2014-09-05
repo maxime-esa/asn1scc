@@ -292,13 +292,17 @@ def submain(lang, encoding, testCaseSet):
     if os.path.isfile(testCaseSet):
         globals()[funcName](os.path.abspath(testCaseSet))
     else:
-        for curDir, _, files in os.walk(testCaseSet):
+        for curDir in sorted(os.listdir(testCaseSet)):
             if -1 != curDir.find('.svn'):
                 continue
-            asn1files = [x for x in files if x.endswith(".asn1")]
+            asn1files = [
+                x
+                for x in sorted(os.listdir(testCaseSet + os.sep + curDir))
+                if x.endswith(".asn1")]
             for asn1file in asn1files:
                 globals()[funcName](
-                    os.path.abspath(curDir + os.sep + asn1file))
+                    os.path.abspath(
+                        testCaseSet + os.sep + curDir + os.sep + asn1file))
 
 
 def usage():
