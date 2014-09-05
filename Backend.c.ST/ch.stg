@@ -110,7 +110,7 @@ Declare_NullType() ::= "NullType"
 
 Declare_BitString(bIsFixeSize, nMaxOctets, nMaxBits) ::= <<
 struct {<if(!bIsFixeSize)>
-    long nCount; /*Number of bits in the array. Max value is : <nMaxBits> */
+    int nCount; /*Number of bits in the array. Max value is : <nMaxBits> */
 
 <endif>    
     byte arr[<nMaxOctets>];
@@ -119,7 +119,7 @@ struct {<if(!bIsFixeSize)>
 
 Declare_OctetString(bIsFixeSize, nMaxOctets) ::= <<
 struct {<if(!bIsFixeSize)>
-    long nCount; 
+    int nCount; 
 
 <endif>    
     byte arr[<nMaxOctets>];
@@ -164,7 +164,7 @@ struct {
 
 Declare_SequenceOf(bIsFixedSize, sTypeDecl, nLength, sArrayPostfix) ::= <<
 struct {<if(!bIsFixedSize)>
-    long nCount; 
+    int nCount; 
 
 <endif>    
     <sTypeDecl> arr[<nLength>]<sArrayPostfix>;
