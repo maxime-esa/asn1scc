@@ -1,5 +1,6 @@
 #!/bin/bash
 set -e
+MAIN_FOLDER="$(pwd)"
 cd parseStg2/
 xbuild
 cd ../
@@ -30,19 +31,11 @@ OEF
 fi
 grep PreBuildEvent Asn1f2.csproj >/dev/null && grep -v TargetFrameworkProfile Asn1f2.csproj | awk 'BEGIN{i=0} /<PreBuildEvent/{i=1;}  {if (i== 0) { print $0; }}  /<\/PreBuildEvent?/{i=0;}' > a && mv a Asn1f2.csproj
 cd ../Antlr
-xbuild
-cd -
-echo ====================================================
-echo ====================================================
-echo 1. Spawn Monodevelop, and open 'Asn1.sln'.
-echo "   (Ignore the warning about .vcxproj)"
-echo 2. Then change 'Debug' to 'Debug|Mixed Platforms'
-echo 3. Right-click on Asn1f2, and click Set As Startup project
-echo 4, Then right-click it again, and choose Build.
-echo 5. It should work - the Asn1f2/bin/Debug must contain the .exe/.dlls
-echo 6. It also needs the .stg - hit ENTER here and I will copy them there.
-read ANS
+xbuild || exit 1
+cd "$MAIN_FOLDER"
+xbuild || exit 1
+cd Asn1f2/
 mkdir -p bin/Debug/
 cp ../*/*.stg bin/Debug/
-echo .stg copied, your compiler is ready:
+echo .stg copied, your compiler is ready, here:
 echo "   " $(pwd)/bin/Debug/Asn1f2.exe
