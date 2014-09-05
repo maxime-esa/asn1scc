@@ -93,7 +93,7 @@ def RunTestCase(asn1, acn, behavior, expErrMsg):
             return
 
     if language == "c":
-        res = mysystem("cd "+targetDir+os.sep+"; CC=gcc-4.7 make coverage", False)
+        res = mysystem("cd "+targetDir+os.sep+"; CC=gcc make coverage", False)
         f = open(targetDir+os.sep+"sample1.c.gcov", 'r')
         lines = [
             l
@@ -114,7 +114,7 @@ def RunTestCase(asn1, acn, behavior, expErrMsg):
             PrintFailed("Victor failed")
             sys.exit(1)
 
-        res = mysystem("CC=gcc-4.7 make coverage >covlog.txt 2>&1", True)
+        res = mysystem("CC=gcc make coverage >covlog.txt 2>&1", True)
         if res != 0 and behavior != 2:
             PrintFailed("run time failure")
             PrintFailed("see covlog.txt")
