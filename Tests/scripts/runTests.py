@@ -104,7 +104,8 @@ def RunTestCase(asn1, acn, behavior, expErrMsg):
             sys.exit(1)
     else:
         os.chdir(targetDir)
-        mysystem("./runSpark.sh >../tmp.err  2>&1", False)
+        mysystem("chmod +x ./runSpark.sh", False)
+        mysystem("./runSpark.sh > tmp.err  2>&1", False)
         f = open("examiner/pogs.sum", 'r')
         totalsline = [
             l
