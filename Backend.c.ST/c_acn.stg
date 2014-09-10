@@ -613,7 +613,7 @@ if (ret) {
 
 ChoiceChild_preWhen_encode(p, sChildID, sChildBody, arrsConditions, bFirst) ::= <<
 case <sChildID>:
-	<sChildContent>
+	<sChildBody>
 	break;
 >>
 
