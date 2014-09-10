@@ -42,25 +42,45 @@ let UpdateDeterminant determinantPath determinantPathPtr (kind:AcnTypes.LongRefe
     | AcnTypes.PresenceInt(_)  ->
         let parentPoint = AcnTypes.Point.TypePoint(ref.decType.AbsPath |> List.rev |> List.tail |> List.rev)
         let parentPath = GetPointAccessPath parentPoint  (r:AstRoot) (acn:AcnTypes.AcnAstResolved)
-        let printItem (rf:AcnTypes.LongReferenceResolved) =
-            match rf.Kind with
-            | AcnTypes.PresenceInt(intVal)  ->
-                let childName = ToC (rf.decType.AbsPath |> List.rev |> List.head)
-                c_acn.ChoiceDependencyIntPres_child determinantPath childName (AcnTypes.EvaluateConstant acn.Constants intVal)
-            | _                             -> raise(BugErrorException "")
-        let children = refs |> Seq.map printItem
-        false, c_acn.ChoiceDependencyPres sTasName children
+        let parentAsnType = GetAsn1TypeByPoint parentPoint (r:AstRoot) (acn:AcnTypes.AcnAstResolved)
+        let printItem (rf:AcnTypes.LongReferenceResolved) (ch:ChildInfo) =
+             match rf.Kind with
+             | AcnTypes.PresenceInt(intVal)  ->
+                  c_acn.ChoiceDependencyIntPres_child determinantPath (ch.CName_Present C) (AcnTypes.EvaluateConstant acn.Constants intVal)
+             | _                             -> raise(BugErrorException "")
+//       let printItem (rf:AcnTypes.LongReferenceResolved) =
+//           match rf.Kind with
+//           | AcnTypes.PresenceInt(intVal)  ->
+//               let childName = ToC (rf.decType.AbsPath |> List.rev |> List.head)
+//               c_acn.ChoiceDependencyIntPres_child determinantPath childName (AcnTypes.EvaluateConstant acn.Constants intVal)
+//           | _                             -> raise(BugErrorException "")
+//       let children = refs |> Seq.map printItem
+        match parentAsnType.Kind with
+        | Choice(children) ->
+            let arrsChEnumItems = Seq.map2 printItem refs children
+            false, c_acn.ChoiceDependencyPres sTasName arrsChEnumItems
+        //false, c_acn.ChoiceDependencyPres sTasName children
     | AcnTypes.PresenceStr(_)  ->
         let parentPoint = AcnTypes.Point.TypePoint(ref.decType.AbsPath |> List.rev |> List.tail |> List.rev)
         let parentPath = GetPointAccessPath parentPoint  (r:AstRoot) (acn:AcnTypes.AcnAstResolved)
-        let printItem (rf:AcnTypes.LongReferenceResolved) =
-            match rf.Kind with
-            | AcnTypes.PresenceStr(sVal)  ->
-                let childName = ToC (rf.decType.AbsPath |> List.rev |> List.head)
-                c_acn.ChoiceDependencyStrPres_child determinantPath childName sVal
-            | _                             -> raise(BugErrorException "")
-        let children = refs |> Seq.map printItem
-        false, c_acn.ChoiceDependencyPres sTasName children
+        let parentAsnType = GetAsn1TypeByPoint parentPoint (r:AstRoot) (acn:AcnTypes.AcnAstResolved)
+//       let printItem (rf:AcnTypes.LongReferenceResolved) =
+//           match rf.Kind with
+//           | AcnTypes.PresenceStr(sVal)  ->
+//               let childName = ToC (rf.decType.AbsPath |> List.rev |> List.head)
+//               c_acn.ChoiceDependencyStrPres_child determinantPath childName sVal
+//           | _                             -> raise(BugErrorException "")
+//        let children = refs |> Seq.map printItem
+//        false, c_acn.ChoiceDependencyPres sTasName children
+        let printItem (rf:AcnTypes.LongReferenceResolved) (ch:ChildInfo) =
+             match rf.Kind with
+             | AcnTypes.PresenceStr(sVal)  ->
+                  c_acn.ChoiceDependencyStrPres_child determinantPath (ch.CName_Present C) sVal
+             | _                             -> raise(BugErrorException "")
+        match parentAsnType.Kind with
+        | Choice(children) ->
+            let arrsChEnumItems = Seq.map2 printItem refs children
+            false, c_acn.ChoiceDependencyPres sTasName arrsChEnumItems
     | AcnTypes.RefTypeArgument(prmName)                          -> 
         let newModule, newTas = match otherType.Kind with
                                 | ReferenceType(md,ts, _) -> 
