@@ -52,6 +52,7 @@ let UpdateDeterminant determinantPath determinantPathPtr (kind:AcnTypes.LongRefe
         | Choice(children) ->
             let arrsChEnumItems = Seq.map2 printItem refs children
             false, c_acn.ChoiceDependencyPres sTasName arrsChEnumItems
+        | _                             -> raise(BugErrorException "")
     | AcnTypes.PresenceStr(_)  ->
         let parentPoint = AcnTypes.Point.TypePoint(ref.decType.AbsPath |> List.rev |> List.tail |> List.rev)
         let parentPath = GetPointAccessPath parentPoint  (r:AstRoot) (acn:AcnTypes.AcnAstResolved)
@@ -65,6 +66,7 @@ let UpdateDeterminant determinantPath determinantPathPtr (kind:AcnTypes.LongRefe
         | Choice(children) ->
             let arrsChEnumItems = Seq.map2 printItem refs children
             false, c_acn.ChoiceDependencyPres sTasName arrsChEnumItems
+        | _                             -> raise(BugErrorException "")
     | AcnTypes.RefTypeArgument(prmName)                          -> 
         let newModule, newTas = match otherType.Kind with
                                 | ReferenceType(md,ts, _) -> 
