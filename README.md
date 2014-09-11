@@ -8,14 +8,14 @@ Compilation
 
 ## Under Windows
 
-If you are working under Windows, you need a version of Visual Studio with support for F# . Main development is done with Visual Studio 2012, but you can probably also use the older versions of the IDEs with the appropriate F# plugins (published by Microsoft).
-
+If you are working under Windows, you need a version of Visual Studio with support for F# .
 Just open Asn1.sln and build the 'Asn1f2' project.
 
 ## Under Linux / OSX
 
 1. Make sure you have installed the mono development tools. We have successfully built the compiler with versions of the tools from Debian Jessie (as of 2014/09):
 
+    ```
     $ mono -V
     Mono JIT compiler version 3.2.8 (Debian 3.2.8+dfsg-7)
     Copyright (C) 2002-2014 Novell, Inc, Xamarin Inc and Contributors. www.mono-project.com
@@ -27,6 +27,7 @@ Just open Asn1.sln and build the 'Asn1f2' project.
             Misc:          softdebug 
             LLVM:          supported, not enabled.
             GC:            sgen
+    ```
 
 3. Use the `fsharpc` compiler inside your distro, or just checkout and compile the Open Source F# compiler...
 
