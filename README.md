@@ -13,7 +13,7 @@ Just open `Asn1.sln` and build the `Asn1f2` project.
 
 ## Under Linux / OSX
 
-1. Make sure you have installed the mono development tools. We have successfully built the compiler with versions of the tools from Debian Jessie (as of 2014/09):
+1. Make sure you have installed Java (the runtime, no need for the full JDK) and the [mono](http://www.mono-project.com) development tools. We have successfully built the compiler with the versions of the tools inside Debian Jessie (as of 2014/Sep):
 
     ```
     $ mono -V
@@ -29,7 +29,7 @@ Just open `Asn1.sln` and build the `Asn1f2` project.
             GC:            sgen
     ```
 
-3. Use the `fsharpc` compiler inside your distro, or just checkout and compile the Open Source F# compiler...
+2. Use the `fsharpc` compiler inside your distro, or just checkout and compile the Open Source F# compiler...
 
     ```
     git clone https://github.com/fsharp/fsharp && \
@@ -38,7 +38,7 @@ Just open `Asn1.sln` and build the `Asn1f2` project.
         make && sudo make install 
     ```
 
-4. Execute ASN1SCC's `./build.sh` - it will tell you what to do next.
+3. Execute ASN1SCC's `./build.sh` - and the compiler will be built.
 
 Usage
 =====
