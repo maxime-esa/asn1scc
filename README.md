@@ -9,7 +9,7 @@ Compilation
 ## Under Windows
 
 If you are working under Windows, you need a version of Visual Studio with support for F# .
-Just open Asn1.sln and build the 'Asn1f2' project.
+Just open `Asn1.sln` and build the `Asn1f2` project.
 
 ## Under Linux / OSX
 
@@ -18,7 +18,7 @@ Just open Asn1.sln and build the 'Asn1f2' project.
     ```
     $ mono -V
     Mono JIT compiler version 3.2.8 (Debian 3.2.8+dfsg-7)
-    Copyright (C) 2002-2014 Novell, Inc, Xamarin Inc and Contributors. www.mono-project.com
+    Copyright (C) 2002-2014 Novell, Inc, Xamarin Inc and Contributors.
             TLS:           __thread
             SIGSEGV:       altstack
             Notifications: epoll
@@ -31,9 +31,14 @@ Just open Asn1.sln and build the 'Asn1f2' project.
 
 3. Use the `fsharpc` compiler inside your distro, or just checkout and compile the Open Source F# compiler...
 
-    git clone https://github.com/fsharp/fsharp && cd fsharp && ./configure && make && sudo make install 
+    ```
+    git clone https://github.com/fsharp/fsharp && \
+        cd fsharp && \
+        ./configure && \
+        make && sudo make install 
+    ```
 
-4. Execute ASN1SCC's ./build.sh - it will tell you what to do next.
+4. Execute ASN1SCC's `./build.sh` - it will tell you what to do next.
 
 Usage
 =====
