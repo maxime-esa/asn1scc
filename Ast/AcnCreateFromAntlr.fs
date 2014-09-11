@@ -689,22 +689,28 @@ and CheckChoice (t:ITree) asn1Type absPath (props:List<ITree>) (ast:AcnAst) (r:A
         | Some(childrenList)    -> 
             let loc = t.Location
             let childrenPresenceCods = childrenList.Children |> List.map GetPresenceConditions
-            let firstChild = childrenPresenceCods.Head
-            let exToThrow = SemanticError(loc, "Invalid presence-when attribute usage. The same type of conditions should be applied to all choice alternatives")
-            let cmprConditionsWithFirstOne (curChild :List<List<string>*LongReferenceKind>) =
-                let cmprCondition ((absPath1, presKind1):List<string>*LongReferenceKind) ((absPath2, presKind2):List<string>*LongReferenceKind) = 
-                    if (absPath1 <> absPath2) then
-                        raise exToThrow
-                    match presKind1, presKind2 with
-                    | PresenceBool, PresenceBool    -> ()
-                    | PresenceInt(v1), PresenceInt(v2)  when v1=v2  -> raise exToThrow
-                    | PresenceInt(v1), PresenceInt(v2)  -> ()
-                    | PresenceStr(v1), PresenceStr(v2)  when v1=v2  -> raise exToThrow
-                    | PresenceStr(v1), PresenceStr(v2)  -> ()
-                    | _                                 -> raise exToThrow
-                
-                if firstChild.Length <> curChild.Length then
-                    raise exToThrow
-                List.zip firstChild curChild |> Seq.iter(fun (c1,c2) -> cmprCondition c1 c2)
-            childrenPresenceCods.Tail |> Seq.iter cmprConditionsWithFirstOne
-    | _                     -> ()
+            // Make sure that all the conditions in the list have the same length, e.g. two
+            //   green [present-when type2==10 type1==30],
+            //   red   [present-when type1==30 type2==20],
+            //   blue  [present-when type1==50 type2==20]
+            let lengthAfterRemovingDuplicateLengths = 
+                childrenPresenceCods 
+                |> List.map (fun conditionList -> Seq.length conditionList)
+                |> Seq.distinct
+                |> Seq.length
+            let exSameLength = SemanticError(loc, "Invalid presence-when attribute usage. The same type of conditions should be applied to all choice alternatives")
+            if lengthAfterRemovingDuplicateLengths <> 1 then
+                raise exSameLength
+            // Make sure that all the conditions in the list are unique, e.g. this is bad:
+            //   green [present-when type2==10 type1==30],
+            //   red   [present-when type1==30 type2==20],
+            // ...because both are the same condition!
+            let lengthAfterRemovingDuplicateConditions = 
+                childrenPresenceCods 
+                |> List.map (fun conditionList -> List.sortBy fst conditionList)
+                |> Seq.distinct
+                |> Seq.length                             
+            let exUniqConditions = SemanticError(loc, "Duplicate condition found in choice alternatives")
+            if lengthAfterRemovingDuplicateConditions <> Seq.length childrenPresenceCods then
+                raise exUniqConditions
+    | _ -> ()
