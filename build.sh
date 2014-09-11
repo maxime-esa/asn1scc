@@ -22,7 +22,7 @@ cp asn1crt/Acn.c ./Asn1f2//Resources/
 cp asn1crt/ber.c ./Asn1f2//Resources/
 cp asn1crt/xer.c ./Asn1f2//Resources/
 cp asn1crt/real.c ./Asn1f2//Resources/
-SVNVERSION=$(svnversion)
+SVNVERSION=$(git log | head -1 | cut -c8-16)
 cd Asn1f2
 if [ ! -f SvnVersion.cs ] ; then
     cat >> SvnVersion.cs <<OEF
