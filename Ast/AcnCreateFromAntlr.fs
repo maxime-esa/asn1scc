@@ -702,7 +702,7 @@ and CheckChoice (t:ITree) asn1Type absPath (props:List<ITree>) (ast:AcnAst) (r:A
             if lengthAfterRemovingDuplicateLengths <> 1 then
                 raise exSameLength
             // Make sure that all the conditions in the list are unique, e.g. this is bad:
-            //   green [present-when type2==10 type1==30],
+            //   green [present-when type2==20 type1==30],
             //   red   [present-when type1==30 type2==20],
             // ...because both are the same condition!
             let lengthAfterRemovingDuplicateConditions = 
