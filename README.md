@@ -14,23 +14,25 @@ Just open Asn1.sln and build the 'Asn1f2' project.
 
 ## Under Linux / OSX
 
-1. Make sure you have installed MonoDevelop and xbuild. We have successfully built the compiler with versions of the tools from Debian Stable (as of 2013/06) - i.e. MonoDevelop 3.0.3.2 and xbuild 2.10.8.1.
+1. Make sure you have installed the mono development tools. We have successfully built the compiler with versions of the tools from Debian Jessie (as of 2014/09):
 
-2. Your MonoDevelop must learn about F# - so go to...
+    $ mono -V
+    Mono JIT compiler version 3.2.8 (Debian 3.2.8+dfsg-7)
+    Copyright (C) 2002-2014 Novell, Inc, Xamarin Inc and Contributors. www.mono-project.com
+            TLS:           __thread
+            SIGSEGV:       altstack
+            Notifications: epoll
+            Architecture:  x86
+            Disabled:      none
+            Misc:          softdebug 
+            LLVM:          supported, not enabled.
+            GC:            sgen
 
-    Tools / Add-in Manager / Gallery / Language Bindinds / F# Language Binding 
-
-...and click on 'Install'. This step will probably become unnecessary in later versions of MonoDevelop.
-
-3. Checkout and compile the Open Source F# compiler...
+3. Use the `fsharpc` compiler inside your distro, or just checkout and compile the Open Source F# compiler...
 
     git clone https://github.com/fsharp/fsharp && cd fsharp && ./configure && make && sudo make install 
 
-...or just use your distro's package manager to install it. Make sure you are installing F# 3.0 or later.
-
 4. Execute ASN1SCC's ./build.sh - it will tell you what to do next.
-
-This last step can be streamlined more - ideally, just requiring an invocation of xbuild. When we find time, we will replace the Windows-specific build rules with portable workarounds (in the various .vcproj/.fsproj files). For now, bear with us :-)
 
 Usage
 =====
