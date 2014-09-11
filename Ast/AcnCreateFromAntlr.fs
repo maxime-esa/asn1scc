@@ -688,7 +688,11 @@ and CheckChoice (t:ITree) asn1Type absPath (props:List<ITree>) (ast:AcnAst) (r:A
         | None                  -> ()
         | Some(childrenList)    -> 
             let loc = t.Location
-            let childrenPresenceCods = childrenList.Children |> List.map GetPresenceConditions
+            let childrenPresenceCods = 
+                childrenList.Children 
+                |> List.map GetPresenceConditions
+                |> List.filter ((<>) [])  // For grammars with no presence conditions, remove empty condition lists
+            
             // Make sure that all the conditions in the list have the same length, e.g. two
             //   green [present-when type2==10 type1==30],
             //   red   [present-when type1==30 type2==20],
@@ -699,8 +703,11 @@ and CheckChoice (t:ITree) asn1Type absPath (props:List<ITree>) (ast:AcnAst) (r:A
                 |> Seq.distinct
                 |> Seq.length
             let exSameLength = SemanticError(loc, "Invalid presence-when attribute usage. The same type of conditions should be applied to all choice alternatives")
-            if lengthAfterRemovingDuplicateLengths <> 1 then
+            // For grammars with no presence conditions, lengthAfterRemovingDuplicateLengths must be 0
+            // Otherwise, it must be 1 - only one length allowed!
+            if lengthAfterRemovingDuplicateLengths <> 0 && lengthAfterRemovingDuplicateLengths <> 1 then
                 raise exSameLength
+                
             // Make sure that all the conditions in the list are unique, e.g. this is bad:
             //   green [present-when type2==20 type1==30],
             //   red   [present-when type1==30 type2==20],
