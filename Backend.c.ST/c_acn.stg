@@ -613,7 +613,7 @@ if (ret) {
 
 ChoiceChild_preWhen_encode(p, sChildID, sChildBody, arrsConditions, bFirst) ::= <<
 case <sChildID>:
-	<sChildContent>
+	<sChildBody>
 	break;
 >>
 
@@ -760,13 +760,13 @@ PresenceDependency(v, sSeqPath, sChildName) ::= <<
 >>
 
 ChoiceDependencyIntPres_child(v, sChildName, nChildRetVal) ::= <<
-case <sChildName>_PRESENT:
+case <sChildName>:
 	<v> = <nChildRetVal>; 
     break;
 >>
 
 ChoiceDependencyStrPres_child(v, sChildName, sChildRetVal) ::= <<
-case <sChildName>_PRESENT:
+case <sChildName>:
 	strcpy(<v>, <sChildRetVal>);
     break;
 >>
