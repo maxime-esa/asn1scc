@@ -441,7 +441,10 @@ let rec RequiredMinBitsForAcnEncodingInt (t:Asn1Type) (absPath:AcnTypes.AbsPath)
             let maxChildSize = children |> Seq.fold(fun accSize ch -> 
                                                         let childSize,_ = RequiredMinBitsForAcnEncodingInt ch.Type (absPath@[ch.Name.Value]) asn1 acn
                                                         max accSize childSize ) 0I
-            indexSize + maxChildSize
+            let minChildSize = children |> Seq.fold(fun accSize ch -> 
+                                                        let childSize,_ = RequiredMinBitsForAcnEncodingInt ch.Type (absPath@[ch.Name.Value]) asn1 acn
+                                                        min accSize childSize ) maxChildSize
+            indexSize + minChildSize
         | IA5String | NumericString | OctetString | BitString(_) | SequenceOf(_)->
             let encClass = GetSizeableEncodingClass t absPath asn1 acn emptyLocation 
             let innerItemSize = 
