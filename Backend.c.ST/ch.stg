@@ -1,6 +1,6 @@
 group ch ;
 
-PrintHeaderFile(sFileNameWithNoExtUpperCase, arrsIncludedModules, arrsTypeAssignments, arrsValueAssignments, arrsUtilityDefines) ::= <<
+PrintHeaderFile(sFileNameWithNoExtUpperCase, arrsIncludedModules, arrsTypeAssignments, arrsValueAssignments, arrsPrototypes, arrsUtilityDefines) ::= <<
 #ifndef _INC_<sFileNameWithNoExtUpperCase>_H
 #define _INC_<sFileNameWithNoExtUpperCase>_H
 /*
@@ -17,6 +17,8 @@ extern "C" {
 <arrsTypeAssignments:{tas|<tas>}; separator="\n">
 
 <arrsValueAssignments:{vas|<vas>}; separator="\n"> 
+
+<arrsPrototypes:{proto|<proto>}; separator="\n"> 
 
 
 #ifdef  __cplusplus
@@ -54,9 +56,13 @@ flag <sName>_Equal(const <sName><sStar> val1, const <sName><sStar> val2);
 
 <endif>
 
-<arrsEncPrototypes: {pr|<pr>}; separator="\n">
 <arrsErrorCodes;separator="\n">
 >>
+
+PrintPrototypes(arrsEncPrototypes) ::= <<
+<arrsEncPrototypes: {pr|<pr>}; separator="\n">
+>>
+
 
 PrintErrorCode(sErrorName, nErrCode, sComment) ::= <<
 #ifndef <sErrorName> 

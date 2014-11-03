@@ -153,6 +153,23 @@ let PrintValueAss (v:ValueAssignment) (m:Asn1Module) (f:Asn1File) (r:AstRoot) =
     ch.PrintValueAssignment sTypeDecl sName
 
 
+let PrintAcnProtos (t:TypeAssignment) (m:Asn1Module) (f:Asn1File) (r:AstRoot) (acn:AcnTypes.AcnAstResolved)  (curErrCode:int) = 
+    let sName = t.GetCName r.TypePrefix
+    let sStar = (TypeStar t.Type r)
+    let print_encoding_protory (enc:Asn1Encoding) =
+        match enc with
+        | BER   -> ch.BER_encPrototypes sName sStar
+        | XER   -> ch.XER_encPrototypes sName sStar        
+        | UPER  -> ch.UPER_encPrototypes sName sStar
+        | ACN   -> 
+            let path = [m.Name.Value; t.Name.Value]
+            let myParams = acn.Parameters |> List.filter(fun p -> p.TasName=t.Name.Value && p.ModName=m.Name.Value)
+            let EncPrms = myParams |> Seq.choose(fun p -> PrintExtracAcnParams p m r Encode)
+            let DecPrms = myParams |> Seq.choose(fun p -> PrintExtracAcnParams p m r Decode)
+            ch.ACN_encPrototypes sName sStar EncPrms DecPrms
+    let result =  ch.PrintPrototypes (r.Encodings |> Seq.map print_encoding_protory )
+    result, curErrCode
+
 
 
 let SortTypeAssigments (f:Asn1File) =
@@ -198,6 +215,7 @@ let PrintFile (f:Asn1File) outDir newFileExt (r:AstRoot) (acn:AcnTypes.AcnAstRes
                     yield file.FileNameWithoutExtension } |> Seq.toList 
     let sortedTas = SortTypeAssigments f
     let tases, s1 = sortedTas |> foldMap(fun s (m,tas) -> PrintTypeAss tas m f r acn s) 1000
+    let protos, s1 = sortedTas |> foldMap(fun s (m,tas) -> PrintAcnProtos tas m f r acn s) 1000
     let vases= seq {
                 for m in f.Modules do
                     for vas in m.ValueAssignments do
@@ -230,7 +248,7 @@ let PrintFile (f:Asn1File) outDir newFileExt (r:AstRoot) (acn:AcnTypes.AcnAstRes
 
         } |> Seq.toList
                     
-    let content = ch.PrintHeaderFile (ToC fileNameNoExtUpper) includedModules tases vases (EnumUtils@ChoiceUtils)
+    let content = ch.PrintHeaderFile (ToC fileNameNoExtUpper) includedModules tases vases protos (EnumUtils@ChoiceUtils)
     let fileName = Path.Combine(outDir, (f.FileNameWithoutExtension+newFileExt))
     File.WriteAllText(fileName, content.Replace("\r",""))
 
