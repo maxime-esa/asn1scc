@@ -132,18 +132,7 @@ let PrintTypeAss (t:TypeAssignment) (m:Asn1Module) (f:Asn1File) (r:AstRoot) (acn
     let nMaxBitsInACN, nMaxBytesInACN = Acn.RequiredBitsForAcnEncodingInt t.Type [m.Name.Value; t.Name.Value] r acn
     let nMaxBytesInXER = XER_bl.GetMaxSizeInBytesForXER t.Type t.Name.Value r
     let sStar = (TypeStar t.Type r)
-    let print_encoding_protory (enc:Asn1Encoding) =
-        match enc with
-        | BER   -> ch.BER_encPrototypes sName sStar
-        | XER   -> ch.XER_encPrototypes sName sStar        
-        | UPER  -> ch.UPER_encPrototypes sName sStar
-        | ACN   -> 
-            let path = [m.Name.Value; t.Name.Value]
-            let myParams = acn.Parameters |> List.filter(fun p -> p.TasName=t.Name.Value && p.ModName=m.Name.Value)
-            let EncPrms = myParams |> Seq.choose(fun p -> PrintExtracAcnParams p m r Encode)
-            let DecPrms = myParams |> Seq.choose(fun p -> PrintExtracAcnParams p m r Decode)
-            ch.ACN_encPrototypes sName sStar EncPrms DecPrms
-    let result =  ch.PrintTypeAssignment  sTypeDecl sarrPostfix  sName  nMaxBitsInPER nMaxBytesInPER  nMaxBitsInACN nMaxBytesInACN (BigInteger nMaxBytesInXER) sStar  r.GenerateEqualFunctions (r.Encodings |> Seq.map print_encoding_protory ) errorCodes
+    let result =  ch.PrintTypeAssignment  sTypeDecl sarrPostfix  sName  nMaxBitsInPER nMaxBytesInPER  nMaxBitsInACN nMaxBytesInACN (BigInteger nMaxBytesInXER) sStar  r.GenerateEqualFunctions errorCodes
     result, newErrCode
 
 

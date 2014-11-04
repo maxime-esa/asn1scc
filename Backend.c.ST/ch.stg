@@ -18,6 +18,11 @@ extern "C" {
 
 <arrsValueAssignments:{vas|<vas>}; separator="\n"> 
 
+/* ================= Encoding/Decoding function prototypes =================
+ * These functions are placed at the end of the file to make sure all types
+ * have been declared first, in case of parameterized ACN encodings
+ * ========================================================================= */
+
 <arrsPrototypes:{proto|<proto>}; separator="\n"> 
 
 
@@ -39,7 +44,7 @@ ChoiceUtilDefine(sTasName, sChildNamePresent) ::= "#define CHOICE_<sChildNamePre
 
 PrintValueAssignment(sTypeDecl, sName) ::= "extern <sTypeDecl> <sName>;"
 
-PrintTypeAssignment(sTypeDecl, sArrayPostfix, sName, nMaxBitsInPER, nMaxBytesInPER, nMaxBitsInACN, nMaxBytesInACN, nMaxBytesInXER, sStar, bGenEqual, arrsEncPrototypes, arrsErrorCodes) ::= <<
+PrintTypeAssignment(sTypeDecl, sArrayPostfix, sName, nMaxBitsInPER, nMaxBytesInPER, nMaxBitsInACN, nMaxBytesInACN, nMaxBytesInXER, sStar, bGenEqual, arrsErrorCodes) ::= <<
 
 typedef <sTypeDecl> <sName><sArrayPostfix>;
 
