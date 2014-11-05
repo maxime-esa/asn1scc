@@ -142,7 +142,7 @@ let PrintValueAss (v:ValueAssignment) (m:Asn1Module) (f:Asn1File) (r:AstRoot) =
     ch.PrintValueAssignment sTypeDecl sName
 
 
-let PrintAcnProtos (t:TypeAssignment) (m:Asn1Module) (f:Asn1File) (r:AstRoot) (acn:AcnTypes.AcnAstResolved)  (curErrCode:int) = 
+let PrintAcnProtos (t:TypeAssignment) (m:Asn1Module) (f:Asn1File) (r:AstRoot) (acn:AcnTypes.AcnAstResolved) = 
     let sName = t.GetCName r.TypePrefix
     let sStar = (TypeStar t.Type r)
     let print_encoding_protory (enc:Asn1Encoding) =
@@ -156,9 +156,8 @@ let PrintAcnProtos (t:TypeAssignment) (m:Asn1Module) (f:Asn1File) (r:AstRoot) (a
             let EncPrms = myParams |> Seq.choose(fun p -> PrintExtracAcnParams p m r Encode)
             let DecPrms = myParams |> Seq.choose(fun p -> PrintExtracAcnParams p m r Decode)
             ch.ACN_encPrototypes sName sStar EncPrms DecPrms
-    let result =  ch.PrintPrototypes (r.Encodings |> Seq.map print_encoding_protory )
-    result, curErrCode
-
+    let result = ch.PrintPrototypes (r.Encodings |> Seq.map print_encoding_protory )
+    result
 
 
 let SortTypeAssigments (f:Asn1File) =
@@ -204,7 +203,7 @@ let PrintFile (f:Asn1File) outDir newFileExt (r:AstRoot) (acn:AcnTypes.AcnAstRes
                     yield file.FileNameWithoutExtension } |> Seq.toList 
     let sortedTas = SortTypeAssigments f
     let tases, s1 = sortedTas |> foldMap(fun s (m,tas) -> PrintTypeAss tas m f r acn s) 1000
-    let protos, s1 = sortedTas |> foldMap(fun s (m,tas) -> PrintAcnProtos tas m f r acn s) 1000
+    let protos  = sortedTas |> Seq.map(fun (m,tas) -> PrintAcnProtos tas m f r acn )
     let vases= seq {
                 for m in f.Modules do
                     for vas in m.ValueAssignments do
