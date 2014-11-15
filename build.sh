@@ -1,23 +1,16 @@
 #!/bin/bash
-if [ $(uname) == "Darwin" ] ; then
-    UNDER_OSX="1"
-    MONO_PREFIX="mono"
-    for i in  */Back*fsproj ; do 
-        cat $i | sed 's/\(PreBuildEvent>\)\([^m].*parseStg2.exe\)/\1mono \2/' > tmp.$$ && mv tmp.$$ "$i"
-    done
-fi
+for i in  */Back*fsproj ; do 
+    cat $i | sed 's/\(PreBuildEvent>\)\([^m].*parseStg2.exe\)/\1mono \2/' > tmp.$$ && mv tmp.$$ "$i"
+done
 set -e
 MAIN_FOLDER="$(pwd)"
 cd parseStg2/
 xbuild
 cd ../
 cd Backend.c.ST/
-if [ -z "$UNDER_OSX" ] ; then
-    cp XER.stg xer.stg
-fi
-$MONO_PREFIX ../parseStg2/bin/Debug/parseStg2.exe backends.xml
+mono ../parseStg2/bin/Debug/parseStg2.exe backends.xml
 cd ../Backend2.ST/
-$MONO_PREFIX ../parseStg2/bin/Debug/parseStg2.exe backends.xml
+mono ../parseStg2/bin/Debug/parseStg2.exe backends.xml
 cd ../
 mkdir -p ./Asn1f2//Resources/
 cp SPARK_RTL/adaasn1rtl.* ./Asn1f2//Resources/

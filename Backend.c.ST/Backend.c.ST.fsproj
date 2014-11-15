@@ -64,7 +64,7 @@
     <Compile Include="c_source.gen.fs" />
     <Compile Include="c_aux.gen.fs" />
     <Compile Include="c_acn.gen.fs" />
-    <None Include="XER.stg" />
+    <None Include="xer.stg" />
     <Compile Include="xer.gen.fs" />
   </ItemGroup>
   <ItemGroup>
