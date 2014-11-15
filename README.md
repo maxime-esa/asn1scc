@@ -8,12 +8,17 @@ Compilation
 
 ## Under Windows
 
-If you are working under Windows, you need a version of Visual Studio with support for F# .
-Just open `Asn1.sln` and build the `Asn1f2` project.
+Install Java JRE (this is a compile-only dependency, required to execute ANTLR) and a version of Visual Studio with support for F# . Then just open `Asn1.sln` and build the `Asn1f2` project.
 
-## Under Linux / OSX
+## Under OSX
 
-1. Make sure you have installed Java (the runtime, no need for the full JDK) and the [mono](http://www.mono-project.com) development tools. We have successfully built the compiler with the versions of the tools inside Debian Jessie (as of 2014/Sep):
+1. Install Java JRE (this is a compile-only dependency, required to execute ANTLR) and then the [Mono MDK](http://www.mono-project.com).
+
+2. Execute ASN1SCC's `./build.sh` - and the compiler will be built.
+
+## Under Linux
+
+1. Install Java JRE (this is a compile-only dependency, required to execute ANTLR) and the [mono](http://www.mono-project.com) development tools. Under Debian Jessie for example (as of Sep/2014):
 
     ```
     $ mono -V
