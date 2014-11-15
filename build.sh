@@ -1,4 +1,13 @@
 #!/bin/bash
+echo Checking for Java 1.6 or 1.7 ...
+java -version 2>&1 | egrep '"1\.[67]' || {
+    echo Either Java is not installed or your Java version is not 1.7 or 1.6.
+    echo The invocation of ANTLR may fail - if that happens, please switch
+    echo your JRE to 1.7 or 1.6
+    echo
+    echo Press ENTER to continue
+    read ANS
+}
 for i in  */Back*fsproj ; do 
     cat $i | sed 's/\(PreBuildEvent>\)\([^m].*parseStg2.exe\)/\1mono \2/' > tmp.$$ && mv tmp.$$ "$i"
 done
