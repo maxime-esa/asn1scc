@@ -47,7 +47,7 @@ PrintSequenceValue(sTasName,arrsChildren) ::= <<
 
 
 PrintChoiceValue(sTasName, sChildName, sChildVal, sChildNamePresent) ::= <<
-<sTasName>'(kind => <sChildNamePresent>, <sChildName> => <sChildVal>)
+<sTasName>_<sChildName>_set(<sChildVal>)
 >>
 
 //FUNCTION MyChoice_a1_set(itm:<rtlModuleName()>.Asn1Int) RETURN MyChoice;
