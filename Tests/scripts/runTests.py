@@ -104,18 +104,19 @@ def RunTestCase(asn1, acn, behavior, expErrMsg):
             sys.exit(1)
     else:
         os.chdir(targetDir)
-        mysystem("chmod +x ./runSpark.sh", False)
-        mysystem("./runSpark.sh > tmp.err  2>&1", False)
-        f = open("examiner/pogs.sum", 'r')
-        totalsline = [
-            l
-            for l in f.readlines()
-            if l.startswith("Totals:")][0]
-        if "<<<" in totalsline:
-            PrintFailed("Victor failed")
-            sys.exit(1)
-
-        res = mysystem("CC=gcc make coverage >covlog.txt 2>&1", True)
+        # mysystem("chmod +x ./runSpark.sh", False)
+        # mysystem("./runSpark.sh > tmp.err  2>&1", False)
+        # f = open("examiner/pogs.sum", 'r')
+        # totalsline = [
+        #     l
+        #     for l in f.readlines()
+        #     if l.startswith("Totals:")][0]
+        # if "<<<" in totalsline:
+        #     PrintFailed("Victor failed")
+        #     sys.exit(1)
+        #
+        # res = mysystem("CC=gcc make coverage >covlog.txt 2>&1", True)
+        res = mysystem("make coverage >covlog.txt 2>&1", True)
         if res != 0 and behavior != 2:
             PrintFailed("run time failure")
             PrintFailed("see covlog.txt")
@@ -132,7 +133,7 @@ def RunTestCase(asn1, acn, behavior, expErrMsg):
             doCoverage = "-- NOCOVERAGE" not in \
                 open("sample1.asn1", 'r').readlines()[0]
             if doCoverage:
-                lmbd = lambda l: "test_case.adb" not in l
+                lmbd = lambda l: "test_case.adb" not in l and "mymod.adb" not in l
                 lines = list(
                     itertools.dropwhile(
                         lmbd, open("covlog.txt", 'r').readlines()))
