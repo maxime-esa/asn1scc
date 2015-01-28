@@ -86,8 +86,6 @@ let PrintTypeEqualBody (t:Asn1Type) (tasName:string) path (m:Asn1Module) (r:AstR
         | PosInf(_)                 -> raise (BugErrorException("All sizeable types must be constraint, otherwise max size is infinite"))
         | Full                      -> raise (BugErrorException("All sizeable types must be constraint, otherwise max size is infinite"))
         | Empty                     -> raise (BugErrorException("I do not known how this is handled"))
-    | SequenceOf ->
-
     | _     -> si.PrimitiveEqual p1 p2
 
 let PrintTypeAssEqual (t:TypeAssignment) (m:Asn1Module) (r:AstRoot)  = 
