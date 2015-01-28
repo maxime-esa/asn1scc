@@ -64,6 +64,10 @@ let PrintTypeEqualBody (t:Asn1Type) (tasName:string) path (m:Asn1Module) (r:AstR
     let p1 = GetAccessFldPriv "val1" path (Same t) r
     let p2 = GetAccessFldPriv "val2" path (Same t) r
     match t.Kind with
+    | Integer -> si.isEqual_Integer p1 p2
+    | Real -> si.isEqual_Real p1 p2
+    | IA5String -> si.isEqual_IA5String p1 p2
+    | NumericString -> si.isEqual_NumericString p1 p2
     | OctetString       ->
         match (GetTypeUperRange t.Kind t.Constraints r) with
         | Concrete(a,b) when  a=b   -> si.isEqual_OctetString p1 p2 true a
@@ -72,6 +76,18 @@ let PrintTypeEqualBody (t:Asn1Type) (tasName:string) path (m:Asn1Module) (r:AstR
         | PosInf(_)                 -> raise (BugErrorException("All sizeable types must be constraint, otherwise max size is infinite"))
         | Full                      -> raise (BugErrorException("All sizeable types must be constraint, otherwise max size is infinite"))
         | Empty                     -> raise (BugErrorException("I do not known how this is handled"))
+    | NullType -> si.isEqual_NullType ()
+    | Boolean -> si.isEqual_Boolean p1 p2
+    | BitString -> 
+        match (GetTypeUperRange t.Kind t.Constraints r) with
+        | Concrete(a,b) when  a=b   -> si.isEqual_BitString p1 p2 true a
+        | Concrete(a,b)             -> si.isEqual_BitString p1 p2 false a
+        | NegInf(_)                 -> raise (BugErrorException("Negative size"))
+        | PosInf(_)                 -> raise (BugErrorException("All sizeable types must be constraint, otherwise max size is infinite"))
+        | Full                      -> raise (BugErrorException("All sizeable types must be constraint, otherwise max size is infinite"))
+        | Empty                     -> raise (BugErrorException("I do not known how this is handled"))
+    | SequenceOf ->
+
     | _     -> si.PrimitiveEqual p1 p2
 
 let PrintTypeAssEqual (t:TypeAssignment) (m:Asn1Module) (r:AstRoot)  = 
