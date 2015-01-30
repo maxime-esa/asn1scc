@@ -90,6 +90,6 @@ let PrintTypeEqualBody (t:Asn1Type) (tasName:string) path (m:Asn1Module) (r:AstR
 
 let PrintTypeAssEqual (t:TypeAssignment) (m:Asn1Module) (r:AstRoot)  = 
     let sName = t.GetCName r.TypePrefix
-    si.PrintTypeAssignment_Equal sName (PrintTypeEqualBody t.Type t.Name.Value [m.Name.Value; t.Name.Value] m r) 
+    si.PrintTypeAssignment_Equal sName (PrintTypeEqualBody t.Type t.Name.Value [m.Name.Value; t.Name.Value] m r)
 
 
