@@ -8,7 +8,10 @@ with Ada.Sequential_IO;
 with Interfaces;
 use type Interfaces.Unsigned_8;
 <endif>
-WITH <rtlModuleName()>; use type <rtlModuleName()>.Asn1UInt; use type <rtlModuleName()>.Asn1Int;use type <rtlModuleName()>.BIT;
+WITH <rtlModuleName()>;
+use type <rtlModuleName()>.Asn1UInt;
+use type <rtlModuleName()>.Asn1Int;
+use type <rtlModuleName()>.BIT;
 <arrsIncludedModules:{inc| WITH <inc>;}; separator="\n">
 --# inherit <rtlModuleName()>, <arrsIncludedModules; separator=", ">;
 --# main_program;

@@ -212,8 +212,12 @@ let PrintTypeAss (t:TypeAssignment) (m:Asn1Module) (r:AstRoot) (acn:AcnTypes.Acn
         | BER   -> ""
         | XER   -> ""
     let arrsEncPrototypes = r.Encodings |>Seq.map print_encoding_protory 
+    let isPrimitive =
+        match t.Type.Kind with
+            | Integer | Real  | Boolean | NullType | ReferenceType(_) -> true
+            | _ -> false
     let result =
-        ss.PrintTypeAssignment sName sTasDecl nMaxBitsInPER nMaxBytesInPER nMaxBitsInACN nMaxBytesInACN errorCodes bGenIsValidFunc bGenEqual arrsEncPrototypes
+        ss.PrintTypeAssignment sName sTasDecl nMaxBitsInPER nMaxBytesInPER nMaxBitsInACN nMaxBytesInACN errorCodes bGenIsValidFunc bGenEqual arrsEncPrototypes isPrimitive
     result, s2
 
 let PrintValueAss (v:ValueAssignment) (m:Asn1Module) (r:AstRoot) (state:State)= 

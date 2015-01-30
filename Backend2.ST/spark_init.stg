@@ -40,35 +40,105 @@ BEGIN
 END <sName>_Init;
 >>
 
-/* E Q U A L*/
+/*
+ *****************************************************************************************
+               E Q U A L I T Y     F U N C T I O N S
+ *****************************************************************************************
+ */
 
-PrimitiveEqual(p1,p2) ::= "RETURN <p1> = <p2>;"
+PrimitiveEqual(p1,p2) ::= <<
+BEGIN
+    RETURN <p1> = <p2>;
+>>
 
-/* OCTET STRING EQUAL - Check the length */
-isEqual_OctetString(p1,p2,bIsFixedSize, nFixedSize) ::= <<
+PrintTypeAssignment_Equal(sName, sBody) ::= <<
+FUNCTION <sName>_Equal(val1, val2: in <sName>) RETURN BOOLEAN IS
+<sBody>
+END <sName>_Equal;
+
+>>
+
+isEqual_Integer(p1, p2) ::= "<PrimitiveEqual(p1=p1,p2=p2)>"
+
+isEqual_Real(p1, p2) ::= <<
+BEGIN
+    RETURN (abs((<p1> - <p2>) / <p1>) \< 0.00001);
+>>
+
+/* IA5String: Not sure it is OK - it can be of variable length */
+isEqual_IA5String(p1, p2) ::= "<PrimitiveEqual(p1=p1,p2=p2)>"
+
+isEqual_NumericString(p1, p2) ::= "<PrimitiveEqual(p1=p1,p2=p2)>"
+
+/* OCTET STRING EQUAL - SPARK-compatible (use a subtype to slice) */
+isEqual_OctetString(p1,p2,bFixedSize) ::= <<
 <if(!bIsFixedSize)>
-IF <p1>.Length = <p2>.Length THEN
-    FOR x in 1 .. <p1>.Length LOOP
-        IF INTEGER(<p1>.Data(x)) /= INTEGER(<p2>.Data(x)) THEN
-            RETURN FALSE;
-        END IF;
-    END LOOP;
-    RETURN TRUE;
-ELSE
-    RETURN FALSE;
-END IF;
-
+    SUBTYPE Slice is INTEGER RANGE 1 .. <p1>.Length;
+BEGIN
+    RETURN (<p1>.Length = <p2>.Length and then <p1>.Data(Slice) = <p2>.Data(Slice));
 <else>
-RETURN <p1> = <p2>;
-
+BEGIN
+    RETURN <p1> = <p2>;
 <endif>	
 >>
 
 
-PrintTypeAssignment_Equal(sName, sBody) ::= <<
-FUNCTION <sName>_Equal(val1, val2: in <sName>) return Boolean
-IS 
+isEqual_NullType() ::= <<
 BEGIN
-    <sBody>
-END <sName>_Equal;
+    RETURN TRUE;
+>>
+
+isEqual_BitString(p1,p2,bFixedSize) ::= <<
+<isEqual_OctetString(p1=p1,p2=p2, bFixedSize=bFixedSize)>
+>>
+
+isEqual_Boolean(p1, p2) ::= "<PrimitiveEqual(p1=p1,p2=p2)>"
+
+isEqual_Enumerated(p1, p2) ::= "<isEqual_Integer(p1=p1,p2=p2)>"
+
+isEqual_SequenceOf(p1,p2, bIsFixedSize) ::= <<
+<if(!bIsFixedSize)>
+    SUBTYPE Slice is INTEGER RANGE 1 .. <p1>.Length;
+BEGIN
+    RETURN (<p1>.Length = <p2>.Length and then (for all I in Slice => <p1>.Data(I) = <p2>.Data(I)));
+<else>
+BEGIN
+    RETURN <p1> = <p2>;
+<endif>	
+>>
+
+
+isEqual_Choice_Child(sCid, sInnerType) ::= <<
+WHEN <sCid> =>
+	<sInnerType>
+	break;
+>>
+
+isEqual_Choice(p1,p2, arrsChildren) ::= <<
+ret : BOOLEAN := FALSE;
+BEGIN
+    ret := (<p1>.Kind = <p2>.Kind);
+    IF (ret = True) THEN
+        CASE <p1>.Kind IS
+	    <arrsChildren: {ch|<ch>}; separator="\n">
+	WHEN OTHERS =>
+		ret := FALSE;    //COVERAGE_IGNORE
+        END CASE;
+    END IF;
+>>
+
+isEqual_Sequence_child(p1, p2, bIsOptional, sChName, sInnerType) ::= <<
+<if(bIsOptional)>
+ret = (<p1>exist.<sChName> == <p2>exist.<sChName>);
+if (ret && <p1>exist.<sChName>) {
+	<sInnerType>
+}
+<else>
+<sInnerType>
+<endif>
+>>
+
+
+isEqual_ReferenceType(sPtr1, sPtr2, sName) ::= <<
+ret = <sName>_Equal(<sPtr1>, <sPtr2>);
 >>
