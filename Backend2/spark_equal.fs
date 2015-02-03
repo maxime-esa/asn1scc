@@ -11,7 +11,7 @@ open spark_utils
 
 
 
-let rec EmitTypeBody (t:Asn1Type) (path:list<string>)  (m:Asn1Module) (r:AstRoot)  =
+let rec EmitTypeBody (t:Asn1Type) (path:list<string>)  (m:Asn1Module) (r:AstRoot) (tas:TypeAssignment) =
 
     //let p1 = GetTypeAccessPathPriv "pVal1" path  r
     let p1 = GetAccessFldPriv "val1" path (Same t) r
@@ -42,8 +42,11 @@ let rec EmitTypeBody (t:Asn1Type) (path:list<string>)  (m:Asn1Module) (r:AstRoot
         | Full                      -> raise (BugErrorException("All sizeable types must be constraint, otherwise max size is infinite"))
         | Empty                     -> raise (BugErrorException("I do not known how this is handled"))      
     | Choice(children)  ->
-        let arrChildre = children |> Seq.map(fun c -> si.isEqual_Choice_Child (c.CName_Present C) (EmitTypeBody c.Type (path@[c.Name.Value]) m r))
-        si.isEqual_Choice p1 p2 arrChildre
+        let arrChildre = 
+            children |> 
+            Seq.map(fun c -> si.isEqual_Choice_Child (c.CName_Present C) 
+                                                     (EmitTypeBody c.Type (path@[c.Name.Value]) m r tas))
+        si.isEqual_Choice p1 p2 arrChildre (tas.GetCName r.TypePrefix)
     | ReferenceType(md,ts, _)  ->
         //let ptr1 = GetTypeAccessPathPrivPtr "pVal1" path  r
         //let ptr2 = GetTypeAccessPathPrivPtr "pVal2" path  r
@@ -54,7 +57,7 @@ let rec EmitTypeBody (t:Asn1Type) (path:list<string>)  (m:Asn1Module) (r:AstRoot
         let getIndexNameByPath (path:string list) =
             "i" + ((Seq.length (path |> Seq.filter(fun s -> s ="#"))) + 1).ToString()
         let index = getIndexNameByPath path
-        let sInnerType = EmitTypeBody child (path@["#"]) m r
+        let sInnerType = EmitTypeBody child (path@["#"]) m r tas
         match (GetTypeUperRange t.Kind t.Constraints r) with
         | Concrete(a,b) when  a=b   -> si.isEqual_SequenceOf p1 p2 index true a sInnerType
         | Concrete(a,b)             -> si.isEqual_SequenceOf p1 p2 index false a sInnerType
@@ -66,13 +69,13 @@ let rec EmitTypeBody (t:Asn1Type) (path:list<string>)  (m:Asn1Module) (r:AstRoot
         let asn1Children = children |> List.filter(fun x -> not x.AcnInsertedField)
         let printChild (c:ChildInfo) sNestedContent = 
             let chKey = (path@[c.Name.Value])
-            let sChildBody = EmitTypeBody c.Type chKey m r
+            let sChildBody = EmitTypeBody c.Type chKey m r tas
             let content = 
                 match c.Optionality with
                 | Some(Default(_)) -> "ret := TRUE;"
                 | _                -> 
-                    si.isEqual_Sequence_child p1 p2 c.Optionality.IsSome c.CName sChildBody + 
-                    " IF NOT ret THEN RETURN FALSE; END IF;"
+                    "IF NOT ret THEN RETURN FALSE; END IF; " + si.isEqual_Sequence_child p1 p2 c.Optionality.IsSome c.CName sChildBody
+
 
             sc.JoinItems content false sNestedContent
 
@@ -106,7 +109,7 @@ let PrintTypeAssEqual2 (tas:TypeAssignment) (m:Asn1Module) (r:AstRoot) =
     let sName = tas.GetCName r.TypePrefix
     let t = RemoveWithComponents tas.Type r
     let localVars = CollectLocalVars t tas m r
-    let sContent = EmitTypeBody t [m.Name.Value; tas.Name.Value] m r
+    let sContent = EmitTypeBody t [m.Name.Value; tas.Name.Value] m r tas
     si.PrintTypeAssignment_Equal sName sContent localVars 
 
 

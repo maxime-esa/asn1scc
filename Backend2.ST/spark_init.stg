@@ -106,31 +106,31 @@ IF (<p1>.Length /= <p2>.Length) THEN
     ret := FALSE;
 END IF;
 <endif>
-
+<if(!bIsFixedSize)>
 FOR <i> in integer range 1 .. <p1>.Length LOOP
-    <sInnerType>
+<else>
+FOR <i> in integer range 1 .. <nFixedSize> LOOP
+<endif>
     IF NOT ret THEN
-        EXIT;
+        RETURN FALSE;
     END IF;
+    <sInnerType>
 END LOOP;
 >>
 
 isEqual_Choice_Child(sCid, sInnerType) ::= <<
-case <sCid>:
+WHEN <sCid> =>
 	<sInnerType>
-	break;
 >>
 
-isEqual_Choice(p1,p2, arrsChildren) ::= <<
-ret = (<p1>kind == <p2>kind);
-if (ret) {
-	switch(<p1>kind) 
-	{
-	<arrsChildren: {ch|<ch>}; separator="\n">
-	default:
-		ret = FALSE;    //COVERAGE_IGNORE
-    }
-}
+isEqual_Choice(p1,p2, arrsChildren, sTasName) ::= <<
+ret := <p1>.kind = <p2>.kind;
+IF NOT ret THEN
+    RETURN FALSE;
+END IF;
+CASE <sTasName>_kind(val1) IS
+    <arrsChildren; separator="\n">
+END CASE;
 >>
 
 isEqual_Sequence_child(p1, p2, bIsOptional, sChName, sInnerType) ::= <<
