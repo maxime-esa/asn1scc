@@ -135,7 +135,7 @@ begin
 
 isEqual_Sequence_Child(p1, p2, bIsOptional, sChName) ::= <<
 <if(bIsOptional)>
-(<p1>exist.<sChName> = <p2>exist.<sChName> and (<p1>exist.<sChName> and then <p1>.<sChName> = <p2>.<sChName> or else True))
+<p1>.Exist.<sChName> = <p2>.Exist.<sChName> and (if <p1>.Exist.<sChName> = 1 then (if <p1>.<sChName> = <p2>.<sChName> then true) else true)
 <else>
 <p1>.<sChName> = <p2>.<sChName>
 <endif>
