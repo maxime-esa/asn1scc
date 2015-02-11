@@ -217,9 +217,7 @@ let PrintTypeAss (t:TypeAssignment) (m:Asn1Module) (r:AstRoot) (acn:AcnTypes.Acn
                     | Real
                     | IA5String
                     | NumericString
-                    | OctetString
                     | NullType
-                    | BitString
                     | Boolean
                     | Enumerated(_)
                     | ReferenceType(_)  -> false

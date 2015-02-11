@@ -64,28 +64,14 @@ let rec EmitTypeBody (t:Asn1Type) (path:list<string>)  (m:Asn1Module) (r:AstRoot
         | NegInf(_)                 -> raise (BugErrorException("Negative size"))
         | PosInf(_)                 -> raise (BugErrorException("All sizeable types must be constraint, otherwise max size is infinite"))
         | Full                      -> raise (BugErrorException("All sizeable types must be constraint, otherwise max size is infinite"))
-        | Empty                     -> raise (BugErrorException("I do not known how this is handled"))      
-    | Sequence(children)    -> 
+        | Empty                     -> raise (BugErrorException("I do not known how this is handled"))
+    | Sequence(children)    ->
         let asn1Children = children |> List.filter(fun x -> not x.AcnInsertedField)
-        let printChild (c:ChildInfo) sNestedContent = 
-            let chKey = (path@[c.Name.Value])
-            let sChildBody = EmitTypeBody c.Type chKey m r tas
-            let content = 
-                match c.Optionality with
-                | Some(Default(_)) -> "ret := TRUE;"
-                | _                -> 
-                    "IF NOT ret THEN RETURN FALSE; END IF; " + si.isEqual_Sequence_child p1 p2 c.Optionality.IsSome c.CName sChildBody
+        let arrChildren =
+            asn1Children |> Seq.map(fun c -> si.isEqual_Sequence_Child p1 p2 c.Optionality.IsSome c.CName)
 
+        si.isEqual_Sequence p1 p2 arrChildren
 
-            sc.JoinItems content false sNestedContent
-
-        let rec printChildren  = function
-            |[]     -> null
-            |x::xs  -> printChild x  (printChildren xs)
-    
-        printChildren asn1Children
-
-    
 
 let OnType_collerLocalVariables (t:Asn1Type) (path:list<string>) (parent:option<Asn1Type>) (ass:Assignment) (m:Asn1Module) (r:AstRoot) (state:list<LOCAL_VARIABLE>) = 
     match t.Kind with

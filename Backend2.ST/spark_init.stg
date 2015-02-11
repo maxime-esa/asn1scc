@@ -45,118 +45,115 @@ END <sName>_Init;
                E Q U A L I T Y     F U N C T I O N S
  *****************************************************************************************
  */
-
 PrimitiveEqual(p1,p2) ::= <<
-ret := <p1> = <p2>;
+begin
+    return <p1> = <p2>;
 >>
+
 
 isEqual_Integer(p1, p2) ::= <<
-ret := <p1> = <p2>;
+begin
+    return <p1> = <p2>;
 >>
+
 
 isEqual_Real(p1, p2) ::= <<
-ret := (abs((<p1> - <p2>) / <p1>) \< 0.00001);
+begin
+    return (abs((<p1> - <p2>) / <p1>) \< 0.00001);
 >>
+
 
 isEqual_IA5String(p1, p2) ::= <<
-ret := <p1> = <p2>;
+begin
+    return <p1> = <p2>;
 >>
+
 
 isEqual_NumericString(p1, p2) ::= <<
-ret := <p1> = <p2>;
+begin
+    return <p1> = <p2>;
 >>
 
-isEqual_OctetString(p1,p2, bFixedSize, nFixedSize) ::= <<
+
+isEqual_OctetString(p1, p2, bFixedSize, nFixedSize) ::= <<
 <if(!bFixedSize)>
-IF <p1>.Length = <p2>.Length THEN
-    FOR x in integer range 1 .. <p1>.Length LOOP
-        IF INTEGER(<p1>.Data(x)) /= INTEGER(<p2>.Data(x)) THEN
-            ret := FALSE;
-            EXIT;
-        END IF;
-    END LOOP;
-ELSE
-    ret := FALSE;
-END IF;
+    subtype Slice is Natural range 1 .. <p1>.Length;
+begin
+    return (<p1>.Length = <p2>.Length and then <p1>.Data(Slice) = <p2>.Data(Slice));
 <else>
-FOR x in integer range 1 .. <nFixedSize> LOOP
-    IF INTEGER(<p1>.Data(x)) /= INTEGER(<p2>.Data(x)) THEN
-        ret := FALSE;
-        EXIT;
-    END IF;
-END LOOP;
+begin
+    return <p1> = <p2>;
 <endif>	
 >>
 
-isEqual_NullType() ::= "ret := TRUE;"
+
+isEqual_NullType() ::= "return True;"
+
 
 isEqual_BitString(p1,p2,bFixedSize,nFixedSize) ::= <<
 <isEqual_OctetString(p1=p1,p2=p2, bFixedSize=bFixedSize, nFixedSize=nFixedSize)>
 >>
 
 isEqual_Boolean(p1, p2) ::= <<
-ret := <p1> = <p2>;
+begin
+    return <p1> = <p2>;
 >>
 
-isEqual_Enumerated(p1, p2) ::= "<isEqual_Integer(p1=p1,p2=p2)>"
+
+isEqual_Enumerated(p1, p2) ::= <<
+begin
+    return <p1> = <p2>;
+>>
+
 
 isEqual_SequenceOf(p1,p2, i, bIsFixedSize, nFixedSize, sInnerType) ::= <<
 <if(!bIsFixedSize)>
-IF (<p1>.Length /= <p2>.Length) THEN
-    ret := FALSE;
-END IF;
-<endif>
-<if(!bIsFixedSize)>
-FOR <i> in integer range 1 .. <p1>.Length LOOP
+    subtype Slice is Natural range 1 .. <p1>.Length;
+begin
+    return (<p1>.Length = <p2>.Length and then (for all I in Slice => <p1>.Data(I) = <p2>.Data(I)));
 <else>
-FOR <i> in integer range 1 .. <nFixedSize> LOOP
-<endif>
-    IF NOT ret THEN
-        RETURN FALSE;
-    END IF;
-    <sInnerType>
-END LOOP;
+begin
+    return <p1> = <p2>;
+<endif>	
 >>
+
 
 isEqual_Choice_Child(sCid, sInnerType) ::= <<
 WHEN <sCid> =>
-	<sInnerType>
+    <sInnerType>
 >>
 
 isEqual_Choice(p1,p2, arrsChildren, sTasName) ::= <<
-ret := <p1>.kind = <p2>.kind;
-IF NOT ret THEN
-    RETURN FALSE;
-END IF;
-CASE <sTasName>_kind(val1) IS
-    <arrsChildren; separator="\n">
-END CASE;
+begin
+    if <p1>.kind /= <p2>.kind then
+        return False;
+    end if;
+    case <sTasName>_kind(val1) is
+        <arrsChildren; separator="\n">
+    end case;
 >>
 
-isEqual_Sequence_child(p1, p2, bIsOptional, sChName, sInnerType) ::= <<
+isEqual_Sequence_Child(p1, p2, bIsOptional, sChName) ::= <<
 <if(bIsOptional)>
-ret = (<p1>exist.<sChName> == <p2>exist.<sChName>);
-if (ret && <p1>exist.<sChName>) {
-    <sInnerType>
-}
+(<p1>exist.<sChName> = <p2>exist.<sChName> and (<p1>exist.<sChName> and then <p1>.<sChName> = <p2>.<sChName> or else True))
 <else>
-<sInnerType>
+<p1>.<sChName> = <p2>.<sChName>
 <endif>
 >>
 
+isEqual_Sequence(p1, p2, arrsChildren) ::= <<
+begin
+    return <arrsChildren; separator=" and ">;
+>>
 
 isEqual_ReferenceType(sPtr1, sPtr2, sName) ::= <<
-ret := <sName>_Equal(<sPtr1>, <sPtr2>);
+return <sPtr1> = <sPtr2>;
 >>
 
 
 PrintTypeAssignment_Equal(sName, sBody, arrsLocalVariables) ::= <<
-FUNCTION <sName>_Equal(val1, val2: in <sName>) return Boolean
-IS
-    ret: Boolean := TRUE; 
-    <arrsLocalVariables:{lv|<lv>}; separator="\n">
-BEGIN
-    <sBody>
-    RETURN ret;
-END <sName>_Equal;
+function <sName>_Equal(val1, val2: in <sName>) return Boolean
+is
+<sBody>
+end <sName>_Equal;
 >>
