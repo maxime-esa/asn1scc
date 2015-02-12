@@ -8,6 +8,7 @@ open VisitTree
 open uPER
 open CloneTree
 open spark_utils
+open spark_equal
 
 type State = spark_init.State
 
@@ -17,7 +18,7 @@ let PrintTypeAss (t:TypeAssignment) (m:Asn1Module) (r:AstRoot) (acn:AcnTypes.Acn
     let valContent, s2 =   match (HasValidateFunc t.Type r) with
                            | true   ->  spark_validate.EmitTypeAss t m r s1
                            | false  -> "", s1
-    let equalContent = if r.GenerateEqualFunctions then spark_init.PrintTypeAssEqual t m r else ""
+    let equalContent = if r.GenerateEqualFunctions then spark_equal.PrintTypeAssEqual2 t m r else ""
     let EncFunc = function
         | UPER  -> [spark_uper.EmitTypeAss t m r Encode; spark_uper.EmitTypeAss t m r Decode]
         | ACN   -> [ spark_acn.EmitUpdate_param_functions t m r acn;
