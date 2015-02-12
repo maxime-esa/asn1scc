@@ -87,7 +87,10 @@ begin
 >>
 
 
-isEqual_NullType() ::= "return True;"
+isEqual_NullType() ::= <<
+begin
+    return True;
+>>
 
 
 isEqual_BitString(p1,p2,bFixedSize,nFixedSize) ::= <<
@@ -113,14 +116,14 @@ begin
     return (<p1>.Length = <p2>.Length and then (for all I in Slice => <p1>.Data(I) = <p2>.Data(I)));
 <else>
 begin
-    return <p1> = <p2>;
+    return (for all I in <p1>.Data'Range => <p1>.Data(I) = <p2>.Data(I));
 <endif>	
 >>
 
 
-isEqual_Choice_Child(sCid, sInnerType) ::= <<
+isEqual_Choice_Child(p1, p2, sCid, sAsn1Id, sInnerType, sTasName) ::= <<
 WHEN <sCid> =>
-    <sInnerType>
+    return <sTasName>_<sAsn1Id>_get(<p1>) = <sTasName>_<sAsn1Id>_get(<p2>);
 >>
 
 isEqual_Choice(p1,p2, arrsChildren, sTasName) ::= <<
@@ -147,7 +150,8 @@ begin
 >>
 
 isEqual_ReferenceType(sPtr1, sPtr2, sName) ::= <<
-return <sPtr1> = <sPtr2>;
+begin
+    return <sPtr1> = <sPtr2>;
 >>
 
 

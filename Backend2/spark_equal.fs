@@ -44,8 +44,8 @@ let rec EmitTypeBody (t:Asn1Type) (path:list<string>)  (m:Asn1Module) (r:AstRoot
     | Choice(children)  ->
         let arrChildre = 
             children |> 
-            Seq.map(fun c -> si.isEqual_Choice_Child (c.CName_Present C) 
-                                                     (EmitTypeBody c.Type (path@[c.Name.Value]) m r tas))
+            Seq.map(fun c -> si.isEqual_Choice_Child p1 p2 (c.CName_Present C) (ToC c.Name.Value)
+                                                     (EmitTypeBody c.Type (path@[c.Name.Value]) m r tas) (tas.GetCName r.TypePrefix))
         si.isEqual_Choice p1 p2 arrChildre (tas.GetCName r.TypePrefix)
     | ReferenceType(md,ts, _)  ->
         //let ptr1 = GetTypeAccessPathPrivPtr "pVal1" path  r
