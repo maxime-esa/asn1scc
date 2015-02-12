@@ -32,7 +32,7 @@ let rec EmitTypeBody (t:Asn1Type) (path:list<string>)  (m:Asn1Module) (r:AstRoot
         | NegInf(_)                 -> raise (BugErrorException("Negative size"))
         | PosInf(_)                 -> raise (BugErrorException("All sizeable types must be constraint, otherwise max size is infinite"))
         | Full                      -> raise (BugErrorException("All sizeable types must be constraint, otherwise max size is infinite"))
-        | Empty                     -> raise (BugErrorException("I do not known how this is handled"))      
+        | Empty                     -> raise (BugErrorException("I do not known how this is handled"))
     | BitString         ->
         match (GetTypeUperRange t.Kind t.Constraints r) with
         | Concrete(a,b) when  a=b   -> si.isEqual_BitString p1 p2 true a
@@ -40,7 +40,7 @@ let rec EmitTypeBody (t:Asn1Type) (path:list<string>)  (m:Asn1Module) (r:AstRoot
         | NegInf(_)                 -> raise (BugErrorException("Negative size"))
         | PosInf(_)                 -> raise (BugErrorException("All sizeable types must be constraint, otherwise max size is infinite"))
         | Full                      -> raise (BugErrorException("All sizeable types must be constraint, otherwise max size is infinite"))
-        | Empty                     -> raise (BugErrorException("I do not known how this is handled"))      
+        | Empty                     -> raise (BugErrorException("I do not known how this is handled"))
     | Choice(children)  ->
         let arrChildre = 
             children |> 
