@@ -13,7 +13,7 @@ rm -f asn1scc/usr/share/asn1scc/*.mdb
 mv asn1scc/usr/share/asn1scc/Asn1f2.exe asn1scc/usr/share/asn1scc/asn1.exe
 cd asn1scc/usr/bin
 ln -s ../share/asn1scc/* .
-cd ../../../..
+cd ../../../
 echo "Package: asn1scc
 Version: 3.0.${VERSION}
 Section: base
