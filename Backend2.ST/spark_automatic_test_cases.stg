@@ -27,7 +27,7 @@ with <rtlModuleName()>;
 use type <rtlModuleName()>.Asn1UInt;
 use type <rtlModuleName()>.Asn1Int;
 use type <rtlModuleName()>.BIT;
-<arrsIncludedModules:{inc| WITH <inc>;}; separator="\n">
+<arrsIncludedModules:{inc| WITH <inc>; USE <inc>;}; separator="\n">
 <arrsTasNames: {tasName|use type <tasName>;}; separator="\n">
 PACKAGE BODY <sModName>_auto_encs_decs 
 IS 
@@ -79,8 +79,8 @@ result := <sModName>.<sTasName>_IsConstraintValid(decodedPDU);
 ret := <rtlModuleName()>.TEST_CASE_RESULT'(Step => <rtlModuleName()>.TC_VALIDATE_DECODED, Success => result.Success, ErrorCode => result.ErrorCode);
 >>
 
-Codec_compare_input_with_output(arrsEncInDecOutParamsNames) ::= <<
-ret := <rtlModuleName()>.TEST_CASE_RESULT'(Step => <rtlModuleName()>.TC_EQUAL, Success => val = decodedPDU<if(arrsEncInDecOutParamsNames)> AND <arrsEncInDecOutParamsNames:{p| (enc_<p>=dec_<p>)}; separator=" AND "><endif>, ErrorCode => result.ErrorCode);
+Codec_compare_input_with_output(arrsEncInDecOutParamsNames, sTasName) ::= <<
+ret := <rtlModuleName()>.TEST_CASE_RESULT'(Step => <rtlModuleName()>.TC_EQUAL, Success => <sTasName>_Equal(val, decodedPDU)<if(arrsEncInDecOutParamsNames)> AND <arrsEncInDecOutParamsNames:{p| (enc_<p>=dec_<p>)}; separator=" AND "><endif>, ErrorCode => result.ErrorCode);
 >>
 
 

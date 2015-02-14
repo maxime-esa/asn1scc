@@ -215,6 +215,7 @@ let PrintTypeAss (t:TypeAssignment) (m:Asn1Module) (r:AstRoot) (acn:AcnTypes.Acn
     let isComplex = match t.Type.Kind with
                     | Integer
                     | Real
+                    | NullType
                     | IA5String
                     | NumericString
                     | Boolean

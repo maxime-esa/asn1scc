@@ -69,7 +69,7 @@ def RunTestCase(asn1, acn, behavior, expErrMsg):
     acnFile = targetDir+os.sep+"sample1.acn"
     res = mysystem(
         "Asn1f2.exe  -" + language + "  -ACN -typePrefix gmamais_ " +
-        "-atc -o '" + resolvedir(targetDir) + "' '" + resolvedir(asn1File) +
+        "-equal -atc -o '" + resolvedir(targetDir) + "' '" + resolvedir(asn1File) +
         "' '" + resolvedir(acnFile)+"' >tmp.err 2>&1", True)
     ferr = open("tmp.err", 'r')
     err_msg = ferr.read().replace("\r\n", "").replace("\n", "")
@@ -143,8 +143,11 @@ def RunTestCase(asn1, acn, behavior, expErrMsg):
                     for l in list(lines)
                     if "executed" in l][0]
                 if "executed:100.00" not in excLine:
-                    PrintFailed("coverage error (less than 100%)")
-                    sys.exit(1)
+                    PrintFailed("coverage error (less than 100%): {}"
+                                .format('\n'.join(lines)))
+                    sys.exit(-1)
+                else:
+                    PrintSucceededAsExpected(excLine)
         else:
             print res, behavior
             PrintWarning(

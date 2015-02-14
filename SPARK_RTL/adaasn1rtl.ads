@@ -5,34 +5,32 @@ WITH Interfaces;
 
 
 PACKAGE adaasn1rtl
-
 IS
+   SUBTYPE RANGE_1_2 is Natural range 1..2;
+   SUBTYPE RANGE_1_4 is Natural range 1..4;
+   SUBTYPE RANGE_1_8 is Natural range 1..8;
+   SUBTYPE RANGE_1_100 is Natural range 1..100;
 
+   TYPE BIT IS mod 2**1;
+   TYPE BitArray IS ARRAY (Natural  RANGE <>) OF BIT;
+   for BitArray'Component_Size use 1;
+   pragma Pack(BitArray);
 
+   SUBTYPE Asn1Byte IS Interfaces.Unsigned_8;
+   TYPE OctetBuffer IS ARRAY (Natural  RANGE <>) OF Asn1Byte;
 
-
-    SUBTYPE RANGE_1_2 is Natural range 1..2;
-    SUBTYPE RANGE_1_4 is Natural range 1..4;
-    SUBTYPE RANGE_1_8 is Natural range 1..8;
-    SUBTYPE RANGE_1_100 is Natural range 1..100;
-
-
-    TYPE BIT IS mod 2**1;
-    TYPE BitArray IS ARRAY (Natural  RANGE <>) OF BIT;
-    for BitArray'Component_Size use 1;
-    pragma Pack(BitArray);
-
-    SUBTYPE Asn1Byte IS Interfaces.Unsigned_8;
-    TYPE OctetBuffer IS ARRAY (Natural  RANGE <>) OF Asn1Byte;
-
-    SUBTYPE Asn1Int IS Interfaces.Integer_64;
-    SUBTYPE Asn1UInt IS Interfaces.Unsigned_64;
-    SUBTYPE Asn1Real IS  Standard.Long_Float;
+   SUBTYPE Asn1Int IS Interfaces.Integer_64;
+   SUBTYPE Asn1UInt IS Interfaces.Unsigned_64;
+   SUBTYPE Asn1Real IS  Standard.Long_Float;
 
    SUBTYPE OctetArray2 IS  OctetBuffer(RANGE_1_2);
    SUBTYPE OctetArray4 IS  OctetBuffer(RANGE_1_4);
    SUBTYPE OctetArray8 IS  OctetBuffer(RANGE_1_8);
    SUBTYPE OctetArray100 IS  OctetBuffer(RANGE_1_100);
+
+   FUNCTION Asn1Real_Equal(Left, Right: in Asn1Real) RETURN Boolean;
+   FUNCTION Asn1Boolean_Equal(Left, Right: in Boolean) RETURN Boolean;
+   FUNCTION Asn1Int_Equal(Left, Right: in Asn1Int) RETURN Boolean;
 
    FUNCTION UInt16_to_OctetArray2(x:Interfaces.Unsigned_16) RETURN OctetArray2;
    FUNCTION OctetArray2_to_UInt16(x:OctetArray2) RETURN Interfaces.Unsigned_16;
