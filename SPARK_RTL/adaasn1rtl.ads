@@ -23,14 +23,19 @@ IS
    SUBTYPE Asn1UInt IS Interfaces.Unsigned_64;
    SUBTYPE Asn1Real IS  Standard.Long_Float;
 
+   SUBTYPE Asn1Boolean IS Boolean;
+   SUBTYPE OctetBuffer_8 IS OctetBuffer(RANGE_1_8);
+   SUBTYPE Asn1NullType IS Interfaces.Unsigned_8;
+
    SUBTYPE OctetArray2 IS  OctetBuffer(RANGE_1_2);
    SUBTYPE OctetArray4 IS  OctetBuffer(RANGE_1_4);
    SUBTYPE OctetArray8 IS  OctetBuffer(RANGE_1_8);
    SUBTYPE OctetArray100 IS  OctetBuffer(RANGE_1_100);
 
    FUNCTION Asn1Real_Equal(Left, Right: in Asn1Real) RETURN Boolean;
-   FUNCTION Asn1Boolean_Equal(Left, Right: in Boolean) RETURN Boolean;
+   FUNCTION Asn1Boolean_Equal(Left, Right: in Asn1Boolean) RETURN Boolean;
    FUNCTION Asn1Int_Equal(Left, Right: in Asn1Int) RETURN Boolean;
+   FUNCTION Asn1NullType_Equal(Left, Right: in Asn1NullType) RETURN Boolean;
 
    FUNCTION UInt16_to_OctetArray2(x:Interfaces.Unsigned_16) RETURN OctetArray2;
    FUNCTION OctetArray2_to_UInt16(x:OctetArray2) RETURN Interfaces.Unsigned_16;
@@ -40,8 +45,6 @@ IS
 
    FUNCTION Asn1UInt_to_OctetArray8(x:Asn1UInt) RETURN OctetArray8;
    FUNCTION OctetArray8_to_Asn1UInt(x:OctetArray8) RETURN Asn1UInt;
-
-
 
    FUNCTION Int16_to_OctetArray2(x:Interfaces.Integer_16) RETURN OctetArray2;
    FUNCTION OctetArray2_to_Int16(x:OctetArray2) RETURN Interfaces.Integer_16;
@@ -60,20 +63,9 @@ IS
    FUNCTION OctetArray8_to_Long_Float(x:OctetArray8) RETURN Asn1Real;
 
 
-
-
-
-
-    SUBTYPE Asn1Boolean IS boolean;
-
-    SUBTYPE OctetBuffer_8 IS OctetBuffer(RANGE_1_8);
-
-   SUBTYPE Asn1NullType IS Interfaces.Unsigned_8;
-
    NUL:CONSTANT Standard.Character:=Ada.Characters.Latin_1.NUL;
 
-
-   ERR_INCORRECT_DATA	          : CONSTANT INTEGER := 105;
+   ERR_INCORRECT_DATA             : CONSTANT INTEGER := 105;
    ERR_INSUFFICIENT_DATA          : CONSTANT INTEGER := 101;
    ERR_INCORRECT_PER_STREAM       : CONSTANT INTEGER := 102;
    ERR_INVALID_CHOICE_ALTERNATIVE : CONSTANT INTEGER := 103;

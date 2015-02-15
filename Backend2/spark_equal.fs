@@ -18,6 +18,7 @@ let rec EmitTypeBody (t:Asn1Type) (path:list<string>)  (m:Asn1Module) (r:AstRoot
         | Integer       -> "Asn1Int"
         | Real          -> "Asn1Real"
         | Boolean       -> "Asn1Boolean"
+        | NullType      -> "Asn1NullType"
         | ReferenceType(modName, tasName, _) ->
             match modName = m.Name with
             | true -> ss.Declare_Reference1 (GetTasCName tasName.Value r.TypePrefix)

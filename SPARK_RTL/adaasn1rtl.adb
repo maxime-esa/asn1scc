@@ -43,6 +43,11 @@ PACKAGE BODY adaasn1rtl IS
        RETURN Left = Right;
    END Asn1Int_Equal;
 
+   FUNCTION Asn1NullType_Equal(Left, Right: in Asn1NullType) RETURN Boolean
+   IS
+   BEGIN
+       RETURN True;
+   END Asn1NullType_Equal;
 
    FUNCTION getStringSize(str:String) RETURN Integer
    IS
