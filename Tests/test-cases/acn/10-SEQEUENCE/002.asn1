@@ -1,0 +1,12 @@
+TEST-CASE  DEFINITIONS AUTOMATIC TAGS::= BEGIN
+
+	MyPDU ::= SEQUENCE {
+            a INTEGER,
+            b NULL,
+            c NumericString(SIZE(2))
+	}
+	
+	pdu1 MyPDU ::= {a 1, b NULL, c "42"}
+--TCLS     MyPDU[] {a[], b[], c[]}
+	
+END

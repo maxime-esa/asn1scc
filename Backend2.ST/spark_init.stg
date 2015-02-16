@@ -59,7 +59,7 @@ begin
 
 isEqual_Real(p1, p2) ::= <<
 begin
-    return (abs((<p1> - <p2>) / <p1>) \< 0.00001);
+    return Asn1Real_Equal(<p1>, <p2>);
 >>
 
 
@@ -109,49 +109,50 @@ begin
 >>
 
 
-isEqual_SequenceOf(p1,p2, i, bIsFixedSize, nFixedSize, sInnerType) ::= <<
+isEqual_SequenceOf(p1,p2, i, bIsFixedSize, nFixedSize, sInnerType, sInnerTypeName) ::= <<
 <if(!bIsFixedSize)>
     subtype Slice is Natural range 1 .. <p1>.Length;
 begin
-    return (<p1>.Length = <p2>.Length and then (for all I in Slice => <p1>.Data(I) = <p2>.Data(I)));
+    return (<p1>.Length = <p2>.Length and then (for all I in Slice => <sInnerTypeName>_Equal(<p1>.Data(I), <p2>.Data(I))));
 <else>
 begin
-    return (for all I in <p1>.Data'Range => <p1>.Data(I) = <p2>.Data(I));
+    return (for all I in <p1>.Data'Range => <sInnerTypeName>_Equal(<p1>.Data(I), <p2>.Data(I)));
 <endif>	
 >>
 
 
-isEqual_Choice_Child(p1, p2, sCid, sAsn1Id, sInnerType, sTasName) ::= <<
-WHEN <sCid> =>
-    return <sTasName>_<sAsn1Id>_get(<p1>) = <sTasName>_<sAsn1Id>_get(<p2>);
+isEqual_Choice_Child(p1, p2, sCid, sAsn1Id, sInnerType, sTasName, sInnerTypeName) ::= <<
+(if <sTasName>_kind(<p1>) = <sCid> then
+ <sInnerTypeName>_Equal(<sTasName>_<sAsn1Id>_get(<p1>), <sTasName>_<sAsn1Id>_get(<p2>)) else False)
 >>
+
 
 isEqual_Choice(p1,p2, arrsChildren, sTasName) ::= <<
 begin
-    if <p1>.kind /= <p2>.kind then
-        return False;
-    end if;
-    case <sTasName>_kind(val1) is
-        <arrsChildren; separator="\n">
-    end case;
+    return <sTasName>_kind(<p1>) = <sTasName>_kind(<p2>) and then
+    (<arrsChildren; separator=" or \n">);
+
 >>
 
-isEqual_Sequence_Child(p1, p2, bIsOptional, sChName) ::= <<
+
+isEqual_Sequence_Child(p1, p2, bIsOptional, sChName, sInnerTypeName) ::= <<
 <if(bIsOptional)>
-<p1>.Exist.<sChName> = <p2>.Exist.<sChName> and (if <p1>.Exist.<sChName> = 1 then (if <p1>.<sChName> = <p2>.<sChName> then true) else true)
+(if <p1>.Exist.<sChName> = 1 then (<p2>.Exist.<sChName> = 1 and <sInnerTypeName>_Equal(<p1>.<sChName>, <p2>.<sChName>)) else (<p2>.Exist.<sChName> = 0))
 <else>
-<p1>.<sChName> = <p2>.<sChName>
+<sInnerTypeName>_Equal(<p1>.<sChName>, <p2>.<sChName>)
 <endif>
 >>
+
 
 isEqual_Sequence(p1, p2, arrsChildren) ::= <<
 begin
     return <arrsChildren; separator=" and ">;
 >>
 
+
 isEqual_ReferenceType(sPtr1, sPtr2, sName) ::= <<
 begin
-    return <sPtr1> = <sPtr2>;
+    return <sName>_Equal(<sPtr1>, <sPtr2>);
 >>
 
 

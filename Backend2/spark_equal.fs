@@ -13,6 +13,18 @@ open spark_utils
 
 let rec EmitTypeBody (t:Asn1Type) (path:list<string>)  (m:Asn1Module) (r:AstRoot) (tas:TypeAssignment) =
 
+    let fieldTypeName (t:Asn1Type) =
+        match t.Kind with
+        | Integer       -> "Asn1Int"
+        | Real          -> "Asn1Real"
+        | Boolean       -> "Asn1Boolean"
+        | NullType      -> "Asn1NullType"
+        | ReferenceType(modName, tasName, _) ->
+            match modName = m.Name with
+            | true -> ss.Declare_Reference1 (GetTasCName tasName.Value r.TypePrefix)
+            | false -> ss.Declare_Reference2 (ToC modName.Value) (GetTasCName tasName.Value r.TypePrefix)
+        |_ -> ""
+
     //let p1 = GetTypeAccessPathPriv "pVal1" path  r
     let p1 = GetAccessFldPriv "val1" path (Same t) r
     //let p2 = GetTypeAccessPathPriv "pVal2" path  r
@@ -30,37 +42,34 @@ let rec EmitTypeBody (t:Asn1Type) (path:list<string>)  (m:Asn1Module) (r:AstRoot
         | Concrete(a,b) when  a=b   -> si.isEqual_OctetString p1 p2 true a
         | Concrete(a,b)             -> si.isEqual_OctetString p1 p2 false a
         | NegInf(_)                 -> raise (BugErrorException("Negative size"))
-        | PosInf(_)                 -> raise (BugErrorException("All sizeable types must be constraint, otherwise max size is infinite"))
-        | Full                      -> raise (BugErrorException("All sizeable types must be constraint, otherwise max size is infinite"))
+        | PosInf(_)                 -> raise (BugErrorException("All sizeable types must be constrained, otherwise max size is infinite"))
+        | Full                      -> raise (BugErrorException("All sizeable types must be constrained, otherwise max size is infinite"))
         | Empty                     -> raise (BugErrorException("I do not known how this is handled"))
     | BitString         ->
         match (GetTypeUperRange t.Kind t.Constraints r) with
         | Concrete(a,b) when  a=b   -> si.isEqual_BitString p1 p2 true a
         | Concrete(a,b)             -> si.isEqual_BitString p1 p2 false a
         | NegInf(_)                 -> raise (BugErrorException("Negative size"))
-        | PosInf(_)                 -> raise (BugErrorException("All sizeable types must be constraint, otherwise max size is infinite"))
-        | Full                      -> raise (BugErrorException("All sizeable types must be constraint, otherwise max size is infinite"))
+        | PosInf(_)                 -> raise (BugErrorException("All sizeable types must be constrained, otherwise max size is infinite"))
+        | Full                      -> raise (BugErrorException("All sizeable types must be constrained, otherwise max size is infinite"))
         | Empty                     -> raise (BugErrorException("I do not known how this is handled"))
     | Choice(children)  ->
         let arrChildre = 
             children |> 
             Seq.map(fun c -> si.isEqual_Choice_Child p1 p2 (c.CName_Present C) (ToC c.Name.Value)
-                                                     (EmitTypeBody c.Type (path@[c.Name.Value]) m r tas) (tas.GetCName r.TypePrefix))
+                                                     (EmitTypeBody c.Type (path@[c.Name.Value]) m r tas) (tas.GetCName r.TypePrefix) (fieldTypeName c.Type))
         si.isEqual_Choice p1 p2 arrChildre (tas.GetCName r.TypePrefix)
     | ReferenceType(md,ts, _)  ->
-        //let ptr1 = GetTypeAccessPathPrivPtr "pVal1" path  r
-        //let ptr2 = GetTypeAccessPathPrivPtr "pVal2" path  r
-        let tsName = Ast.GetTasCName ts.Value r.TypePrefix
-        //si.isEqual_ReferenceType ptr1 ptr2 tsName
-        si.isEqual_ReferenceType p1 p2 tsName
+        //let tsName = Ast.GetTasCName ts.Value r.TypePrefix
+        si.isEqual_ReferenceType p1 p2 (fieldTypeName t) //tsName
     | SequenceOf(child)     -> 
         let getIndexNameByPath (path:string list) =
             "i" + ((Seq.length (path |> Seq.filter(fun s -> s ="#"))) + 1).ToString()
         let index = getIndexNameByPath path
         let sInnerType = EmitTypeBody child (path@["#"]) m r tas
         match (GetTypeUperRange t.Kind t.Constraints r) with
-        | Concrete(a,b) when  a=b   -> si.isEqual_SequenceOf p1 p2 index true a sInnerType
-        | Concrete(a,b)             -> si.isEqual_SequenceOf p1 p2 index false a sInnerType
+        | Concrete(a,b) when  a=b   -> si.isEqual_SequenceOf p1 p2 index true a sInnerType (fieldTypeName child)
+        | Concrete(a,b)             -> si.isEqual_SequenceOf p1 p2 index false a sInnerType (fieldTypeName child)
         | NegInf(_)                 -> raise (BugErrorException("Negative size"))
         | PosInf(_)                 -> raise (BugErrorException("All sizeable types must be constraint, otherwise max size is infinite"))
         | Full                      -> raise (BugErrorException("All sizeable types must be constraint, otherwise max size is infinite"))
@@ -68,7 +77,7 @@ let rec EmitTypeBody (t:Asn1Type) (path:list<string>)  (m:Asn1Module) (r:AstRoot
     | Sequence(children)    ->
         let asn1Children = children |> List.filter(fun x -> not x.AcnInsertedField)
         let arrChildren =
-            asn1Children |> Seq.map(fun c -> si.isEqual_Sequence_Child p1 p2 c.Optionality.IsSome c.CName)
+            asn1Children |> Seq.map(fun c -> si.isEqual_Sequence_Child p1 p2 c.Optionality.IsSome c.CName (fieldTypeName c.Type))
 
         si.isEqual_Sequence p1 p2 arrChildren
 

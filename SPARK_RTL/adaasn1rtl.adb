@@ -11,20 +11,43 @@ use type Interfaces.Integer_64;
 
 PACKAGE BODY adaasn1rtl IS
 
+   MASKS : CONSTANT OctetBuffer_8 := OctetBuffer_8'(16#80#, 16#40#, 16#20#, 16#10#, 16#08#, 16#04#, 16#02#, 16#01#);
+   MSBIT_ONE  : CONSTANT Asn1UInt := 16#8000000000000000#;
 
-
-
-    MASKS : CONSTANT OctetBuffer_8 := OctetBuffer_8'(16#80#, 16#40#, 16#20#, 16#10#, 16#08#, 16#04#, 16#02#, 16#01#);
---    MSBIT_ONE  : CONSTANT Asn1UInt := Asn1UInt(2)**(Asn1UInt'SIZE - 1);
-    MSBIT_ONE  : CONSTANT Asn1UInt := 16#8000000000000000#;
-
-    MSBYTE_FF  : CONSTANT Asn1UInt:= 16#FF00000000000000#;
+   MSBYTE_FF  : CONSTANT Asn1UInt:= 16#FF00000000000000#;
 
    MantissaFactor : CONSTANT Asn1Real:=Asn1Real(Interfaces.Unsigned_64(2)**Asn1Real'Machine_Mantissa);
 
-    ERR_END_OF_STREAM    	:CONSTANT INTEGER:= 1001;
-    ERR_UNSUPPORTED_ENCODING    :CONSTANT INTEGER:= 1001;		--returned when the uPER encoding for REALs is not binary encoding
+   ERR_END_OF_STREAM           :CONSTANT INTEGER:= 1001;
+   ERR_UNSUPPORTED_ENCODING    :CONSTANT INTEGER:= 1001;  --  Returned when the uPER encoding for REALs is not binary encoding
 
+
+   FUNCTION Asn1Real_Equal(Left, Right: in Asn1Real) RETURN Boolean
+   IS
+   BEGIN
+       RETURN (IF Left = 0.0 THEN (Right = 0.0)
+               ELSE (ABS((Left - Right) / Left) < 0.00001));
+   END Asn1Real_Equal;
+
+
+   FUNCTION Asn1Boolean_Equal(Left, Right: in Boolean) RETURN Boolean
+   IS
+   BEGIN
+       RETURN Left = Right;
+   END Asn1Boolean_Equal;
+
+
+   FUNCTION Asn1Int_Equal(Left, Right: in Asn1Int) RETURN Boolean
+   IS
+   BEGIN
+       RETURN Left = Right;
+   END Asn1Int_Equal;
+
+   FUNCTION Asn1NullType_Equal(Left, Right: in Asn1NullType) RETURN Boolean
+   IS
+   BEGIN
+       RETURN True;
+   END Asn1NullType_Equal;
 
    FUNCTION getStringSize(str:String) RETURN Integer
    IS
@@ -36,6 +59,7 @@ PACKAGE BODY adaasn1rtl IS
       END LOOP;
       RETURN I-1;
    END  getStringSize;
+
 
    FUNCTION stringContainsChar(str:String; ch:Character) RETURN Boolean
    IS
@@ -52,24 +76,23 @@ PACKAGE BODY adaasn1rtl IS
    END stringContainsChar;
 
 
+   FUNCTION To_Int(IntVal: Asn1UInt) return Asn1Int
+   IS
+       ret:Asn1Int;
+       c:Asn1UInt;
+   BEGIN
+       IF IntVal > Asn1UInt(Asn1Int'Last) THEN
+           c := NOT IntVal;
+           ret := -Asn1Int(c) - 1;
+       ELSE
+           ret := Asn1Int(IntVal);
+       END IF;
+       RETURN ret;
+   END To_Int;
 
-    FUNCTION To_Int(IntVal: Asn1UInt) return Asn1Int
-    IS
-        ret:Asn1Int;
-        c:Asn1UInt;
-    Begin
-        IF IntVal > Asn1UInt(Asn1Int'Last) THEN
-            c := NOT IntVal;
-            ret := -Asn1Int(c) - 1;
-        ELSE
-            ret := Asn1Int(IntVal);
-        END IF;
-      return ret;
-    End To_Int;
 
-
-  FUNCTION RequiresReverse(dummy:BOOLEAN) return BOOLEAN
-  IS
+   FUNCTION RequiresReverse(dummy:BOOLEAN) return BOOLEAN
+   IS
       --# hide RequiresReverse;
       dword:Integer := 16#00000001#;
       arr: aliased OctetArray4;
@@ -79,27 +102,27 @@ PACKAGE BODY adaasn1rtl IS
    END RequiresReverse;
 
    FUNCTION To_Int_n(IntVal: Asn1UInt; nBits: INTEGER) return Asn1Int
-    --# pre nBits>=0 and nBits<=64;
-    IS
-        ret:Asn1Int;
-        c:Asn1UInt;
-    Begin
-    	IF nBits = 0 THEN
-            ret :=0;
-        ELSIF nBits = 64 THEN
-            ret := To_Int(IntVal);
-        ELSE
-        --# assert  nBits>=1 and nBits<=63
-        --# and 2**(nBits-1)>=1 AND 2**(nBits-1)<=4611686018427387904 AND 2**nBits-1>=1 AND 2**nBits-1<=9223372036854775807;
-            IF IntVal > Asn1UInt(2)**(nBits-1) THEN
-                c := NOT (Asn1UInt(2)**nBits-1);
-                ret := To_Int(IntVal OR c);
-            ELSE
-                ret := Asn1Int(IntVal);
-            END IF;
-        END IF;
-        return ret;
-    End To_Int_n;
+   --# pre nBits>=0 and nBits<=64;
+   IS
+      ret:Asn1Int;
+      c:Asn1UInt;
+  BEGIN
+      IF nBits = 0 THEN
+          ret :=0;
+      ELSIF nBits = 64 THEN
+          ret := To_Int(IntVal);
+      ELSE
+      --# assert  nBits>=1 and nBits<=63
+      --# and 2**(nBits-1)>=1 AND 2**(nBits-1)<=4611686018427387904 AND 2**nBits-1>=1 AND 2**nBits-1<=9223372036854775807;
+          IF IntVal > Asn1UInt(2)**(nBits-1) THEN
+              c := NOT (Asn1UInt(2)**nBits-1);
+              ret := To_Int(IntVal OR c);
+          ELSE
+              ret := Asn1Int(IntVal);
+          END IF;
+      END IF;
+      RETURN ret;
+  END To_Int_n;
 
 
 
