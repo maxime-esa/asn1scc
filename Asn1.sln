@@ -28,6 +28,9 @@ Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "Backend.c", "Backend.c\Back
 	EndProjectSection
 EndProject
 Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "Backend.c.ST", "Backend.c.ST\Backend.c.ST.fsproj", "{821BE302-634C-465E-9F9A-19DDCA139C9F}"
+	ProjectSection(ProjectDependencies) = postProject
+		{4112E7C9-0E9C-41DB-88C3-D5911C1D89D5} = {4112E7C9-0E9C-41DB-88C3-D5911C1D89D5}
+	EndProjectSection
 EndProject
 Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "ST", "ST\ST.fsproj", "{94495D92-B615-4745-B26B-A5EC73A6A462}"
 EndProject
