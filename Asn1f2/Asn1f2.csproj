@@ -145,9 +145,10 @@
     <MakeDir Directories="$(ResourcesDir)" />
     <Copy SourceFiles="@(ResourceFilesToCopy)" DestinationFolder="$(ResourcesDir)" />
   </Target>
-  <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
-       Other similar extension points exist, see Microsoft.Common.targets.
   <Target Name="AfterBuild">
+	<ItemGroup>
+		<StgFilesToCopy Include="$(SolutionDir)*/*.stg" />
+	</ItemGroup>
+	<Copy SourceFiles="@(StgFilesToCopy)" DestinationFolder="$(OutputPath)" />
   </Target>
-  -->
 </Project>
