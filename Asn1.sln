@@ -17,6 +17,9 @@ EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Asn1f2", "Asn1f2\Asn1f2.csproj", "{9FC95EBA-A745-4C0D-BF4E-53497E066D1C}"
 EndProject
 Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "Backend2.ST", "Backend2.ST\Backend2.ST.fsproj", "{D451F135-4104-4441-99C1-5C1A6B7C2F91}"
+	ProjectSection(ProjectDependencies) = postProject
+		{4112E7C9-0E9C-41DB-88C3-D5911C1D89D5} = {4112E7C9-0E9C-41DB-88C3-D5911C1D89D5}
+	EndProjectSection
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "parseStg2", "parseStg2\parseStg2.csproj", "{4112E7C9-0E9C-41DB-88C3-D5911C1D89D5}"
 EndProject
