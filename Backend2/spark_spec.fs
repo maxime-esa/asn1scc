@@ -19,7 +19,7 @@ type State = {
 
 
 let rec PrintType (t:Asn1Type) (path:list<string>) (parent:option<Asn1Type>) (tas:Assignment, m:Asn1Module, r:AstRoot) (state:State)=
-    let result = 
+    let result =
         match t.Kind with
         |Integer    -> 
             match (GetTypeUperRange t.Kind t.Constraints r) with
@@ -30,8 +30,8 @@ let rec PrintType (t:Asn1Type) (path:list<string>) (parent:option<Asn1Type>) (ta
             |Empty                     -> ss.Declare_Integer_Empty()
         |ReferenceType(modName, tasName, _)    ->
             match modName = m.Name with
-            |true  -> ss.Declare_Reference1 (GetTasCName tasName.Value r.TypePrefix)   
-            |false  -> ss.Declare_Reference2 (ToC modName.Value) (GetTasCName tasName.Value r.TypePrefix)   
+            |true  -> ss.Declare_Reference1 (GetTasCName tasName.Value r.TypePrefix)
+            |false  -> ss.Declare_Reference2 (ToC modName.Value) (GetTasCName tasName.Value r.TypePrefix)
         |Boolean    -> ss.Declare_BOOLEAN()
         |Real       -> ss.Declare_REAL()
         |NullType   -> ss.Declare_NULL()
@@ -75,7 +75,7 @@ let PrintTasDeclaration (t:TypeAssignment) (m:Asn1Module) (r:AstRoot) (state:Sta
             match items |> Seq.exists(fun itm -> itm._value.IsNone) with
             | true  ->  items 
             | false ->  items |> Seq.sortBy(fun x -> Ast.GetValueAsInt x._value.Value r ) |> Seq.toList
-            
+
         let arrsEnumNames = 
             orderedItems |> Seq.map(fun it -> (it.CEnumName r Spark))
 
@@ -212,8 +212,18 @@ let PrintTypeAss (t:TypeAssignment) (m:Asn1Module) (r:AstRoot) (acn:AcnTypes.Acn
         | BER   -> ""
         | XER   -> ""
     let arrsEncPrototypes = r.Encodings |>Seq.map print_encoding_protory 
+    let isComplex = match t.Type.Kind with
+                    | Integer
+                    | Real
+                    | NullType
+                    | IA5String
+                    | NumericString
+                    | Boolean
+                    | Enumerated(_)
+                    | ReferenceType(_)  -> false
+                    | _ -> true
     let result =
-        ss.PrintTypeAssignment sName sTasDecl nMaxBitsInPER nMaxBytesInPER nMaxBitsInACN nMaxBytesInACN errorCodes bGenIsValidFunc bGenEqual arrsEncPrototypes
+        ss.PrintTypeAssignment sName sTasDecl nMaxBitsInPER nMaxBytesInPER nMaxBitsInACN nMaxBytesInACN errorCodes bGenIsValidFunc bGenEqual arrsEncPrototypes isComplex
     result, s2
 
 let PrintValueAss (v:ValueAssignment) (m:Asn1Module) (r:AstRoot) (state:State)= 

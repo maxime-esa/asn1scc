@@ -61,6 +61,7 @@
     <Compile Include="spark_validate.fs" />
     <Compile Include="spark_uper.fs" />
     <Compile Include="spark_acn.fs" />
+    <Compile Include="spark_equal.fs" />
     <Compile Include="spark_body.fs" />
     <Compile Include="spark_automatic_test_cases.fs" />
     <Compile Include="spark_main.fs" />

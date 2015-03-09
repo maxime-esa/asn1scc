@@ -60,7 +60,7 @@ Install:
 Usage
 =====
 
-The compiler has many features - it is documented in [Chapter 11 of the TASTE manual](http://download.tuxfamily.org/taste/snapshots/doc/taste-documentation-20130619.pdf), and you can see some simple usage examples in a related [blog post](http://users.softlab.ece.ntua.gr/~ttsiod/asn1.html).
+The compiler has many features - it is documented in [Chapter 10 of the TASTE manual](http://download.tuxfamily.org/taste/snapshots/doc/taste-documentation-current.pdf), and you can see some simple usage examples in a related [blog post](http://users.softlab.ece.ntua.gr/~ttsiod/asn1.html).
 
 You can also read about [how the compiler has been used in the TASTE project](http://www.semantix.gr/assert/) to target safety-critical systems - and maybe also check out the official [TASTE project site](http://taste.tuxfamily.org).
 

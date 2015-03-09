@@ -24,11 +24,11 @@ let rec PrintInitValueByType (t:Asn1Type) (tasName:string) (m:Asn1Module) (r:Ast
             let min,max = uPER.GetSizebaleMinMax t.Kind t.Constraints r
             let chVals = [] 
             { Asn1Value.Kind = SeqOfValue []; Location = emptyLocation}
-        | _                         -> Asn1Values.GetDefaultValueByType (RemoveWithComponents t r) m r 
-    
+        | _                         -> Asn1Values.GetDefaultValueByType (RemoveWithComponents t r) m r
+
     let rec PrintAsn1Value (v:Asn1Value) (t:Asn1Type) (tasName:string) (m:Asn1Module) (r:AstRoot) = 
         match v.Kind, t.Kind with
-        |  SeqOfValue(childValues), SequenceOf(childType)    -> 
+        |  SeqOfValue(childValues), SequenceOf(childType)    ->
             let min,max = uPER.GetSizebaleMinMax t.Kind t.Constraints r
             let childTasName = spark_variables.GetTasNameByKind childType.Kind m r
             let arrChVals = []    
@@ -36,12 +36,12 @@ let rec PrintInitValueByType (t:Asn1Type) (tasName:string) (m:Asn1Module) (r:Ast
             let sDefValue = PrintAsn1Value defValue childType childTasName m r
             sv.PrintSequenceOfValue sTasName (min=max) min arrChVals sDefValue
         | _ -> spark_variables.PrintAsn1Value v false true t (tasName,0) m r
-    
+
     PrintAsn1Value initVal t sTasName m r
-    
 
 
-let PrintChoiceGetters (t:TypeAssignment) (m:Asn1Module) (r:AstRoot)  = 
+
+let PrintChoiceGetters (t:TypeAssignment) (m:Asn1Module) (r:AstRoot)  =
     match t.Type.Kind with
     |Choice(children) ->
         let sTasName = GetTasCName t.Name.Value r.TypePrefix
@@ -50,9 +50,9 @@ let PrintChoiceGetters (t:TypeAssignment) (m:Asn1Module) (r:AstRoot)  =
             si.CHOICE_setters_body_child sTasName c.CName typeDecl (c.CName_Present Spark)
         si.CHOICE_setters_body sTasName (children |> Seq.map printChild)
     |_              -> ""
-        
 
-let PrintTypeAss (t:TypeAssignment) (m:Asn1Module) (r:AstRoot) (state:State) = 
+
+let PrintTypeAss (t:TypeAssignment) (m:Asn1Module) (r:AstRoot) (state:State) =
     let sName = t.GetCName r.TypePrefix
     let hasChoice = IsOrContainsChoice t.Type r
     let init = si.PrintTypeAssignment sName (PrintInitValueByType t.Type t.Name.Value m r) hasChoice
@@ -64,6 +64,10 @@ let PrintTypeEqualBody (t:Asn1Type) (tasName:string) path (m:Asn1Module) (r:AstR
     let p1 = GetAccessFldPriv "val1" path (Same t) r
     let p2 = GetAccessFldPriv "val2" path (Same t) r
     match t.Kind with
+    | Integer -> si.isEqual_Integer p1 p2
+    | Real -> si.isEqual_Real p1 p2
+    | IA5String -> si.isEqual_IA5String p1 p2
+    | NumericString -> si.isEqual_NumericString p1 p2
     | OctetString       ->
         match (GetTypeUperRange t.Kind t.Constraints r) with
         | Concrete(a,b) when  a=b   -> si.isEqual_OctetString p1 p2 true a
@@ -72,10 +76,20 @@ let PrintTypeEqualBody (t:Asn1Type) (tasName:string) path (m:Asn1Module) (r:AstR
         | PosInf(_)                 -> raise (BugErrorException("All sizeable types must be constraint, otherwise max size is infinite"))
         | Full                      -> raise (BugErrorException("All sizeable types must be constraint, otherwise max size is infinite"))
         | Empty                     -> raise (BugErrorException("I do not known how this is handled"))
+    | NullType -> si.isEqual_NullType ()
+    | Boolean -> si.isEqual_Boolean p1 p2
+    | BitString -> 
+        match (GetTypeUperRange t.Kind t.Constraints r) with
+        | Concrete(a,b) when  a=b   -> si.isEqual_BitString p1 p2 true a
+        | Concrete(a,b)             -> si.isEqual_BitString p1 p2 false a
+        | NegInf(_)                 -> raise (BugErrorException("Negative size"))
+        | PosInf(_)                 -> raise (BugErrorException("All sizeable types must be constraint, otherwise max size is infinite"))
+        | Full                      -> raise (BugErrorException("All sizeable types must be constraint, otherwise max size is infinite"))
+        | Empty                     -> raise (BugErrorException("I do not known how this is handled"))
     | _     -> si.PrimitiveEqual p1 p2
 
 let PrintTypeAssEqual (t:TypeAssignment) (m:Asn1Module) (r:AstRoot)  = 
     let sName = t.GetCName r.TypePrefix
-    si.PrintTypeAssignment_Equal sName (PrintTypeEqualBody t.Type t.Name.Value [m.Name.Value; t.Name.Value] m r) 
+    si.PrintTypeAssignment_Equal sName (PrintTypeEqualBody t.Type t.Name.Value [m.Name.Value; t.Name.Value] m r)
 
 
