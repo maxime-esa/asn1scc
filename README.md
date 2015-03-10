@@ -6,19 +6,31 @@ This is the source code of the ASN1SCC compiler - an ASN.1 compiler that targets
 Compilation
 ===========
 
-## Under Windows
+## Common for all OSes
 
-Install Java JRE (this is a compile-only dependency, required to execute ANTLR) and a version of Visual Studio with support for F# . Then just open `Asn1.sln` and build the `Asn1f2` project.
+First, install the Java JRE. This is a compile-time only dependency, required to execute ANTLR. Please use the Java 1.7 series, ANTLR seems to have some issues with Java 1.8.
+
+Then depending on your OS:
+
+### Under Windows
+
+Install:
+
+1. A version of Visual Studio with support for F# .
+
+2. Open `Asn1.sln` and build the `Asn1f2` project (right-click/build)
+
+3. Copy the set of files needed inside Asn1f2/Resources (see output of `grep ^cp build.sh` to get the list).
 
 ## Under OSX
 
-1. Install Java JRE (this is a compile-only dependency, required to execute ANTLR) and then the [Mono MDK](http://www.mono-project.com).
+1. Install the [Mono MDK](http://www.mono-project.com).
 
 2. Execute ASN1SCC's `./build.sh` - and the compiler will be built.
 
 ## Under Linux
 
-1. Install Java JRE (this is a compile-only dependency, required to execute ANTLR) and the [mono](http://www.mono-project.com) development tools. Under Debian Jessie for example (as of Sep/2014):
+1. Install the [mono](http://www.mono-project.com) development tools. Under Debian Jessie for example (as of Sep/2014):
 
     ```
     $ mono -V
