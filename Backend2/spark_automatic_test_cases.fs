@@ -80,7 +80,7 @@ let PrintModuleBody outDir (m:Asn1Module) r (acn:AcnTypes.AcnAstResolved) =
                     |Encode_input_no_result             -> stc.Codec_Encode_no_result packageName sTasName sEnc arrsEncInDecOutParamsNames, false
                     |Decode_output                      -> stc.Codec_Decode packageName sTasName sEnc arrsParamNames, true
                     |Validate_output                    -> stc.Codec_validate_output packageName sTasName , true
-                    |Compare_input_output               -> stc.Codec_compare_input_with_output arrsEncInDecOutParamsNames, true
+                    |Compare_input_output               -> stc.Codec_compare_input_with_output arrsEncInDecOutParamsNames sTasName, true
                 stc.JoinItems content bCanFail sNestedContent
 
             let rec printStatements  = function

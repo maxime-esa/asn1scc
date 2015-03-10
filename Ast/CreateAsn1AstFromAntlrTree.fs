@@ -81,6 +81,8 @@ let rec CreateType (astRoot:list<ITree>) (tree:ITree) (fileTokens:array<IToken>)
         | asn1Parser.IA5String          -> IA5String
         | asn1Parser.NumericString      -> NumericString
         | asn1Parser.OBJECT_TYPE        -> raise (SemanticError (tree.Location, "OBJECT IDs not supported"))
+        | asn1Parser.VisibleString      -> 
+            raise (SemanticError (tree.Location, "VisibleString is not supported - please use IA5String"))
         | asn1Parser.NULL               -> NullType
         | asn1Parser.REFERENCED_TYPE    
         | asn1Parser.PREFERENCED_TYPE   -> 

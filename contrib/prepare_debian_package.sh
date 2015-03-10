@@ -6,14 +6,14 @@ echo Creating a Debian package for ASN1Scc version 3.0.$VERSION
 test -f Asn1f2/bin/Debug/Asn1f2.exe || (echo 'Run ./build.sh first to build ASN1SCC' && false)
 rm -rf asn1scc
 mkdir -p asn1scc/DEBIAN
-mkdir -p asn1scc/usr/local/bin
-mkdir -p asn1scc/usr/local/share/asn1scc
-cp -r Asn1f2/bin/Debug/* asn1scc/usr/local/share/asn1scc
-rm -f asn1scc/usr/local/share/asn1scc/*.mdb
-mv asn1scc/usr/local/share/asn1scc/Asn1f2.exe asn1scc/usr/local/share/asn1scc/asn1.exe
-cd asn1scc/usr/local/bin
+mkdir -p asn1scc/usr/bin
+mkdir -p asn1scc/usr/share/asn1scc
+cp -r Asn1f2/bin/Debug/* asn1scc/usr/share/asn1scc
+rm -f asn1scc/usr/share/asn1scc/*.mdb
+mv asn1scc/usr/share/asn1scc/Asn1f2.exe asn1scc/usr/share/asn1scc/asn1.exe
+cd asn1scc/usr/bin
 ln -s ../share/asn1scc/* .
-cd ../../../..
+cd ../../../
 echo "Package: asn1scc
 Version: 3.0.${VERSION}
 Section: base
