@@ -27,9 +27,6 @@ Install:
 
 2. Open `Asn1.sln` and build the `Asn1f2` project (right-click/build)
 
-3. Copy the set of files needed inside Asn1f2/Resources (see output of `grep
-   ^cp build.sh` to get the list).
-
 ## Under OSX
 
 1. Install the [Mono MDK](http://www.mono-project.com).
@@ -65,7 +62,7 @@ Install:
         make && sudo make install 
     ```
 
-3. Execute ASN1SCC's `./build.sh` - and the compiler will be built.
+3. Execute 'xbuild' in ASN1SCC directory
 
 Usage
 =====

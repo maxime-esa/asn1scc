@@ -107,9 +107,23 @@
       </PropertyGroup>
     </Otherwise>
   </Choose>
+    <Choose>
+    <When Condition="$(OS) == 'Unix'">
+      <PropertyGroup>
+        <MonoCallPrefix> mono </MonoCallPrefix>
+      </PropertyGroup>
+    </When>
+    <Otherwise>
+      <PropertyGroup>
+        <MonoCallPrefix/>
+      </PropertyGroup>
+    </Otherwise>
+  </Choose>
   <Import Project="$(FSharpTargetsPath)" Condition="Exists('$(FSharpTargetsPath)')" />
   <PropertyGroup>
-    <PreBuildEvent>$(ProjectDir)..\parseStg2\bin\Debug\parseStg2.exe $(ProjectDir)backends.xml</PreBuildEvent>
+    <PreBuildEvent>
+      $(MonoCallPrefix) $(ProjectDir)..\parseStg2\bin\Debug\parseStg2.exe $(ProjectDir)backends.xml
+    </PreBuildEvent>
   </PropertyGroup>
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
 	     Other similar extension points exist, see Microsoft.Common.targets.
