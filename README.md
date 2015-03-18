@@ -14,9 +14,8 @@ Compilation
 
 ## Common for all OSes
 
-First, install the Java JRE. This is a compile-time only dependency, required
-to execute ANTLR. Please use the Java 1.7 series, ANTLR seems to have some
-issues with Java 1.8.
+First, install the Java JRE. This is a compile-time only dependency,
+required to execute ANTLR.
 
 Then depending on your OS:
 
