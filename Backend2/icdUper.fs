@@ -217,7 +217,7 @@ let rec printType (tas:Ast.TypeAssignment) (t:Ast.Asn1Type) (r:AstRoot) (acn:Acn
             | Concrete(a,b)  when a=b && b<2I     -> [ChildRow 1I]
             | Concrete(a,b)  when a=b && b>=2I      -> (ChildRow 1I)::(icd_uper.EmitRowWith3Dots())::(ChildRow b)::[]
             | Concrete(a,b)  when a<>b && b<2I    -> LengthRow::(ChildRow 2I)::[]
-            | Concrete(a,b)                        -> LengthRow::(ChildRow 2I)::(icd_uper.EmitRowWith3Dots())::(ChildRow b)::[]
+            | Concrete(a,b)                        -> LengthRow::(ChildRow 2I)::(icd_uper.EmitRowWith3Dots())::(ChildRow (b+1I))::[]
             | PosInf(_)                            
             | Full                                 -> LengthRow::(ChildRow 2I)::(icd_uper.EmitRowWith3Dots())::(ChildRow 65535I)::[]
             | NegInf(_)                            -> raise(BugErrorException "")
