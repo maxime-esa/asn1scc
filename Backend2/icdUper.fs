@@ -170,7 +170,7 @@ let rec printType (tas:Ast.TypeAssignment) (t:Ast.Asn1Type) (r:AstRoot) (acn:Acn
             charSize.ToString()
         let ChildRow (i:BigInteger) =
             let sClass = if i % 2I = 0I then icd_uper.EvenRow() else icd_uper.OddRow()
-            let nIndex = BigInteger i
+            let nIndex = i
             let sFieldName = sprintf "Item #%A" i
             let sComment = ""
             let sType, sAsn1Constraints, sMinBits, sMaxBits = 
@@ -214,12 +214,12 @@ let rec printType (tas:Ast.TypeAssignment) (t:Ast.Asn1Type) (r:AstRoot) (acn:Acn
         
         let arRows = 
             match (GetTypeUperRange t.Kind t.Constraints  r) with
-            | Concrete(a,b)  when a=b && b<2I     -> [ChildRow 1]
-            | Concrete(a,b)  when a=b && b>=2I      -> (ChildRow 1)::(icd_uper.EmitRowWith3Dots())::(ChildRow (int b))::[]
-            | Concrete(a,b)  when a<>b && b<2I    -> LengthRow::(ChildRow 2)::[]
-            | Concrete(a,b)                        -> LengthRow::(ChildRow 2)::(icd_uper.EmitRowWith3Dots())::(ChildRow (int b))::[]
+            | Concrete(a,b)  when a=b && b<2I     -> [ChildRow 1I]
+            | Concrete(a,b)  when a=b && b>=2I      -> (ChildRow 1I)::(icd_uper.EmitRowWith3Dots())::(ChildRow b)::[]
+            | Concrete(a,b)  when a<>b && b<2I    -> LengthRow::(ChildRow 2I)::[]
+            | Concrete(a,b)                        -> LengthRow::(ChildRow 2I)::(icd_uper.EmitRowWith3Dots())::(ChildRow b)::[]
             | PosInf(_)                            
-            | Full                                 -> LengthRow::(ChildRow 2)::(icd_uper.EmitRowWith3Dots())::(ChildRow (int 65535))::[]
+            | Full                                 -> LengthRow::(ChildRow 2I)::(icd_uper.EmitRowWith3Dots())::(ChildRow 65535I)::[]
             | NegInf(_)                            -> raise(BugErrorException "")
             | Empty                                -> []
 
