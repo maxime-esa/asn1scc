@@ -210,18 +210,25 @@ let rec printType (tas:Ast.TypeAssignment) (t:Ast.Asn1Type) (r:AstRoot) (acn:Acn
         let sMaxBits, sMaxBytes = uperSizeInBitsAsInt uperGetMaxSizeInBits t.Kind t.Constraints r
         let sMinBits, sMinBytes = uperSizeInBitsAsInt uperGetMinSizeInBits t.Kind t.Constraints r
         let sMaxBitsExplained = ""
-        let sCommentLine = GetCommentLine tas.Comments t
         
-        let arRows = 
+        let sFixedLengthComment (nMax: BigInteger) =
+            sprintf "Length is fixed to %A elements (no length determinant is needed)." nMax
+
+        let arRows, sExtraComment = 
             match (GetTypeUperRange t.Kind t.Constraints  r) with
-            | Concrete(a,b)  when a=b && b<2I     -> [ChildRow 1I]
-            | Concrete(a,b)  when a=b && b>=2I      -> (ChildRow 1I)::(icd_uper.EmitRowWith3Dots())::(ChildRow b)::[]
-            | Concrete(a,b)  when a<>b && b<2I    -> LengthRow::(ChildRow 2I)::[]
-            | Concrete(a,b)                        -> LengthRow::(ChildRow 2I)::(icd_uper.EmitRowWith3Dots())::(ChildRow (b+1I))::[]
+            | Concrete(a,b)  when a=b && b<2I     -> [ChildRow 1I], "The arrary contains a single element."
+            | Concrete(a,b)  when a=b && b=2I    -> (ChildRow 1I)::(ChildRow 2I)::[], (sFixedLengthComment b)
+            | Concrete(a,b)  when a=b && b>2I    -> (ChildRow 1I)::(icd_uper.EmitRowWith3Dots())::(ChildRow b)::[], (sFixedLengthComment b)
+            | Concrete(a,b)  when a<>b && b<2I    -> LengthRow::(ChildRow 2I)::[],""
+            | Concrete(a,b)                       -> LengthRow::(ChildRow 2I)::(icd_uper.EmitRowWith3Dots())::(ChildRow (b+1I))::[], ""
             | PosInf(_)                            
-            | Full                                 -> LengthRow::(ChildRow 2I)::(icd_uper.EmitRowWith3Dots())::(ChildRow 65535I)::[]
-            | NegInf(_)                            -> raise(BugErrorException "")
-            | Empty                                -> []
+            | Full                                -> LengthRow::(ChildRow 2I)::(icd_uper.EmitRowWith3Dots())::(ChildRow 65535I)::[], ""
+            | NegInf(_)                           -> raise(BugErrorException "")
+            | Empty                               -> [], ""
+        
+        let sCommentLine = match GetCommentLine tas.Comments t with
+                           | null | ""  -> sExtraComment
+                           | _          -> sprintf "%s%s%s" (GetCommentLine tas.Comments t) (icd_uper.NewLine()) sExtraComment
 
 
         icd_uper.EmitSizeable color sTasName  (ToC sTasName) (Kind2Name t) sMinBytes sMaxBytes sMaxBitsExplained sCommentLine arRows
