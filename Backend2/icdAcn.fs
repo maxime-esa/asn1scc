@@ -209,7 +209,7 @@ let rec printType (tas:Ast.TypeAssignment) (t:Ast.Asn1Type) path (m:Asn1Module) 
             | PosInf(_)   | Full                   -> raise(BugErrorException "")
             | Empty                                -> 0I
             | NegInf(_)                            -> raise(BugErrorException "")
-        let sFixedLengthComment = sprintf "Length is Fixed equal to  %A, so no length determinant is encoded." nMax
+        let sFixedLengthComment = sprintf "Length is Fixed equal to %A, so no length determinant is encoded." nMax
         let arRows, sExtraComment =
             match Acn.GetSizeableEncodingClass t path r acn emptyLocation,  nMax>=2I with
             | Acn.FixedSize(nSize), true      -> (ChildRow 1I)::(icd_uper.EmitRowWith3Dots())::(ChildRow nMax)::[], sFixedLengthComment
