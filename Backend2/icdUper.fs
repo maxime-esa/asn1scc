@@ -216,7 +216,7 @@ let rec printType (tas:Ast.TypeAssignment) (t:Ast.Asn1Type) (r:AstRoot) (acn:Acn
 
         let arRows, sExtraComment = 
             match (GetTypeUperRange t.Kind t.Constraints  r) with
-            | Concrete(a,b)  when a=b && b<2I     -> [ChildRow 1I], "The arrary contains a single element."
+            | Concrete(a,b)  when a=b && b<2I     -> [ChildRow 1I], "The array contains a single element."
             | Concrete(a,b)  when a=b && b=2I    -> (ChildRow 1I)::(ChildRow 2I)::[], (sFixedLengthComment b)
             | Concrete(a,b)  when a=b && b>2I    -> (ChildRow 1I)::(icd_uper.EmitRowWith3Dots())::(ChildRow b)::[], (sFixedLengthComment b)
             | Concrete(a,b)  when a<>b && b<2I    -> LengthRow::(ChildRow 2I)::[],""
