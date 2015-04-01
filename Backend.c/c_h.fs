@@ -16,6 +16,7 @@ let rec PrintTypeDeclaration (t:Asn1Type)  (p:list<string>) (r:AstRoot) =
     let SizeableTypeUperRange() =
             match (GetTypeUperRange t.Kind t.Constraints r) with
             |Concrete(min, max)        -> min,max
+            |Empty                    -> raise(SemanticError(t.Location, "SEQUENCE OF or OCTET STRING ended up with no (or invalid) constraints"))
             |_                         -> raise(BugErrorException "SEQUENCE OF or OCTET STRING etc has no constraints")
     let PrintChoiceSeqChild (child:ChildInfo) =
         ch.PrintSeq_ChoiceChild  (PrintTypeDeclaration child.Type (p@[child.Name.Value]) r) child.CName (TypeArrayPostfix child.Type r)
