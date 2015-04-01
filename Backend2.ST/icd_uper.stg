@@ -9,6 +9,8 @@ NewLine() ::= "<br/>"
 Orange() ::= "#FF8f00"
 Blue() ::= "#379CEE"
 
+ItemNumber(nIndex) ::= "Item #$nIndex$"
+
 RealSizeExplained() ::= <<
 <a href="#REAL_SIZE_EXPLAINED123"><span style="vertical-align: super">why?</span></a>
 >>

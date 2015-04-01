@@ -171,7 +171,7 @@ let rec printType (tas:Ast.TypeAssignment) (t:Ast.Asn1Type) (r:AstRoot) (acn:Acn
         let ChildRow (i:BigInteger) =
             let sClass = if i % 2I = 0I then icd_uper.EvenRow() else icd_uper.OddRow()
             let nIndex = i
-            let sFieldName = sprintf "Item #%A" i
+            let sFieldName = icd_uper.ItemNumber(i)
             let sComment = ""
             let sType, sAsn1Constraints, sMinBits, sMaxBits = 
                 match t.Kind with
