@@ -63,7 +63,7 @@ let rec printType (tas:Ast.TypeAssignment) (t:Ast.Asn1Type) path (m:Asn1Module) 
                 | _     -> singleComment + (icd_uper.NewLine ()) + extraComment
             | _                 -> singleComment
         let ret = ret.Replace("/*","").Replace("*/","").Replace("--","")
-        if ret.Trim() = "" then null else ret  
+        if ret.Trim() = "" then null else ret.Trim()
 
     let sCommentLine = GetCommentLine tas.Comments t
 
@@ -105,7 +105,8 @@ let rec printType (tas:Ast.TypeAssignment) (t:Ast.Asn1Type) path (m:Asn1Module) 
     | Boolean   
     | NullType
     | Enumerated(_) ->
-        icd_acn.EmitPrimitiveType color sTasName (ToC sTasName) hasAcnDef sKind sMinBytes sMaxBytes sMaxBitsExplained sCommentLine ( if sAsn1Constraints.Trim() ="" then "N.A." else sAsn1Constraints) sMinBits sMaxBits (myParams 2I)
+        icd_acn.EmitPrimitiveType color sTasName (ToC sTasName) hasAcnDef sKind sMinBytes sMaxBytes sMaxBitsExplained sCommentLine ( if sAsn1Constraints.Trim() ="" then "N.A." else sAsn1Constraints) sMinBits sMaxBits (myParams 2I) (sCommentLine.Split [|'\n'|])
+
     |ReferenceType(modl,tsName,_) ->
         let baseTypeWithCons = Ast.GetActualTypeAllConsIncluded t r
         printType tas baseTypeWithCons [modl.Value; tsName.Value] m r acn color
@@ -140,7 +141,8 @@ let rec printType (tas:Ast.TypeAssignment) (t:Ast.Asn1Type) path (m:Asn1Module) 
             | None          -> arChildren 1
             | Some(prm)     -> prm::(arChildren 2)
 
-        icd_acn.EmitSequenceOrChoice color sTasName (ToC sTasName) hasAcnDef "SEQUENCE" sMinBytes sMaxBytes sMaxBitsExplained sCommentLine arRows (myParams 6I)
+        icd_acn.EmitSequenceOrChoice color sTasName (ToC sTasName) hasAcnDef "SEQUENCE" sMinBytes sMaxBytes sMaxBitsExplained sCommentLine arRows (myParams 6I) (sCommentLine.Split [|'\n'|])
+
 
     |Choice(children)   -> 
         let Choice_like_uPER() =
@@ -184,7 +186,7 @@ let rec printType (tas:Ast.TypeAssignment) (t:Ast.Asn1Type) path (m:Asn1Module) 
         let ChildRow (i:BigInteger) =
             let sClass = if i % 2I = 0I then icd_uper.EvenRow() else icd_uper.OddRow()
             let nIndex = i
-            let sFieldName = sprintf "Item #%A" i
+            let sFieldName = icd_acn.ItemNumber(i)
             let sComment = ""
             let sType, sAsn1Constraints, sMinBits, sMaxBits = 
                 match t.Kind with
@@ -237,7 +239,8 @@ let rec printType (tas:Ast.TypeAssignment) (t:Ast.Asn1Type) path (m:Asn1Module) 
                            | null | ""  -> sExtraComment
                            | _          -> sprintf "%s%s%s" sCommentLine (icd_uper.NewLine()) sExtraComment
         
-        icd_acn.EmitSizeable color sTasName  (ToC sTasName) hasAcnDef (icdUper.Kind2Name t) sMinBytes sMaxBytes sMaxBitsExplained (makeEmptyNull sCommentLine) arRows (myParams 5I)
+        icd_acn.EmitSizeable color sTasName  (ToC sTasName) hasAcnDef (icdUper.Kind2Name t) sMinBytes sMaxBytes sMaxBitsExplained (makeEmptyNull sCommentLine) arRows (myParams 5I) (sCommentLine.Split [|'\n'|])
+
 
 
 

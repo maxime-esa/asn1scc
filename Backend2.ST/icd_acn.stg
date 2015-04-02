@@ -4,8 +4,9 @@ group icd_acn;
 
 
 
+ItemNumber(nIndex) ::= "Item #$nIndex$"
 
-EmitSequenceOrChoice(sColor, sTasName, sTasNameC, bHasAcnDef, sAsn1Kinf, sMinBytes, sMaxBytes, sMaxBitsExplained, sCommentLine, arrsChildren, arrsParams) ::= <<
+EmitSequenceOrChoice(sColor, sTasName, sTasNameC, bHasAcnDef, sAsn1Kinf, sMinBytes, sMaxBytes, sMaxBitsExplained, sCommentLine, arrsChildren, arrsParams, arrsComments) ::= <<
 <a name="ICD_$sTasNameC$"></a> 
 <table border="0" width="100%" >
 <tbody>
@@ -85,7 +86,7 @@ Special field used by ACN to indicate which choice alternative is present.
 
 
 
-EmitPrimitiveType(sColor, sTasName, sTasNameC, bHasAcnDef, sAsnKindName, sMinBytes, sMaxBytes, sMaxBitsExplained, sCommentLine, sAsn1Constraints, sMinBits, sMaxBits, arrsParams) ::= <<
+EmitPrimitiveType(sColor, sTasName, sTasNameC, bHasAcnDef, sAsnKindName, sMinBytes, sMaxBytes, sMaxBitsExplained, sCommentLine, sAsn1Constraints, sMinBits, sMaxBits, arrsParams, arrsComments) ::= <<
 <a name="ICD_$sTasNameC$"></a> 
 <table border="0" width="100%" >
 <tbody>
@@ -139,7 +140,7 @@ $endif$
 
 
 /* *********** SEQUENCE OF, OCTET STRING etc ********** */
-EmitSizeable(sColor, sTasName, sTasNameC, bHasAcnDef, sKind, sMinBytes, sMaxBytes, sMaxBitsExplained, sCommentLine, arrsRows, arrsParams) ::= <<
+EmitSizeable(sColor, sTasName, sTasNameC, bHasAcnDef, sKind, sMinBytes, sMaxBytes, sMaxBitsExplained, sCommentLine, arrsRows, arrsParams, arrsComments) ::= <<
 <a name="ICD_$sTasNameC$"></a> 
 <table border="0" width="100%" >
 <tbody>
