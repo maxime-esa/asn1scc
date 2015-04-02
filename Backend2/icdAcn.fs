@@ -8,14 +8,14 @@ open VisitTree
 open CloneTree
 open spark_utils
 
-    
+
 
 let printPoint (p:AcnTypes.Point) =
     match p with
     | AcnTypes.TypePoint(pth)
     | AcnTypes.TempPoint(pth)        -> pth |> Seq.StrJoin "."
     | AcnTypes.ParamPoint(pth)       -> pth.Tail.Tail |> Seq.StrJoin "."
-    
+
 let makeEmptyNull (s:string) =
     match s with
     | null  -> null
@@ -28,12 +28,12 @@ let printParamType = function
     | AcnTypes.RefTypeCon(_,ts)  -> ts.Value
 
 
-               
+
 
 let getAcnMax (t:Ast.Asn1Type) path (r:AstRoot) (acn:AcnTypes.AcnAstResolved) =
     let (bits, bytes) = Acn.RequiredBitsForAcnEncodingInt t path r acn
     bits.ToString(), bytes.ToString()
-    
+
 let getAcnMin (t:Ast.Asn1Type) path (r:AstRoot) (acn:AcnTypes.AcnAstResolved) =
     let (bits, bytes) = Acn.RequiredMinBitsForAcnEncodingInt t path r acn
     bits.ToString(), bytes.ToString()
@@ -67,7 +67,7 @@ let rec printType (tas:Ast.TypeAssignment) (t:Ast.Asn1Type) path (m:Asn1Module) 
 
     let sCommentLine = GetCommentLine tas.Comments t
 
-    
+
 
     let EmitSeqOrChoiceChild (i:int) (ch:ChildInfo) (optionalLikeUperChildren:ChildInfo list) getPresence =
         let sClass = if i % 2 = 0 then icd_uper.EvenRow() else icd_uper.OddRow()
@@ -177,7 +177,8 @@ let rec printType (tas:Ast.TypeAssignment) (t:Ast.Asn1Type) path (m:Asn1Module) 
             | Some(Acn.EnumDeterminant(extFld))  -> Choice_enm extFld
             | Some(Acn.PresentWhenOnChildren)   -> Choice_presWhen()
             | None                              -> Choice_like_uPER()
-        icd_acn.EmitSequenceOrChoice color sTasName (ToC sTasName) hasAcnDef "CHOICE" sMinBytes sMaxBytes sMaxBitsExplained sCommentLine arrRows (myParams 6I)
+        icd_acn.EmitSequenceOrChoice color sTasName (ToC sTasName) hasAcnDef "CHOICE" sMinBytes sMaxBytes sMaxBitsExplained sCommentLine arrRows (myParams 6I) (sCommentLine.Split [|'\n'|])
+
     | OctetString   
     | NumericString   
     | IA5String   
@@ -204,7 +205,7 @@ let rec printType (tas:Ast.TypeAssignment) (t:Ast.Asn1Type) path (m:Asn1Module) 
                 | BitString                    -> "BIT", "", "1","1"
                 | _                            -> raise(BugErrorException "")
             icd_uper.EmmitChoiceChild sClass nIndex sFieldName sComment  sType sAsn1Constraints sMinBits sMaxBits
-        
+
         let nMax =
             match (uPER.GetTypeUperRange t.Kind t.Constraints  r) with
             | Concrete(_,b)                        -> b
@@ -232,13 +233,13 @@ let rec printType (tas:Ast.TypeAssignment) (t:Ast.Asn1Type) path (m:Asn1Module) 
                 | false, false->(ChildRow 1I)::[], sFixedLengthComment
             | Acn.ExternalField(fld), true    -> (ChildRow 1I)::(icd_uper.EmitRowWith3Dots())::(ChildRow nMax)::[], sprintf "Length determined by external field %s" (printPoint fld)
             | Acn.ExternalField(fld), false   -> (ChildRow 1I)::[], sprintf "Length is determined by the external field: %s" (printPoint fld)
-                
+
             | Acn.NullTerminated,_        -> [],""
 
         let sCommentLine = match sCommentLine with
                            | null | ""  -> sExtraComment
                            | _          -> sprintf "%s%s%s" sCommentLine (icd_uper.NewLine()) sExtraComment
-        
+
         icd_acn.EmitSizeable color sTasName  (ToC sTasName) hasAcnDef (icdUper.Kind2Name t) sMinBytes sMaxBytes sMaxBitsExplained (makeEmptyNull sCommentLine) arRows (myParams 5I) (sCommentLine.Split [|'\n'|])
 
 
@@ -262,8 +263,8 @@ let PrintFile1 (f:Asn1File)  (r:AstRoot) (acn:AcnTypes.AcnAstResolved)  =
     let modules = f.Modules |> Seq.map (fun  m -> PrintModule m f r acn )  
     icd_uper.EmmitFile (Path.GetFileName f.FileName) modules 
 
-let PrintFile3 (r:AstRoot) (acn:AcnTypes.AcnAstResolved) = 
-    
+let PrintFile3 (r:AstRoot) (acn:AcnTypes.AcnAstResolved) =
+
     acn.Files |>
     Seq.map(fun (fName, tokens) -> 
             let f = r.Files |> Seq.find(fun x -> Path.GetFileNameWithoutExtension(x.FileName) = Path.GetFileNameWithoutExtension(fName))
@@ -271,8 +272,6 @@ let PrintFile3 (r:AstRoot) (acn:AcnTypes.AcnAstResolved) =
             let content = Antlr.Html.getAcnInHtml(tokens, tasNames)
             icd_uper.EmmitFilePart2  (Path.GetFileName fName) content
     )
-
-    
 
 
 let DoWork (r:AstRoot) (acn:AcnTypes.AcnAstResolved) outDir =
