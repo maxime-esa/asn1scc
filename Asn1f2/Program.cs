@@ -411,7 +411,7 @@ namespace Asn1f2
             var procName = "asn1";
             Console.Error.WriteLine();
             Console.Error.WriteLine("Semantix ASN.1 Compiler");
-            Console.Error.WriteLine("Current Version is: 3.0.{0} ", Svn.Version);
+            Console.Error.WriteLine("Current Version is: 3.1.{0} ", Svn.Version);
             Console.Error.WriteLine("Usage:");
             Console.Error.WriteLine();
             Console.Error.WriteLine("{0}  <OPTIONS> file1, file2, ..., fileN ", procName);
@@ -465,6 +465,9 @@ namespace Asn1f2
             Console.Error.WriteLine();
             Console.Error.WriteLine("\t -atc\t\t\tcreate automatic test cases.");
             Console.Error.WriteLine("\t\t\t\tDefault is current directory");
+            Console.Error.WriteLine();
+            Console.Error.WriteLine("\t -equal \t\tGenerate functions for testing type equality");
+            Console.Error.WriteLine("\t\t\t\tWhen using Ada, compiler must support Ada2012");
             Console.Error.WriteLine();
             Console.Error.WriteLine();
             Console.Error.WriteLine("Example:");
