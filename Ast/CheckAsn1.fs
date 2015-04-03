@@ -309,10 +309,11 @@ let rec isConstraintValid (t:Asn1Type) (c:Asn1Constraint) ast =
         isConstraintValid t c1 ast
         isConstraintValid t c2 ast
     | AllExceptConstraint(c1) | RootConstraint(c1)       -> isConstraintValid t c1 ast
-    | TypeInclusionConstraint(_)  -> 
+    | TypeInclusionConstraint(mdName, refName)  -> 
+        let typeInclusion = GetActualTypeByName mdName refName ast
         let actType = GetActualType t ast
-        if not(AreTypesCompatible t actType ast) then
-            raise (SemanticError(t.Location, "Incompatible types used in type inclusion contraint"))
+        if not(AreTypesCompatible typeInclusion actType ast) then
+            raise (SemanticError(t.Location, "Incompatible types used in type inclusion constraint"))
     | WithComponentConstraint(c1)       -> 
         match CanHaveWithComponentConstraint t with
         | None -> raise (SemanticError(t.Location, "Type does not support WITH COMPONENT constraints"))
