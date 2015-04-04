@@ -32,6 +32,9 @@ ModuleXml(sName, arrsImportedModules, arrsExpTypes, arrsExpVars, arrsTases, arrs
 <TypeAssignments>
     $arrsTases;separator="\n"$
 </TypeAssignments>
+<VariablesAssignments>
+    $arrsVases;separator="\n"$
+</VariablesAssignments>
 </Asn1Module >
 >>
 
