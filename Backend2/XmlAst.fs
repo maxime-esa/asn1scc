@@ -67,7 +67,7 @@ let rec PrintType (t:Asn1Type) modName (r:AstRoot) =
 
 let DoWork (r:AstRoot) =
     let PrintVas (vas: Ast.ValueAssignment) modName =
-        xml.VasXml vas.Name.Value (BigInteger vas.Name.Location.srcLine) (BigInteger vas.Name.Location.charPos) (PrintType vas.Type modName r)
+        xml.VasXml vas.Name.Value (BigInteger vas.Name.Location.srcLine) (BigInteger vas.Name.Location.charPos) (PrintType vas.Type modName r) (PrintAsn1.PrintAsn1Value vas.Value)
     let PrintTas (tas:Ast.TypeAssignment) modName =
         xml.TasXml tas.Name.Value (BigInteger tas.Name.Location.srcLine) (BigInteger tas.Name.Location.charPos) (PrintType tas.Type modName r)
     let PrintModule (m:Asn1Module) =

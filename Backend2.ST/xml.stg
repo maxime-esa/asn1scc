@@ -55,9 +55,10 @@ TasXml(sName, nLine, nPos, sType) ::= <<
 </TypeAssignment>
 >>
 
-VasXml(sName, nLine, nPos, sType) ::= <<
+VasXml(sName, nLine, nPos, sType, sValue) ::= <<
 <VariableAssignment Name="$sName$" Line="$nLine$" CharPositionInLine="$nPos$">
     $sType$
+    <Value>$sValue$</Value>
 </VariableAssignment>
 >>
 
