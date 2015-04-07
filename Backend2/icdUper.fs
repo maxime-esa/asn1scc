@@ -63,7 +63,7 @@ let rec printType (tas:Ast.TypeAssignment) (t:Ast.Asn1Type) (r:AstRoot) (acn:Acn
                 | _     -> singleComment + (icd_uper.NewLine ()) + extraComment
             | _                 -> singleComment
         let ret = ret.Replace("/*","").Replace("*/","").Replace("--","")
-        if ret.Trim() = "" then null else ret.Trim()
+        ret.Trim()
     match t.Kind with
     | Integer    
     | Real    

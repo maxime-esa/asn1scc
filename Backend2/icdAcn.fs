@@ -63,7 +63,7 @@ let rec printType (tas:Ast.TypeAssignment) (t:Ast.Asn1Type) path (m:Asn1Module) 
                 | _     -> singleComment + (icd_uper.NewLine ()) + extraComment
             | _                 -> singleComment
         let ret = ret.Replace("/*","").Replace("*/","").Replace("--","")
-        if ret.Trim() = "" then null else ret.Trim()
+        ret.Trim()
 
     let sCommentLine = GetCommentLine tas.Comments t
 
