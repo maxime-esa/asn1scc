@@ -8,35 +8,8 @@ using Antlr.Runtime.Tree;
 using System.IO;
 using Antlr.Asn1;
 using Antlr.Acn;
-//using Semantix.Utils;
 
 
-
-/*
- to do
- 
--Fragmentation 1 day
--Choice support  3 days
--add verification support 2 days
--for each variable in the asn.1 file, generate a test_case (all test cases in a single file). A test case is procedure which
-    (a) declares locally (and statically) the variable
-    (b) calls isConstraintValid
-    (c) encodes the variable
-    (d) decodes the encoded data into another variable
-    (e) calls isConstraintValid for the decoded variable
-    (f) calls the equal function
-    (g) compares encoded stream with OSS
--generate main, RTL	1 day
--run regression for uPER	2 days
-
--ACN support		15 days
-
--Addapt C to new AST and remove old staff 5 days
-
-**** regression runs for uPER,ACN in both C, SPARK/Ada ****
-
-  
- */
 namespace Asn1f2
 {
     public class Program
@@ -242,7 +215,7 @@ namespace Asn1f2
 
                 var customStgAstVer = cmdArgs.GetOptionalArgument("customStgAstVerion", "1");
 
-                var astForCustomBackend = asn1Ast0; //: EnsureUniqueEnumNames.DoWork(refTypesWithNoConstraints);
+                var astForCustomBackend = asn1Ast0;
                 if (customStgAstVer == "1")
                     astForCustomBackend = asn1Ast0;
                 else if (customStgAstVer == "2")
@@ -267,9 +240,7 @@ namespace Asn1f2
 
             if (cmdArgs.HasArgument("Ada"))
             {
-                //spark_spec.DoWork(refTypesWithNoConstraints, acnAst3, outDir, ".ads");
                 var astForBackend = EnsureUniqueEnumNames.DoWork(refTypesWithNoConstraints);
-                //PrintAsn1.DebugPrintAsn1Acn(astForBackend, acnAst3, ".", ".2.asn1");
 
                 spark_body.DoWork(astForBackend, acnAst3, outDir);
 
@@ -282,7 +253,6 @@ namespace Asn1f2
                     spark_main.CreateMakeFile(astForBackend, outDir);
                 }
 
-                //var ddd = 
                 WriteTextFile(Path.Combine(outDir, spark_body.GetRTLName() + ".adb"), Resource1.adaasn1rtl_adb);
                 WriteTextFile(Path.Combine(outDir, spark_body.GetRTLName() + ".ads"), Resource1.adaasn1rtl_ads);
                 WriteTextFile(Path.Combine(outDir, "IgnoredExaminerWarnings.wrn"), Resource1.IgnoredExaminerWarnings);
@@ -400,12 +370,6 @@ namespace Asn1f2
             return parsedInputFiles;
         }
 
-
-
-
-
-
-
         static int Usage()
         {
             var procName = "asn1";
@@ -418,18 +382,13 @@ namespace Asn1f2
             Console.Error.WriteLine();
             Console.Error.WriteLine("Where OPTIONS are:\n\n");
             Console.Error.WriteLine("\t -c\t\t\tgenerate code for the C/C++ programming language");
-            Console.Error.WriteLine();
             Console.Error.WriteLine("\t -Ada\t\t\tgenerate code for the Ada/SPARK programming language");
-            Console.Error.WriteLine();
             Console.Error.WriteLine("\t -uPER\t\t\tgenerates encoding and decoding functions for");
             Console.Error.WriteLine("\t\t\t\tunaligned Packed Encoding Rules (uPER)");
-            Console.Error.WriteLine();
             Console.Error.WriteLine("\t -ACN\t\t\tgenerates encoding and decoding functions using");
             Console.Error.WriteLine("\t\t\t\tthe ASSERT ASN.1 encoding Control Notation");
-            Console.Error.WriteLine();
             Console.Error.WriteLine("\t -ACND\t\t\tcreates ACN grammars for the input ASN.1 grammars");
             Console.Error.WriteLine("\t\t\t\tusing the default encoding properties");
-            Console.Error.WriteLine();
             //Console.Error.WriteLine("\t -BER\t\t\tgenerates encoding and decoding functions for.");
             //Console.Error.WriteLine("\t\t\t\tBasic Encoding Rules (BER)");
             //Console.Error.WriteLine();
@@ -438,41 +397,31 @@ namespace Asn1f2
             //Console.Error.WriteLine();
             Console.Error.WriteLine("\t -ast file.xml          Produces an XML file of the parsed input ASN.1");
             Console.Error.WriteLine("\t\t\t\tgrammar.(No encoders/decoders are produced)");
-            Console.Error.WriteLine();
             Console.Error.WriteLine("\t -customStg stgFile.stg:outputFile");
             Console.Error.WriteLine("\t\t\t\tInvokes the custom stg file 'stgFile.stg' and produces the");
             Console.Error.WriteLine("\t\t\t\toutput file 'outputFile'");
-            Console.Error.WriteLine();
-
             Console.Error.WriteLine("\t -customStgAstVerion astVersionNumber");
             Console.Error.WriteLine("\t\t\t\twhere astVersionNumber is:");
             Console.Error.WriteLine("\t\t\t\t1\tparameterized types have been removed");
             Console.Error.WriteLine("\t\t\t\t2\tinner types have been removed");
             Console.Error.WriteLine("\t\t\t\t3\tconstraint reference types have been removed");
             Console.Error.WriteLine("\t\t\t\t4\tEnumerated names are unique (required by C backend)");
-            Console.Error.WriteLine();
-
             Console.Error.WriteLine("\t -icdUper file.html     Produces an Interface Control Document for");
             Console.Error.WriteLine("\t\t\t\tthe input ASN.1 grammar for uPER encoding");
-            Console.Error.WriteLine();
             Console.Error.WriteLine("\t -icdAcn file.html      Produces an Interface Control Document for ");
             Console.Error.WriteLine("\t\t\t\tthe input ASN.1 and ACN grammars for ACN encoding");
-            Console.Error.WriteLine();
             Console.Error.WriteLine("\t -typePrefix prefix\tadds 'prefix' to all generated C or Ada/SPARK data types.");
-            Console.Error.WriteLine();
             Console.Error.WriteLine("\t -o outdir\t\tdirectory where all files are produced.");
             Console.Error.WriteLine("\t\t\t\tDefault is current directory");
-            Console.Error.WriteLine();
             Console.Error.WriteLine("\t -atc\t\t\tcreate automatic test cases.");
             Console.Error.WriteLine("\t\t\t\tDefault is current directory");
-            Console.Error.WriteLine();
             Console.Error.WriteLine("\t -equal \t\tGenerate functions for testing type equality");
             Console.Error.WriteLine("\t\t\t\tWhen using Ada, compiler must support Ada2012");
             Console.Error.WriteLine();
             Console.Error.WriteLine();
             Console.Error.WriteLine("Example:");
             Console.Error.WriteLine();
-            Console.Error.WriteLine("\t{0} -Ada -uPER MyFile.asn1", procName);
+            Console.Error.WriteLine("\t{0} -Ada -uPER MyFile.asn", procName);
             return 4;
         }
 
@@ -480,7 +429,6 @@ namespace Asn1f2
         {
             System.IO.File.WriteAllText(fileName, data.Replace("\r",""));
 
-            //System.IO.File.SetAttributes(fileName, FileAttributes.
             if (makeItExecutable)
             {
                 try
