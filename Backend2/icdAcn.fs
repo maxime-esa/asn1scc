@@ -184,9 +184,9 @@ let rec printType (tas:Ast.TypeAssignment) (t:Ast.Asn1Type) path (m:Asn1Module) 
     | IA5String   
     | BitString   
     | SequenceOf(_)  -> 
-        let ChildRow (i:BigInteger) =
+        let ChildRow (lineFrom:BigInteger) (i:BigInteger) =
             let sClass = if i % 2I = 0I then icd_uper.EvenRow() else icd_uper.OddRow()
-            let nIndex = i
+            let nIndex = lineFrom + i
             let sFieldName = icd_acn.ItemNumber(i)
             let sComment = ""
             let sType, sAsn1Constraints, sMinBits, sMaxBits = 
@@ -215,8 +215,8 @@ let rec printType (tas:Ast.TypeAssignment) (t:Ast.Asn1Type) path (m:Asn1Module) 
         let sFixedLengthComment = sprintf "Length is Fixed equal to %A, so no length determinant is encoded." nMax
         let arRows, sExtraComment =
             match Acn.GetSizeableEncodingClass t path r acn emptyLocation,  nMax>=2I with
-            | Acn.FixedSize(nSize), true      -> (ChildRow 1I)::(icd_uper.EmitRowWith3Dots())::(ChildRow nMax)::[], sFixedLengthComment
-            | Acn.FixedSize(nSize), false     -> (ChildRow 1I)::[], sFixedLengthComment
+            | Acn.FixedSize(nSize), true      -> (ChildRow 0I 1I)::(icd_uper.EmitRowWith3Dots())::(ChildRow 0I nMax)::[], sFixedLengthComment
+            | Acn.FixedSize(nSize), false     -> (ChildRow 0I 1I)::[], sFixedLengthComment
             | Acn.AutoSize ,_                 ->
                 let nLengthSize = match (uPER.GetTypeUperRange t.Kind t.Constraints  r) with
                                   | Concrete(a,b)                           -> (GetNumberOfBitsForNonNegativeInteger(b-a)) 
@@ -227,12 +227,12 @@ let rec printType (tas:Ast.TypeAssignment) (t:Ast.Asn1Type) path (m:Asn1Module) 
 
                 let lengthLine = icd_uper.EmmitChoiceChild (icd_uper.OddRow()) 1I "Length" comment    "unsigned int" sCon (nLengthSize.ToString()) (nLengthSize.ToString())
                 match nLengthSize>0I,nMax>=2I with
-                | true,true  -> lengthLine::(ChildRow 2I)::(icd_uper.EmitRowWith3Dots())::(ChildRow (nMax+1I))::[], ""
-                | true,false -> lengthLine::(ChildRow 2I)::[], ""
-                | false, true-> (ChildRow 1I)::(icd_uper.EmitRowWith3Dots())::(ChildRow nMax)::[], sFixedLengthComment
-                | false, false->(ChildRow 1I)::[], sFixedLengthComment
-            | Acn.ExternalField(fld), true    -> (ChildRow 1I)::(icd_uper.EmitRowWith3Dots())::(ChildRow nMax)::[], sprintf "Length determined by external field %s" (printPoint fld)
-            | Acn.ExternalField(fld), false   -> (ChildRow 1I)::[], sprintf "Length is determined by the external field: %s" (printPoint fld)
+                | true,true  -> lengthLine::(ChildRow 1I 1I)::(icd_uper.EmitRowWith3Dots())::(ChildRow 1I nMax)::[], ""
+                | true,false -> lengthLine::(ChildRow 1I 1I)::[], ""
+                | false, true-> (ChildRow 0I 1I)::(icd_uper.EmitRowWith3Dots())::(ChildRow 0I nMax)::[], sFixedLengthComment
+                | false, false->(ChildRow 0I 1I)::[], sFixedLengthComment
+            | Acn.ExternalField(fld), true    -> (ChildRow 0I 1I)::(icd_uper.EmitRowWith3Dots())::(ChildRow 0I nMax)::[], sprintf "Length determined by external field %s" (printPoint fld)
+            | Acn.ExternalField(fld), false   -> (ChildRow 0I 1I)::[], sprintf "Length is determined by the external field: %s" (printPoint fld)
 
             | Acn.NullTerminated,_        -> [],""
 
