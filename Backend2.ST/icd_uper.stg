@@ -9,6 +9,8 @@ NewLine() ::= "<br/>"
 Orange() ::= "#FF8f00"
 Blue() ::= "#379CEE"
 
+ItemNumber(nIndex) ::= "Item #$nIndex$"
+
 RealSizeExplained() ::= <<
 <a href="#REAL_SIZE_EXPLAINED123"><span style="vertical-align: super">why?</span></a>
 >>
@@ -42,7 +44,7 @@ $arrsItems;separator="\n"$
 >>
 
 // applicable to Integers, booleans, reals
-EmitPrimitiveType(sColor, sTasName, sTasNameC, sAsnKindName, sMinBytes, sMaxBytes, sMaxBitsExplained, sCommentLine, sAsn1Constraints, sMinBits, sMaxBits) ::= <<
+EmitPrimitiveType(sColor, sTasName, sTasNameC, sAsnKindName, sMinBytes, sMaxBytes, sMaxBitsExplained, sCommentLine, sAsn1Constraints, sMinBits, sMaxBits, arrsComments) ::= <<
 <a name="ICD_$sTasNameC$"></a> 
 <table border="0" width="100%" >
 <tbody>
@@ -87,7 +89,7 @@ $endif$
 
 
 
-EmitSequence(sColor, sTasName, sTasNameC, sMinBytes, sMaxBytes, sMaxBitsExplained, sCommentLine, arrsChildren) ::= <<
+EmitSequence(sColor, sTasName, sTasNameC, sMinBytes, sMaxBytes, sMaxBitsExplained, sCommentLine, arrsChildren, arrsComments) ::= <<
 <a name="ICD_$sTasNameC$"></a> 
 <table border="0" width="100%" >
 <tbody>
@@ -171,7 +173,7 @@ $arrsOptChildren;separator="\n"$
 
 
 /* *** CHOICE ****/
-EmitChoice(sColor, sTasName, sTasNameC, sMinBytes, sMaxBytes, sMaxBitsExplained, sCommentLine, arrsChildren) ::= <<
+EmitChoice(sColor, sTasName, sTasNameC, sMinBytes, sMaxBytes, sMaxBitsExplained, sCommentLine, arrsChildren, arrsComments) ::= <<
 <a name="ICD_$sTasNameC$"></a> 
 <table border="0" width="100%" >
 <tbody>
@@ -241,7 +243,7 @@ $arrsOptChildren;separator="\n"$
 
 /* *********** CHOICE END ********** */
 /* *********** SEQUENCE OF, OCTET STRING etc ********** */
-EmitSizeable(sColor, sTasName, sTasNameC, sKind, sMinBytes, sMaxBytes, sMaxBitsExplained, sCommentLine, arrsRows) ::= <<
+EmitSizeable(sColor, sTasName, sTasNameC, sKind, sMinBytes, sMaxBytes, sMaxBitsExplained, sCommentLine, arrsRows, arrsComments) ::= <<
 <a name="ICD_$sTasNameC$"></a> 
 <table border="0" width="100%" >
 <tbody>

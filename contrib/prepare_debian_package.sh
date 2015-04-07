@@ -2,7 +2,7 @@
 INITIAL_FOLDER=$(pwd)
 cd ..
 VERSION=$(cat Asn1f2/SvnVersion.cs | cut -d \" -f 2)
-echo Creating a Debian package for ASN1Scc version 3.0.$VERSION
+echo Creating a Debian package for ASN1Scc version 3.1.$VERSION
 test -f Asn1f2/bin/Debug/Asn1f2.exe || (echo 'Run ./build.sh first to build ASN1SCC' && false)
 rm -rf asn1scc
 mkdir -p asn1scc/DEBIAN
