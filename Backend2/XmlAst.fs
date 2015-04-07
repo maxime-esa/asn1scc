@@ -66,14 +66,18 @@ let rec PrintType (t:Asn1Type) modName (r:AstRoot) =
 
 
 let DoWork (r:AstRoot) =
+    let AllExported (m: Asn1Module) =
+        match m.Exports with
+        | All -> true
+        | _ -> false        
     let PrintVas (vas: Ast.ValueAssignment) modName =
-        xml.VasXml vas.Name.Value (BigInteger vas.Name.Location.srcLine) (BigInteger vas.Name.Location.charPos) (PrintType vas.Type modName r)
+        xml.VasXml vas.Name.Value (BigInteger vas.Name.Location.srcLine) (BigInteger vas.Name.Location.charPos) (PrintType vas.Type modName r) (PrintAsn1.PrintAsn1Value vas.Value)
     let PrintTas (tas:Ast.TypeAssignment) modName =
         xml.TasXml tas.Name.Value (BigInteger tas.Name.Location.srcLine) (BigInteger tas.Name.Location.charPos) (PrintType tas.Type modName r)
     let PrintModule (m:Asn1Module) =
         let PrintImpModule (im:Ast.ImportedModule) =
             xml.ImportedMod im.Name.Value (im.Types |> Seq.map(fun x -> x.Value)) (im.Values |> Seq.map(fun x -> x.Value))
-        xml.ModuleXml m.Name.Value (m.Imports |> Seq.map PrintImpModule) m.ExportedTypes m.ExportedVars (m.TypeAssignments |> Seq.map (fun t -> PrintTas t m.Name.Value)) (m.ValueAssignments |> Seq.map (fun t -> PrintVas t m.Name.Value))
+        xml.ModuleXml m.Name.Value (m.Imports |> Seq.map PrintImpModule) m.ExportedTypes m.ExportedVars (m.TypeAssignments |> Seq.map (fun t -> PrintTas t m.Name.Value)) (m.ValueAssignments |> Seq.map (fun t -> PrintVas t m.Name.Value)) (AllExported m)
     let PrintFile (f:Asn1File) =
         xml.FileXml f.FileName (f.Modules |> Seq.map PrintModule)
     let content = xml.RootXml (r.Files |> Seq.map PrintFile)

@@ -21,18 +21,26 @@ namespace Antlr
             {
                 IToken t = FileTokens[nextTokenIndex++];
                 if (alreadyTakenComments.Contains(t))
+                {
                     break;
+                }
                 if (t.Line != lastTokenLineNo)
+                {
                     break;
+                }
                 if (t.Type == asn1Lexer.WS)
+                {
                     continue;
+                }
                 else if (t.Type == asn1Lexer.COMMENT || t.Type == asn1Lexer.COMMENT2)
                 {
                         comments.Insert(0, t.Text);
                         alreadyTakenComments.Add(t);
                 }
                 else
+                {
                     break;
+                }
 
             }
 

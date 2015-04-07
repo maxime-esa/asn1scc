@@ -117,7 +117,7 @@ and CreateChoiceChild (astRoot:list<ITree>) (tree:ITree) (fileTokens:array<IToke
                 Type = CreateType astRoot sec fileTokens alreadyTakenComments ; 
                 Optionality=None; 
                 AcnInsertedField=false
-                Comments = Antlr.Comment.GetComments(fileTokens, alreadyTakenComments, fileTokens.[tree.TokenStopIndex].Line, tree.TokenStartIndex - 1, tree.TokenStopIndex + 2)
+                Comments = Antlr.Comment.GetComments(fileTokens, alreadyTakenComments, fileTokens.[x.TokenStopIndex].Line, x.TokenStartIndex - 1, x.TokenStopIndex + 2)
             }
         | _ -> raise (BugErrorException("Bug in CreateChoiceChild"))
     )
@@ -204,7 +204,7 @@ and CreateSequenceChild (astRoot:list<ITree>) (tree:ITree) (fileTokens:array<ITo
                                     | (None, None)      -> None
                                     | _                 -> raise (BugErrorException("Bug in CreateSequenceChild")) 
                     AcnInsertedField=false
-                    Comments = Antlr.Comment.GetComments(fileTokens, alreadyTakenComments, fileTokens.[tree.TokenStopIndex].Line, tree.TokenStartIndex - 1, tree.TokenStopIndex + 2)
+                    Comments = Antlr.Comment.GetComments(fileTokens, alreadyTakenComments, fileTokens.[x.TokenStopIndex].Line, x.TokenStartIndex - 1, x.TokenStopIndex + 2)
                 }
             ChildInfo chInfo
         | asn1Parser.COMPONENTS_OF -> 
