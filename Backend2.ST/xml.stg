@@ -18,8 +18,8 @@ FileXml(sFileName, arrsModules) ::= <<
 </Asn1File>
 >>
 
-ModuleXml(sName, arrsImportedModules, arrsExpTypes, arrsExpVars, arrsTases, arrsVases) ::=<<
-<Asn1Module ID="$sName$">
+ModuleXml(sName, arrsImportedModules, arrsExpTypes, arrsExpVars, arrsTases, arrsVases, bAllTypesExported) ::=<<
+<Asn1Module ID="$sName$" ExportAll="$bAllTypesExported$">
 <ExportedTypes>
     $arrsExpTypes:{x|<ExportedType Name="$x$" />};separator="\n"$ 
 </ExportedTypes>
@@ -32,6 +32,9 @@ ModuleXml(sName, arrsImportedModules, arrsExpTypes, arrsExpVars, arrsTases, arrs
 <TypeAssignments>
     $arrsTases;separator="\n"$
 </TypeAssignments>
+<VariablesAssignments>
+    $arrsVases;separator="\n"$
+</VariablesAssignments>
 </Asn1Module >
 >>
 
@@ -52,9 +55,10 @@ TasXml(sName, nLine, nPos, sType) ::= <<
 </TypeAssignment>
 >>
 
-VasXml(sName, nLine, nPos, sType) ::= <<
+VasXml(sName, nLine, nPos, sType, sValue) ::= <<
 <VariableAssignment Name="$sName$" Line="$nLine$" CharPositionInLine="$nPos$">
     $sType$
+    <Value>$sValue$</Value>
 </VariableAssignment>
 >>
 
