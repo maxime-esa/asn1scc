@@ -168,9 +168,9 @@ let rec printType (tas:Ast.TypeAssignment) (t:Ast.Asn1Type) (r:AstRoot) (acn:Acn
             let charSet = GetTypeUperRangeFrom(t.Kind, t.Constraints, r)
             let charSize = GetNumberOfBitsForNonNegativeInteger (BigInteger (charSet.Length-1))
             charSize.ToString()
-        let ChildRow (i:BigInteger) =
+        let ChildRow (lineFrom:BigInteger) (i:BigInteger) =
             let sClass = if i % 2I = 0I then icd_uper.EvenRow() else icd_uper.OddRow()
-            let nIndex = i
+            let nIndex = lineFrom + i
             let sFieldName = icd_uper.ItemNumber(i)
             let sComment = ""
             let sType, sAsn1Constraints, sMinBits, sMaxBits = 
@@ -216,13 +216,13 @@ let rec printType (tas:Ast.TypeAssignment) (t:Ast.Asn1Type) (r:AstRoot) (acn:Acn
 
         let arRows, sExtraComment = 
             match (GetTypeUperRange t.Kind t.Constraints  r) with
-            | Concrete(a,b)  when a=b && b<2I     -> [ChildRow 1I], "The array contains a single element."
-            | Concrete(a,b)  when a=b && b=2I    -> (ChildRow 1I)::(ChildRow 2I)::[], (sFixedLengthComment b)
-            | Concrete(a,b)  when a=b && b>2I    -> (ChildRow 1I)::(icd_uper.EmitRowWith3Dots())::(ChildRow b)::[], (sFixedLengthComment b)
-            | Concrete(a,b)  when a<>b && b<2I    -> LengthRow::(ChildRow 2I)::[],""
-            | Concrete(a,b)                       -> LengthRow::(ChildRow 2I)::(icd_uper.EmitRowWith3Dots())::(ChildRow (b+1I))::[], ""
+            | Concrete(a,b)  when a=b && b<2I     -> [ChildRow 0I 1I], "The array contains a single element."
+            | Concrete(a,b)  when a=b && b=2I     -> (ChildRow 0I 1I)::(ChildRow 0I 2I)::[], (sFixedLengthComment b)
+            | Concrete(a,b)  when a=b && b>2I     -> (ChildRow 0I 1I)::(icd_uper.EmitRowWith3Dots())::(ChildRow 0I b)::[], (sFixedLengthComment b)
+            | Concrete(a,b)  when a<>b && b<2I    -> LengthRow::(ChildRow 1I 1I)::[],""
+            | Concrete(a,b)                       -> LengthRow::(ChildRow 1I 1I)::(icd_uper.EmitRowWith3Dots())::(ChildRow 1I b)::[], ""
             | PosInf(_)                            
-            | Full                                -> LengthRow::(ChildRow 2I)::(icd_uper.EmitRowWith3Dots())::(ChildRow 65535I)::[], ""
+            | Full                                -> LengthRow::(ChildRow 1I 1I)::(icd_uper.EmitRowWith3Dots())::(ChildRow 1I 65535I)::[], ""
             | NegInf(_)                           -> raise(BugErrorException "")
             | Empty                               -> [], ""
         
