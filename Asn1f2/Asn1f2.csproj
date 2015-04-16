@@ -105,8 +105,6 @@
     <None Include="Resources\GPS_project.gpr" />
     <None Include="Resources\IgnoredExaminerWarnings.wrn" />
     <None Include="Resources\run.sh" />
-    <None Include="Resources\spark_asn1_rtl.adb" />
-    <None Include="Resources\spark_asn1_rtl.ads" />
   </ItemGroup>
   <ItemGroup>
     <None Include="Resources\asn1crt.c" />

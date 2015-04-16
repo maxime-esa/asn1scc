@@ -11,6 +11,8 @@
     <AssemblyName>Backend2.ST</AssemblyName>
     <TargetFrameworkVersion>v4.0</TargetFrameworkVersion>
     <Name>Backend2.ST</Name>
+    <TargetFSharpCoreVersion>4.3.0.0</TargetFSharpCoreVersion>
+    <MinimumVisualStudioVersion Condition="'$(MinimumVisualStudioVersion)' == ''">11</MinimumVisualStudioVersion>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
     <DebugSymbols>true</DebugSymbols>
@@ -31,46 +33,89 @@
     <WarningLevel>3</WarningLevel>
     <DocumentationFile>bin\Release\Backend2.ST.XML</DocumentationFile>
   </PropertyGroup>
-  <Import Project="$(MSBuildExtensionsPath32)\FSharp\1.0\Microsoft.FSharp.Targets" Condition="!Exists('$(MSBuildBinPath)\Microsoft.Build.Tasks.v4.0.dll')" />
-  <Import Project="$(MSBuildExtensionsPath32)\..\Microsoft F#\v4.0\Microsoft.FSharp.Targets" Condition=" Exists('$(MSBuildBinPath)\Microsoft.Build.Tasks.v4.0.dll')" />
+  <Choose>
+    <When Condition="'$(VisualStudioVersion)' == '11.0'">
+      <PropertyGroup>
+        <FSharpTargetsPath>$(MSBuildExtensionsPath32)\..\Microsoft SDKs\F#\3.0\Framework\v4.0\Microsoft.FSharp.Targets</FSharpTargetsPath>
+      </PropertyGroup>
+    </When>
+    <Otherwise>
+      <PropertyGroup>
+        <FSharpTargetsPath>$(MSBuildExtensionsPath32)\Microsoft\VisualStudio\v$(VisualStudioVersion)\FSharp\Microsoft.FSharp.Targets</FSharpTargetsPath>
+      </PropertyGroup>
+    </Otherwise>
+  </Choose>
+  <Import Project="$(FSharpTargetsPath)" Condition="Exists('$(FSharpTargetsPath)')" />
   <PropertyGroup>
     <PreBuildEvent>$(ProjectDir)..\parseStg2\bin\Debug\parseStg2.exe $(ProjectDir)backends.xml</PreBuildEvent>
   </PropertyGroup>
   <ItemGroup>
     <None Include="Script.fsx" />
     <Content Include="backends.xml" />
-    <None Include="ACN.stg" />
+    <None Include="ACN.stg">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
     <Compile Include="ACN.fs" />
-    <None Include="ASN.stg" />
+    <None Include="ASN.stg">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
     <Compile Include="ASN.fs" />
-    <None Include="spark_spec.stg" />
+    <None Include="spark_spec.stg">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
     <Compile Include="spark_spec.gen.fs" />
-    <None Include="spark_init.stg" />
+    <None Include="spark_init.stg">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
     <Compile Include="spark_init.gen.fs" />
-    <None Include="spark_validate.stg" />
+    <None Include="spark_validate.stg">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
     <Compile Include="spark_validate.gen.fs" />
-    <None Include="spark_variables.stg" />
+    <None Include="spark_variables.stg">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
     <Compile Include="spark_variables.gen.fs" />
-    <None Include="spark_uper.stg" />
+    <None Include="spark_uper.stg">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
     <Compile Include="spark_uper.gen.fs" />
-    <None Include="spark_main.stg" />
+    <None Include="spark_main.stg">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
     <Compile Include="spark_main.gen.fs" />
-    <None Include="spark_acn.stg" />
+    <None Include="spark_acn.stg">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
     <Compile Include="spark_acn.gen.fs" />
-    <None Include="spark_acn_int.stg" />
+    <None Include="spark_acn_int.stg">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
     <Compile Include="spark_acn_int.gen.fs" />
-    <None Include="spark_automatic_test_cases.stg" />
+    <None Include="spark_automatic_test_cases.stg">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
     <Compile Include="spark_automatic_test_cases.gen.fs" />
-    <None Include="xml.stg" />
+    <None Include="xml.stg">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
     <Compile Include="xml.gen.fs" />
-    <None Include="icd_uper.stg" />
+    <None Include="icd_uper.stg">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
     <Compile Include="icd_uper.gen.fs" />
     <Compile Include="generic.gen.fs" />
-    <None Include="generic.stg" />
+    <None Include="generic.stg">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
     <Compile Include="icd_acn.gen.fs" />
-    <None Include="icd_acn.stg" />
+    <None Include="icd_acn.stg">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
     <Compile Include="python.gen.fs" />
-    <None Include="python.stg" />
+    <None Include="python.stg">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\ST\ST.fsproj">
@@ -86,8 +131,10 @@
     <Reference Include="Antlr3.Utility">
       <HintPath>..\Antlr\antlr313\Antlr3.Utility.dll</HintPath>
     </Reference>
+    <Reference Include="FSharp.Core, Version=$(TargetFSharpCoreVersion), Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a">
+      <Private>True</Private>
+    </Reference>
     <Reference Include="mscorlib" />
-    <Reference Include="FSharp.Core" />
     <Reference Include="StringTemplate">
       <HintPath>..\Antlr\antlr313\StringTemplate.dll</HintPath>
     </Reference>
