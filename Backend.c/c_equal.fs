@@ -95,7 +95,7 @@ let CollectLocalVars (t:Asn1Type) (tas:TypeAssignment) (m:Asn1Module) (r:AstRoot
         | _                 -> ""
     lvs |> Seq.map emitLocalVariable
 
-let PrintTypeAss (tas:TypeAssignment) (m:Asn1Module) (f:Asn1File) (r:AstRoot) (acn:AcnTypes.AcnAstResolved) = 
+let PrintTypeAss (tas:TypeAssignment) (m:Asn1Module) (r:AstRoot) = 
     let sName = tas.GetCName r.TypePrefix
     let t = RemoveWithComponents tas.Type r
     let sStar = (TypeStar tas.Type r)

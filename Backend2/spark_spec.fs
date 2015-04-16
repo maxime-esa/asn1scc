@@ -235,13 +235,20 @@ let PrintValueAss (v:ValueAssignment) (m:Asn1Module) (r:AstRoot) (state:State)=
     |true   -> ss.PrintValueAssignment_Choice sName sTypeDecl sValue, s1
 
 
-let SortTypeAssigments (m:Asn1Module) =
+let SortTypeAssigments (m:Asn1Module) (r:AstRoot) (acn:AcnTypes.AcnAstResolved) =
     let GetTypeDependencies (tas:TypeAssignment)  = 
         seq {
             for ch in (GetMySelfAndChildren tas.Type) do
                 match ch.Kind with
                 | ReferenceType(_, tasName, _)   -> yield tasName.Value; 
                 | _                                 ->      ()
+            for acnpar in acn.Parameters do
+                if acnpar.ModName = m.Name.Value && acnpar.TasName = tas.Name.Value then
+                    match acnpar.Asn1Type with
+                    | AcnTypes.Integer                      -> ()
+                    | AcnTypes.Boolean                      -> ()
+                    | AcnTypes.NullType                     -> ()
+                    | AcnTypes.RefTypeCon(mod_ref,tas_ref)  ->  yield tas_ref.Value
         } |> Seq.distinct |> Seq.toList
 
     let allNodes = m.TypeAssignments |> List.map( fun tas -> (tas.Name.Value, GetTypeDependencies tas))
@@ -262,7 +269,7 @@ let SortTypeAssigments (m:Asn1Module) =
 
 let PrintModule (m:Asn1Module) (f:Asn1File) (r:AstRoot) (acn:AcnTypes.AcnAstResolved) outDir fileExt (state:State) =
     let includedPackages = ss.rtlModuleName()::(m.Imports |> List.map (fun im -> ToC im.Name.Value))
-    let sortedTas = SortTypeAssigments m
+    let sortedTas = SortTypeAssigments m r acn
     let tases, s1 = sortedTas |> foldMap(fun s tas -> PrintTypeAss tas m r acn s) state
     let vases, s2 = m.ValueAssignments |> foldMap(fun s vas -> PrintValueAss vas m r s) s1
     let arrPrivChoices = 

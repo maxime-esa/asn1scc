@@ -250,7 +250,15 @@ let bitStringValueToByteArray (s:StringLoc) =
  
 
 
-let rec DoTopologicalSort2 independentNodes dependentNodes  comparer excToThrow =
+//let rec DoTopologicalSort2 independentNodes dependentNodes  comparer excToThrow =
+//let rec DoTopologicalSort2 
+//                (independentNodes: PrimitiveWithLocation<string> list) 
+//                (dependentNodes: (PrimitiveWithLocation<string> * PrimitiveWithLocation<string> list) list)  
+//                comparer excToThrow =
+let rec DoTopologicalSort2 
+                (independentNodes: 'a list) 
+                (dependentNodes: ('a * 'b list) list)  
+                comparer excToThrow =
     match independentNodes with
     | []          ->  if List.isEmpty dependentNodes then []
                       else  

@@ -25,7 +25,7 @@ let PrintTypeAss (t:TypeAssignment) (m:Asn1Module) (f:Asn1File) (r:AstRoot) (acn
         c_src.PrintInitialize sName sStar sVal bIsString
     let initContent =  PrintInitFunc ()
     let valContent =   c_validate.PrintTypeAss t m f r acn
-    let equalContent = if r.GenerateEqualFunctions then (c_equal.PrintTypeAss t m f r acn) else ""
+    let equalContent = if r.GenerateEqualFunctions then (c_equal.PrintTypeAss t m r) else ""
     let EncFunc = function
         | UPER  -> [c_uper.EmitTypeAss t m r Encode; c_uper.EmitTypeAss t m r Decode] 
         | ACN   -> [c_acn.EmitUpdate_param_functions t m r acn; c_acn.EmitTypeAss t m r acn Encode;  c_acn.EmitTypeAss t m r acn Decode]
