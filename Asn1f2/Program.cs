@@ -116,7 +116,7 @@ namespace Asn1f2
                 Console.Error.WriteLine("No input files");
                 Environment.Exit(Usage());
             }
-            var generateEqualFunctions = cmdArgs.HasArgument("equal") || (cmdArgs.HasArgument("c") && cmdArgs.HasArgument("atc"));
+            var generateEqualFunctions = cmdArgs.HasArgument("equal") || cmdArgs.HasArgument("atc");
             var outDir = cmdArgs.GetOptionalArgument("o") ?? ".";
             var bGenerateAcnDefault = cmdArgs.HasArgument("ACND");
 

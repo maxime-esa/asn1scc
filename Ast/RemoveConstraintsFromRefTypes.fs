@@ -37,7 +37,7 @@ let DoWork ast acn =
             | true  -> [{acnType with Properties=[]}; {acnType with TypeID = newTypeAbsPath}]
         {ast with Types = ast.Types |> List.collect ChangeTypeID}
 
-    let CloneType (old:Asn1Type) m (key:list<string>) (cons:Constructors<State>) (state:State) =
+    let CloneType (old:Asn1Type) (m:Ast.Asn1Module) (key:list<string>) (cons:Constructors<State>) (state:State) =
         let moveableLongReference (x:LongReferenceResolved) = match x.Kind with SizeDeterminant | ChoiceDeteterminant -> true | _ ->false
         let acnProps = old.AcnProperties
         let moveLongRefs = state.acn.References |> List.filter(fun x -> x.decType.AbsPath =  key && moveableLongReference x)
@@ -48,10 +48,10 @@ let DoWork ast acn =
                 | modName::restKey -> modName, (restKey@[state.Count.ToString()]).StrJoin("-")
                 | []               -> raise(BugErrorException("Invalid type key"))
             let baseType = GetBaseType old ast
-            let typeToReturn = {old with Kind = ReferenceType(mn,newRefTypeName.AsLoc, bTab); Constraints=[]; AcnProperties=[]}
+            let typeToReturn = {old with Kind = ReferenceType(m.Name,newRefTypeName.AsLoc, bTab); Constraints=[]; AcnProperties=[]}
             let newType = {baseType with Constraints=(baseType.Constraints @ old.Constraints); AcnProperties=old.AcnProperties}
 
-            let newTas = {NewTas.ModName = mn.Value; TasName=newRefTypeName;Type=newType; originalTypePath=key}
+            let newTas = {NewTas.ModName = m.Name.Value; TasName=newRefTypeName;Type=newType; originalTypePath=key}
 
             let newState = {state with State.newTases = newTas::state.newTases; Count = state.Count+1; }
             typeToReturn, newState

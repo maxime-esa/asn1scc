@@ -18,7 +18,7 @@ let PrintTypeAss (t:TypeAssignment) (m:Asn1Module) (r:AstRoot) (acn:AcnTypes.Acn
     let valContent, s2 =   match (HasValidateFunc t.Type r) with
                            | true   ->  spark_validate.EmitTypeAss t m r s1
                            | false  -> "", s1
-    let equalContent = if r.GenerateEqualFunctions then spark_equal.PrintTypeAssEqual2 t m r else ""
+    let equalContent = if r.GenerateEqualFunctions then (spark_equal.PrintTypeAssEqual2 t m r) else ""
     let EncFunc = function
         | UPER  -> [spark_uper.EmitTypeAss t m r Encode; spark_uper.EmitTypeAss t m r Decode]
         | ACN   -> [ spark_acn.EmitUpdate_param_functions t m r acn;
@@ -54,7 +54,7 @@ let PrintModule (m:Asn1Module) (f:Asn1File) (r:AstRoot) (acn:AcnTypes.AcnAstReso
     let includedPackages = ss.rtlModuleName()::(m.Imports |> List.map (fun im -> ToC im.Name.Value))
     let acnBoolPatterns = spark_acn.CollectBoolPatterns m r
     let negRealConstants = CollectNegativeReals m r |> Seq.map(fun (nm, dv) -> ss.PrintNegativeRealConstant nm dv)
-    let tases, s1 = (spark_spec.SortTypeAssigments m) |> foldMap(fun s tas -> PrintTypeAss tas m r acn s) state
+    let tases, s1 = (spark_spec.SortTypeAssigments m r acn) |> foldMap(fun s tas -> PrintTypeAss tas m r acn s) state
     let vases, s2 = m.ValueAssignments|>List.filter(fun v ->IsOrContainsChoice v.Type r) |> foldMap(fun s vas -> PrintValueAss vas m r s) s1
     let content = ss.PrintPackageBody (ToC m.Name.Value) includedPackages negRealConstants acnBoolPatterns tases vases
     let fileName = Path.Combine(outDir, ((ToC m.Name.Value)+fileExt).ToLower())
