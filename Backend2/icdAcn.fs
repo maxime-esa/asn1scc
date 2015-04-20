@@ -255,7 +255,8 @@ let PrintTas (tas:Ast.TypeAssignment) (m:Asn1Module) (r:AstRoot) (acn:AcnTypes.A
 
 let PrintModule (m:Asn1Module) (f:Asn1File) (r:AstRoot) (acn:AcnTypes.AcnAstResolved)  =
     let blueTasses = icdUper.getModuleBlueTasses m |> Seq.map snd
-    let tases = m.TypeAssignments |> Seq.map (fun x -> PrintTas x m r acn blueTasses)
+    let sortedTas = spark_spec.SortTypeAssigments m r acn
+    let tases = sortedTas |> Seq.map (fun x -> PrintTas x m r acn blueTasses)
     let comments = []
     icd_uper.EmmitModule m.Name.Value comments tases
 

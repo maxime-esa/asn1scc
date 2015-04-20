@@ -182,7 +182,7 @@ let SortTypeAssigments (f:Asn1File) =
 
     let independentNodes = allNodes |> List.filter(fun (_,list) -> List.isEmpty list) |> List.map(fun (n,l) -> n)
     let dependentNodes = allNodes |> List.filter(fun (_,list) -> not (List.isEmpty list) )
-    let sortedTypeAss = DoTopologicalSort (importedTypes@ independentNodes) dependentNodes (fun c -> SemanticError(emptyLocation, sprintf "ASN.1 grammar has cyclic dependencies: %A" c ))
+    let sortedTypeAss = DoTopologicalSort (importedTypes@ independentNodes) dependentNodes (fun c -> SemanticError(emptyLocation, sprintf "Recursive types are not compatible with embedded systems.\nASN.1 grammar has cyclic dependencies: %A" c ))
     seq {
         for tasName in sortedTypeAss do
             for m in f.Modules do

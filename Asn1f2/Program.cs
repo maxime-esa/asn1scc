@@ -62,7 +62,11 @@ namespace Asn1f2
             }
             catch (FsUtils.SemanticError ex)
             {
-                Console.Error.WriteLine("File:{0}, line:{1}, {2}", Path.GetFileName(ex.Data0.srcFilename), ex.Data0.srcLine, ex.Data1);
+                if (ex.Data0.Equals(FsUtils.emptyLocation))
+                    // do not display empty file/zero line for "emptyLocation"
+                    Console.Error.WriteLine("{0}", ex.Data1);
+                else
+                    Console.Error.WriteLine("File:{0}, line:{1}, {2}", Path.GetFileName(ex.Data0.srcFilename), ex.Data0.srcLine, ex.Data1);
                 return 2;
             }
 
