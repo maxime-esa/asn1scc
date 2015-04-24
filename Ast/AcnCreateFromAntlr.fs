@@ -272,8 +272,8 @@ and CreateAcnChild (files:seq<ITree*string*array<IToken>>) (t:ITree)  (asn1Paren
             let asn1Type = {AcnAsn1Type2Asn1Type acnAsn1Type with Location = t.GetChild(1).Location}
             // Get comments using the files tokens
             let alreadyTakenComments = System.Collections.Generic.List<IToken>()
-            let comments = Antlr.Comment.GetComments(tokens, alreadyTakenComments, tokens.[t.TokenStopIndex].Line, t.TokenStartIndex - 1, t.TokenStopIndex + 2)
-            printfn "%A %d %d %d" tokens tokens.[t.TokenStopIndex].Line t.TokenStartIndex t.TokenStopIndex
+            let comments = Antlr.Comment.GetAcnComments(tokens, alreadyTakenComments, tokens.[t.TokenStopIndex].Line, t.TokenStartIndex - 1, t.TokenStopIndex + 2)
+            //printfn "%s %A %d %d %d" name comments tokens.[t.TokenStopIndex].Line t.TokenStartIndex t.TokenStopIndex
             CreateAcnType files (t.GetChildByType acnParser.ENCODING_SPEC) asn1Type newAbsPath implMode loc ast r tokens
         | _                             -> raise(BugErrorException("AcnCreayeFromAntlr::CreateAcnChild"))
     | Choice(children)      ->
