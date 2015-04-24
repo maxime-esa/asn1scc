@@ -54,7 +54,7 @@ let CheckReference (newAsn1:AstRoot) (newAcn:AcnTypes.AcnAst) (r:AcnTypes.LongRe
                 | Enumerated(_), _          -> raise(SemanticError(loc, "expecting a matching enumerated field"))
                 | _                         -> raise(BugErrorException "")
             | _                             -> raise(SemanticError(loc, "Arguments can be applied only to reference types "))
-        
+
     match r.TypeID with
     | []       -> raise(BugErrorException "")
     | x::[]    -> raise(BugErrorException "")
@@ -88,7 +88,7 @@ let CheckReference (newAsn1:AstRoot) (newAcn:AcnTypes.AcnAst) (r:AcnTypes.LongRe
 let DoWork (ast:AstRoot) (acn:AcnTypes.AcnAst) =
     let CheckReferences (newAsn1:AstRoot) (newAcn:AcnTypes.AcnAst) =
         newAcn.References |> Seq.iter (CheckReference newAsn1 newAcn)
-        
+
     let CloneType (old:Asn1Type) m (key:list<string>) (cons:Constructors<State>) (state:State) =
         let CloneChild s (ch:ChildInfo) =
             let t,ns = cons.cloneType ch.Type m (key@[ch.Name.Value]) cons s
@@ -124,11 +124,11 @@ let DoWork (ast:AstRoot) (acn:AcnTypes.AcnAst) =
                                                                   | AcnTypes.AcnTypeImplMode.LocalVariable(_)    -> true
                                                                   | AcnTypes.FunctionParameter(_)                -> true
                                                 Optionality = None
-                                                Comments = [||]
+                                                Comments = acnChild.Comments
                                             }
 
                             } |>Seq.toList
-                
+
                 Sequence(newChich)
             | Choice(children)    -> 
                 let newChildren, finalState = children |> foldMap CloneChild state
@@ -137,7 +137,7 @@ let DoWork (ast:AstRoot) (acn:AcnTypes.AcnAst) =
                 let nch,ns = cons.cloneType child m (key@["#"]) cons state
                 SequenceOf(nch)
             | _                   -> old.Kind
-        
+
         {
             Kind = newKind
             Constraints = old.Constraints

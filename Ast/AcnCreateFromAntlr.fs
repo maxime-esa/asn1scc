@@ -1,4 +1,4 @@
-﻿module AcnCreayeFromAntlr
+﻿module AcnCreateFromAntlr
 
 open System.Linq
 open System.Numerics
@@ -108,7 +108,7 @@ and CreateExpression (r:Ast.AstRoot, st:List<StringLoc>)  (t:ITree) =
     | acnParser.MODULO              -> ModExpr(CreateExpression (r,st) (t.GetChild(0)), CreateExpression (r,st) (t.GetChild(1)))
     | acnParser.POWER_SYMBOL        -> PowExpr(CreateExpression (r,st) (t.GetChild(0)), CreateExpression (r,st) (t.GetChild(1)))
     | acnParser.UNARY_MINUS         -> UnMinExp(CreateExpression (r,st) (t.GetChild(0)))
-    | _                             -> raise( BugErrorException("AcnCreayeFromAntlr::CreateExpression Unsupported operator"))
+    | _                             -> raise( BugErrorException("AcnCreateFromAntlr::CreateExpression Unsupported operator"))
 
 and CreateAcnIntegerConstant constantsSet (t:ITree) = 
     match t.Type with
@@ -117,7 +117,7 @@ and CreateAcnIntegerConstant constantsSet (t:ITree) =
         let extToThrow = SemanticError(t.Location, (sprintf "No ACN constant is defined with name '%s'" t.Text))
         CheckExists t.TextL constantsSet extToThrow
         RefConst(t.TextL)
-    | _                             -> raise(BugErrorException("AcnCreayeFromAntlr::CreateAcnIntegerConstant"))
+    | _                             -> raise(BugErrorException("AcnCreateFromAntlr::CreateAcnIntegerConstant"))
 
 
 and CreateAcnFile (files:seq<ITree*string*array<IToken>>) (t:ITree) (ast:AcnAst) (r:Ast.AstRoot) (tokens:array<IToken>) = 
@@ -154,7 +154,7 @@ and CreateAcnTypeAssigment (files:seq<ITree*string*array<IToken>>) (t:ITree) mod
                     paramList.Children |> List.map CreateParam
     let asn1Type = Ast.GetTypeByAbsPath absPath r
 
-    CreateAcnType files encSpec asn1Type absPath RecordField (t.GetChildByType(acnParser.UID).Location) {ast with Parameters = ast.Parameters@prms} r tokens
+    CreateAcnType files encSpec asn1Type absPath RecordField (t.GetChildByType(acnParser.UID).Location) {ast with Parameters = ast.Parameters@prms} r tokens [||]
 
 
 and CreateAcnAsn1Type (t:ITree) (r:Ast.AstRoot) =
@@ -167,14 +167,14 @@ and CreateAcnAsn1Type (t:ITree) (r:Ast.AstRoot) =
             match t.Children with
             | first::[]             -> first.GetAncestor(acnParser.MODULE_DEF).GetChild(0).TextL,first.TextL
             | first::sec::[]        -> first.TextL,sec.TextL
-            | _                     -> raise(BugErrorException("AcnCreayeFromAntlr::CreateAcnAsn1Type 1"))
+            | _                     -> raise(BugErrorException("AcnCreateFromAntlr::CreateAcnAsn1Type 1"))
         CheckModuleName mdName r
         CheckTasName mdName.Value tsName r
         AcnAsn1Type.RefTypeCon(mdName, tsName)
-    | _                         -> raise(BugErrorException("AcnCreayeFromAntlr::CreateAcnAsn1Type 2"))
+    | _                         -> raise(BugErrorException("AcnCreateFromAntlr::CreateAcnAsn1Type 2"))
 
 
-and CreateAcnType (files:seq<ITree*string*array<IToken>>) (t:ITree) (asn1Type:Asn1Type) absPath implMode location (ast:AcnAst) (r:Ast.AstRoot) (tokens:array<IToken>) =
+and CreateAcnType (files:seq<ITree*string*array<IToken>>) (t:ITree) (asn1Type:Asn1Type) absPath implMode location (ast:AcnAst) (r:Ast.AstRoot) (tokens:array<IToken>) (comments: array<string>) =
 
     let props = match t.GetOptChild(acnParser.ENCODING_PROPERTIES) with
                 | None              -> []
@@ -189,7 +189,7 @@ and CreateAcnType (files:seq<ITree*string*array<IToken>>) (t:ITree) (asn1Type:As
 
     let props = propsWithRefs |> List.choose(fun x -> match x with Prop p -> Some p | _ -> None)
     let enumResetProps = GetEnumValuesResetInAcn t asn1Type |> List.map(fun (nm,vl) -> EnumeratorResetValue(nm,vl))
-    let acnType = {AcnType.TypeID = absPath; ImpMode=implMode; Properties = props@enumResetProps; Location = location}
+    let acnType = {AcnType.TypeID = absPath; ImpMode=implMode; Properties = props@enumResetProps; Location = location; Comments = comments}
     let LRer_2_LongReference (relPat:RelPath, kind:LongReferenceKind, loc) =
         {LongReference.TypeID = absPath; LongRef=relPat; Kind = kind; Location = loc }
     let longReferences = propsWithRefs |> List.choose(fun x -> match x with LRef(lf) -> Some(lf|>List.map LRer_2_LongReference)|_ -> None) |> List.concat
@@ -257,7 +257,8 @@ and CreateAcnChild (files:seq<ITree*string*array<IToken>>) (t:ITree)  (asn1Paren
 
         let asn1Child = children |> Seq.find(fun x -> x.Name.Value = name)
         let args= GetArgumentList asn1Child.Type.Kind
-        CreateAcnType files (t.GetChildByType acnParser.ENCODING_SPEC) asn1Child.Type newAbsPath RecordField loc {ast with References = ast.References@ args} r tokens
+        // TODO add comments
+        CreateAcnType files (t.GetChildByType acnParser.ENCODING_SPEC) asn1Child.Type newAbsPath RecordField loc {ast with References = ast.References@ args} r tokens [||]
 
     match asn1Parent.Kind with
     | Sequence(children)    ->
@@ -273,14 +274,14 @@ and CreateAcnChild (files:seq<ITree*string*array<IToken>>) (t:ITree)  (asn1Paren
             // Get comments using the files tokens
             let alreadyTakenComments = System.Collections.Generic.List<IToken>()
             let comments = Antlr.Comment.GetAcnComments(tokens, alreadyTakenComments, tokens.[t.TokenStopIndex].Line, t.TokenStartIndex - 1, t.TokenStopIndex + 2)
-            //printfn "%s %A %d %d %d" name comments tokens.[t.TokenStopIndex].Line t.TokenStartIndex t.TokenStopIndex
-            CreateAcnType files (t.GetChildByType acnParser.ENCODING_SPEC) asn1Type newAbsPath implMode loc ast r tokens
-        | _                             -> raise(BugErrorException("AcnCreayeFromAntlr::CreateAcnChild"))
+            //printfn "%s %A" name comments
+            CreateAcnType files (t.GetChildByType acnParser.ENCODING_SPEC) asn1Type newAbsPath implMode loc ast r tokens comments
+        | _                             -> raise(BugErrorException("AcnCreateFromAntlr::CreateAcnChild"))
     | Choice(children)      ->
         match t.Type with
         | acnParser.CHILD               -> Handle_ExistingChild children
         | acnParser.CHILD_NEW           -> raise(SemanticError(t.Location, "New fields can be inserted within sequences, not choices."))
-        | _                             -> raise(BugErrorException("AcnCreayeFromAntlr::CreateAcnChild"))
+        | _                             -> raise(BugErrorException("AcnCreateFromAntlr::CreateAcnChild"))
     | SequenceOf(child)     ->
         match t.Type with
         | acnParser.CHILD       ->
@@ -290,9 +291,9 @@ and CreateAcnChild (files:seq<ITree*string*array<IToken>>) (t:ITree)  (asn1Paren
             | Some(lid)     -> raise(SemanticError(t.Location, sprintf "%s Unexpected field name" lid.Text))
 
             let args= GetArgumentList child.Kind
-            CreateAcnType files (t.GetChildByType acnParser.ENCODING_SPEC) child newAbsPath RecordField loc {ast with References = ast.References@ args} r tokens
+            CreateAcnType files (t.GetChildByType acnParser.ENCODING_SPEC) child newAbsPath RecordField loc {ast with References = ast.References@ args} r tokens [||]
         | acnParser.CHILD_NEW           -> raise(SemanticError(t.Location, "New fields can be inserted within sequences, not sequence ofs."))
-        | _                             -> raise(BugErrorException("AcnCreayeFromAntlr::CreateAcnChild"))
+        | _                             -> raise(BugErrorException("AcnCreateFromAntlr::CreateAcnChild"))
     | _                     -> raise(SemanticError(t.Location, "Only Sequences, Choices and Sequence Ofs may contain child element specifications."))
         
 

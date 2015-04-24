@@ -60,16 +60,16 @@ and Asn1Type = {
 }
 
 and Asn1TypeKind =
-    | Integer 
-    | Real    
-    | IA5String 
+    | Integer
+    | Real
+    | IA5String
     | NumericString
     | OctetString 
     | NullType
-    | BitString         
+    | BitString
     | Boolean 
     | Enumerated        of list<NamedItem>
-    | SequenceOf        of Asn1Type    
+    | SequenceOf        of Asn1Type
     | Sequence          of list<ChildInfo>
     | Choice            of list<ChildInfo>
     | ReferenceType     of StringLoc*StringLoc*bool  // Module, tas, flag indicating if type is tablularized (=true) or not
@@ -375,23 +375,23 @@ let AcnAsn1Type2Asn1Type (t:AcnTypes.AcnAsn1Type) :  Asn1Type =
     | AcnTypes.Integer                   -> {Asn1Type.Kind = Integer; Constraints = []; AcnProperties=[]; Location= emptyLocation}
     | AcnTypes.Boolean                   -> {Asn1Type.Kind = Boolean; Constraints = []; AcnProperties=[]; Location= emptyLocation}
     | AcnTypes.NullType                  -> {Asn1Type.Kind = NullType; Constraints = []; AcnProperties=[]; Location= emptyLocation}
-    | AcnTypes.RefTypeCon(mdName, tsName)-> 
+    | AcnTypes.RefTypeCon(mdName, tsName)->
         {Asn1Type.Kind = ReferenceType(mdName, tsName, false); Constraints = []; AcnProperties=[]; Location= emptyLocation}
 
 
 let GetTypeByPoint (p:AcnTypes.Point) (r:AstRoot) (acn:AcnTypes.AcnAstResolved) =
     match p with
     | AcnTypes.TypePoint(absPath)   ->      GetTypeByAbsPath absPath r
-    | AcnTypes.ParamPoint(absPath)  ->      
+    | AcnTypes.ParamPoint(absPath)  ->
         let modName, tasName, prmName = match p.AbsPath with
                                         | x1::x2::x3::[]   -> x1,x2,x3
-                                        | _              -> raise(BugErrorException("Invalid Path"))                        
+                                        | _              -> raise(BugErrorException("Invalid Path"))
         let prm = acn.Parameters |> Seq.find(fun x -> x.ModName = modName && x.TasName=tasName && x.Name = prmName)
         AcnAsn1Type2Asn1Type prm.Asn1Type
     | AcnTypes.TempPoint(absPath)  ->
         let modName, tasName, prmName = match p.AbsPath with
                                         | x1::x2::x3::[]   -> x1,x2,x3
-                                        | _              -> raise(BugErrorException("Invalid Path"))                        
+                                        | _              -> raise(BugErrorException("Invalid Path"))
         let prm = acn.TmpTypes |> Seq.find(fun x -> x.ModName = modName && x.TasName=tasName && x.Name = prmName)
         AcnAsn1Type2Asn1Type prm.Asn1Type
 
