@@ -106,7 +106,7 @@ let DoWork (ast:AstRoot) (acn:AcnTypes.AcnAst) =
                                 for acnChild in acnChildren do
                                     let acnChildName = acnChild.TypeID |> List.rev |> List.head
                                     match children |> Seq.tryFind(fun x-> x.Name.Value = acnChildName) with
-                                    |Some(asn1Child)    -> yield (CloneChild state asn1Child|> fst)
+                                    |Some(asn1Child)    -> yield {(CloneChild state asn1Child|> fst) with Comments=acnChild.Comments}
                                     |None               ->
                                         yield {
                                                 ChildInfo.Name = {StringLoc.Value = acnChildName; Location= acnChild.Location}

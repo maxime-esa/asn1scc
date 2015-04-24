@@ -257,8 +257,11 @@ and CreateAcnChild (files:seq<ITree*string*array<IToken>>) (t:ITree)  (asn1Paren
 
         let asn1Child = children |> Seq.find(fun x -> x.Name.Value = name)
         let args= GetArgumentList asn1Child.Type.Kind
-        // TODO add comments
-        CreateAcnType files (t.GetChildByType acnParser.ENCODING_SPEC) asn1Child.Type newAbsPath RecordField loc {ast with References = ast.References@ args} r tokens [||]
+        let alreadyTakenComments = System.Collections.Generic.List<IToken>()
+        let comments = Antlr.Comment.GetAcnComments(tokens, alreadyTakenComments, tokens.[t.TokenStopIndex].Line, t.TokenStartIndex - 1, t.TokenStopIndex + 2)
+        // Keep the existing comments from the ASN.1 module and add those of the ASN module
+        let full_comments = Array.append asn1Child.Comments comments
+        CreateAcnType files (t.GetChildByType acnParser.ENCODING_SPEC) asn1Child.Type newAbsPath RecordField loc {ast with References = ast.References@ args} r tokens full_comments
 
     match asn1Parent.Kind with
     | Sequence(children)    ->
