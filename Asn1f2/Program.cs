@@ -167,7 +167,7 @@ namespace Asn1f2
             }
 
 
-            var acnAstUnresolved = AcnCreayeFromAntlr.CreateAcnAst(ParseAcnInputFiles(acnInputFiles), asn1Ast0);
+            var acnAstUnresolved = AcnCreateFromAntlr.CreateAcnAst(ParseAcnInputFiles(acnInputFiles), asn1Ast0);
            
 
             //PrintAsn1.DoWork(asn1Ast0, outDir, ".0.asn1");

@@ -27,16 +27,16 @@ let rec GetEndianess (t:Asn1Type) (asn1:Ast.AstRoot)   =
     match t.AcnProperties |> List.choose(fun x -> match x with Endianness(a) -> Some a | _ -> None ) with
     | hd::_   -> hd
     | []      -> AcnTypes.endianness.BigEndianness
-    
+
 
 let rec isEnumEncodingValues (t:Asn1Type) (asn1:Ast.AstRoot)   =
     t.AcnProperties |> List.exists(fun x -> match x with EncodeValues -> true | _ -> false ) 
 
 let GetEncodingProperty (a:Asn1Type) (asn1:Ast.AstRoot)   =
-    match a.AcnProperties |> List.choose(fun x -> match x with Encoding(a) -> Some a | _ -> None ) with     
+    match a.AcnProperties |> List.choose(fun x -> match x with Encoding(a) -> Some a | _ -> None ) with
     | hd::_ -> Some hd
     | []    -> None
-        
+
 
 
 type IntEncodingClass =
@@ -604,7 +604,7 @@ module Resolve =
         | []  | _::[]               -> raise(SemanticError (loc,sprintf "Invalid Reference: %s" (p.StrJoin ".")))
         | modName::tasName::restPart -> 
             GetLongChild (r,acn) ((Ast.GetActualTypeByNameLoc modName tasName loc r), [modName;tasName]) restPart loc
-        
+
 
 
     let ResolveRelativePaths (acn:AcnAst) (asn1:AstRoot) : AcnAstResolved =

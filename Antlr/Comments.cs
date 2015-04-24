@@ -5,6 +5,7 @@ using System.Text;
 using Antlr.Runtime.Tree;
 using Antlr.Runtime;
 using Antlr.Asn1;
+using Antlr.Acn;
 using System.IO;
 
 namespace Antlr
@@ -68,7 +69,66 @@ namespace Antlr
             return comments.ToArray();
         }
 
+        // get ACN comments - lexer identifiers are different from asn1
+        public static string[] GetAcnComments(IToken[] FileTokens, List<IToken> alreadyTakenComments, int lastTokenLineNo,
+            int prevTokenIndex, int nextTokenIndex)
+        {
+            List<string> comments = new List<string>();
+            //first see if there comments on the same line
+
+            while (nextTokenIndex >= 0 && nextTokenIndex < FileTokens.Length)
+            {
+                IToken t = FileTokens[nextTokenIndex++];
+                if (alreadyTakenComments.Contains(t))
+                {
+                    break;
+                }
+                if (t.Line != lastTokenLineNo)
+                {
+                    break;
+                }
+                if (t.Type == acnLexer.WS)
+                {
+                    continue;
+                }
+                else if (t.Type == acnLexer.COMMENT || t.Type == acnLexer.COMMENT2)
+                {
+                        comments.Insert(0, t.Text);
+                        alreadyTakenComments.Add(t);
+                }
+                else
+                {
+                    break;
+                }
+
+            }
+
+            //if no comments were found at the same line, then look back (above)
+            if (comments.Count == 0)
+            {
+
+                while (prevTokenIndex >= 0 && prevTokenIndex < FileTokens.Length)
+                {
+                    IToken t = FileTokens[prevTokenIndex--];
+                    if (alreadyTakenComments.Contains(t))
+                        break;
+                    if (t.Type == acnLexer.WS)
+                        continue;
+                    else if (t.Type == acnLexer.COMMENT || t.Type == acnLexer.COMMENT2)
+                    {
+                            comments.Insert(0, t.Text);
+                            alreadyTakenComments.Add(t);
+                    }
+                    else
+                        break;
+                }
+            }
+
+            return comments.ToArray();
+        }
+
     }
+
 
 
     public class Html
