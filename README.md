@@ -83,3 +83,21 @@ official [TASTE project site](http://taste.tuxfamily.org).
 Credits
 =======
 George Mamais (gmamais@gmail.com), Thanassis Tsiodras (ttsiodras@gmail.com)
+
+
+Changelog
+=========
+
+3.1.4
+-----
+When adding fields to a SEQUENCE in an ACN model, the comments are now propagated to the ICD backends.
+
+3.1.1/2/3
+---------
+Various minor bugfixes, in particular related to the handling of cyclic dependencies
+
+3.1.0
+-----
+* Change in the API of the ICD backends: the comments are not only sent as a string but also as a list, allowing to extract the first line
+* Added a Latex template for ICDs (in contrib) / Experimental
+
