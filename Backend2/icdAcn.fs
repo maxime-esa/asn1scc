@@ -7,6 +7,8 @@ open System.IO
 open VisitTree
 open CloneTree
 open spark_utils
+open Antlr.Runtime
+open Antlr.Acn
 
 
 
@@ -264,13 +266,35 @@ let PrintFile1 (f:Asn1File)  (r:AstRoot) (acn:AcnTypes.AcnAstResolved)  =
     let modules = f.Modules |> Seq.map (fun  m -> PrintModule m f r acn )  
     icd_uper.EmmitFile (Path.GetFileName f.FileName) modules 
 
+
 let PrintFile3 (r:AstRoot) (acn:AcnTypes.AcnAstResolved) =
+    let colorize (t: IToken, tasses: string array) =
+            let containedIn = Array.exists (fun elem -> elem = t.Text) 
+            let isAcnKeyword = containedIn Antlr.Html.m_acnKeywords
+            let isType = containedIn tasses
+            let safeText = t.Text.Replace("<",icd_acn.LeftDiple).Replace(">",icd_acn.RightDiple)
+            let uid =
+                match isType with
+                |true -> icd_acn.TasName(safeText, safeText.Replace("-","_"))
+                |false -> safeText
+            let colored =
+                match t.Type with
+                |acnLexer.StringLiteral
+                |acnLexer.BitStringLiteral -> icd_acn.StringLiteral safeText
+                |acnLexer.UID -> uid
+                |acnLexer.COMMENT
+                |acnLexer.COMMENT2 -> icd_acn.Comment safeText
+                |_ -> safeText
+            match isAcnKeyword with
+                |true -> icd_acn.AcnKeyword safeText
+                |false -> colored
 
     acn.Files |>
     Seq.map(fun (fName, tokens) -> 
             let f = r.Files |> Seq.find(fun x -> Path.GetFileNameWithoutExtension(x.FileName) = Path.GetFileNameWithoutExtension(fName))
             let tasNames = f.Modules |> Seq.collect(fun x -> x.TypeAssignments) |> Seq.map(fun x -> x.Name.Value) |> Seq.toArray
-            let content = Antlr.Html.getAcnInHtml(tokens, tasNames)
+            //let content = Antlr.Html.getAcnInHtml(tokens, tasNames)
+            let content = tokens |> Seq.map(fun token -> colorize(token,tasNames)) |> toString
             icd_uper.EmmitFilePart2  (Path.GetFileName fName) content
     )
 

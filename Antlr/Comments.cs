@@ -88,7 +88,7 @@ namespace Antlr
             "UniversalString", "BMPString", "UTF8String", "INCLUDES", "EXCEPT", "SET", "SEQUENCE","CHOICE","OF","COMPONENTS"
             };
 
-        static string[] m_acnKeywords = {
+        public static string[] m_acnKeywords = {
             "endianness", "big", "little", "encoding", "pos-int", "twos-complement", "BCD", "ASCII",
             "IEEE754-1985-32", "IEEE754-1985-64", "size", "null-terminated", "align-to-next", "byte",
             "word", "dword", "encode-values", "true-value", "false-value", "pattern", "present-when",
