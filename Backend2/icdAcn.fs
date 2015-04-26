@@ -282,7 +282,7 @@ let PrintFile3 (r:AstRoot) (acn:AcnTypes.AcnAstResolved) =
             let safeText = text.Replace("<",lt).Replace(">",gt)
             let uid =
                 match isType with
-                |true -> icd_acn.TasName safeText (ToC safeText) //(safeText.Replace "-" "_"))
+                |true -> icd_acn.TasName safeText (ToC safeText)
                 |false -> safeText
             let colored =
                 match t.Type with
@@ -300,9 +300,8 @@ let PrintFile3 (r:AstRoot) (acn:AcnTypes.AcnAstResolved) =
     Seq.map(fun (fName, tokens) -> 
             let f = r.Files |> Seq.find(fun x -> Path.GetFileNameWithoutExtension(x.FileName) = Path.GetFileNameWithoutExtension(fName))
             let tasNames = f.Modules |> Seq.collect(fun x -> x.TypeAssignments) |> Seq.map(fun x -> x.Name.Value) |> Seq.toArray
-            //let content = Antlr.Html.getAcnInHtml(tokens, tasNames)
-            let content = tokens |> Seq.map(fun token -> colorize(token,tasNames)) |> toString
-            icd_uper.EmmitFilePart2  (Path.GetFileName fName) content
+            let content = tokens |> Seq.map(fun token -> colorize(token,tasNames))
+            icd_uper.EmmitFilePart2  (Path.GetFileName fName) (content |> Seq.StrJoin "")
     )
 
 

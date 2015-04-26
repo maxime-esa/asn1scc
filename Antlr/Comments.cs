@@ -145,33 +145,5 @@ namespace Antlr
             return strm.ToString();
         }
 
-        public static string getAcnInHtml(IToken[] asn1FileTokens, string[] tasNames)
-        {
-            System.IO.StringWriter strm = new StringWriter();
-
-            for (int i = 0; i < asn1FileTokens.Length; i++)
-            {
-                IToken t = asn1FileTokens[i];
-                var line = t.Line;
-                var charPos = t.CharPositionInLine;
-
-                if (m_acnKeywords.Contains(t.Text))
-                    strm.Write("<b><font  color=\"#5F9EA0\" >" + getSafeText(t) + "</font></b>");
-                else if (t.Type == Antlr.Acn.acnLexer.StringLiteral || t.Type == Antlr.Acn.acnLexer.BitStringLiteral)
-                    strm.Write("<font  color=\"#A31515\" >" + getSafeText(t) + "</font>");
-                else if (t.Type == Antlr.Acn.acnLexer.UID && tasNames.Contains(t.Text))
-                {
-                    strm.Write("<a name=\"ACN_" + getSafeText(t).Replace("-", "_") + "\"></a><a href=\"#ICD_" + getSafeText(t).Replace("-", "_") + "\"><font  color=\"#B8860B\" ><b>" + getSafeText(t) + "</b></font></a>");
-                }
-                else if (t.Type == Antlr.Acn.acnLexer.COMMENT || t.Type == Antlr.Acn.acnLexer.COMMENT2)
-                    strm.Write("<font  color=\"#008000\" ><i>" + getSafeText(t) + "</i></font>");
-                else
-                    strm.Write(getSafeText(t));
-            }
-
-            return strm.ToString();
-        }
-
     }
-
 }

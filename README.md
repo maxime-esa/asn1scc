@@ -88,6 +88,10 @@ George Mamais (gmamais@gmail.com), Thanassis Tsiodras (ttsiodras@gmail.com)
 Changelog
 =========
 
+3.2.0
+-----
+Minor API change in ICD backends - templates now contain code to customize the formatted output of the grammar.
+
 3.1.4
 -----
 When adding fields to a SEQUENCE in an ACN model, the comments are now propagated to the ICD backends.
