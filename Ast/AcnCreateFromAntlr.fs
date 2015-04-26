@@ -258,7 +258,7 @@ and CreateAcnChild (files:seq<ITree*string*array<IToken>>) (t:ITree)  (asn1Paren
         let asn1Child = children |> Seq.find(fun x -> x.Name.Value = name)
         let args= GetArgumentList asn1Child.Type.Kind
         let alreadyTakenComments = System.Collections.Generic.List<IToken>()
-        let comments = Antlr.Comment.GetAcnComments(tokens, alreadyTakenComments, tokens.[t.TokenStopIndex].Line, t.TokenStartIndex - 1, t.TokenStopIndex + 2)
+        let comments = Antlr.Comment.GetComments(tokens, alreadyTakenComments, tokens.[t.TokenStopIndex].Line, t.TokenStartIndex - 1, t.TokenStopIndex + 2, true)
         // Keep the existing comments from the ASN.1 module and add those of the ASN module
         let full_comments = Array.append asn1Child.Comments comments
         CreateAcnType files (t.GetChildByType acnParser.ENCODING_SPEC) asn1Child.Type newAbsPath RecordField loc {ast with References = ast.References@ args} r tokens full_comments
@@ -276,7 +276,7 @@ and CreateAcnChild (files:seq<ITree*string*array<IToken>>) (t:ITree)  (asn1Paren
             let asn1Type = {AcnAsn1Type2Asn1Type acnAsn1Type with Location = t.GetChild(1).Location}
             // Get comments using the files tokens
             let alreadyTakenComments = System.Collections.Generic.List<IToken>()
-            let comments = Antlr.Comment.GetAcnComments(tokens, alreadyTakenComments, tokens.[t.TokenStopIndex].Line, t.TokenStartIndex - 1, t.TokenStopIndex + 2)
+            let comments = Antlr.Comment.GetComments(tokens, alreadyTakenComments, tokens.[t.TokenStopIndex].Line, t.TokenStartIndex - 1, t.TokenStopIndex + 2, true)
             //printfn "%s %A" name comments
             CreateAcnType files (t.GetChildByType acnParser.ENCODING_SPEC) asn1Type newAbsPath implMode loc ast r tokens comments
         | _                             -> raise(BugErrorException("AcnCreateFromAntlr::CreateAcnChild"))
