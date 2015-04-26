@@ -6,7 +6,7 @@ group icd_acn;
 
 ItemNumber(nIndex) ::= "Item #$nIndex$"
 
-// HTML formatting for the ACN grammar
+// HTML formatting for the ACN grammar (new in version 3.2.x)
 
 // Lower/greater than symbols (< and >) must be replaced with HTML code
 LeftDiple() ::= "&lt;"

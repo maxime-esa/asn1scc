@@ -271,6 +271,8 @@ let PrintFile1 (f:Asn1File)  (r:AstRoot) (acn:AcnTypes.AcnAstResolved)  =
     icd_uper.EmmitFile (Path.GetFileName f.FileName) modules 
 
 
+// Generate a formatted version of the ACN grammar given as input,
+// using the stringtemplate layouts.
 let PrintFile3 (r:AstRoot) (acn:AcnTypes.AcnAstResolved) =
     let colorize (t: IToken, tasses: string array) =
             let text = t.Text
