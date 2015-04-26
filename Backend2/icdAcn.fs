@@ -11,17 +11,18 @@ open Antlr.Runtime
 open Antlr.Acn
 
 
-
 let printPoint (p:AcnTypes.Point) =
     match p with
     | AcnTypes.TypePoint(pth)
     | AcnTypes.TempPoint(pth)        -> pth |> Seq.StrJoin "."
     | AcnTypes.ParamPoint(pth)       -> pth.Tail.Tail |> Seq.StrJoin "."
 
+
 let makeEmptyNull (s:string) =
     match s with
     | null  -> null
     | _     -> match s.Trim() with "" -> null | _ -> s
+
 
 let printParamType = function
     | AcnTypes.Integer       -> "INTEGER"
@@ -30,15 +31,15 @@ let printParamType = function
     | AcnTypes.RefTypeCon(_,ts)  -> ts.Value
 
 
-
-
 let getAcnMax (t:Ast.Asn1Type) path (r:AstRoot) (acn:AcnTypes.AcnAstResolved) =
     let (bits, bytes) = Acn.RequiredBitsForAcnEncodingInt t path r acn
     bits.ToString(), bytes.ToString()
 
+
 let getAcnMin (t:Ast.Asn1Type) path (r:AstRoot) (acn:AcnTypes.AcnAstResolved) =
     let (bits, bytes) = Acn.RequiredMinBitsForAcnEncodingInt t path r acn
     bits.ToString(), bytes.ToString()
+
 
 let rec printType (tas:Ast.TypeAssignment) (t:Ast.Asn1Type) path (m:Asn1Module) (r:AstRoot) (acn:AcnTypes.AcnAstResolved)  color =
 
@@ -70,7 +71,6 @@ let rec printType (tas:Ast.TypeAssignment) (t:Ast.Asn1Type) path (m:Asn1Module) 
     let sCommentLine = GetCommentLine tas.Comments t
 
 
-
     let EmitSeqOrChoiceChild (i:int) (ch:ChildInfo) (optionalLikeUperChildren:ChildInfo list) getPresence =
         let sClass = if i % 2 = 0 then icd_uper.EvenRow() else icd_uper.OddRow()
         let nIndex = BigInteger i
@@ -89,6 +89,7 @@ let rec printType (tas:Ast.TypeAssignment) (t:Ast.Asn1Type) path (m:Asn1Module) 
 
         icd_acn.EmmitSeqOrChoiceRow sClass nIndex ch.Name.Value sComment  sPresentWhen  sType sAsn1Constraints sMinBits sMaxBits
 
+
     let myParams colSpan= 
         acn.Parameters |> List.filter(fun p -> p.TasName=tas.Name.Value && p.ModName=m.Name.Value) |>
         List.mapi(fun i x -> 
@@ -100,7 +101,11 @@ let rec printType (tas:Ast.TypeAssignment) (t:Ast.Asn1Type) path (m:Asn1Module) 
 
             icd_acn.PrintParam (i+1).AsBigInt x.Name sType colSpan
             )
+
+
     let hasAcnDef = acn.Files |> Seq.collect snd |> Seq.exists(fun x -> x.Text = tas.Name.Value)
+
+
     match t.Kind with
     | Integer      
     | Real    
@@ -144,7 +149,6 @@ let rec printType (tas:Ast.TypeAssignment) (t:Ast.Asn1Type) path (m:Asn1Module) 
             | Some(prm)     -> prm::(arChildren 2)
 
         icd_acn.EmitSequenceOrChoice color sTasName (ToC sTasName) hasAcnDef "SEQUENCE" sMinBytes sMaxBytes sMaxBitsExplained sCommentLine arRows (myParams 6I) (sCommentLine.Split [|'\n'|])
-
 
     |Choice(children)   -> 
         let Choice_like_uPER() =
@@ -269,24 +273,27 @@ let PrintFile1 (f:Asn1File)  (r:AstRoot) (acn:AcnTypes.AcnAstResolved)  =
 
 let PrintFile3 (r:AstRoot) (acn:AcnTypes.AcnAstResolved) =
     let colorize (t: IToken, tasses: string array) =
-            let containedIn = Array.exists (fun elem -> elem = t.Text) 
+            let text = t.Text
+            let lt = icd_acn.LeftDiple ()
+            let gt = icd_acn.RightDiple ()
+            let containedIn = Array.exists (fun elem -> elem = text) 
             let isAcnKeyword = containedIn Antlr.Html.m_acnKeywords
             let isType = containedIn tasses
-            let safeText = t.Text.Replace("<",icd_acn.LeftDiple).Replace(">",icd_acn.RightDiple)
+            let safeText = text.Replace("<",lt).Replace(">",gt)
             let uid =
                 match isType with
-                |true -> icd_acn.TasName(safeText, safeText.Replace("-","_"))
+                |true -> icd_acn.TasName safeText (ToC safeText) //(safeText.Replace "-" "_"))
                 |false -> safeText
             let colored =
                 match t.Type with
                 |acnLexer.StringLiteral
-                |acnLexer.BitStringLiteral -> icd_acn.StringLiteral safeText
+                |acnLexer.BitStringLiteral -> icd_acn.StringLiteral(safeText)
                 |acnLexer.UID -> uid
                 |acnLexer.COMMENT
                 |acnLexer.COMMENT2 -> icd_acn.Comment safeText
                 |_ -> safeText
             match isAcnKeyword with
-                |true -> icd_acn.AcnKeyword safeText
+                |true -> icd_acn.AcnKeyword(safeText)
                 |false -> colored
 
     acn.Files |>
