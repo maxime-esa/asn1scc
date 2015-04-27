@@ -285,7 +285,7 @@ let PrintFile2 (f:Asn1File) =
             let lt = icd_uper.LeftDiple ()
             let gt = icd_uper.RightDiple ()
             let containedIn = Array.exists (fun elem -> elem = t.Text) 
-            let isAsn1Token = containedIn asn1Tokens //Antlr.Keywords.m_asn1Tokens
+            let isAsn1Token = containedIn asn1Tokens
             let isType = containedIn tasses
             let safeText = t.Text.Replace("<",lt).Replace(">",gt)
             let checkWsCmt (tok: IToken) =

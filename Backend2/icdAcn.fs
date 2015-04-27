@@ -283,7 +283,7 @@ let PrintFile3 (r:AstRoot) (acn:AcnTypes.AcnAstResolved) =
             let lt = icd_acn.LeftDiple ()
             let gt = icd_acn.RightDiple ()
             let containedIn = Array.exists (fun elem -> elem = t.Text) 
-            let isAcnKeyword = containedIn acnTokens //Antlr.Keywords.m_acnKeywords
+            let isAcnKeyword = containedIn acnTokens
             let isType = containedIn tasses
             let safeText = t.Text.Replace("<",lt).Replace(">",gt)
             let uid =
