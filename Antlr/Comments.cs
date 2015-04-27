@@ -78,7 +78,7 @@ namespace Antlr
 
     public class Html
     {
-        static string[] m_asn1Tokens = {
+        public static string[] m_asn1Tokens = {
             "PLUS-INFINITY", "MINUS-INFINITY", "GeneralizedTime", "UTCTime", "mantissa", "base", "exponent", "UNION", "INTERSECTION",
             "DEFINITIONS", "EXPLICIT", "TAGS", "IMPLICIT", "AUTOMATIC", "EXTENSIBILITY", "IMPLIED", "BEGIN", "END", "EXPORTS", "ALL",
             "IMPORTS", "FROM", "UNIVERSAL", "APPLICATION", "PRIVATE", "BIT", "STRING", "BOOLEAN", "ENUMERATED", "INTEGER", "REAL",
@@ -119,18 +119,20 @@ namespace Antlr
                 else if (t.Type == asn1Lexer.UID && tasNames.Contains(t.Text))
                 {
                     int j = i + 1;
+                    // increment j until a non WS/Comment is found (find first "real" token forward)
                     while (j < asn1FileTokens.Length)
                         if (asn1FileTokens[j].Type == asn1Lexer.WS || asn1FileTokens[j].Type == asn1Lexer.COMMENT || asn1FileTokens[j].Type == asn1Lexer.COMMENT2)
                             j++;
                         else
                             break;
                     int k = i - 1;
+                    // find backward the first non-WS/Comment token
                     while (k > 0)
                         if (asn1FileTokens[k].Type == asn1Lexer.WS || asn1FileTokens[k].Type == asn1Lexer.COMMENT || asn1FileTokens[k].Type == asn1Lexer.COMMENT2)
                             k--;
                         else
                             break;
-
+                    // new Type Assignment (followed by ::= and not following a lid, that would correspond to value assignment)
                     if (asn1FileTokens[j].Type == asn1Lexer.ASSIG_OP && asn1FileTokens[k].Type != asn1Lexer.LID)
                         strm.Write("<a name=\"ASN1_" + getSafeText(t).Replace("-", "_") + "\"></a><a href=\"#ICD_" + getSafeText(t).Replace("-", "_") + "\"><font  color=\"#B8860B\" ><b>" + getSafeText(t) + "</b></font></a>");
                     else

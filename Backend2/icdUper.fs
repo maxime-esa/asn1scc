@@ -270,7 +270,48 @@ let PrintFile2 (f:Asn1File) =
                                     let tas = f.TypeAssignments |> Seq.find(fun y -> y.Name.Value = ts.Value)
                                     Some(ts.Value, tas.Type.Location.srcLine, tas.Type.Location.charPos)
                                   | _                           -> None ) |> Seq.toArray
-    let asn1Content = Antlr.Html.getAsn1InHtml(f.Tokens, tasNames, blueTassesWithLoc)
+    //let asn1Content = Antlr.Html.getAsn1InHtml(f.Tokens, tasNames, blueTassesWithLoc)
+    let asn1Content = f.Tokens |> Seq.map(fun token -> colorize(token,token.[index],tasNames,blueTassesWithLoc))
+    let colorize (t: IToken, idx: int, tasses: string array, blueTassesWithLoc: (string*int*int) array) =
+            let text = t.Text
+            let line = t.Line
+            let charPos = t.CharPositionInLine
+            let blueTas = blueTassesWithLoc |> Array.tryFind(fun _,l,c -> l=line && c=charPos)
+            let lt = icd_uper.LeftDiple ()
+            let gt = icd_uper.RightDiple ()
+            let containedIn = Array.exists (fun elem -> elem = text) 
+            let isAsn1Token = containedIn Antlr.Html.m_asn1Tokens
+            let isType = containedIn tasses
+            let safeText = text.Replace("<",lt).Replace(">",gt)
+            let checkWsCmt (tok: IToken) =
+                match tok with
+                |asn1Lexer.WS
+                |asn1Lexer.COMMENT
+                |asn1Lexer.COMMENT2 -> true
+                |_ -> false
+            let findToken = Array.tryFind(fun tok -> not checkWsCmt)
+            let nextToken = f.Tokens.[idx+1..] |> findToken
+            let prevToken = f.Tokens.[0..idx-1].rev |> findToken
+            let uid =
+                match isType with
+                |true -> if nextToken.Type = asn1Lexer.ASSIG_OP && prevToken != asn1LExer.LID then icd_uper.TasName safeText (ToC safeText) else icd_uper.TasName2 safeText (ToC safeText)
+                |false -> safeText
+            let colored =
+                match t.Type with
+                |asn1Lexer.StringLiteral
+                |asn1Lexer.OctetStringLiteral
+                |asn1Lexer.BitStringLiteral -> icd_uper.StringLiteral(safeText)
+                |asn1Lexer.UID -> uid
+                |asn1Lexer.COMMENT
+                |asn1Lexer.COMMENT2 -> icd_uper.Comment safeText
+                |_ -> safeText
+            let is_asn1Token =
+                match isAsn1Token with
+                |true -> icd_uper.Asn1Token safeText
+                |false -> colored
+            match blueTas with
+            |Some (s,_,_) -> icd_uper.BlueTas (ToC s) safeText
+            |None -> is_asn1Token
     icd_uper.EmmitFilePart2  (Path.GetFileName f.FileName ) asn1Content
 
 let DoWork (r:AstRoot) (acn:AcnTypes.AcnAstResolved) outDir =
