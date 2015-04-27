@@ -8,6 +8,8 @@ open VisitTree
 open uPER
 open CloneTree
 open spark_utils
+open Antlr.Asn1
+open Antlr.Runtime
 
 
 let Kind2Name (t:Asn1Type) =
@@ -271,12 +273,11 @@ let PrintFile2 (f:Asn1File) =
                                     Some(ts.Value, tas.Type.Location.srcLine, tas.Type.Location.charPos)
                                   | _                           -> None ) |> Seq.toArray
     //let asn1Content = Antlr.Html.getAsn1InHtml(f.Tokens, tasNames, blueTassesWithLoc)
-    let asn1Content = f.Tokens |> Seq.map(fun token -> colorize(token,token.[index],tasNames,blueTassesWithLoc))
     let colorize (t: IToken, idx: int, tasses: string array, blueTassesWithLoc: (string*int*int) array) =
             let text = t.Text
             let line = t.Line
             let charPos = t.CharPositionInLine
-            let blueTas = blueTassesWithLoc |> Array.tryFind(fun _,l,c -> l=line && c=charPos)
+            let blueTas = blueTassesWithLoc |> Array.tryFind(fun (_,l,c) -> l=line && c=charPos)
             let lt = icd_uper.LeftDiple ()
             let gt = icd_uper.RightDiple ()
             let containedIn = Array.exists (fun elem -> elem = text) 
@@ -284,22 +285,30 @@ let PrintFile2 (f:Asn1File) =
             let isType = containedIn tasses
             let safeText = text.Replace("<",lt).Replace(">",gt)
             let checkWsCmt (tok: IToken) =
-                match tok with
+                match tok.Type with
                 |asn1Lexer.WS
                 |asn1Lexer.COMMENT
                 |asn1Lexer.COMMENT2 -> true
                 |_ -> false
-            let findToken = Array.tryFind(fun tok -> not checkWsCmt)
-            let nextToken = f.Tokens.[idx+1..] |> findToken
-            let prevToken = f.Tokens.[0..idx-1].rev |> findToken
+            let findToken = Array.tryFind(fun tok -> not(checkWsCmt tok))
+            let findNextToken = f.Tokens.[idx+1..] |> findToken
+            let findPrevToken = Array.rev f.Tokens.[0..idx-1] |> findToken
+            let nextToken =
+                match findNextToken with
+                |Some(tok) -> tok
+                |None -> raise(BugErrorException "Missing token in grammar or bug in the tool (icdAcn.fs)")
+            let prevToken =
+                match findPrevToken with
+                |Some(tok) -> tok
+                |None -> raise(BugErrorException "Missing token in grammar or bug in the tool (icdAcn.fs)")
             let uid =
                 match isType with
-                |true -> if nextToken.Type = asn1Lexer.ASSIG_OP && prevToken != asn1LExer.LID then icd_uper.TasName safeText (ToC safeText) else icd_uper.TasName2 safeText (ToC safeText)
+                |true -> if nextToken.Type = asn1Lexer.ASSIG_OP && prevToken.Type <> asn1Lexer.LID then icd_uper.TasName safeText (ToC safeText) else icd_uper.TasName2 safeText (ToC safeText)
                 |false -> safeText
             let colored =
                 match t.Type with
                 |asn1Lexer.StringLiteral
-                |asn1Lexer.OctetStringLiteral
+                |asn1Lexer.OctectStringLiteral
                 |asn1Lexer.BitStringLiteral -> icd_uper.StringLiteral(safeText)
                 |asn1Lexer.UID -> uid
                 |asn1Lexer.COMMENT
@@ -312,7 +321,8 @@ let PrintFile2 (f:Asn1File) =
             match blueTas with
             |Some (s,_,_) -> icd_uper.BlueTas (ToC s) safeText
             |None -> is_asn1Token
-    icd_uper.EmmitFilePart2  (Path.GetFileName f.FileName ) asn1Content
+    let asn1Content = f.Tokens |> Seq.mapi(fun i token -> colorize(token,i,tasNames,blueTassesWithLoc))
+    icd_uper.EmmitFilePart2  (Path.GetFileName f.FileName ) (asn1Content |> Seq.StrJoin "")
 
 let DoWork (r:AstRoot) (acn:AcnTypes.AcnAstResolved) outDir =
     let files1 = r.Files |> Seq.map (fun f -> PrintFile1 f r acn) 
