@@ -274,14 +274,18 @@ let PrintFile1 (f:Asn1File)  (r:AstRoot) (acn:AcnTypes.AcnAstResolved)  =
 // Generate a formatted version of the ACN grammar given as input,
 // using the stringtemplate layouts.
 let PrintFile3 (r:AstRoot) (acn:AcnTypes.AcnAstResolved) =
+    let acnTokens = [|
+            "endianness"; "big"; "little"; "encoding"; "pos-int"; "twos-complement"; "BCD"; "ASCII";
+            "IEEE754-1985-32"; "IEEE754-1985-64"; "size"; "null-terminated"; "align-to-next"; "byte";
+            "word"; "dword"; "encode-values"; "true-value"; "false-value"; "pattern"; "present-when";
+            "determinant"; "DEFINITIONS"; "BEGIN"; "END"; "CONSTANT"; "NOT"; "INTEGER"; "BOOLEAN"; "NULL"|]
     let colorize (t: IToken, tasses: string array) =
-            let text = t.Text
             let lt = icd_acn.LeftDiple ()
             let gt = icd_acn.RightDiple ()
-            let containedIn = Array.exists (fun elem -> elem = text) 
-            let isAcnKeyword = containedIn Antlr.Html.m_acnKeywords
+            let containedIn = Array.exists (fun elem -> elem = t.Text) 
+            let isAcnKeyword = containedIn acnTokens //Antlr.Keywords.m_acnKeywords
             let isType = containedIn tasses
-            let safeText = text.Replace("<",lt).Replace(">",gt)
+            let safeText = t.Text.Replace("<",lt).Replace(">",gt)
             let uid =
                 match isType with
                 |true -> icd_acn.TasName safeText (ToC safeText)

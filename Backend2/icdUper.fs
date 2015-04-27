@@ -272,18 +272,22 @@ let PrintFile2 (f:Asn1File) =
                                     let tas = f.TypeAssignments |> Seq.find(fun y -> y.Name.Value = ts.Value)
                                     Some(ts.Value, tas.Type.Location.srcLine, tas.Type.Location.charPos)
                                   | _                           -> None ) |> Seq.toArray
-    //let asn1Content = Antlr.Html.getAsn1InHtml(f.Tokens, tasNames, blueTassesWithLoc)
     let colorize (t: IToken, idx: int, tasses: string array, blueTassesWithLoc: (string*int*int) array) =
-            let text = t.Text
-            let line = t.Line
-            let charPos = t.CharPositionInLine
-            let blueTas = blueTassesWithLoc |> Array.tryFind(fun (_,l,c) -> l=line && c=charPos)
+            let asn1Tokens = [| "PLUS-INFINITY";"MINUS-INFINITY";"GeneralizedTime";"UTCTime";"mantissa";"base";"exponent";"UNION";"INTERSECTION";
+                "DEFINITIONS";"EXPLICIT";"TAGS";"IMPLICIT";"AUTOMATIC";"EXTENSIBILITY";"IMPLIED";"BEGIN";"END";"EXPORTS";"ALL";
+                "IMPORTS";"FROM";"UNIVERSAL";"APPLICATION";"PRIVATE";"BIT";"STRING";"BOOLEAN";"ENUMERATED";"INTEGER";"REAL";
+                "OPTIONAL";"SIZE";"OCTET";"MIN";"MAX";"TRUE";"FALSE";"ABSENT";"PRESENT";"WITH";
+                "COMPONENT";"DEFAULT";"NULL";"PATTERN";"OBJECT";"IDENTIFIER";"RELATIVE-OID";"NumericString";
+                "PrintableString";"VisibleString";"IA5String";"TeletexString";"VideotexString";"GraphicString";"GeneralString";
+                "UniversalString";"BMPString";"UTF8String";"INCLUDES";"EXCEPT";"SET";"SEQUENCE";"CHOICE";"OF";"COMPONENTS"|]
+
+            let blueTas = blueTassesWithLoc |> Array.tryFind(fun (_,l,c) -> l=t.Line && c=t.CharPositionInLine)
             let lt = icd_uper.LeftDiple ()
             let gt = icd_uper.RightDiple ()
-            let containedIn = Array.exists (fun elem -> elem = text) 
-            let isAsn1Token = containedIn Antlr.Html.m_asn1Tokens
+            let containedIn = Array.exists (fun elem -> elem = t.Text) 
+            let isAsn1Token = containedIn asn1Tokens //Antlr.Keywords.m_asn1Tokens
             let isType = containedIn tasses
-            let safeText = text.Replace("<",lt).Replace(">",gt)
+            let safeText = t.Text.Replace("<",lt).Replace(">",gt)
             let checkWsCmt (tok: IToken) =
                 match tok.Type with
                 |asn1Lexer.WS
