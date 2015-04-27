@@ -237,8 +237,8 @@ and CreateNamedItems (astRoot:list<ITree>) (tree:ITree) (fileTokens:array<IToken
         match itemChildren with
         | name::value::_    -> 
             let value = Some(CreateValue astRoot (value) )
-            {NamedItem.Name=name.TextL; _value=value; Comments = Antlr.Comment.GetComments(fileTokens, alreadyTakenComments, fileTokens.[tree.TokenStopIndex].Line, tree.TokenStartIndex - 1, tree.TokenStopIndex + 2)}
-        | name::[]          -> {NamedItem.Name=name.TextL; _value= None; Comments = Antlr.Comment.GetComments(fileTokens, alreadyTakenComments, fileTokens.[tree.TokenStopIndex].Line, tree.TokenStartIndex - 1, tree.TokenStopIndex + 2)}
+            {NamedItem.Name=name.TextL; _value=value; Comments = Antlr.Comment.GetComments(fileTokens, alreadyTakenComments, fileTokens.[itemItree.TokenStopIndex].Line, itemItree.TokenStartIndex - 1, itemItree.TokenStopIndex + 2)}
+        | name::[]          -> {NamedItem.Name=name.TextL; _value= None; Comments = Antlr.Comment.GetComments(fileTokens, alreadyTakenComments, fileTokens.[itemItree.TokenStopIndex].Line, itemItree.TokenStartIndex - 1, itemItree.TokenStopIndex + 2)}
         | _                 -> raise (BugErrorException("Bug in CreateNamedItems.CreateItem")) 
     let enumItes = getChildrenByType(tree, asn1Parser.NUMBER_LST_ITEM)
     enumItes |> List.map CreateItem
