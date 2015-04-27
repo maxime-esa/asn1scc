@@ -288,19 +288,20 @@ let PrintFile2 (f:Asn1File) =
                 match tok.Type with
                 |asn1Lexer.WS
                 |asn1Lexer.COMMENT
-                |asn1Lexer.COMMENT2 -> true
-                |_ -> false
-            let findToken = Array.tryFind(fun tok -> not(checkWsCmt tok))
+                |asn1Lexer.COMMENT2 -> false
+                |_ -> true
+            let findToken = Array.tryFind(fun tok -> checkWsCmt tok)
             let findNextToken = f.Tokens.[idx+1..] |> findToken
             let findPrevToken = Array.rev f.Tokens.[0..idx-1] |> findToken
             let nextToken =
+                let size = Seq.length(f.Tokens) - 1
                 match findNextToken with
                 |Some(tok) -> tok
-                |None -> raise(BugErrorException "Missing token in grammar or bug in the tool (icdAcn.fs)")
+                |None -> if idx = size then t else f.Tokens.[idx+1]
             let prevToken =
                 match findPrevToken with
                 |Some(tok) -> tok
-                |None -> raise(BugErrorException "Missing token in grammar or bug in the tool (icdAcn.fs)")
+                |None -> if idx = 0 then t else f.Tokens.[idx-1]
             let uid =
                 match isType with
                 |true -> if nextToken.Type = asn1Lexer.ASSIG_OP && prevToken.Type <> asn1Lexer.LID then icd_uper.TasName safeText (ToC safeText) else icd_uper.TasName2 safeText (ToC safeText)
