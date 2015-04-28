@@ -1,4 +1,4 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
+<?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="4.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <PropertyGroup>
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
@@ -40,8 +40,23 @@
   <Choose>
     <When Condition="'$(VisualStudioVersion)' == '11.0' Or $(OS) == 'Unix'">
       <PropertyGroup>
-        <FSharpTargetsPath>$(MSBuildExtensionsPath32)\..\Microsoft SDKs\F#\3.0\Framework\v4.0\Microsoft.FSharp.Targets</FSharpTargetsPath>
+        <FSharpTargetsPath45>$(MSBuildExtensionsPath32)\..\Microsoft SDKs\F#\3.1\Framework\v4.5\Microsoft.FSharp.Targets</FSharpTargetsPath45>
       </PropertyGroup>
+      <PropertyGroup>
+        <FSharpTargetsPath40>$(MSBuildExtensionsPath32)\..\Microsoft SDKs\F#\3.0\Framework\v4.0\Microsoft.FSharp.Targets</FSharpTargetsPath40>
+      </PropertyGroup>
+      <Choose>
+        <When Condition="Exists('$(FSharpTargetsPath45)')">
+          <PropertyGroup>
+            <FSharpTargetsPath>$(FSharpTargetsPath45)</FSharpTargetsPath>
+          </PropertyGroup>
+        </When>
+        <Otherwise>
+          <PropertyGroup>
+            <FSharpTargetsPath>$(FSharpTargetsPath40)</FSharpTargetsPath>
+          </PropertyGroup>
+        </Otherwise>
+      </Choose>
     </When>
     <Otherwise>
       <PropertyGroup>
