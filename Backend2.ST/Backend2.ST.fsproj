@@ -34,7 +34,7 @@
     <DocumentationFile>bin\Release\Backend2.ST.XML</DocumentationFile>
   </PropertyGroup>
   <Choose>
-    <When Condition="'$(VisualStudioVersion)' == '11.0'">
+    <When Condition="'$(VisualStudioVersion)' == '11.0' Or $(OS) == 'Unix'">
       <PropertyGroup>
         <FSharpTargetsPath>$(MSBuildExtensionsPath32)\..\Microsoft SDKs\F#\3.0\Framework\v4.0\Microsoft.FSharp.Targets</FSharpTargetsPath>
       </PropertyGroup>
@@ -45,9 +45,23 @@
       </PropertyGroup>
     </Otherwise>
   </Choose>
+  <Choose>
+    <When Condition="$(OS) == 'Unix'">
+      <PropertyGroup>
+        <MonoCallPrefix> mono </MonoCallPrefix>
+      </PropertyGroup>
+    </When>
+    <Otherwise>
+      <PropertyGroup>
+        <MonoCallPrefix/>
+      </PropertyGroup>
+    </Otherwise>
+  </Choose>
   <Import Project="$(FSharpTargetsPath)" Condition="Exists('$(FSharpTargetsPath)')" />
   <PropertyGroup>
-    <PreBuildEvent>$(ProjectDir)..\parseStg2\bin\Debug\parseStg2.exe $(ProjectDir)backends.xml</PreBuildEvent>
+    <PreBuildEvent>
+      $(MonoCallPrefix) $(ProjectDir)..\parseStg2\bin\Debug\parseStg2.exe $(ProjectDir)backends.xml
+    </PreBuildEvent>
   </PropertyGroup>
   <ItemGroup>
     <None Include="Script.fsx" />
