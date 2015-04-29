@@ -6,6 +6,31 @@ group icd_acn;
 
 ItemNumber(nIndex) ::= "Item #$nIndex$"
 
+// HTML formatting for the ACN grammar (new in version 3.2.x)
+
+// Lower/greater than symbols (< and >) must be replaced with HTML code
+LeftDiple() ::= "&lt;"
+RightDiple() ::= "&gt;"
+
+AcnKeyword(sKeyword) ::= <<
+<b><font color="#5F9EA0">$sKeyword$</font></b>
+>>
+
+StringLiteral(sStringLiteral) ::= <<
+<font color="#A31515">$sStringLiteral$</font>
+>>
+
+TasName(sTasName, sTasNameC) ::= <<
+<a name="ACN_$sTasNameC$"></a><a href="#ICD_$sTasNameC$"><font color="#B8860B"><b>$sTasName$</b></font></a>
+>>
+
+Comment(sComment) ::= <<
+<font color="#008000"><i>$sComment$</i></font>
+>>
+
+// End HTML formatting for the ACN grammar
+
+
 EmitSequenceOrChoice(sColor, sTasName, sTasNameC, bHasAcnDef, sAsn1Kinf, sMinBytes, sMaxBytes, sMaxBitsExplained, sCommentLine, arrsChildren, arrsParams, arrsComments) ::= <<
 <a name="ICD_$sTasNameC$"></a> 
 <table border="0" width="100%" >

@@ -379,7 +379,7 @@ namespace Asn1f2
             var procName = "asn1";
             Console.Error.WriteLine();
             Console.Error.WriteLine("Semantix ASN.1 Compiler");
-            Console.Error.WriteLine("Current Version is: 3.1.{0} ", Svn.Version);
+            Console.Error.WriteLine("Current Version is: 3.2.{0} ", Svn.Version);
             Console.Error.WriteLine("Usage:");
             Console.Error.WriteLine();
             Console.Error.WriteLine("{0}  <OPTIONS> file1, file2, ..., fileN ", procName);

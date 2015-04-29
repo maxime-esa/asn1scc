@@ -7,7 +7,8 @@ open System.IO
 open VisitTree
 open CloneTree
 open spark_utils
-
+open Antlr.Runtime
+open Antlr.Acn
 
 
 let printPoint (p:AcnTypes.Point) =
@@ -16,10 +17,12 @@ let printPoint (p:AcnTypes.Point) =
     | AcnTypes.TempPoint(pth)        -> pth |> Seq.StrJoin "."
     | AcnTypes.ParamPoint(pth)       -> pth.Tail.Tail |> Seq.StrJoin "."
 
+
 let makeEmptyNull (s:string) =
     match s with
     | null  -> null
     | _     -> match s.Trim() with "" -> null | _ -> s
+
 
 let printParamType = function
     | AcnTypes.Integer       -> "INTEGER"
@@ -28,15 +31,15 @@ let printParamType = function
     | AcnTypes.RefTypeCon(_,ts)  -> ts.Value
 
 
-
-
 let getAcnMax (t:Ast.Asn1Type) path (r:AstRoot) (acn:AcnTypes.AcnAstResolved) =
     let (bits, bytes) = Acn.RequiredBitsForAcnEncodingInt t path r acn
     bits.ToString(), bytes.ToString()
 
+
 let getAcnMin (t:Ast.Asn1Type) path (r:AstRoot) (acn:AcnTypes.AcnAstResolved) =
     let (bits, bytes) = Acn.RequiredMinBitsForAcnEncodingInt t path r acn
     bits.ToString(), bytes.ToString()
+
 
 let rec printType (tas:Ast.TypeAssignment) (t:Ast.Asn1Type) path (m:Asn1Module) (r:AstRoot) (acn:AcnTypes.AcnAstResolved)  color =
 
@@ -68,7 +71,6 @@ let rec printType (tas:Ast.TypeAssignment) (t:Ast.Asn1Type) path (m:Asn1Module) 
     let sCommentLine = GetCommentLine tas.Comments t
 
 
-
     let EmitSeqOrChoiceChild (i:int) (ch:ChildInfo) (optionalLikeUperChildren:ChildInfo list) getPresence =
         let sClass = if i % 2 = 0 then icd_uper.EvenRow() else icd_uper.OddRow()
         let nIndex = BigInteger i
@@ -87,6 +89,7 @@ let rec printType (tas:Ast.TypeAssignment) (t:Ast.Asn1Type) path (m:Asn1Module) 
 
         icd_acn.EmmitSeqOrChoiceRow sClass nIndex ch.Name.Value sComment  sPresentWhen  sType sAsn1Constraints sMinBits sMaxBits
 
+
     let myParams colSpan= 
         acn.Parameters |> List.filter(fun p -> p.TasName=tas.Name.Value && p.ModName=m.Name.Value) |>
         List.mapi(fun i x -> 
@@ -98,7 +101,11 @@ let rec printType (tas:Ast.TypeAssignment) (t:Ast.Asn1Type) path (m:Asn1Module) 
 
             icd_acn.PrintParam (i+1).AsBigInt x.Name sType colSpan
             )
+
+
     let hasAcnDef = acn.Files |> Seq.collect snd |> Seq.exists(fun x -> x.Text = tas.Name.Value)
+
+
     match t.Kind with
     | Integer      
     | Real    
@@ -142,7 +149,6 @@ let rec printType (tas:Ast.TypeAssignment) (t:Ast.Asn1Type) path (m:Asn1Module) 
             | Some(prm)     -> prm::(arChildren 2)
 
         icd_acn.EmitSequenceOrChoice color sTasName (ToC sTasName) hasAcnDef "SEQUENCE" sMinBytes sMaxBytes sMaxBitsExplained sCommentLine arRows (myParams 6I) (sCommentLine.Split [|'\n'|])
-
 
     |Choice(children)   -> 
         let Choice_like_uPER() =
@@ -264,14 +270,44 @@ let PrintFile1 (f:Asn1File)  (r:AstRoot) (acn:AcnTypes.AcnAstResolved)  =
     let modules = f.Modules |> Seq.map (fun  m -> PrintModule m f r acn )  
     icd_uper.EmmitFile (Path.GetFileName f.FileName) modules 
 
+
+// Generate a formatted version of the ACN grammar given as input,
+// using the stringtemplate layouts.
 let PrintFile3 (r:AstRoot) (acn:AcnTypes.AcnAstResolved) =
+    let acnTokens = [|
+            "endianness"; "big"; "little"; "encoding"; "pos-int"; "twos-complement"; "BCD"; "ASCII";
+            "IEEE754-1985-32"; "IEEE754-1985-64"; "size"; "null-terminated"; "align-to-next"; "byte";
+            "word"; "dword"; "encode-values"; "true-value"; "false-value"; "pattern"; "present-when";
+            "determinant"; "DEFINITIONS"; "BEGIN"; "END"; "CONSTANT"; "NOT"; "INTEGER"; "BOOLEAN"; "NULL"|]
+    let colorize (t: IToken, tasses: string array) =
+            let lt = icd_acn.LeftDiple ()
+            let gt = icd_acn.RightDiple ()
+            let containedIn = Array.exists (fun elem -> elem = t.Text) 
+            let isAcnKeyword = containedIn acnTokens
+            let isType = containedIn tasses
+            let safeText = t.Text.Replace("<",lt).Replace(">",gt)
+            let uid =
+                match isType with
+                |true -> icd_acn.TasName safeText (ToC safeText)
+                |false -> safeText
+            let colored =
+                match t.Type with
+                |acnLexer.StringLiteral
+                |acnLexer.BitStringLiteral -> icd_acn.StringLiteral(safeText)
+                |acnLexer.UID -> uid
+                |acnLexer.COMMENT
+                |acnLexer.COMMENT2 -> icd_acn.Comment safeText
+                |_ -> safeText
+            match isAcnKeyword with
+                |true -> icd_acn.AcnKeyword(safeText)
+                |false -> colored
 
     acn.Files |>
     Seq.map(fun (fName, tokens) -> 
             let f = r.Files |> Seq.find(fun x -> Path.GetFileNameWithoutExtension(x.FileName) = Path.GetFileNameWithoutExtension(fName))
             let tasNames = f.Modules |> Seq.collect(fun x -> x.TypeAssignments) |> Seq.map(fun x -> x.Name.Value) |> Seq.toArray
-            let content = Antlr.Html.getAcnInHtml(tokens, tasNames)
-            icd_uper.EmmitFilePart2  (Path.GetFileName fName) content
+            let content = tokens |> Seq.map(fun token -> colorize(token,tasNames))
+            icd_uper.EmmitFilePart2  (Path.GetFileName fName) (content |> Seq.StrJoin "")
     )
 
 
