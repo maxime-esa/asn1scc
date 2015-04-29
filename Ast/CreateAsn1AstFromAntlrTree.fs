@@ -394,6 +394,9 @@ let CreateAsn1Module (astRoot:list<ITree>) (tree:ITree)   (fileTokens:array<ITok
             | None          -> Exports.All
     match tree.Type with
     | asn1Parser.MODULE_DEF ->  
+          match getOptionChildByType(tree, asn1Parser.EXTENSIBILITY) with
+          | Some(_) -> raise (SemanticError(tree.Location, "Unsupported ASN.1 feature: EXTENSIBILIY IMPLED. Extensibility is incompatible with embedded systems"))
+          | None ->
           { 
                 Name=  getChildByType(tree, asn1Parser.UID).TextL
                 TypeAssignments= getChildrenByType(tree, asn1Parser.TYPE_ASSIG) |> List.map(fun x -> CreateTypeAssigment astRoot x fileTokens alreadyTakenComments)
