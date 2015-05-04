@@ -2,22 +2,22 @@ group icd_acn;
 
 //delimiters "$", "$"
 
-
-EmitEnumItem(sName, nValue) ::= <<
-<li><font class="enumeration_name">$sName$</font> ($nValue$)</li>
+EmitFile(sAsnFileName, arrsModules) ::= <<
+<div style="width: 100%">
+<h1>ASN.1 file : $sAsnFileName$</h1>
+    $arrsModules;separator="\n"$
+</div>
 >>
 
-EmitEnumItemWithComment(sName, nValue, sComment) ::= <<
-<li><font class="enumeration_name">$sName$</font> ($nValue$) - $sComment$</li>
+EmitModule(sModName, arrsComments, arrsTases) ::= <<
+<div style="width: 100%">
+<h2>Module: $sModName$</h2>
+<p>
+$arrsComments;separator="\n"$
+</p>
+$arrsTases;separator="\n"$
+</div>
 >>
-
-EmitEnumInternalContents(arrsItems) ::= <<
-Possible values:<br/>
-<ul class="enumeration">
-$arrsItems;separator="\n"$
-</ul>
->>
-
 
 ItemNumber(nIndex) ::= "Item #$nIndex$"
 
@@ -44,6 +44,21 @@ Comment(sComment) ::= <<
 >>
 
 // End HTML formatting for the ACN grammar
+
+EmitEnumItem(sName, nValue) ::= <<
+<li><font class="enumeration_name">$sName$</font> ($nValue$)</li>
+>>
+
+EmitEnumItemWithComment(sName, nValue, sComment) ::= <<
+<li><font class="enumeration_name">$sName$</font> ($nValue$) - $sComment$</li>
+>>
+
+EmitEnumInternalContents(arrsItems) ::= <<
+Possible values:<br/>
+<ul class="enumeration">
+$arrsItems;separator="\n"$
+</ul>
+>>
 
 
 EmitSequenceOrChoice(sClass, sTasName, sTasNameC, bHasAcnDef, sAsn1Kinf, sMinBytes, sMaxBytes, sMaxBitsExplained, sCommentLine, arrsChildren, arrsParams, arrsComments) ::= <<
@@ -232,8 +247,6 @@ $arrsRows;separator="\n"$
 </table>
 >>
 
-
-
 PrintParam(nIndex, sName, sType, nColSpan) ::= <<
 <tr class="OddRow">
     <td class="no" >$nIndex$</td>
@@ -242,13 +255,7 @@ PrintParam(nIndex, sName, sType, nColSpan) ::= <<
 </tr>
 >>
 
-RootHtml(arrsFiles1, arrsFiles2, bAcnParamsMustBeExplained, arrsFiles3, typeRowColor, typeRowBlueColor) ::= <<
-<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd"> 
-<html xmlns="http://www.w3.org/1999/xhtml" >
-<head>
-    <title>ICD</title>
-    <meta http-equiv="Content-Type" content="text/html;charset=utf-8" />
-    <style type="text/css"> 
+RootCss(typeRowColor, typeRowBlueColor) ::= <<
 .headerRow
 {
     background-color: #BBBBBB;
@@ -515,8 +522,15 @@ font.enumeration_name
 {
     font-style: italic;
 }
-</style>
+>>
 
+RootHtml(arrsFiles1, arrsFiles2, bAcnParamsMustBeExplained, arrsFiles3, cssFileName) ::= <<
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd"> 
+<html xmlns="http://www.w3.org/1999/xhtml" >
+<head>
+    <title>ICD</title>
+    <meta http-equiv="Content-Type" content="text/html;charset=utf-8" />
+    <link rel="stylesheet" href="$cssFileName$" /> 
 </head>
 <body>
 <em>The following tables describe the binary encodings of the data model using the ACN Encoding Rules.

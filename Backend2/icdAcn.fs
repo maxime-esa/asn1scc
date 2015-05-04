@@ -263,12 +263,12 @@ let PrintModule (m:Asn1Module) (f:Asn1File) (r:AstRoot) (acn:AcnTypes.AcnAstReso
     let blueTasses = icdUper.getModuleBlueTasses m |> Seq.map snd
     let sortedTas = spark_spec.SortTypeAssigments m r acn
     let tases = sortedTas |> Seq.map (fun x -> PrintTas x m r acn blueTasses)
-    let comments = m.Comments |> Array.map (fun x -> x.Replace("--", "").Replace("/*", "").Replace("*/",""))
-    icd_uper.EmmitModule m.Name.Value comments tases
+    let comments = m.Comments |> Array.map (fun x -> x.Trim().Replace("--", "").Replace("/*", "").Replace("*/","").Replace("\n", "<br/>"))
+    icd_acn.EmitModule m.Name.Value comments tases
 
 let PrintFile1 (f:Asn1File)  (r:AstRoot) (acn:AcnTypes.AcnAstResolved)  =
-    let modules = f.Modules |> Seq.map (fun  m -> PrintModule m f r acn )  
-    icd_uper.EmmitFile (Path.GetFileName f.FileName) modules 
+    let modules = f.Modules |> Seq.map (fun  m -> PrintModule m f r acn )
+    icd_acn.EmitFile (Path.GetFileName f.FileName) modules
 
 
 // Generate a formatted version of the ACN grammar given as input,
@@ -315,7 +315,9 @@ let DoWork (r:AstRoot) (acn:AcnTypes.AcnAstResolved) outDir =
     let files1 = r.Files |> Seq.map (fun f -> PrintFile1 f r acn) 
     let files2 = r.Files |> Seq.map icdUper.PrintFile2
     let files3 = PrintFile3 r acn
-    let content = icd_acn.RootHtml files1 files2 (acn.Parameters |> Seq.exists(fun x->true)) files3 (icd_uper.Orange()) (icd_uper.Blue())
-    File.WriteAllText(Path.Combine(outDir,r.IcdAcnHtmlFileName), content.Replace("\r",""))
-
-
+    let htmlFileName = r.IcdAcnHtmlFileName
+    let cssFileName = Path.ChangeExtension(htmlFileName, ".css")
+    let htmlContent = icd_acn.RootHtml files1 files2 (acn.Parameters |> Seq.exists(fun x->true)) files3 (Path.GetFileName(cssFileName))
+    let cssContent = icd_acn.RootCss (icd_uper.Orange()) (icd_uper.Blue())
+    File.WriteAllText(Path.Combine(outDir, htmlFileName), htmlContent.Replace("\r",""))
+    File.WriteAllText(Path.Combine(outDir, cssFileName), cssContent.Replace("\r", ""))
