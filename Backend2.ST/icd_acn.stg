@@ -256,7 +256,7 @@ RootHtml(arrsFiles1, arrsFiles2, bAcnParamsMustBeExplained, arrsFiles3, typeRowC
 
 .typeRow
 {
-    font-family: Verdana;
+    font-family: Verdana, Sans-Serif;
     font-size: 14pt;
     color: white;
     background-color: #999999;
@@ -281,7 +281,7 @@ RootHtml(arrsFiles1, arrsFiles2, bAcnParamsMustBeExplained, arrsFiles3, typeRowC
 .hrNo
 {
     text-align: center;
-    font-family: Verdana;
+    font-family: Verdana, Sans-Serif;
     color: white;
     font-size: 10pt;
     width: 3%;
@@ -291,7 +291,7 @@ RootHtml(arrsFiles1, arrsFiles2, bAcnParamsMustBeExplained, arrsFiles3, typeRowC
 {
     text-align: left;
     padding-left: 3pt;
-    font-family: Verdana;
+    font-family: Verdana, Sans-Serif;
     color: white;
     font-size: 10pt;
     width:15%;
@@ -301,7 +301,7 @@ RootHtml(arrsFiles1, arrsFiles2, bAcnParamsMustBeExplained, arrsFiles3, typeRowC
 {
     text-align: left;
     padding-left: 3pt;
-    font-family: Verdana;
+    font-family: Verdana, Sans-Serif;
     color: white;
     font-size: 10pt;
 }
@@ -310,7 +310,7 @@ RootHtml(arrsFiles1, arrsFiles2, bAcnParamsMustBeExplained, arrsFiles3, typeRowC
 {
     text-align: left;
     padding-left: 3pt;
-    font-family: Verdana;
+    font-family: Verdana, Sans-Serif;
     color: white;
     font-size: 10pt;
     width: 20%;
@@ -320,7 +320,7 @@ RootHtml(arrsFiles1, arrsFiles2, bAcnParamsMustBeExplained, arrsFiles3, typeRowC
 {
     text-align: left;
     padding-left: 3pt;
-    font-family: Verdana;
+    font-family: Verdana, Sans-Serif;
     color: white;
     font-size: 10pt;
     width: 10%;
@@ -330,7 +330,7 @@ RootHtml(arrsFiles1, arrsFiles2, bAcnParamsMustBeExplained, arrsFiles3, typeRowC
 {
     text-align: left;
     padding-left: 3pt;
-    font-family: Verdana;
+    font-family: Verdana, Sans-Serif;
     color: white;
     font-size: 10pt;
 }
@@ -339,7 +339,7 @@ RootHtml(arrsFiles1, arrsFiles2, bAcnParamsMustBeExplained, arrsFiles3, typeRowC
 {
     text-align: left;
     padding-left: 3pt;
-    font-family: Verdana;
+    font-family: Verdana, Sans-Serif;
     color: white;
     font-size: 10pt;
     width:10%;
@@ -349,7 +349,7 @@ RootHtml(arrsFiles1, arrsFiles2, bAcnParamsMustBeExplained, arrsFiles3, typeRowC
 {
     text-align: left;
     padding-left: 3pt;
-    font-family: Verdana;
+    font-family: Verdana, Sans-Serif;
     color: white;
     font-size: 10pt;
     width: 7%;
@@ -359,7 +359,7 @@ RootHtml(arrsFiles1, arrsFiles2, bAcnParamsMustBeExplained, arrsFiles3, typeRowC
 {
     text-align: left;
     padding-left: 3pt;
-    font-family: Verdana;
+    font-family: Verdana, Sans-Serif;
     color: white;
     font-size: 10pt;
     width: 7%;
@@ -386,7 +386,7 @@ RootHtml(arrsFiles1, arrsFiles2, bAcnParamsMustBeExplained, arrsFiles3, typeRowC
 .no
 {
     text-align:  center;
-    font-family: Verdana;
+    font-family: Verdana, Sans-Serif;
     color: black;
     font-size: 9pt;
 }
@@ -395,7 +395,7 @@ RootHtml(arrsFiles1, arrsFiles2, bAcnParamsMustBeExplained, arrsFiles3, typeRowC
 {
     text-align: left;
     padding-left: 3pt;
-    font-family: Verdana;
+    font-family: Verdana, Sans-Serif;
     color: black;
     font-size: 9pt;
 }
@@ -403,7 +403,7 @@ RootHtml(arrsFiles1, arrsFiles2, bAcnParamsMustBeExplained, arrsFiles3, typeRowC
 .comment
 {
     color: black;
-    font-family: Verdana;
+    font-family: Verdana, Sans-Serif;
     font-size: 9pt;
     text-align: left;
     padding-left: 3pt;
@@ -412,7 +412,7 @@ RootHtml(arrsFiles1, arrsFiles2, bAcnParamsMustBeExplained, arrsFiles3, typeRowC
 .comment2
 {
     color: black;
-    font-family: Verdana;
+    font-family: Verdana, Sans-Serif;
     font-size: 9pt;
     text-align: left;
     padding-left: 3pt;
@@ -421,7 +421,7 @@ RootHtml(arrsFiles1, arrsFiles2, bAcnParamsMustBeExplained, arrsFiles3, typeRowC
 .threeDots
 {
     color: black;
-    font-family: Verdana;
+    font-family: Verdana, Sans-Serif;
     font-size: 9pt;
     text-align:center;
 }
@@ -429,7 +429,7 @@ RootHtml(arrsFiles1, arrsFiles2, bAcnParamsMustBeExplained, arrsFiles3, typeRowC
 .type
 {
     text-align: left;
-    font-family: Verdana;
+    font-family: Verdana, Sans-Serif;
     color: black;
     font-size: 9pt;
     padding-left: 3pt;
@@ -439,7 +439,7 @@ RootHtml(arrsFiles1, arrsFiles2, bAcnParamsMustBeExplained, arrsFiles3, typeRowC
 {
     text-align: left;
     padding-left: 3pt;
-    font-family: Verdana;
+    font-family: Verdana, Sans-Serif;
     color: black;
     font-size: 9pt;
 }
@@ -448,7 +448,7 @@ RootHtml(arrsFiles1, arrsFiles2, bAcnParamsMustBeExplained, arrsFiles3, typeRowC
 {
     text-align: left;
     padding-left: 3pt;
-    font-family: Verdana;
+    font-family: Verdana, Sans-Serif;
     color: black;
     font-size: 9pt;
 }
@@ -457,7 +457,7 @@ RootHtml(arrsFiles1, arrsFiles2, bAcnParamsMustBeExplained, arrsFiles3, typeRowC
 {
     text-align: right;
     padding-right: 3pt;
-    font-family: Verdana;
+    font-family: Verdana, Sans-Serif;
     color: black;
     font-size: 9pt;
 }
@@ -466,21 +466,21 @@ RootHtml(arrsFiles1, arrsFiles2, bAcnParamsMustBeExplained, arrsFiles3, typeRowC
 {
     text-align: right;
     padding-right: 3pt;
-    font-family: Verdana;
+    font-family: Verdana, Sans-Serif;
     color: black;
     font-size: 9pt;
 }
 
 h1
 {
-    font-family: Verdana, Tahoma;
+    font-family: Verdana, Sans-Serif;
     color: #033a7a;
     font-size: 14pt;
 }
 
 h2
 {
-    font-family: Verdana, Tahoma;
+    font-family: Verdana, Sans-Serif;
     color: #033a7a;
     font-size: 12pt;
 }
