@@ -263,7 +263,7 @@ let PrintModule (m:Asn1Module) (f:Asn1File) (r:AstRoot) (acn:AcnTypes.AcnAstReso
     let blueTasses = icdUper.getModuleBlueTasses m |> Seq.map snd
     let sortedTas = spark_spec.SortTypeAssigments m r acn
     let tases = sortedTas |> Seq.map (fun x -> PrintTas x m r acn blueTasses)
-    let comments = []
+    let comments = m.Comments |> Array.map (fun x -> x.Replace("--", "").Replace("/*", "").Replace("*/",""))
     icd_uper.EmmitModule m.Name.Value comments tases
 
 let PrintFile1 (f:Asn1File)  (r:AstRoot) (acn:AcnTypes.AcnAstResolved)  =

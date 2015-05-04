@@ -38,6 +38,7 @@ let CloneModule (oldRoot:AstRoot) (old:Asn1Module) cons state  =
         ValueAssignments = newVas
         Imports = old.Imports 
         Exports = old.Exports
+        Comments = old.Comments
     }, s1
 
 
