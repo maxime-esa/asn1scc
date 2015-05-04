@@ -470,14 +470,14 @@ RootCss() ::= <<
 h1
 {
     font-family: Verdana, Sans-Serif;
-    color: #033a7a;
+    color: black;
     font-size: 14pt;
 }
 
 h2
 {
     font-family: Verdana, Sans-Serif;
-    color: #033a7a;
+    color: black;
     font-size: 12pt;
 }
 
