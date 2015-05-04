@@ -303,10 +303,12 @@ let PrintFile3 (r:AstRoot) (acn:AcnTypes.AcnAstResolved) =
                 |true -> icd_acn.AcnKeyword(safeText)
                 |false -> colored
 
+    let tasNames = r.Files |> Seq.collect(fun f -> f.Modules) |> Seq.collect(fun x -> x.TypeAssignments) |> Seq.map(fun x -> x.Name.Value) |> Seq.toArray
+
     acn.Files |>
     Seq.map(fun (fName, tokens) -> 
-            let f = r.Files |> Seq.find(fun x -> Path.GetFileNameWithoutExtension(x.FileName) = Path.GetFileNameWithoutExtension(fName))
-            let tasNames = f.Modules |> Seq.collect(fun x -> x.TypeAssignments) |> Seq.map(fun x -> x.Name.Value) |> Seq.toArray
+            //let f = r.Files |> Seq.find(fun x -> Path.GetFileNameWithoutExtension(x.FileName) = Path.GetFileNameWithoutExtension(fName))
+            //let tasNames = f.Modules |> Seq.collect(fun x -> x.TypeAssignments) |> Seq.map(fun x -> x.Name.Value) |> Seq.toArray
             let content = tokens |> Seq.map(fun token -> colorize(token,tasNames))
             icd_uper.EmmitFilePart2  (Path.GetFileName fName) (content |> Seq.StrJoin "")
     )
