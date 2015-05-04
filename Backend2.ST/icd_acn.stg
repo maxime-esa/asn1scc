@@ -11,9 +11,9 @@ EmitFile(sAsnFileName, arrsModules) ::= <<
 
 EmitModule(sModName, arrsComments, arrsTases) ::= <<
 <div style="width: 100%">
-<h2>Module: $sModName$</h2>
+<h2>Module $sModName$</h2>
 <p>
-$arrsComments;separator="\n"$
+$arrsComments;separator="\n<br/>\n"$
 </p>
 $arrsTases;separator="\n"$
 </div>
