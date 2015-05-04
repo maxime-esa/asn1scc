@@ -61,14 +61,14 @@ $arrsItems;separator="\n"$
 >>
 
 
-EmitSequenceOrChoice(sClass, sTasName, sTasNameC, bHasAcnDef, sAsn1Kinf, sMinBytes, sMaxBytes, sMaxBitsExplained, sCommentLine, arrsChildren, arrsParams, arrsComments) ::= <<
+EmitSequenceOrChoice(isAnonymousType, sTasName, sTasNameC, bHasAcnDef, sAsn1Kinf, sMinBytes, sMaxBytes, sMaxBitsExplained, sCommentLine, arrsChildren, arrsParams, arrsComments) ::= <<
 <a name="ICD_$sTasNameC$"></a> 
 <table border="0" width="100%" >
 <tbody>
 
-<tr class="typeRow $sClass$">
+<tr class="typeRow">
 <td colspan="6">
-$sTasName$ <font size="-1">($sAsn1Kinf$)</font>
+$sTasName$ <font size="-1">($if(isAnonymousType)$<i>anonymous </i>$endif$$sAsn1Kinf$)</font>
 <font size="-2"><a href="#ASN1_$sTasNameC$" class="fileLink">ASN.1</a>$if(bHasAcnDef)$  <a href="#ACN_$sTasNameC$" class="fileLink">ACN</a>$endif$</font>
 </td>
 
@@ -141,14 +141,14 @@ Special field used by ACN to indicate which choice alternative is present.
 
 
 
-EmitPrimitiveType(sClass, sTasName, sTasNameC, bHasAcnDef, sAsnKindName, sMinBytes, sMaxBytes, sMaxBitsExplained, sCommentLine, sAsn1Constraints, sMinBits, sMaxBits, arrsParams, arrsComments) ::= <<
+EmitPrimitiveType(isAnonymousType, sTasName, sTasNameC, bHasAcnDef, sAsnKindName, sMinBytes, sMaxBytes, sMaxBitsExplained, sCommentLine, sAsn1Constraints, sMinBits, sMaxBits, arrsParams, arrsComments) ::= <<
 <a name="ICD_$sTasNameC$"></a> 
 <table border="0" width="100%" >
 <tbody>
 
-<tr class="typeRow $sClass$">
+<tr class="typeRow">
 <td colspan="2"  >
-$sTasName$ <font size="-1">($sAsnKindName$)</font>
+$sTasName$ <font size="-1">($if(isAnonymousType)$<i>anonymous </i>$endif$$sAsnKindName$)</font>
 <font size="-2"><a href="#ASN1_$sTasNameC$" class="fileLink">ASN.1</a>  $if(bHasAcnDef)$<a href="#ACN_$sTasNameC$" class="fileLink">ACN</a>$endif$ </font>
 </td>
 
@@ -194,15 +194,14 @@ $endif$
 >>
 
 
-/* *********** SEQUENCE OF, OCTET STRING etc ********** */
-EmitSizeable(sClass, sTasName, sTasNameC, bHasAcnDef, sKind, sMinBytes, sMaxBytes, sMaxBitsExplained, sCommentLine, arrsRows, arrsParams, arrsComments) ::= <<
+EmitSizeable(isAnonymousType, sTasName, sTasNameC, bHasAcnDef, sKind, sMinBytes, sMaxBytes, sMaxBitsExplained, sCommentLine, arrsRows, arrsParams, arrsComments) ::= <<
 <a name="ICD_$sTasNameC$"></a> 
 <table border="0" width="100%" >
 <tbody>
 
-<tr  class="typeRow $sClass$">
+<tr  class="typeRow">
 <td colspan="5">
-$sTasName$ <font size="-1">($sKind$)</font>
+$sTasName$ <font size="-1">($if(isAnonymousType)$<i>anonymous </i>$endif$$sKind$)</font>
 <font size="-2"><a href="#ASN1_$sTasNameC$" class="fileLink">ASN.1</a>$if(bHasAcnDef)$  <a href="#ACN_$sTasNameC$" class="fileLink">ACN</a>$endif$</font>
 </td>
 
@@ -255,7 +254,7 @@ PrintParam(nIndex, sName, sType, nColSpan) ::= <<
 </tr>
 >>
 
-RootCss(typeRowColor, typeRowBlueColor) ::= <<
+RootCss() ::= <<
 .headerRow
 {
     background-color: #BBBBBB;
@@ -273,16 +272,6 @@ RootCss(typeRowColor, typeRowBlueColor) ::= <<
 .typeRow td
 {
     padding-left: 3pt;
-}
-
-.blueBackground
-{
-    background-color: $typeRowBlueColor$;
-}
-
-.orangeBackground
-{
-   background-color: $typeRowColor$;
 }
 
 .hrNo
