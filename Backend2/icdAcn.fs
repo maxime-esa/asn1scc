@@ -264,17 +264,17 @@ let PrintModule (m:Asn1Module) (f:Asn1File) (r:AstRoot) (acn:AcnTypes.AcnAstReso
     let moduleName = m.Name.Value
     let title = if comments.Length > 0 then moduleName + " - " + comments.[0] else moduleName
     let commentsTail = if comments.Length > 1 then comments.[1..] else [||]
-    icd_acn.EmitModule title commentsTail tases
+    let acnFileName, _ = acn.Files |> Seq.find(fun (_, tokens) -> tokens |> Seq.exists (fun (token:IToken) -> token.Text = moduleName))
+    icd_acn.EmitModule title (Path.GetFileName(f.FileName)) (Path.GetFileName(acnFileName)) commentsTail tases
 
 
-let PrintFile1 (f:Asn1File)  (r:AstRoot) (acn:AcnTypes.AcnAstResolved)  =
-    let modules = f.Modules |> Seq.map (fun  m -> PrintModule m f r acn )
-    icd_acn.EmitFile (Path.GetFileName f.FileName) modules
+let PrintTasses (f:Asn1File)  (r:AstRoot) (acn:AcnTypes.AcnAstResolved)  =
+    f.Modules |> Seq.map (fun  m -> PrintModule m f r acn ) |> String.concat "\n"
 
 
 // Generate a formatted version of the ACN grammar given as input,
 // using the stringtemplate layouts.
-let PrintFile3 (r:AstRoot) (acn:AcnTypes.AcnAstResolved) =
+let PrintAcnAsHTML (r:AstRoot) (acn:AcnTypes.AcnAstResolved) =
     let acnTokens = [|
             "endianness"; "big"; "little"; "encoding"; "pos-int"; "twos-complement"; "BCD"; "ASCII";
             "IEEE754-1985-32"; "IEEE754-1985-64"; "size"; "null-terminated"; "align-to-next"; "byte";
@@ -315,9 +315,9 @@ let PrintFile3 (r:AstRoot) (acn:AcnTypes.AcnAstResolved) =
 
 
 let DoWork (r:AstRoot) (acn:AcnTypes.AcnAstResolved) outDir =
-    let files1 = r.Files |> Seq.map (fun f -> PrintFile1 f r acn) 
+    let files1 = r.Files |> Seq.map (fun f -> PrintTasses f r acn) 
     let files2 = r.Files |> Seq.map icdUper.PrintFile2
-    let files3 = PrintFile3 r acn
+    let files3 = PrintAcnAsHTML r acn
     let htmlFileName = r.IcdAcnHtmlFileName
     let cssFileName = Path.ChangeExtension(htmlFileName, ".css")
     let htmlContent = icd_acn.RootHtml files1 files2 (acn.Parameters |> Seq.exists(fun x->true)) files3 (Path.GetFileName(cssFileName))

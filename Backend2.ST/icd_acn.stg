@@ -2,16 +2,10 @@ group icd_acn;
 
 //delimiters "$", "$"
 
-EmitFile(sAsnFileName, arrsModules) ::= <<
+EmitModule(sModName, asn1FileName, acnFileName, arrsComments, arrsTases) ::= <<
 <div style="width: 100%">
-<h1>ASN.1 file : $sAsnFileName$</h1>
-    $arrsModules;separator="\n"$
-</div>
->>
-
-EmitModule(sModName, arrsComments, arrsTases) ::= <<
-<div style="width: 100%">
-<h2>Module $sModName$</h2>
+<h1>Module $sModName$</h1>
+<i>Defined in: $asn1FileName$, $acnFileName$.</i>
 <p>
 $arrsComments;separator="\n<br/>\n"$
 </p>
