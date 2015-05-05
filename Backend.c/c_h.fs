@@ -161,7 +161,7 @@ let PrintAcnProtos (t:TypeAssignment) (m:Asn1Module) (f:Asn1File) (r:AstRoot) (a
     result
 
 
-let SortTypeAssigments (f:Asn1File) =
+let SortTypeAssigments (f:Asn1File) (r:AstRoot) (acn:AcnTypes.AcnAstResolved) =
     let GetTypeDependencies (tas:TypeAssignment)  = 
         seq {
             for ch in (GetMySelfAndChildren tas.Type) do
@@ -182,7 +182,14 @@ let SortTypeAssigments (f:Asn1File) =
 
     let independentNodes = allNodes |> List.filter(fun (_,list) -> List.isEmpty list) |> List.map(fun (n,l) -> n)
     let dependentNodes = allNodes |> List.filter(fun (_,list) -> not (List.isEmpty list) )
-    let sortedTypeAss = DoTopologicalSort (importedTypes@ independentNodes) dependentNodes (fun c -> SemanticError(emptyLocation, sprintf "Recursive types are not compatible with embedded systems.\nASN.1 grammar has cyclic dependencies: %A" c ))
+    let sortedTypeAss = 
+        DoTopologicalSort (importedTypes @ independentNodes) dependentNodes 
+            (fun c -> 
+            SemanticError
+                (emptyLocation, 
+                 sprintf 
+                     "Recursive types are not compatible with embedded systems.\nASN.1 grammar has cyclic dependencies: %A" 
+                     c))
     seq {
         for tasName in sortedTypeAss do
             for m in f.Modules do
@@ -202,7 +209,7 @@ let PrintFile (f:Asn1File) outDir newFileExt (r:AstRoot) (acn:AcnTypes.AcnAstRes
             if file.FileName <> f.FileName then
                 if file.Modules |> Seq.exists (fun m -> allImportedModules |> Seq.exists(fun x -> x = m.Name.Value)) then
                     yield file.FileNameWithoutExtension } |> Seq.toList 
-    let sortedTas = SortTypeAssigments f
+    let sortedTas = SortTypeAssigments f r acn
     let tases, s1 = sortedTas |> foldMap(fun s (m,tas) -> PrintTypeAss tas m f r acn s) 1000
     let protos  = sortedTas |> Seq.map(fun (m,tas) -> PrintAcnProtos tas m f r acn )
     let vases= seq {
