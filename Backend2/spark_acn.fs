@@ -31,7 +31,13 @@ let UpdateDeterminant determinantPath (kind:AcnTypes.LongReferenceKind, refs:seq
             sa.ChoiceDependencyEnum_Item determinantPath (ch.CName_Present Spark) (en.CEnumName r Spark)
         match actOtherType.Kind, actDeterminant.Kind with
         | Choice(children), Enumerated(enms)    ->
-            let arrsChEnumItems = Seq.map2 printItem children enms
+            let sortedEnms = 
+                enms |> 
+                List.sortBy (
+                    fun en -> 
+                        children |> Seq.findIndex (fun ch -> ch.uniqueName = en.uniqueName)
+                )
+            let arrsChEnumItems = Seq.map2 printItem children sortedEnms
             false, sa.ChoiceDependencyEnum sTasName arrsChEnumItems
         | _ -> raise(BugErrorException(""))
     | AcnTypes.PresenceBool        ->
