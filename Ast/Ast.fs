@@ -23,11 +23,12 @@ and Asn1File = {
 }
 
 and Asn1Module = {
-    Name:StringLoc
+    Name : StringLoc
     TypeAssignments : list<TypeAssignment>
     ValueAssignments : list<ValueAssignment>
     Imports : list<ImportedModule>
     Exports : Exports
+    Comments : string array
 }
 
 and Exports =

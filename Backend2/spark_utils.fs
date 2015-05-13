@@ -478,6 +478,7 @@ let MoveChoiceVasToPrivateModule (ast:Ast.AstRoot) =
             ValueAssignments = newVas
             Imports = old.Imports 
             Exports = old.Exports
+            Comments = old.Comments
         }, s1
 
     let OnCloneValueAssignment (old:ValueAssignment)  (m:Asn1Module) cons state=
