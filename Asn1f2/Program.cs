@@ -53,7 +53,9 @@ namespace Asn1f2
             try
             {
 
-                CheckSuccess(args);
+                int ret = CheckSuccess(args);
+                if (ret != 0)
+                    return ret;
             }
             catch (asn1Parser.SyntaxErrorException ex)
             {
@@ -269,7 +271,7 @@ namespace Asn1f2
                 System.IO.Directory.CreateDirectory(Path.Combine(outDir, "examiner"));
                 System.IO.Directory.CreateDirectory(Path.Combine(outDir, "bin"));
             }
-            else if (cmdArgs.HasArgument("c"))
+            /*else */if (cmdArgs.HasArgument("c"))
             {
                 WriteTextFile(Path.Combine(outDir, "asn1crt.c"), Resource1.asn1crt);
                 WriteTextFile(Path.Combine(outDir, "asn1crt.h"), Resource1.asn1crt1);
@@ -291,11 +293,11 @@ namespace Asn1f2
                 }
 
             }
-            else if (bGenerateAcnDefault)
+            /*else */if (bGenerateAcnDefault)
             {
                 c_body.EmmitDefaultACNGrammar(asn1Ast0, outDir);
             }
-            else 
+            /*else */
             {
                 if (cmdArgs.HasArgument("AdaUses"))
                     foreach (var s in Ast.AdaUses(refTypesWithNoConstraints))

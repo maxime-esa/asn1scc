@@ -526,6 +526,19 @@ let rec GetMySelfAndChildren (t:Asn1Type) =
         |_ -> ()    
     }
 
+let rec GetMySelfAndChildren2 (t:Asn1Type) = 
+    let rec GetMySelfAndChildren2_aux (acnInserted:bool) (t:Asn1Type) = 
+        seq {
+            yield (acnInserted, t)
+            match t.Kind with
+            | SequenceOf(conType) ->  yield! GetMySelfAndChildren2_aux false conType
+            | Sequence(children) | Choice(children)-> 
+                for ch in children do 
+                    yield! GetMySelfAndChildren2_aux ch.AcnInsertedField ch.Type
+            |_ -> ()    
+        }
+    GetMySelfAndChildren2_aux false t
+
 let rec GetMySelfAndChildrenWithPath (t:Asn1Type) (curPath:list<string>) = 
     seq {
         yield (t, curPath)

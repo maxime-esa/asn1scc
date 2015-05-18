@@ -238,9 +238,12 @@ let PrintValueAss (v:ValueAssignment) (m:Asn1Module) (r:AstRoot) (state:State)=
 let SortTypeAssigments (m:Asn1Module) (r:AstRoot) (acn:AcnTypes.AcnAstResolved) =
     let GetTypeDependencies (tas:TypeAssignment)  = 
         seq {
-            for ch in (GetMySelfAndChildren tas.Type) do
+            for (acnInsertedType, ch) in (GetMySelfAndChildren2 tas.Type) do
                 match ch.Kind with
-                | ReferenceType(_, tasName, _)   -> yield tasName.Value; 
+                | ReferenceType(moduName, tasName, _)   -> 
+                    match m.Name.Value = moduName.Value with
+                    | true  -> yield (false, tasName.Value) 
+                    | false -> yield (acnInsertedType, tasName.Value) 
                 | _                                 ->      ()
             for acnpar in acn.Parameters do
                 if acnpar.ModName = m.Name.Value && acnpar.TasName = tas.Name.Value then
@@ -248,15 +251,22 @@ let SortTypeAssigments (m:Asn1Module) (r:AstRoot) (acn:AcnTypes.AcnAstResolved) 
                     | AcnTypes.Integer                      -> ()
                     | AcnTypes.Boolean                      -> ()
                     | AcnTypes.NullType                     -> ()
-                    | AcnTypes.RefTypeCon(mod_ref,tas_ref)  ->  yield tas_ref.Value
+                    | AcnTypes.RefTypeCon(mod_ref,tas_ref)  ->  
+                        match m.Name.Value = mod_ref.Value with
+                        | true  -> yield (false, tas_ref.Value) 
+                        | false -> yield (true, tas_ref.Value) 
+
         } |> Seq.distinct |> Seq.toList
 
+    
     let allNodes = m.TypeAssignments |> List.map( fun tas -> (tas.Name.Value, GetTypeDependencies tas))
+    let implicitImportedTypes = allNodes |> List.collect snd |> List.filter(fun (a,_) -> a) |> List.map snd
+    let allNodes = allNodes |> List.map(fun (a,b) -> (a, b|> List.map snd))
     let importedTypes = m.Imports |> List.collect(fun imp -> imp.Types) |> List.map(fun x -> x.Value)
 
     let independentNodes = allNodes |> List.filter(fun (_,list) -> List.isEmpty list) |> List.map(fun (n,l) -> n)
     let dependentNodes = allNodes |> List.filter(fun (_,list) -> not (List.isEmpty list) )
-    let sortedTypeAss = DoTopologicalSort (importedTypes@ independentNodes) dependentNodes (fun c -> SemanticError(emptyLocation, sprintf "Recursive types are not compatible with embedded systems.\nASN.1 grammar has cyclic dependencies: %A" c ))
+    let sortedTypeAss = DoTopologicalSort (importedTypes@ implicitImportedTypes@independentNodes) dependentNodes (fun c -> SemanticError(emptyLocation, sprintf "Recursive types are not compatible with embedded systems.\nASN.1 grammar has cyclic dependencies: %A" c ))
     seq {
         for tasName in sortedTypeAss do
         match m.TypeAssignments |> Seq.tryFind(fun x -> x.Name.Value = tasName) with
