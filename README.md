@@ -85,6 +85,11 @@ George Mamais (gmamais@gmail.com), Thanassis Tsiodras (ttsiodras@gmail.com)
 Changelog
 =========
 
+3.2.2
+-----
+Various minor bugfixes
+Improvements of ICD backend for ACN
+
 3.2.0
 -----
 Minor API change in ICD backends - templates now contain code to customize the formatted output of the grammar.
