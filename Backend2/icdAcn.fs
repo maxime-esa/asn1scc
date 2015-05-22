@@ -299,9 +299,7 @@ let PrintAcnAsHTML (r:AstRoot) (acn:AcnTypes.AcnAstResolved) =
                 |acnLexer.COMMENT
                 |acnLexer.COMMENT2 -> icd_acn.Comment safeText
                 |_ -> safeText
-            match isAcnKeyword with
-                |true -> icd_acn.AcnKeyword(safeText)
-                |false -> colored
+            if isAcnKeyword then icd_acn.AcnKeyword safeText else colored
 
     let tasNames = r.Files |> Seq.collect(fun f -> f.Modules) |> Seq.collect(fun x -> x.TypeAssignments) |> Seq.map(fun x -> x.Name.Value) |> Seq.toArray
 
