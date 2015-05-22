@@ -37,7 +37,7 @@ let GetWhyExplanation (t:Ast.Asn1Type) (r:AstRoot) =
         | Concrete(a,b)  when a=b       -> icd_uper.ZeroSizeExplained()
         | Full                          -> icd_uper.IntSizeExplained()
         | _                             -> ""
-    | _         -> ""    
+    | _         -> ""
 
 let rec printType (tas:Ast.TypeAssignment) (t:Ast.Asn1Type) (r:AstRoot) (acn:AcnTypes.AcnAstResolved)  color =
     let uperSizeInBitsAsInt func (kind:Asn1TypeKind) (cons:list<Asn1Constraint>)  (ast:AstRoot) =
@@ -47,7 +47,7 @@ let rec printType (tas:Ast.TypeAssignment) (t:Ast.Asn1Type) (r:AstRoot) (acn:Acn
             maxBits.ToString(), maxBytes.ToString()
         | Infinite          -> icd_uper.Infinity (), icd_uper.Infinity ()
 
-    
+
     let GetCommentLine (comments:string array) (t:Asn1Type) =
         let singleComment = comments |> Seq.StrJoin (icd_uper.NewLine ()) 
         let ret = 
@@ -81,7 +81,7 @@ let rec printType (tas:Ast.TypeAssignment) (t:Ast.Asn1Type) (r:AstRoot) (acn:Acn
         let sAsn1Constraints = t.Constraints |> Seq.map PrintAsn1.PrintConstraint |> Seq.StrJoin ""
 
         icd_uper.EmitPrimitiveType color sTasName (ToC sTasName) sKind sMinBytes sMaxBytes sMaxBitsExplained sCommentLine ( if sAsn1Constraints.Trim() ="" then "N.A." else sAsn1Constraints) sMinBits sMaxBits (sCommentLine.Split [|'\n'|])
-        
+
     |ReferenceType(_) ->
         let baseTypeWithCons = Ast.GetActualTypeAllConsIncluded t r
         printType tas baseTypeWithCons r acn color
@@ -104,7 +104,7 @@ let rec printType (tas:Ast.TypeAssignment) (t:Ast.Asn1Type) (r:AstRoot) (acn:Acn
             let sMinBits, sMinBytes = uperSizeInBitsAsInt uperGetMinSizeInBits  ch.Type.Kind ch.Type.Constraints r
             let sMaxBitsExplained =  GetWhyExplanation ch.Type r
             icd_uper.EmmitSequenceChild sClass nIndex ch.Name.Value sComment  sOptionality  sType sAsn1Constraints sMinBits (sMaxBits+sMaxBitsExplained)
-        
+
         let SeqPreamble =
             let optChild = children |> Seq.filter (fun x -> x.Optionality.IsSome) |> Seq.mapi(fun i c -> icd_uper.EmmitSequencePreambleSingleComment (BigInteger (i+1)) c.Name.Value)
             let nLen = optChild |> Seq.length
@@ -120,7 +120,7 @@ let rec printType (tas:Ast.TypeAssignment) (t:Ast.Asn1Type) (r:AstRoot) (acn:Acn
         let sMinBits, sMinBytes = uperSizeInBitsAsInt uperGetMinSizeInBits t.Kind t.Constraints r
         let sMaxBitsExplained = ""
         let sCommentLine = GetCommentLine tas.Comments t
-        
+
         let arChildren idx = children |> Seq.mapi(fun i ch -> EmitChild (idx + i) ch) |> Seq.toList
         let arRows =
             match SeqPreamble with 
@@ -129,7 +129,7 @@ let rec printType (tas:Ast.TypeAssignment) (t:Ast.Asn1Type) (r:AstRoot) (acn:Acn
 
         icd_uper.EmitSequence color sTasName (ToC sTasName) sMinBytes sMaxBytes sMaxBitsExplained sCommentLine arRows (sCommentLine.Split [|'\n'|])
 
-    |Choice(children)   -> 
+    |Choice(children)   ->
         let EmitChild (i:int) (ch:ChildInfo) =
             let sClass = if i % 2 = 0 then icd_uper.EvenRow() else icd_uper.OddRow()
             let nIndex = BigInteger 2
@@ -155,17 +155,17 @@ let rec printType (tas:Ast.TypeAssignment) (t:Ast.Asn1Type) (r:AstRoot) (acn:Acn
         let sMinBits, sMinBytes = uperSizeInBitsAsInt uperGetMinSizeInBits t.Kind t.Constraints r
         let sMaxBitsExplained = ""
         let sCommentLine = GetCommentLine tas.Comments t
-        
+
         let arChildren = children |> Seq.mapi(fun i ch -> EmitChild (2 + i) ch) |> Seq.toList
         let arRows = ChIndex::arChildren
 
         icd_uper.EmitChoice color sTasName (ToC sTasName) sMinBytes sMaxBytes sMaxBitsExplained sCommentLine arRows (sCommentLine.Split [|'\n'|])
 
-    | OctetString   
-    | NumericString   
-    | IA5String   
-    | BitString   
-    |SequenceOf(_)  -> 
+    | OctetString
+    | NumericString
+    | IA5String
+    | BitString
+    | SequenceOf(_)  ->
         let getCharSize () =
             let charSet = GetTypeUperRangeFrom(t.Kind, t.Constraints, r)
             let charSize = GetNumberOfBitsForNonNegativeInteger (BigInteger (charSet.Length-1))
@@ -192,7 +192,7 @@ let rec printType (tas:Ast.TypeAssignment) (t:Ast.Asn1Type) (r:AstRoot) (acn:Acn
                 | BitString                    -> "BIT", "", "1","1"
                 | _                            -> raise(BugErrorException "")
             icd_uper.EmmitChoiceChild sClass nIndex sFieldName sComment  sType sAsn1Constraints sMinBits sMaxBits
-            
+
         let LengthRow =
             let nMin, nLengthSize = 
                 match (GetTypeUperRange t.Kind t.Constraints  r) with
@@ -212,7 +212,7 @@ let rec printType (tas:Ast.TypeAssignment) (t:Ast.Asn1Type) (r:AstRoot) (acn:Acn
         let sMaxBits, sMaxBytes = uperSizeInBitsAsInt uperGetMaxSizeInBits t.Kind t.Constraints r
         let sMinBits, sMinBytes = uperSizeInBitsAsInt uperGetMinSizeInBits t.Kind t.Constraints r
         let sMaxBitsExplained = ""
-        
+
         let sFixedLengthComment (nMax: BigInteger) =
             sprintf "Length is fixed to %A elements (no length determinant is needed)." nMax
 
@@ -223,11 +223,11 @@ let rec printType (tas:Ast.TypeAssignment) (t:Ast.Asn1Type) (r:AstRoot) (acn:Acn
             | Concrete(a,b)  when a=b && b>2I     -> (ChildRow 0I 1I)::(icd_uper.EmitRowWith3Dots())::(ChildRow 0I b)::[], (sFixedLengthComment b)
             | Concrete(a,b)  when a<>b && b<2I    -> LengthRow::(ChildRow 1I 1I)::[],""
             | Concrete(a,b)                       -> LengthRow::(ChildRow 1I 1I)::(icd_uper.EmitRowWith3Dots())::(ChildRow 1I b)::[], ""
-            | PosInf(_)                            
+            | PosInf(_)
             | Full                                -> LengthRow::(ChildRow 1I 1I)::(icd_uper.EmitRowWith3Dots())::(ChildRow 1I 65535I)::[], ""
             | NegInf(_)                           -> raise(BugErrorException "")
             | Empty                               -> [], ""
-        
+
         let sCommentLine = match GetCommentLine tas.Comments t with
                            | null | ""  -> sExtraComment
                            | _          -> sprintf "%s%s%s" (GetCommentLine tas.Comments t) (icd_uper.NewLine()) sExtraComment
@@ -284,7 +284,7 @@ let PrintFile2 (f:Asn1File) =
             let blueTas = blueTassesWithLoc |> Array.tryFind(fun (_,l,c) -> l=t.Line && c=t.CharPositionInLine)
             let lt = icd_uper.LeftDiple ()
             let gt = icd_uper.RightDiple ()
-            let containedIn = Array.exists (fun elem -> elem = t.Text) 
+            let containedIn = Array.exists (fun elem -> elem = t.Text)
             let isAsn1Token = containedIn asn1Tokens
             let isType = containedIn tasses
             let safeText = t.Text.Replace("<",lt).Replace(">",gt)
@@ -319,13 +319,9 @@ let PrintFile2 (f:Asn1File) =
                 |asn1Lexer.COMMENT
                 |asn1Lexer.COMMENT2 -> icd_uper.Comment safeText
                 |_ -> safeText
-            let is_asn1Token =
-                match isAsn1Token with
-                |true -> icd_uper.Asn1Token safeText
-                |false -> colored
             match blueTas with
             |Some (s,_,_) -> icd_uper.BlueTas (ToC s) safeText
-            |None -> is_asn1Token
+            |None -> if isAsn1Token then icd_uper.Asn1Token safeText else colored
     let asn1Content = f.Tokens |> Seq.mapi(fun i token -> colorize(token,i,tasNames,blueTassesWithLoc))
     icd_uper.EmmitFilePart2  (Path.GetFileName f.FileName ) (asn1Content |> Seq.StrJoin "")
 
