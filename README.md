@@ -85,6 +85,10 @@ George Mamais (gmamais@gmail.com), Thanassis Tsiodras (ttsiodras@gmail.com)
 Changelog
 =========
 
+3.2.3
+-----
+Added error message for unsupported string and UTCTime types
+
 3.2.2
 -----
 Various minor bugfixes

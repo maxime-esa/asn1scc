@@ -83,6 +83,8 @@ let rec CreateType (astRoot:list<ITree>) (tree:ITree) (fileTokens:array<IToken>)
         | asn1Parser.OBJECT_TYPE        -> raise (SemanticError (tree.Location, "OBJECT IDs not supported"))
         | asn1Parser.VisibleString      -> 
             raise (SemanticError (tree.Location, "VisibleString is not supported - please use IA5String"))
+        | asn1Parser.PrintableString      -> 
+            raise (SemanticError (tree.Location, "PrintableString is not supported - please use IA5String"))
         | asn1Parser.NULL               -> NullType
         | asn1Parser.REFERENCED_TYPE    
         | asn1Parser.PREFERENCED_TYPE   -> 
@@ -99,7 +101,15 @@ let rec CreateType (astRoot:list<ITree>) (tree:ITree) (fileTokens:array<IToken>)
             ReferenceType(md, ts, templateArgs)
         | asn1Parser.SEQUENCE_OF_TYPE   -> SequenceOf(CreateType  astRoot (getChildByType (typeNode, asn1Parser.TYPE_DEF)) fileTokens alreadyTakenComments )
         | asn1Parser.SET_OF_TYPE        -> SequenceOf(CreateType  astRoot (getChildByType (typeNode, asn1Parser.TYPE_DEF)) fileTokens alreadyTakenComments )
-        | asn1Parser.UTF8String         -> raise (SemanticError (tree.Location, "UTF8String is not supported"))
+        | asn1Parser.UTF8String         -> raise (SemanticError (tree.Location, "UTF8String is not supported, use IA5String"))
+        | asn1Parser.TeletexString      -> raise (SemanticError (tree.Location, "TeletexString is not supported, use IA5String"))
+        | asn1Parser.VideotexString     -> raise (SemanticError (tree.Location, "VideotexString is not supported"))
+        | asn1Parser.GraphicString      -> raise (SemanticError (tree.Location, "GraphicString is not supported"))
+        | asn1Parser.GeneralString      -> raise (SemanticError (tree.Location, "GeneralString is not supported"))
+        | asn1Parser.BMPString          -> raise (SemanticError (tree.Location, "BMPString is not supported"))
+        | asn1Parser.UniversalString    -> raise (SemanticError (tree.Location, "UniversalString is not supported"))
+        | asn1Parser.UTCTime            -> raise (SemanticError (tree.Location, "UTCTime type is not supported (contact us for DATE-TIME support)"))
+        | asn1Parser.GeneralizedTime    -> raise (SemanticError (tree.Location, "GeneralizedTime type is not supported"))
         | _                             -> raise (BugErrorException("Bug in CreateType"))
     {
         Asn1Type.Kind = asn1Kind
