@@ -13,7 +13,7 @@ type RelPath = list<string>
 type AbsPath = list<string>
 
 
-        
+
 
 let GetLastItemLocation (lf:LongFieldLoc) =
     (lf |> List.rev).Head.Location
@@ -32,7 +32,7 @@ and acnIntegerConstant =
     | RefConst of StringLoc       //reference to other constant
 
 
-    
+
 
 type AcnConstant = {
     Name  : StringLoc
@@ -62,13 +62,13 @@ and endianness =
     | LittleEndianness
     | BigEndianness            // Default
 
-and encoding =   
-    | PosInt             
-    | TwosComplement    
+and encoding =
+    | PosInt
+    | TwosComplement
     | Ascii
     | BCD
     | IEEE754_32
-    | IEEE754_64        
+    | IEEE754_64
 
 and booleanEncoding =
     | TrueValue    of StringLoc    //Default '1'
@@ -76,10 +76,11 @@ and booleanEncoding =
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////
 type AcnType = {
-    TypeID     : AbsPath           
+    TypeID     : AbsPath
     ImpMode    : AcnTypeImplMode
     Properties : list<AcnProperty>      //does not contain the properties with long fields 
     Location : SrcLoc
+    Comments: string array
 }
 and AcnTempType = {                // this type is not encoded decoded. It is declared locally at the tas level
                                     // and it is used for passing values
@@ -102,7 +103,7 @@ and AcnParameter = {
     Location : SrcLoc
 }
 
-and AcnAsn1Type = 
+and AcnAsn1Type =
     | Integer
     | Boolean
     | NullType
@@ -134,8 +135,8 @@ and Point =
 
 
 and LongReferenceResolved = {
-    decType      : Point               
-    determinant  : Point               
+    decType      : Point
+    determinant  : Point
     Kind : LongReferenceKind
 }
 

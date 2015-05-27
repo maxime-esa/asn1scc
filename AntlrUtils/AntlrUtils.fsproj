@@ -47,7 +47,7 @@
     <None Include="Script.fsx" />
   </ItemGroup>
   <Choose>
-    <When Condition="'$(VisualStudioVersion)' == '11.0'">
+    <When Condition="'$(VisualStudioVersion)' == '11.0' Or $(OS) == 'Unix'">
       <PropertyGroup>
         <FSharpTargetsPath>$(MSBuildExtensionsPath32)\..\Microsoft SDKs\F#\3.0\Framework\v4.0\Microsoft.FSharp.Targets</FSharpTargetsPath>
       </PropertyGroup>

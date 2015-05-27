@@ -83,6 +83,8 @@ let rec CreateType (astRoot:list<ITree>) (tree:ITree) (fileTokens:array<IToken>)
         | asn1Parser.OBJECT_TYPE        -> raise (SemanticError (tree.Location, "OBJECT IDs not supported"))
         | asn1Parser.VisibleString      -> 
             raise (SemanticError (tree.Location, "VisibleString is not supported - please use IA5String"))
+        | asn1Parser.PrintableString      -> 
+            raise (SemanticError (tree.Location, "PrintableString is not supported - please use IA5String"))
         | asn1Parser.NULL               -> NullType
         | asn1Parser.REFERENCED_TYPE    
         | asn1Parser.PREFERENCED_TYPE   -> 
@@ -99,7 +101,15 @@ let rec CreateType (astRoot:list<ITree>) (tree:ITree) (fileTokens:array<IToken>)
             ReferenceType(md, ts, templateArgs)
         | asn1Parser.SEQUENCE_OF_TYPE   -> SequenceOf(CreateType  astRoot (getChildByType (typeNode, asn1Parser.TYPE_DEF)) fileTokens alreadyTakenComments )
         | asn1Parser.SET_OF_TYPE        -> SequenceOf(CreateType  astRoot (getChildByType (typeNode, asn1Parser.TYPE_DEF)) fileTokens alreadyTakenComments )
-        | asn1Parser.UTF8String         -> raise (SemanticError (tree.Location, "UTF8String is not supported"))
+        | asn1Parser.UTF8String         -> raise (SemanticError (tree.Location, "UTF8String is not supported, use IA5String"))
+        | asn1Parser.TeletexString      -> raise (SemanticError (tree.Location, "TeletexString is not supported, use IA5String"))
+        | asn1Parser.VideotexString     -> raise (SemanticError (tree.Location, "VideotexString is not supported"))
+        | asn1Parser.GraphicString      -> raise (SemanticError (tree.Location, "GraphicString is not supported"))
+        | asn1Parser.GeneralString      -> raise (SemanticError (tree.Location, "GeneralString is not supported"))
+        | asn1Parser.BMPString          -> raise (SemanticError (tree.Location, "BMPString is not supported"))
+        | asn1Parser.UniversalString    -> raise (SemanticError (tree.Location, "UniversalString is not supported"))
+        | asn1Parser.UTCTime            -> raise (SemanticError (tree.Location, "UTCTime type is not supported (contact us for DATE-TIME support)"))
+        | asn1Parser.GeneralizedTime    -> raise (SemanticError (tree.Location, "GeneralizedTime type is not supported"))
         | _                             -> raise (BugErrorException("Bug in CreateType"))
     {
         Asn1Type.Kind = asn1Kind
@@ -237,8 +247,8 @@ and CreateNamedItems (astRoot:list<ITree>) (tree:ITree) (fileTokens:array<IToken
         match itemChildren with
         | name::value::_    -> 
             let value = Some(CreateValue astRoot (value) )
-            {NamedItem.Name=name.TextL; _value=value; Comments = Antlr.Comment.GetComments(fileTokens, alreadyTakenComments, fileTokens.[tree.TokenStopIndex].Line, tree.TokenStartIndex - 1, tree.TokenStopIndex + 2)}
-        | name::[]          -> {NamedItem.Name=name.TextL; _value= None; Comments = Antlr.Comment.GetComments(fileTokens, alreadyTakenComments, fileTokens.[tree.TokenStopIndex].Line, tree.TokenStartIndex - 1, tree.TokenStopIndex + 2)}
+            {NamedItem.Name=name.TextL; _value=value; Comments = Antlr.Comment.GetComments(fileTokens, alreadyTakenComments, fileTokens.[itemItree.TokenStopIndex].Line, itemItree.TokenStartIndex - 1, itemItree.TokenStopIndex + 2)}
+        | name::[]          -> {NamedItem.Name=name.TextL; _value= None; Comments = Antlr.Comment.GetComments(fileTokens, alreadyTakenComments, fileTokens.[itemItree.TokenStopIndex].Line, itemItree.TokenStartIndex - 1, itemItree.TokenStopIndex + 2)}
         | _                 -> raise (BugErrorException("Bug in CreateNamedItems.CreateItem")) 
     let enumItes = getChildrenByType(tree, asn1Parser.NUMBER_LST_ITEM)
     enumItes |> List.map CreateItem
@@ -394,12 +404,16 @@ let CreateAsn1Module (astRoot:list<ITree>) (tree:ITree)   (fileTokens:array<ITok
             | None          -> Exports.All
     match tree.Type with
     | asn1Parser.MODULE_DEF ->  
+          match getOptionChildByType(tree, asn1Parser.EXTENSIBILITY) with
+          | Some(_) -> raise (SemanticError(tree.Location, "Unsupported ASN.1 feature: EXTENSIBILIY IMPLED. Extensibility is incompatible with embedded systems"))
+          | None ->
           { 
                 Name=  getChildByType(tree, asn1Parser.UID).TextL
                 TypeAssignments= getChildrenByType(tree, asn1Parser.TYPE_ASSIG) |> List.map(fun x -> CreateTypeAssigment astRoot x fileTokens alreadyTakenComments)
                 ValueAssignments = getChildrenByType(tree, asn1Parser.VAL_ASSIG) |> List.map(fun x -> CreateValueAssigment astRoot x)
                 Imports = getChildrenByType(tree, asn1Parser.IMPORTS_FROM_MODULE) |> List.map createImport
                 Exports = HandleExports()
+                Comments = Antlr.Comment.GetComments(fileTokens, alreadyTakenComments, fileTokens.[tree.TokenStopIndex].Line, tree.TokenStartIndex - 1, tree.TokenStopIndex + 2)
           }
     | _ -> raise (BugErrorException("Bug in CreateAsn1Module"))
 

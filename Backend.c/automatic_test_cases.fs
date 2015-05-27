@@ -27,7 +27,7 @@ let CreateHeaderFile (f:Asn1File) outDir (newFileExt:string) (r:AstRoot) (acn:Ac
             if file.FileName <> f.FileName then
                 if file.Modules |> Seq.exists (fun m -> allImportedModules |> Seq.exists(fun x -> x = m.Name.Value)) then
                     yield file.FileNameWithoutExtension } |> Seq.toList 
-    let sortedTas = c_h.SortTypeAssigments f
+    let sortedTas = c_h.SortTypeAssigments f r acn
     let printTas (tas:TypeAssignment) =
         let sTasName = tas.GetCName r.TypePrefix
         let sStar = (TypeStar tas.Type r)
@@ -121,7 +121,7 @@ let CreateSourceFile (f:Asn1File) outDir (newFileExt:string) (r:AstRoot) (acn:Ac
             if file.FileName <> f.FileName then
                 if file.Modules |> Seq.exists (fun m -> allImportedModules |> Seq.exists(fun x -> x = m.Name.Value)) then
                     yield file.FileNameWithoutExtension } |> Seq.toList 
-    let sortedTas = c_h.SortTypeAssigments f
+    let sortedTas = c_h.SortTypeAssigments f r acn
     let tases = sortedTas |> Seq.map(fun (m,tas) -> PrintTypeAss tas m f r acn ) 
     let arrsUnnamedVariables = []                    
     let content = c_aux.PrintAutomaticTestCasesSourceFile headerFileName  tases 

@@ -53,7 +53,9 @@ namespace Asn1f2
             try
             {
 
-                CheckSuccess(args);
+                int ret = CheckSuccess(args);
+                if (ret != 0)
+                    return ret;
             }
             catch (asn1Parser.SyntaxErrorException ex)
             {
@@ -62,7 +64,11 @@ namespace Asn1f2
             }
             catch (FsUtils.SemanticError ex)
             {
-                Console.Error.WriteLine("File:{0}, line:{1}, {2}", Path.GetFileName(ex.Data0.srcFilename), ex.Data0.srcLine, ex.Data1);
+                if (ex.Data0.Equals(FsUtils.emptyLocation))
+                    // do not display empty file/zero line for "emptyLocation"
+                    Console.Error.WriteLine("{0}", ex.Data1);
+                else
+                    Console.Error.WriteLine("File:{0}, line:{1}, {2}", Path.GetFileName(ex.Data0.srcFilename), ex.Data0.srcLine, ex.Data1);
                 return 2;
             }
 
@@ -163,7 +169,7 @@ namespace Asn1f2
             }
 
 
-            var acnAstUnresolved = AcnCreayeFromAntlr.CreateAcnAst(ParseAcnInputFiles(acnInputFiles), asn1Ast0);
+            var acnAstUnresolved = AcnCreateFromAntlr.CreateAcnAst(ParseAcnInputFiles(acnInputFiles), asn1Ast0);
            
 
             //PrintAsn1.DoWork(asn1Ast0, outDir, ".0.asn1");
@@ -265,7 +271,7 @@ namespace Asn1f2
                 System.IO.Directory.CreateDirectory(Path.Combine(outDir, "examiner"));
                 System.IO.Directory.CreateDirectory(Path.Combine(outDir, "bin"));
             }
-            else if (cmdArgs.HasArgument("c"))
+            /*else */if (cmdArgs.HasArgument("c"))
             {
                 WriteTextFile(Path.Combine(outDir, "asn1crt.c"), Resource1.asn1crt);
                 WriteTextFile(Path.Combine(outDir, "asn1crt.h"), Resource1.asn1crt1);
@@ -287,11 +293,11 @@ namespace Asn1f2
                 }
 
             }
-            else if (bGenerateAcnDefault)
+            /*else */if (bGenerateAcnDefault)
             {
                 c_body.EmmitDefaultACNGrammar(asn1Ast0, outDir);
             }
-            else 
+            /*else */
             {
                 if (cmdArgs.HasArgument("AdaUses"))
                     foreach (var s in Ast.AdaUses(refTypesWithNoConstraints))
@@ -375,7 +381,7 @@ namespace Asn1f2
             var procName = "asn1";
             Console.Error.WriteLine();
             Console.Error.WriteLine("Semantix ASN.1 Compiler");
-            Console.Error.WriteLine("Current Version is: 3.1.{0} ", Svn.Version);
+            Console.Error.WriteLine("Current Version is: 3.2.{0} ", Svn.Version);
             Console.Error.WriteLine("Usage:");
             Console.Error.WriteLine();
             Console.Error.WriteLine("{0}  <OPTIONS> file1, file2, ..., fileN ", procName);

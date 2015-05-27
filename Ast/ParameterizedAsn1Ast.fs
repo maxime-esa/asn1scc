@@ -29,6 +29,7 @@ and Asn1Module = {
     ValueAssignments : list<ValueAssignment>
     Imports : list<ImportedModule>
     Exports : Exports
+    Comments : string array
 }
 
 and Exports =

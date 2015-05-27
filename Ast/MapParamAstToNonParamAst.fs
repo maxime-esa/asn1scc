@@ -243,6 +243,7 @@ let MapModule (r:ParameterizedAsn1Ast.AstRoot) (m:ParameterizedAsn1Ast.Asn1Modul
         Exports  = match m.Exports with
                    | ParameterizedAsn1Ast.All               -> Ast.All
                    | ParameterizedAsn1Ast.OnlySome(lst)     -> Ast.OnlySome(lst)
+        Comments = m.Comments
     }
 
 let MapFile (r:ParameterizedAsn1Ast.AstRoot) (f:ParameterizedAsn1Ast.Asn1File) :Ast.Asn1File =
