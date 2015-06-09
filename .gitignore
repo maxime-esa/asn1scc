@@ -19,3 +19,4 @@ Asn1.userprefs
 */bin/
 */obj/
 *.suo
+*.csproj.user
