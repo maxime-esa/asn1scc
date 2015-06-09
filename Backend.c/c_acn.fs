@@ -35,7 +35,7 @@ let UpdateDeterminant determinantPath determinantPathPtr (kind:AcnTypes.LongRefe
                 enms |> 
                 List.sortBy (
                     fun en -> 
-                        children |> Seq.findIndex (fun ch -> ch.uniqueName = en.uniqueName)
+                        children |> Seq.findIndex (fun ch -> ch.Name = en.Name)
                 )
             let arrsChEnumItems = Seq.map2 printItem children sortedEnms
             false, c_acn.ChoiceDependencyEnum sTasName arrsChEnumItems
