@@ -20,9 +20,6 @@ ChoiceTwo ::= CHOICE
   a2 TestType
 }
 
---TCLS     ChoiceSelector [size 8, encoding pos-int]
---TCLS     TestType [size 8, encoding pos-int]
---TCLS     ChoiceOne<ChoiceSelector:sel> [determinant sel]
---TCLS     ChoiceTwo<ChoiceSelector:sel> [determinant sel]
+--TCLS     ChoiceSelector [size 8, encoding pos-int] TestType [size 8, encoding pos-int] ChoiceOne<ChoiceSelector:sel> [determinant sel] ChoiceTwo<ChoiceSelector:sel> [determinant sel]
 
 END
