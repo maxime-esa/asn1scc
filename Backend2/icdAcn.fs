@@ -264,8 +264,12 @@ let PrintModule (m:Asn1Module) (f:Asn1File) (r:AstRoot) (acn:AcnTypes.AcnAstReso
     let moduleName = m.Name.Value
     let title = if comments.Length > 0 then moduleName + " - " + comments.[0] else moduleName
     let commentsTail = if comments.Length > 1 then comments.[1..] else [||]
-    let acnFileName, _ = acn.Files |> Seq.find(fun (_, tokens) -> tokens |> Seq.exists (fun (token:IToken) -> token.Text = moduleName))
-    icd_acn.EmitModule title (Path.GetFileName(f.FileName)) (Path.GetFileName(acnFileName)) commentsTail tases
+    let acnFileName = 
+        match acn.Files |> Seq.tryFind(fun (_, tokens) -> tokens |> Seq.exists (fun (token:IToken) -> token.Text = moduleName)) with
+        | Some (acnFileName, _) -> (Some (Path.GetFileName(acnFileName)))
+        | None                  -> None
+    
+    icd_acn.EmitModule title (Path.GetFileName(f.FileName)) acnFileName commentsTail tases
 
 
 let PrintTasses (f:Asn1File)  (r:AstRoot) (acn:AcnTypes.AcnAstResolved)  =

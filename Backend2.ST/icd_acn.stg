@@ -2,10 +2,14 @@ group icd_acn;
 
 //delimiters "$", "$"
 
-EmitModule(sModName, asn1FileName, acnFileName, arrsComments, arrsTases) ::= <<
+EmitModule(sModName, sAsn1FileName, soAcnFileName, arrsComments, arrsTases) ::= <<
 <div style="width: 100%">
 <h1>Module $sModName$</h1>
-<i>Defined in: $asn1FileName$, $acnFileName$.</i>
+$if(soAcnFileName)$
+<i>Defined in: $sAsn1FileName$, $soAcnFileName$.</i>
+$else$
+<i>Defined in: $sAsn1FileName$.</i>
+$endif$
 <p>
 $arrsComments;separator="\n<br/>\n"$
 </p>
@@ -507,13 +511,14 @@ font.enumeration_name
 }
 >>
 
-RootHtml(arrsFiles1, arrsFiles2, bAcnParamsMustBeExplained, arrsFiles3, cssFileName) ::= <<
+
+RootHtml(arrsFiles1, arrsFiles2, bAcnParamsMustBeExplained, arrsFiles3, sCssFileName) ::= <<
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd"> 
 <html xmlns="http://www.w3.org/1999/xhtml" >
 <head>
     <title>ICD</title>
     <meta http-equiv="Content-Type" content="text/html;charset=utf-8" />
-    <link rel="stylesheet" href="$cssFileName$" /> 
+    <link rel="stylesheet" href="$sCssFileName$" /> 
 </head>
 <body>
 <em>The following tables describe the binary encodings of the data model using the ACN Encoding Rules.

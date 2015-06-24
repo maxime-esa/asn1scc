@@ -11,6 +11,23 @@ type dummy =
     | Dummy1 
 
 let mutable lang:Ast.ProgrammingLanguage = Ast.ProgrammingLanguage.Unknown
+type StrHelper =
+    StrHelper of string
+    with 
+    override this.ToString () = 
+        match this with  StrHelper(actStr) -> actStr
+    member this.U1 =
+        match this with  StrHelper(actStr) -> actStr.U1
+    member this.L1 =
+        match this with  StrHelper(actStr) -> actStr.L1
+    member this.RDA =
+        match this with  StrHelper(actStr) -> actStr.RDA
+    member this.JSEsc =
+        match this with  StrHelper(actStr) -> actStr.JSEsc
+    member this.ISQ =
+        match this with  StrHelper(actStr) -> actStr.ISQ
+
+        
 
 type BasicFormatRenderer() =
     interface IAttributeRenderer with
@@ -140,6 +157,7 @@ let get_group  fileName =
         group.RegisterAttributeRenderer(typedefof<double>, new RealFormatRenderer());
         group.RegisterAttributeRenderer(typedefof<float>, new RealFormatRenderer());
         group.RegisterAttributeRenderer(typedefof<string>, new StringFormatRenderer());
+        group.RegisterAttributeRenderer(typedefof<StrHelper>, new StringFormatRenderer());
         group.RegisterAttributeRenderer(typedefof<PrimitiveWithLocation<Double>>, new RealFormatRenderer2());
         group.RegisterAttributeRenderer(typedefof<PrimitiveWithLocation<string>>, new StringFormatRenderer2());
         group.RegisterAttributeRenderer(typedefof<PrimitiveWithLocation<BigInteger>>, new BasicFormatRendererBigInt());

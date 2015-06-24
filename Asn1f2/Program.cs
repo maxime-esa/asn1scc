@@ -207,9 +207,15 @@ namespace Asn1f2
                 var files = customStg.Split(':');
                 if (files.Length != 2)
                 {
-                    Console.Error.WriteLine("Invalid usage of customStg argument. Please use ':' to seperate the stg file with output file", outDir);
-                    Console.Error.WriteLine("E.g. -customStg mystg.stg:output.txt ", outDir);
-                    return 4;
+                    files = customStg.Split(new string[] { "::" }, StringSplitOptions.RemoveEmptyEntries);
+                    if (files.Length != 2)
+                    {
+                        Console.Error.WriteLine("Invalid usage of customStg argument. Please use ':' to seperate the stg file with output file");
+                        Console.Error.WriteLine("E.g. -customStg mystg.stg:output.txt ");
+                        Console.Error.WriteLine("Under windows, you may user double :: to separate the stg file with output file");
+                        Console.Error.WriteLine("E.g. -customStg c:\\mystg.stg::c:\\output.txt ");
+                        return 4;
+                    }
                 }
                 var stgFileName = files.First();
                 var outFileName = files.Last();

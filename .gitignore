@@ -19,3 +19,4 @@ Asn1.userprefs
 */bin/
 */obj/
 *.suo
+/mantis/0000374/out.py

@@ -126,8 +126,39 @@ let getOptionalChildByType (tree:ITree, childType) =
         | _             -> None
 
 
+
+type System.String with
+    member this.IsEmptyOrNull = if this = null || this = "" then true else false
+
+let MakeLowerFirst(s:string) =
+    if s.IsEmptyOrNull then ""
+    else s.Substring(0,1).ToLower() + s.Substring(1)
+
+
 type System.String with
     member s.WithLoc (lc:SrcLoc) = {StringLoc.Value = s; Location=lc}
+    member this.L1 = MakeLowerFirst this
+    member this.U1 = 
+        if this.IsEmptyOrNull then ""
+        else this.Substring(0,1).ToUpper() + this.Substring(1)
+    member this.RDA =
+        if this.IsEmptyOrNull then ""
+        else this.Replace('.','_')
+    member this.JSEsc =
+        if this.IsEmptyOrNull then ""
+        else this.Replace("'","\\'").Replace("\"","\\\"")
+    member this.ISQ =
+        if this.IsEmptyOrNull then "''"
+        else sprintf "'%s'" this.JSEsc
+    member this.HtmlEsc =
+        if this.IsEmptyOrNull then ""
+        else this.
+                Replace("\"","&quot;").
+                Replace("&", "&amp;").
+                Replace("'","&#39;").
+                Replace("<","&lt;").
+                Replace(">","&gt;");
+
 
 
 type System.Int32 with
