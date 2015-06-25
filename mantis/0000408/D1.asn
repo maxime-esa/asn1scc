@@ -1,0 +1,32 @@
+TASTE-Dataview DEFINITIONS ::=
+BEGIN
+
+A ::= SEQUENCE (SIZE(1..10)) OF INTEGER (0..5)
+
+B ::= A (SIZE(2..3))
+
+C ::= INTEGER (0..100)
+
+D ::= C (101..102) -- init value is not correct in C code
+
+E ::= C (10)
+
+    COLOR-TYPE ::= INTEGER (0..255)
+    T-enum ::= ENUMERATED
+    {
+      pink, yellow, brown
+    }
+    
+    COLOR-DATA ::= CHOICE {
+        green COLOR-TYPE,
+        red COLOR-TYPE
+    }
+    
+    MySeq ::= SEQUENCE {
+        myEnum T-enum( yellow | brown),
+        colorData COLOR-DATA
+    }
+
+
+END
+
