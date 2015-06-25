@@ -1,0 +1,7 @@
+MY-MODULE DEFINITIONS  ::= BEGIN
+
+MyBool []
+MyPDU []
+	
+
+END
