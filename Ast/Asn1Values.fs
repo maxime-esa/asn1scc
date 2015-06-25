@@ -33,7 +33,14 @@ let rec GetDefaultValueByType (t:Asn1Type) (m:Asn1Module) (r:AstRoot) =
         let min,max = uPER.GetSizebaleMinMax t.Kind t.Constraints r
         getVal (BitStringValue (loc (System.String('0',int min)) ))
     | Boolean                   ->getVal (BooleanValue (loc false))
-    | Enumerated(items)         ->getVal (RefValue (m.Name, items.Head.Name))
+    | Enumerated(items)         ->
+        match items |> Seq.tryFind (fun itm -> 
+            let checkCon c = CheckAsn1.IsValueAllowed c (getVal (RefValue (m.Name, itm.Name) )) true r
+            t.Constraints |> List.fold(fun state cn -> state && (checkCon cn)) true) with
+        | Some itm -> getVal (RefValue (m.Name, itm.Name))
+        | None     -> 
+            System.Console.Error.WriteLine("Warning File:{0}, Line:{1}: No initial value for enumerated type could be obtained.\nPossibly the ASN.1 enumerated type has been constraint to void. The generated code may not compile or crash in runtime.", t.Location.srcFilename, t.Location.srcLine)
+            getVal (RefValue (m.Name, items.Head.Name))
     | SequenceOf(child)         ->
         let min,max = uPER.GetSizebaleMinMax t.Kind t.Constraints r
         let chVals = [1I..min] |> List.map(fun i -> GetDefaultValueByType child m r )

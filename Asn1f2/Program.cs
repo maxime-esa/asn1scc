@@ -197,6 +197,7 @@ namespace Asn1f2
             //PrintAsn1.DebugPrintAsn1Acn(noInnerasn1Ast.Item1, noInnerasn1Ast.Item2, ".", ".1b.asn1");
 
             var refTypesWithNoConstraints_asn1_acn = RemoveConstraintsFromRefTypes.DoWork(noInnerasn1Ast.Item1, noInnerasn1Ast.Item2);
+            CheckAsn1.CheckFiles(refTypesWithNoConstraints_asn1_acn.Item1);
 
             var refTypesWithNoConstraints = refTypesWithNoConstraints_asn1_acn.Item1;
             var acnAst2 = refTypesWithNoConstraints_asn1_acn.Item2;
