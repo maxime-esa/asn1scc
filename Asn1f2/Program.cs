@@ -153,8 +153,23 @@ namespace Asn1f2
             var asn1Files = ParseAsn1InputFiles(asn1InputFiles);
             var astXmlFile = cmdArgs.GetOptionalArgument("ast", "");
             var customStg = cmdArgs.GetOptionalArgument("customStg", "");
+
+
             var icdUperHtmlFileName = cmdArgs.GetOptionalArgument("icdUper", "");
+            if (!String.IsNullOrEmpty(icdUperHtmlFileName) && !(icdUperHtmlFileName.ToLower().EndsWith(".html") || icdUperHtmlFileName.ToLower().EndsWith(".htm")))
+            {
+                Console.Error.WriteLine("Invalid output filename '{0}'\nGenerated icd files must have an .html or .htm extension", icdUperHtmlFileName);
+                return 4;
+            }
+
             var icdAcnHtmlFileName = cmdArgs.GetOptionalArgument("icdAcn", "");
+            if (!String.IsNullOrEmpty(icdAcnHtmlFileName) && !(icdAcnHtmlFileName.ToLower().EndsWith(".html") || icdAcnHtmlFileName.ToLower().EndsWith(".htm")))
+            {
+                Console.Error.WriteLine("Invalid output filename '{0}'\nGenerated icd files must have an .html or .htm extension", icdAcnHtmlFileName);
+                return 4;
+            }
+
+
             var asn1Ast0 = MapParamAstToNonParamAst.DoWork(CreateAsn1AstFromAntlrTree.CreateAstRoot(asn1Files, encodings.ToArray(),
                     generateEqualFunctions, cmdArgs.GetOptionalArgument("typePrefix", ""), cmdArgs.HasArgument("oss"),
                     astXmlFile, icdUperHtmlFileName, icdAcnHtmlFileName));
