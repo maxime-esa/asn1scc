@@ -418,7 +418,7 @@ COMMENT
     ;
 
 COMMENT2
-    :   '--' ( options {greedy=false;} : . )* ('--'|'\r'?'\n') {$channel=HIDDEN;}
+    : '--' ~('\n'|'\r')* '\r'? '\n' {$channel=HIDDEN;}
     ;
 
 
