@@ -12,7 +12,7 @@ D ::= C (101..102) -- init value is not correct in C code
 E ::= C (10)
 
     COLOR-TYPE ::= INTEGER (0..255)
-    T-enum ::= ENUMERATED
+    T-enum ::= ENUMERATED -- incorrect isConstraintValid in C code
     {
       pink, yellow, brown
     }
@@ -23,7 +23,7 @@ E ::= C (10)
     }
     
     MySeq ::= SEQUENCE {
-        myEnum T-enum( yellow | brown),
+        myEnum T-enum( yellow | brown), -- incorrect init value in C code
         colorData COLOR-DATA
     }
 
