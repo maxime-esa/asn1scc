@@ -158,14 +158,14 @@ namespace Asn1f2
             var icdUperHtmlFileName = cmdArgs.GetOptionalArgument("icdUper", "");
             if (!String.IsNullOrEmpty(icdUperHtmlFileName) && !(icdUperHtmlFileName.ToLower().EndsWith(".html") || icdUperHtmlFileName.ToLower().EndsWith(".htm")))
             {
-                Console.Error.WriteLine("Invalid output filename '{0}'\nGenerated icd files must have an .html or .htm extension", icdUperHtmlFileName);
+                Console.Error.WriteLine("Invalid output filename '{0}'\nGenerated icd files must have an .html or .htm extension.", icdUperHtmlFileName);
                 return 4;
             }
 
             var icdAcnHtmlFileName = cmdArgs.GetOptionalArgument("icdAcn", "");
             if (!String.IsNullOrEmpty(icdAcnHtmlFileName) && !(icdAcnHtmlFileName.ToLower().EndsWith(".html") || icdAcnHtmlFileName.ToLower().EndsWith(".htm")))
             {
-                Console.Error.WriteLine("Invalid output filename '{0}'\nGenerated icd files must have an .html or .htm extension", icdAcnHtmlFileName);
+                Console.Error.WriteLine("Invalid output filename '{0}'\nGenerated icd files must have an .html or .htm extension.", icdAcnHtmlFileName);
                 return 4;
             }
 

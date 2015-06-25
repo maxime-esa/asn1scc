@@ -1,0 +1,11 @@
+MOD1 DEFINITIONS ::=
+
+BEGIN
+
+T-UInt16 ::= INTEGER (0..65535)
+
+T-UInt8 ::= INTEGER (0..255)
+
+
+END
+

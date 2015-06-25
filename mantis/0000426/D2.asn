@@ -1,0 +1,10 @@
+MOD2 DEFINITIONS ::=
+
+BEGIN
+
+MyInt  ::= MOD1.T-UInt16 (0..10)
+
+
+
+END
+
