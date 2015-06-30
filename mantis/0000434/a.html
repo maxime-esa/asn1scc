@@ -1,0 +1,117 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd"> 
+<html xmlns="http://www.w3.org/1999/xhtml" >
+<head>
+    <title>ICD</title>
+    <meta http-equiv="Content-Type" content="text/html;charset=utf-8" />
+    <link rel="stylesheet" href="a.css" /> 
+</head>
+<body>
+<em>The following tables describe the binary encodings of the data model using the ACN Encoding Rules.
+</em><br/><br/>
+  <div style="width: 100%">
+  <h1>Module MY-MODULE</h1>
+  <i>Defined in: a.asn1, a.acn.</i><p>
+  </p>
+  <a name="ICD_Packet"></a> 
+  <table border="0" width="100%" >
+  <tbody>
+  
+  <tr class="typeRow">
+  <td colspan="6">
+  Packet <font size="-1">(SEQUENCE)</font>
+  <font size="-2"><a href="#ASN1_Packet" class="fileLink">ASN.1</a>  <a href="#ACN_Packet" class="fileLink">ACN</a></font>
+  </td>
+  
+  <td align="left">
+      <font size="-1">Min: 1 bytes</font>
+  </td>
+  
+  <td align="left">
+      <font size="-1">Max: 2 bytes</font>
+  </td>
+  </tr>
+  
+  <tr class="CommentRow">
+  <td class="comment2" colspan="8"></td>
+  </tr>
+  
+  
+  <tr class="headerRow">
+  <td class="hrNo">No</td>
+  <td class="hrField">Field</td>
+  <td class="hrComment">Comment</td>
+  <td class="hrOptional">Present</td>
+  <td class="hrType">Type</td>
+  <td class="hrConstraint">Constraint</td>
+  <td class="hrMin">Min Bits</td>
+  <td class="hrMax">Max Bits</td>
+  </tr>
+  
+  <tr class="OddRow">
+  <td class="no">1</td>
+  <td class="field">Preamble</td>
+  <td class="comment">Special field used by ACN to indicate the presence/absence of optional fields that do not have the present when property.</td>
+  <td class="optional">always</td>
+  <td class="type">Bit mask</td>
+  <td class="constraint">N.A.</td>
+  <td class="min">1</td>
+  <td class="max">1</td>
+  </tr>
+  <tr class="EvenRow">
+  <td class="no">2</td>
+  <td class="field">headr</td>
+  <td class="comment"></td>
+  <td class="optional">always</td>
+  <td class="type">INTEGER</td>
+  <td class="constraint">(1 .. 20)</td>
+  <td class="min">5</td>
+  <td class="max">5</td>
+  </tr>
+  <tr class="OddRow">
+  <td class="no">3</td>
+  <td class="field">data</td>
+  <td class="comment"></td>
+  <td class="optional">always</td>
+  <td class="type">INTEGER</td>
+  <td class="constraint">(1 .. 40)</td>
+  <td class="min">6</td>
+  <td class="max">6</td>
+  </tr>
+  
+  </tbody>
+  </table>
+  &nbsp;<br/>
+  </div>
+
+  <hr />
+  <div style="width: 100%">
+  <h1 >File : a.asn1</h1>
+  <div style="width: 100%; white-space:pre; font-family:Courier New; font-size:small">
+  MY-MODULE <b><font color="#5F9EA0">DEFINITIONS</font></b> <b><font color="#5F9EA0">AUTOMATIC</font></b> <b><font color="#5F9EA0">TAGS</font></b> ::= <b><font color="#5F9EA0">BEGIN</font></b>
+
+  	<a name="ASN1_Packet"></a><a href="#ICD_Packet"><font color="#B8860B"><b>Packet</b></font></a> ::= <b><font color="#5F9EA0">SEQUENCE</font></b> {
+  		headr <b><font color="#5F9EA0">INTEGER</font></b> (1 ..20),
+  		data <b><font color="#5F9EA0">INTEGER</font></b> (1..40) <b><font color="#5F9EA0">OPTIONAL</font></b>
+  	}
+  	
+  	
+      
+  	
+  <b><font color="#5F9EA0">END</font></b>
+  </div>
+  </div>
+
+  <div style="width: 100%">
+  <h1 >File : a.acn</h1>
+  <div style="width: 100%; white-space:pre; font-family:Courier New; font-size:small">
+  MY-MODULE <b><font color="#5F9EA0">DEFINITIONS</font></b>  ::= <b><font color="#5F9EA0">BEGIN</font></b>
+  
+  	<a name="ACN_Packet"></a><a href="#ICD_Packet"><font color="#B8860B"><b>Packet</b></font></a>[]  
+  	
+  
+  <b><font color="#5F9EA0">END</font></b>
+  </div>
+  </div>
+
+</body>
+</html>

@@ -153,8 +153,23 @@ namespace Asn1f2
             var asn1Files = ParseAsn1InputFiles(asn1InputFiles);
             var astXmlFile = cmdArgs.GetOptionalArgument("ast", "");
             var customStg = cmdArgs.GetOptionalArgument("customStg", "");
+
+
             var icdUperHtmlFileName = cmdArgs.GetOptionalArgument("icdUper", "");
+            if (!String.IsNullOrEmpty(icdUperHtmlFileName) && !(icdUperHtmlFileName.ToLower().EndsWith(".html") || icdUperHtmlFileName.ToLower().EndsWith(".htm")))
+            {
+                Console.Error.WriteLine("Invalid output filename '{0}'\nGenerated icd files must have an .html or .htm extension.", icdUperHtmlFileName);
+                return 4;
+            }
+
             var icdAcnHtmlFileName = cmdArgs.GetOptionalArgument("icdAcn", "");
+            if (!String.IsNullOrEmpty(icdAcnHtmlFileName) && !(icdAcnHtmlFileName.ToLower().EndsWith(".html") || icdAcnHtmlFileName.ToLower().EndsWith(".htm")))
+            {
+                Console.Error.WriteLine("Invalid output filename '{0}'\nGenerated icd files must have an .html or .htm extension.", icdAcnHtmlFileName);
+                return 4;
+            }
+
+
             var asn1Ast0 = MapParamAstToNonParamAst.DoWork(CreateAsn1AstFromAntlrTree.CreateAstRoot(asn1Files, encodings.ToArray(),
                     generateEqualFunctions, cmdArgs.GetOptionalArgument("typePrefix", ""), cmdArgs.HasArgument("oss"),
                     astXmlFile, icdUperHtmlFileName, icdAcnHtmlFileName));
@@ -182,6 +197,7 @@ namespace Asn1f2
             //PrintAsn1.DebugPrintAsn1Acn(noInnerasn1Ast.Item1, noInnerasn1Ast.Item2, ".", ".1b.asn1");
 
             var refTypesWithNoConstraints_asn1_acn = RemoveConstraintsFromRefTypes.DoWork(noInnerasn1Ast.Item1, noInnerasn1Ast.Item2);
+            CheckAsn1.CheckFiles(refTypesWithNoConstraints_asn1_acn.Item1);
 
             var refTypesWithNoConstraints = refTypesWithNoConstraints_asn1_acn.Item1;
             var acnAst2 = refTypesWithNoConstraints_asn1_acn.Item2;
@@ -207,9 +223,15 @@ namespace Asn1f2
                 var files = customStg.Split(':');
                 if (files.Length != 2)
                 {
-                    Console.Error.WriteLine("Invalid usage of customStg argument. Please use ':' to seperate the stg file with output file", outDir);
-                    Console.Error.WriteLine("E.g. -customStg mystg.stg:output.txt ", outDir);
-                    return 4;
+                    files = customStg.Split(new string[] { "::" }, StringSplitOptions.RemoveEmptyEntries);
+                    if (files.Length != 2)
+                    {
+                        Console.Error.WriteLine("Invalid usage of customStg argument. Please use ':' to seperate the stg file with output file");
+                        Console.Error.WriteLine("E.g. -customStg mystg.stg:output.txt ");
+                        Console.Error.WriteLine("Under windows, you may user double :: to separate the stg file with output file");
+                        Console.Error.WriteLine("E.g. -customStg c:\\mystg.stg::c:\\output.txt ");
+                        return 4;
+                    }
                 }
                 var stgFileName = files.First();
                 var outFileName = files.Last();

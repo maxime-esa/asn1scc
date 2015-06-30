@@ -49,6 +49,8 @@ namespace parseStg2
                 return "seq<byte>";
             if (hn(name, "arro"))
                 return "???array<###Object>";
+            if (hn(name, "so"))
+                return "string option";
             if (hn(name, "b"))
                 return "bool";
             if (hn(name, "s"))
@@ -89,6 +91,19 @@ namespace parseStg2
             return ret;
         }
 
+
+        static string MapParamName(string p)
+        {
+            //(p => "(\"" + p + "\"," + (p.StartsWith("arr")?p+"|>Seq.toArray":p) + " :>Object)")
+            if (p.StartsWith("arrs"))
+                return "(\"" + p + "\",(" + (p + "|>Seq.map ST.StrHelper |> Seq.toArray") + ") :>Object)";
+            if (p.StartsWith("so"))
+                return "(\"" + p + "\"," + ("(if " + p + ".IsNone then null else ST.StrHelper " + p + ".Value:>Object") + ") )";
+            if (p.StartsWith("s"))
+                return "(\"" + p + "\"," + ("(if " + p + " = null then null else ST.StrHelper " + p + ":>Object") + ") )";
+            return "(\"" + p + "\"," + (p.StartsWith("arr") ? p + "|>Seq.toArray" : p) + " :>Object)";
+        }
+        
         static int ProcessSingle(XElement run, string curDir)
         {
             var inpFileName = Path.Combine(curDir, run.Element("input").Value);
@@ -155,7 +170,8 @@ namespace parseStg2
                     foreach (var func in groupedFunc.Take(1))
                     {
                         
-                        var prms = func.prms.Select(p => "(\"" + p + "\"," + (p.StartsWith("arr")?p+"|>Seq.toArray":p) + " :>Object)").Join(";");
+                        //var prms = func.prms.Select(p => "(\"" + p + "\"," + (p.StartsWith("arr") ? p + "|>Seq.toArray" : p) + " :>Object)").Join(";");
+                        var prms = func.prms.Select(p => MapParamName(p)).Join(";");
                         var paramerters =
                                 func.prms.Count() > 0 ?
                                 func.prms.Select(p => "(" + p + ":" + detectTypeByParam(p) + ")").Join(" ") :

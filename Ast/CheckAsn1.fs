@@ -341,10 +341,10 @@ let rec isConstraintValid (t:Asn1Type) (c:Asn1Constraint) ast =
 
 /// it checks the input type for semantic error
 /// raises a user exception if an error is found.
-let rec CheckType(t:Asn1Type) ast =
+let rec CheckType(t:Asn1Type) (m:Asn1Module) ast =
     let CheckSeqChoiceChildren (children:seq<ChildInfo>) =
         children |> Seq.map(fun c -> c.Name) |> CheckForDuplicates 
-        children |> Seq.map(fun c -> c.Type) |> Seq.iter (fun x -> CheckType x ast)
+        children |> Seq.map(fun c -> c.Type) |> Seq.iter (fun x -> CheckType x m ast)
         children |> Seq.choose(fun c -> match c.Optionality with Some(Default v) -> Some (c.Type, v) |_->None) |> Seq.iter (fun (t,v) -> CheckValueType t v ast)
     let CheckNamedItem (children:seq<NamedItem>) =
         children |> Seq.map(fun c -> c.Name) |> CheckForDuplicates 
@@ -357,21 +357,34 @@ let rec CheckType(t:Asn1Type) ast =
     match t.Kind with
     | Sequence(children)    ->  CheckSeqChoiceChildren children
     | Choice(children)      ->  CheckSeqChoiceChildren children
-    | SequenceOf(child)     ->  CheckType child ast
+    | SequenceOf(child)     ->  CheckType child m ast
     | Enumerated(children)  ->  
+        let getVal vKind = { Asn1Value.Kind = vKind; Location = emptyLocation}
         CheckNamedItem  children 
         children |> Seq.filter(fun x -> x._value.IsSome) |> Seq.map(fun c -> {IntLoc.Value=GetValueAsInt c._value.Value ast; Location=c._value.Value.Location}) |> CheckForDuplicates 
+        match children |> Seq.tryFind (fun itm -> 
+            let checkCon c = IsValueAllowed c (getVal (RefValue (m.Name, itm.Name) )) true ast
+            t.Constraints |> List.fold(fun state cn -> state && (checkCon cn)) true) with
+        | Some itm -> ()
+        | None     -> raise(SemanticError(t.Location, "The constraints defined for this type do not allow any value"))
+
     | BitString            ->   ()
-    | Integer               ->  ()
+    | Integer               ->  
+        match (uPER.GetTypeUperRange t.Kind t.Constraints ast) with
+        | Empty                   -> raise(SemanticError(t.Location, "The constraints defined for this type do not allow any value"))
+        | _                       -> ()
+
     | Real                  ->  ()
     | Boolean               ->  ()
     | IA5String             ->  ()
     | NumericString         ->  ()
     | NullType              ->  ()
     | OctetString           ->  ()
-    | ReferenceType(_)       -> 
-        let dummy = GetActualType t ast
-        ()
+    | ReferenceType(impModName, impTypName,_)       -> 
+        let impMod = ast.GetModuleByName impModName
+        match impMod.ExportedTypes |> Seq.tryFind ( (=) impTypName.Value) with
+        | Some _    -> ()
+        | None      -> raise(SemanticError(impTypName.Location, sprintf "No type assignemt with name %s exists (or exported) in module %s" impTypName.Value  impMod.Name.Value))
     t.Constraints |> Seq.iter(fun c -> isConstraintValid t c ast)
 
 
@@ -401,8 +414,8 @@ let CheckModule (m:Asn1Module) ast=
     Seq.concat [valAssNames; importedValAssNames] |> CheckForDuplicates 
 
     // Check Types
-    m.TypeAssignments |> Seq.map(fun x -> x.Type) |> Seq.iter (fun x -> CheckType x ast)
-    m.ValueAssignments |> Seq.map(fun x -> x.Type) |> Seq.iter (fun x -> CheckType x ast)
+    m.TypeAssignments |> Seq.map(fun x -> x.Type) |> Seq.iter (fun x -> CheckType x m ast)
+    m.ValueAssignments |> Seq.map(fun x -> x.Type) |> Seq.iter (fun x -> CheckType x m ast)
 
     // Check Values
     m.ValueAssignments |> Seq.iter(fun vas -> CheckValueType vas.Type vas.Value ast)
@@ -419,11 +432,17 @@ let CheckModule (m:Asn1Module) ast=
         | Some(im)  -> 
             let checkTasName tasName =
                 match im.TypeAssignments |> Seq.tryFind(fun x-> x.Name.Value = tasName.Value ) with
-                | Some(_) -> ()
+                | Some(_) -> 
+                    match im.ExportedTypes |> Seq.tryFind((=) tasName.Value ) with
+                    | Some (_)  -> ()
+                    | None      -> raise(SemanticError(tasName.Location, sprintf "Type assignemt '%s' is privately defined in module '%s'. Use EXPORT keyword to make it visible to other modules." tasName.Value  imp.Name.Value))
                 | None    -> raise(SemanticError(tasName.Location, sprintf "No type assignemt with name %s exists in module %s" tasName.Value  imp.Name.Value))
             let checkVasName vasName =
                 match im.ValueAssignments |> Seq.tryFind(fun x-> x.Name.Value = vasName.Value ) with
-                | Some(_) -> ()
+                | Some(_) -> 
+                    match im.ExportedVars |> Seq.tryFind( (=) vasName.Value ) with
+                    | Some (_)  -> ()
+                    | None      -> raise(SemanticError(vasName.Location, sprintf "Value assignemt %s is privately defined in module '%s'. Use EXPORT keyword to make it visible to other modules" vasName.Value  imp.Name.Value))
                 | None    -> raise(SemanticError(vasName.Location, sprintf "No value assignemt with name %s exists in module %s" vasName.Value  imp.Name.Value))
             imp.Types |> Seq.iter checkTasName
             imp.Values |> Seq.iter checkVasName

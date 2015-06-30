@@ -1,0 +1,13 @@
+MOD1 DEFINITIONS ::=
+BEGIN
+--only T-UInt8 is exported
+--T-UInt16 is not exported so any module referencing this type should fail.
+EXPORTS T-UInt8;
+
+T-UInt16 ::= INTEGER (0..65535)
+
+T-UInt8 ::= INTEGER (0..255)
+
+
+END
+

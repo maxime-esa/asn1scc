@@ -1,0 +1,18 @@
+TASTE-Dataview DEFINITIONS ::=
+BEGIN
+
+T-UInt16 ::= INTEGER (0..65535)
+
+
+-- Telecommands Application Data
+--------------------------------
+
+
+
+-- Telemetry Application Data
+-----------------------------
+
+T-Int1 ::= INTEGER (0..10)  --- another comment
+
+END
+

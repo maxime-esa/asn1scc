@@ -810,9 +810,13 @@ WS  :   (' ' | '\t' | '\r' | '\n')+ {$channel=HIDDEN;}
 COMMENT
     :   '/*' ( options {greedy=false;} : . )* '*/' {$channel=HIDDEN;}
     ;
-
+/*
 COMMENT2
     :   '--' ( options {greedy=false;} : . )* ('--'|'\r'?'\n') {$channel=HIDDEN;}
+    ;
+*/
+COMMENT2
+    : '--' ~('\n'|'\r')* '\r'? '\n' {$channel=HIDDEN;}
     ;
 
 

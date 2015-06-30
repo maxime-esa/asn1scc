@@ -60,6 +60,23 @@ let rec GetActualTypeKind (astRoot:list<ITree>) (kind:Asn1TypeKind)  =
     | _                     -> kind, None
     
 *)
+
+let createDefaultConstraintsForEnumeratedTypes (tree:ITree) (namedItems:NamedItem list) =
+    let mdTree = tree.GetAncestor(asn1Parser.MODULE_DEF)
+    let mdName = mdTree.GetChild(0).TextL
+    let createSingleValueConstraintFromNamedItem (ni:NamedItem) =
+        let v = {Asn1Value.Kind = (RefValue ({StringLoc.Value = mdName.Value; Location=ni.Name.Location}, ni.Name)); Location = ni.Name.Location  }
+        SingleValueContraint v
+    match namedItems with
+    | []    -> 
+            raise (SemanticError (tree.Location, "Enumerated type has no enumerants"))
+    | x::xs ->
+        let initialCon = createSingleValueConstraintFromNamedItem x
+        xs |> List.fold(fun accConst ni -> 
+                            let curCon = createSingleValueConstraintFromNamedItem ni
+                            UnionConstraint (accConst, curCon) ) initialCon
+    
+
 let rec CreateType (astRoot:list<ITree>) (tree:ITree) (fileTokens:array<IToken>) (alreadyTakenComments:System.Collections.Generic.List<IToken>) : Asn1Type= 
     let children = getTreeChildren(tree)
     let typeNodes = children |> List.filter(fun x -> (not (ConstraintNodes |> List.exists(fun y -> y=x.Type) ) ) && (x.Type <> asn1Parser.TYPE_TAG) )
@@ -113,7 +130,14 @@ let rec CreateType (astRoot:list<ITree>) (tree:ITree) (fileTokens:array<IToken>)
         | _                             -> raise (BugErrorException("Bug in CreateType"))
     {
         Asn1Type.Kind = asn1Kind
-        Constraints= contraintNodes |> List.map(fun x-> CreateConstraint  astRoot x ) |> List.choose(fun x -> x)
+        Constraints= 
+            let userConstraints = contraintNodes |> List.map(fun x-> CreateConstraint  astRoot x ) |> List.choose(fun x -> x)
+            match asn1Kind with
+            | Enumerated(itms)  -> 
+                match userConstraints with
+                | []    -> [createDefaultConstraintsForEnumeratedTypes tree itms]
+                | _     -> userConstraints
+            | _                 -> userConstraints
         Location = tree.Location
     }
 

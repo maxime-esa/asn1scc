@@ -1,0 +1,11 @@
+MY-MODULE DEFINITIONS AUTOMATIC TAGS ::= BEGIN
+
+	Packet ::= SEQUENCE {
+		headr INTEGER (1 ..20),
+		data INTEGER (1..40) OPTIONAL
+	}
+	
+	
+    
+	
+END
