@@ -96,7 +96,7 @@ namespace parseStg2
         {
             //(p => "(\"" + p + "\"," + (p.StartsWith("arr")?p+"|>Seq.toArray":p) + " :>Object)")
             if (p.StartsWith("arrs"))
-                return "(\"" + p + "\",(" + (p + "|>Seq.map ST.StrHelper |> Seq.toArray") + ") :>Object)";
+                return "(\"" + p + "\",(" + (p + "|>Seq.map (fun s ->  if s = null then null else (ST.StrHelper s):>Object) |> Seq.toArray") + ") :>Object)";
             if (p.StartsWith("so"))
                 return "(\"" + p + "\"," + ("(if " + p + ".IsNone then null else ST.StrHelper " + p + ".Value:>Object") + ") )";
             if (p.StartsWith("s"))
