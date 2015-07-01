@@ -1,0 +1,29 @@
+TEST-CASE DEFINITIONS AUTOMATIC TAGS::= BEGIN
+
+ChoiceSelector ::= ENUMERATED
+{
+	a1,
+	a2
+}
+
+MyEnum ::= ENUMERATED
+{
+	a1,
+	b1
+}
+
+TestType ::= INTEGER(0..255)
+
+ChoiceOne ::= CHOICE
+{
+	a1 TestType,
+	a2 TestType
+}
+
+ChoiceTwo ::= CHOICE
+{
+	a1 TestType,
+	a2 TestType
+}
+
+END
