@@ -339,10 +339,10 @@ booleanType
 	;
 	
 enumeratedType 
-	:	a=ENUMERATED L_BRACKET en1=enumeratedTypeItems2  ( COMMA ext=EXT_MARK exceptionSpec? (COMMA en2=enumeratedTypeItems2)? )? R_BRACKET
+	:	a=ENUMERATED L_BRACKET en1=enumeratedTypeItems  ( COMMA ext=EXT_MARK exceptionSpec? (COMMA en2=enumeratedTypeItems)? )? R_BRACKET
 	-> ^(ENUMERATED_TYPE[$a] $en1 ($ext exceptionSpec? $en2?) ?)
 	;
-
+/*
 enumeratedTypeItems2 
 	:	 enumItemNoValue  (COMMA enumItemNoValue)* ->enumItemNoValue+
 	|	 enumItemWithValue  (COMMA enumItemWithValue)* 		->enumItemWithValue+
@@ -355,7 +355,8 @@ enumItemNoValue
 enumItemWithValue
 	:	identifier  L_PAREN (INT|valuereference) R_PAREN -> ^(NUMBER_LST_ITEM identifier INT? valuereference?)
 	;
-/*
+*/
+
 enumeratedTypeItems 
 	:	 enumeratedLstItem (COMMA enumeratedLstItem)* ->enumeratedLstItem+
 	;		
@@ -364,7 +365,7 @@ enumeratedTypeItems
 enumeratedLstItem	:	
 	identifier ( L_PAREN (INT|valuereference) R_PAREN)? -> ^(NUMBER_LST_ITEM identifier INT? valuereference?)
 ;
-*/
+
 
 integerType
 	:	a=INTEGER ( L_BRACKET (integerTypeListItem (COMMA integerTypeListItem)*)? R_BRACKET)?	-> ^(INTEGER_TYPE[$a] integerTypeListItem*)

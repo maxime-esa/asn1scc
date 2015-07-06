@@ -1,0 +1,8 @@
+MOD1 DEFINITIONS ::=
+
+BEGIN
+
+Something ::= ENUMERATED { a(1), b, c(2) }
+
+END
+

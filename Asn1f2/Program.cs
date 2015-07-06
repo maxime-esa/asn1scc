@@ -193,7 +193,7 @@ namespace Asn1f2
             var acnAstResolved = Acn.Resolve.ResolveRelativePaths(acnAstUnresolved, asn1Ast);
 
             //PrintAsn1.DebugPrintAsn1Acn(asn1Ast, acnAstResolved, ".", ".1.asn1");
-            var noInnerasn1Ast = ReplaceInnerTypes.DoWork(RemoveNumericStrings.DoWork(asn1Ast), acnAstResolved, false);
+            var noInnerasn1Ast = ReplaceInnerTypes.DoWork(RemoveNumericStringsAndFixEnums.DoWork(asn1Ast), acnAstResolved, false);
             //PrintAsn1.DebugPrintAsn1Acn(noInnerasn1Ast.Item1, noInnerasn1Ast.Item2, ".", ".1b.asn1");
 
             var refTypesWithNoConstraints_asn1_acn = RemoveConstraintsFromRefTypes.DoWork(noInnerasn1Ast.Item1, noInnerasn1Ast.Item2);
