@@ -81,8 +81,6 @@ tokens {
 	EXCEPTION_SPEC_VAL_REF;
 	EXCEPTION_SPEC_TYPE_VALUE;
 	EMPTY_LIST;
-	CUSTOM_ATTR_LIST;
-	CUSTOM_ATTR;
 	ALL_EXCEPT;
 	SINGLE_VALUE_CONSTRAINT;
 	INNER_CONSTRAINT;
@@ -287,33 +285,26 @@ values for this type are those of the intersection of constraints .
 
 */
 type	: typeTag?
-(	 nULL													-> ^(TYPE_DEF typeTag? nULL)
-	|bitStringType constraint*	customAttributes?			-> ^(TYPE_DEF typeTag? bitStringType constraint* customAttributes?)
-	|booleanType constraint*	customAttributes?			-> ^(TYPE_DEF typeTag? booleanType constraint* customAttributes?)
-	|enumeratedType constraint*	customAttributes?			-> ^(TYPE_DEF typeTag? enumeratedType constraint* customAttributes?)
-	|integerType constraint*	customAttributes?			-> ^(TYPE_DEF typeTag? integerType constraint* customAttributes?)
-    |realType constraint*		customAttributes?			-> ^(TYPE_DEF typeTag? realType constraint* customAttributes?)
-	|stringType constraint*		customAttributes?			-> ^(TYPE_DEF typeTag? stringType constraint* customAttributes?)
-	|referencedType	constraint*	customAttributes?			-> ^(TYPE_DEF typeTag? referencedType constraint* customAttributes?)
-	|sequenceOfType 										-> ^(TYPE_DEF typeTag? sequenceOfType)
-	|choiceType	constraint*		customAttributes?			-> ^(TYPE_DEF typeTag? choiceType constraint* customAttributes?)
-    |sequenceType constraint*	customAttributes?			-> ^(TYPE_DEF typeTag? sequenceType constraint* customAttributes?)
-    |setType	constraint*		customAttributes?			-> ^(TYPE_DEF typeTag? setType customAttributes?)
-    |setOfType												-> ^(TYPE_DEF typeTag? setOfType)
-    |objectIdentifier constraint*	customAttributes?		-> ^(TYPE_DEF typeTag? objectIdentifier constraint* customAttributes?)
-    |relativeOID	constraint*		customAttributes?		-> ^(TYPE_DEF typeTag? relativeOID constraint* customAttributes?)
-    |selectionType											-> ^(TYPE_DEF typeTag? selectionType)
+(   nULL						-> ^(TYPE_DEF typeTag? nULL)
+    |bitStringType constraint*				-> ^(TYPE_DEF typeTag? bitStringType constraint* )
+    |booleanType constraint*				-> ^(TYPE_DEF typeTag? booleanType constraint* )
+    |enumeratedType constraint*				-> ^(TYPE_DEF typeTag? enumeratedType constraint* )
+    |integerType constraint*				-> ^(TYPE_DEF typeTag? integerType constraint* )
+    |realType constraint*		                -> ^(TYPE_DEF typeTag? realType constraint* )
+    |stringType constraint*		                -> ^(TYPE_DEF typeTag? stringType constraint* )
+    |referencedType	constraint*	                -> ^(TYPE_DEF typeTag? referencedType constraint* )
+    |sequenceOfType 				        -> ^(TYPE_DEF typeTag? sequenceOfType)
+    |choiceType	constraint*		        	-> ^(TYPE_DEF typeTag? choiceType constraint* )
+    |sequenceType constraint*	                        -> ^(TYPE_DEF typeTag? sequenceType constraint* )
+    |setType	constraint*		                -> ^(TYPE_DEF typeTag? setType )
+    |setOfType						-> ^(TYPE_DEF typeTag? setOfType)
+    |objectIdentifier constraint*	                -> ^(TYPE_DEF typeTag? objectIdentifier constraint* )
+    |relativeOID	constraint*		        -> ^(TYPE_DEF typeTag? relativeOID constraint* )
+    |selectionType					-> ^(TYPE_DEF typeTag? selectionType)
 )
 ;
 
 
-customAttributes 
-	:	CUSTOM_ATTR_BEGIN customAttribute+ CUSTOM_ATTR_END 	-> ^(CUSTOM_ATTR_LIST customAttribute+ )
-	;
-
-customAttribute
-	:	UID ASSIG_OP StringLiteral							-> ^(CUSTOM_ATTR UID StringLiteral)
-	;
 	
 
 selectionType	:	
@@ -446,12 +437,12 @@ componentType
 	;	
 	
 sequenceOfType
-	:	a=SEQUENCE (sizeShortConstraint | constraint)? customAttributes? OF (identifier)? type			
-		-> ^(SEQUENCE_OF_TYPE[$a] sizeShortConstraint? constraint? identifier? type customAttributes?)
+	:	a=SEQUENCE (sizeShortConstraint | constraint)? OF (identifier)? type			
+		-> ^(SEQUENCE_OF_TYPE[$a] sizeShortConstraint? constraint? identifier? type )
 	;
 	
 setOfType
-	:	a=SET (sizeShortConstraint | constraint)? customAttributes? OF (identifier)? type				-> ^(SET_OF_TYPE[$a] sizeShortConstraint? constraint? identifier? type customAttributes?)
+	:	a=SET (sizeShortConstraint | constraint)? OF (identifier)? type				-> ^(SET_OF_TYPE[$a] sizeShortConstraint? constraint? identifier? type )
 	;		
 
 	
@@ -741,9 +732,6 @@ COMMA		:	',';
 EXT_MARK	: '...';
 DOUBLE_DOT  : '..';
 
-CUSTOM_ATTR_BEGIN 	: '<<';
-
-CUSTOM_ATTR_END 	: '>>';
 
 LESS_THAN			: '<';
 
