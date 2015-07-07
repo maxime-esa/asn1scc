@@ -162,6 +162,7 @@ let DoValueAssignment (r:AstRoot) (vas:ValueAssignment) :ValueAssignment =
         ValueAssignment.Name = vas.Name
         Type = DoAsn1Type r vas.Type
         Value = vas.Value
+        Scope = vas.Scope
     }
 
 

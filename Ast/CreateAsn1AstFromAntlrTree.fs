@@ -411,6 +411,7 @@ let CreateValueAssigment (astRoot:list<ITree>) (tree:ITree) =
         ValueAssignment.Name = tree.GetChild(0).TextL;
         Type = typ
         Value = CreateValue astRoot (tree.GetChild(2)) 
+        Scope = ParameterizedAsn1Ast.GlobalScope
     }
 
 let CreateAsn1Module (astRoot:list<ITree>) (tree:ITree)   (fileTokens:array<IToken>) (alreadyTakenComments:System.Collections.Generic.List<IToken>)= 
@@ -426,6 +427,32 @@ let CreateAsn1Module (astRoot:list<ITree>) (tree:ITree)   (fileTokens:array<ITok
             match getOptionChildByType(tree, asn1Parser.EXPORTS) with
             | Some(exps)    -> Exports.OnlySome (exps.Children |> List.map (fun x -> x.Text))
             | None          -> Exports.All
+    let handleIntegerValues (tree:ITree) =
+        let mdName = tree.GetChild(0).TextL
+        tree.AllChildren |> 
+        List.filter(fun x -> x.Type = asn1Parser.INTEGER_TYPE && not (x.Children.IsEmpty) && x.Parent.Parent.Type = asn1Parser.TYPE_ASSIG) |>
+        List.collect(fun x -> 
+            let tas = x.Parent.Parent.GetChild(0).TextL
+            let Type = { Asn1Type.Kind =  ReferenceType(mdName, tas, []); Constraints= []; Location = tas.Location}
+            
+            //CreateType astRoot x.Parent fileTokens alreadyTakenComments 
+
+            let scope = TypeScope(mdName, tas)
+
+            let namedItems = 
+                seq {
+                    for ni in x.Children do
+                        if ni.Type = asn1Parser.NUMBER_LST_ITEM then
+                            let Value = CreateValue astRoot (ni.GetChild(1))
+                            let vasName = ni.GetChild(0).TextL
+                            yield   {
+                                        ValueAssignment.Name = vasName
+                                        Type = Type
+                                        Value = Value
+                                        Scope = scope
+                                    }
+                    } |> Seq.toList
+            namedItems)
     match tree.Type with
     | asn1Parser.MODULE_DEF ->  
           match getOptionChildByType(tree, asn1Parser.EXTENSIBILITY) with
@@ -434,7 +461,10 @@ let CreateAsn1Module (astRoot:list<ITree>) (tree:ITree)   (fileTokens:array<ITok
           { 
                 Name=  getChildByType(tree, asn1Parser.UID).TextL
                 TypeAssignments= getChildrenByType(tree, asn1Parser.TYPE_ASSIG) |> List.map(fun x -> CreateTypeAssigment astRoot x fileTokens alreadyTakenComments)
-                ValueAssignments = getChildrenByType(tree, asn1Parser.VAL_ASSIG) |> List.map(fun x -> CreateValueAssigment astRoot x)
+                ValueAssignments = 
+                    let globalValueAssignments = getChildrenByType(tree, asn1Parser.VAL_ASSIG) |> List.map(fun x -> CreateValueAssigment astRoot x)
+                    let typeScopedValueAssignments = handleIntegerValues tree
+                    globalValueAssignments@typeScopedValueAssignments
                 Imports = getChildrenByType(tree, asn1Parser.IMPORTS_FROM_MODULE) |> List.map createImport
                 Exports = HandleExports()
                 Comments = Antlr.Comment.GetComments(fileTokens, alreadyTakenComments, fileTokens.[tree.TokenStopIndex].Line, tree.TokenStartIndex - 1, tree.TokenStopIndex + 2)

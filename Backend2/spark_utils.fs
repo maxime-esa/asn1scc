@@ -489,6 +489,7 @@ let MoveChoiceVasToPrivateModule (ast:Ast.AstRoot) =
             Value = match vasesToBeMoved |> Seq.tryFind(fun ((m1,v1),(m2,v2)) -> m.Name.Value=m1 && v1.Name.Value = old.Name.Value) with
                     | None              -> old.Value 
                     | Some(_,(m2,v2))   -> {old.Value with Kind = RefValue(m2.AsLoc,v2.AsLoc)}
+            Scope = old.Scope
         },s
 
 

@@ -1,0 +1,11 @@
+MOD1 DEFINITIONS ::=
+
+BEGIN
+
+MyInt ::= INTEGER { one(1), two(2) } (1..2)
+
+ErrorCode ::= INTEGER { disk-full(1), no-disk(-1), disk-not-formatted(2) }
+stupid-error ErrorCode ::= disk-full
+
+END
+

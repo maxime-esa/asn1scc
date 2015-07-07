@@ -57,7 +57,12 @@ and ValueAssignment = {
     Name:StringLoc
     Type:Asn1Type
     Value:Asn1Value
+    Scope : ValueScope
 }
+
+and ValueScope =
+    | GlobalScope
+    | TypeScope  of StringLoc*StringLoc     
 
 and Asn1Type = {
     Kind:Asn1TypeKind;

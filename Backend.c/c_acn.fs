@@ -679,8 +679,8 @@ let rec EmitTypeBodyAux (t:Asn1Type) (sTasName:string) (path:list<string>, altPa
                 let sChildContent = EmitTypeBody c.Type sTasName (newPath, None) tas m r acn codec
                 let determinantType = GetActualType (GetTypeByPoint enmDet r acn) r
                 let enumValue = match determinantType.Kind with
-                               | Enumerated(enms) -> enms |> List.find(fun en -> en.Name = c.Name)
-                               | _ -> raise(BugErrorException(""))
+                                | Enumerated(enms) -> enms |> List.find(fun en -> en.Name = c.Name)
+                                | _ -> raise(BugErrorException(""))
                 c_acn.ChoiceChild_Enum pp (ToC (r.TypePrefix + enumValue.uniqueName)) (c.CName_Present C) sChildContent codec                
             let extFldPath = GetPointAccessPath enmDet  r acn //GetTypeAccessPath (enmDet.AbsPath.Tail.Tail)  r 
             c_acn.Choice_Enum p (children |> Seq.map printChild) extFldPath errCode codec

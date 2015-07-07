@@ -253,5 +253,5 @@ let GenerateVases (tas:TypeAssignment) modName (r:AstRoot) (acn:AcnTypes.AcnAstR
         for v in (GenerateValues noWithComponent modName r acn) do
             I := !I + 1
             let vasName = tas.Name.Value.ToLower()+"_"+(!I).ToString()
-            yield {ValueAssignment .Name = loc vasName; Type = (createRefType tas.Name); Value = createVal v}
+            yield {ValueAssignment .Name = loc vasName; Type = (createRefType tas.Name); Value = createVal v; Scope = GlobalScope}
     }

@@ -56,6 +56,7 @@ let CloneValueAssignment (old:ValueAssignment)  (m:Asn1Module) cons state=
         ValueAssignment.Name = old.Name
         Type = newType
         Value = old.Value 
+        Scope = old.Scope
     },s
 
 let CloneType (old:Asn1Type) m key cons state =

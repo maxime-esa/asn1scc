@@ -221,6 +221,10 @@ let MapValueAssignment (r:ParameterizedAsn1Ast.AstRoot) (vas:ParameterizedAsn1As
         Ast.ValueAssignment.Name = vas.Name
         Type = MapAsn1Type r vas.Type
         Value = MapAsn1Value r  vas.Type.Kind vas.Value
+        Scope = 
+            match vas.Scope with
+            | ParameterizedAsn1Ast.GlobalScope      ->  Ast.GlobalScope
+            | ParameterizedAsn1Ast.TypeScope(m,t)   ->  Ast.TypeScope(m,t)
     }
 
 
