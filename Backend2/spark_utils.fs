@@ -490,6 +490,8 @@ let MoveChoiceVasToPrivateModule (ast:Ast.AstRoot) =
                     | None              -> old.Value 
                     | Some(_,(m2,v2))   -> {old.Value with Kind = RefValue(m2.AsLoc,v2.AsLoc)}
             Scope = old.Scope
+            c_name = old.c_name
+            ada_name = old.ada_name
         },s
 
 

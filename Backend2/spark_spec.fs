@@ -227,7 +227,7 @@ let PrintTypeAss (t:TypeAssignment) (m:Asn1Module) (r:AstRoot) (acn:AcnTypes.Acn
     result, s2
 
 let PrintValueAss (v:ValueAssignment) (m:Asn1Module) (r:AstRoot) (state:State)= 
-    let sName = ToC v.Name.Value 
+    let sName = v.ada_name 
     let sTypeDecl, s1 = PrintType v.Type [m.Name.Value; v.Name.Value] None (ValueAssignment v,m,r) state
     let sValue = spark_variables.PrintAsn1Value v.Value true false v.Type (sTypeDecl,0) m r 
     match (IsOrContainsChoice v.Type r) with
@@ -275,13 +275,34 @@ let SortTypeAssigments (m:Asn1Module) (r:AstRoot) (acn:AcnTypes.AcnAstResolved) 
     } |> Seq.toList
 
 
+let SortValueAssigments (m:Asn1Module) (r:AstRoot) (acn:AcnTypes.AcnAstResolved) =
+    let GetValueDependencies (vas:ValueAssignment)  = 
+        let actType = Ast.GetActualType vas.Type r
+        seq {
+            match vas.Value.Kind, actType.Kind with
+            | RefValue(m,n), Enumerated(itms) -> 
+                match itms |> Seq.exists(fun i -> i.Name.Value = n.Value) with
+                | true  -> ()
+                | false -> yield n.Value
+            | RefValue(m,n), _ -> yield n.Value
+            | _             -> ()
+        } |> Seq.distinct |> Seq.toList
+
+    
+    let allNodes = m.ValueAssignments |> List.map( fun tas -> (tas.Name.Value, GetValueDependencies tas))
+    let independentNodes = allNodes |> List.filter(fun (_,list) -> List.isEmpty list) |> List.map(fun (n,l) -> n)
+    let dependentNodes = allNodes |> List.filter(fun (_,list) -> not (List.isEmpty list) )
+    let sortedValueAss = DoTopologicalSort independentNodes dependentNodes (fun c -> SemanticError(emptyLocation, sprintf "qqRecursive types are not compatible with embedded systems.\nASN.1 grammar has cyclic dependencies: %A" c ))
+    let mp = m.ValueAssignments |> List.map(fun v -> v.Name.Value, v) |> Map.ofList
+    sortedValueAss |> List.map(fun x -> mp.[x])
 
 
 let PrintModule (m:Asn1Module) (f:Asn1File) (r:AstRoot) (acn:AcnTypes.AcnAstResolved) outDir fileExt (state:State) =
     let includedPackages = ss.rtlModuleName()::(m.Imports |> List.map (fun im -> ToC im.Name.Value))
     let sortedTas = SortTypeAssigments m r acn
     let tases, s1 = sortedTas |> foldMap(fun s tas -> PrintTypeAss tas m r acn s) state
-    let vases, s2 = m.ValueAssignments |> foldMap(fun s vas -> PrintValueAss vas m r s) s1
+    let sortedValueAssignments = SortValueAssigments m r acn
+    let vases, s2 = sortedValueAssignments |> foldMap(fun s vas -> PrintValueAss vas m r s) s1
     let arrPrivChoices = 
         let choices = sortedTas |> Seq.choose(fun x -> match x.Type.Kind with Choice(ch) -> Some(x, ch) | _ -> None )
         let ChoicePrivate (t:TypeAssignment, children:list<ChildInfo>) =

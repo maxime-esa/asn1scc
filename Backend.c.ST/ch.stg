@@ -42,7 +42,7 @@ EnumInnerUtilDefine(sTasName, sItemName) ::= "#define ENUM_<sItemName>	<sTasName
 
 ChoiceUtilDefine(sTasName, sChildNamePresent) ::= "#define CHOICE_<sChildNamePresent>	<sTasName>::<sChildNamePresent>"
 
-PrintValueAssignment(sTypeDecl, sName) ::= "extern <sTypeDecl> <sName>;"
+PrintValueAssignment(sTypeDecl, sName) ::= "extern const <sTypeDecl> <sName>;"
 
 PrintTypeAssignment(sTypeDecl, sArrayPostfix, sName, nMaxBitsInPER, nMaxBytesInPER, nMaxBitsInACN, nMaxBytesInACN, nMaxBytesInXER, sStar, bGenEqual, arrsErrorCodes) ::= <<
 

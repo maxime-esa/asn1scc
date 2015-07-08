@@ -66,9 +66,10 @@ let rec PrintAsn1Value (v:Asn1Value) (t:Asn1Type) (bInGlobalsScope:bool) (tasNam
     |RefValue(modName,vasName), _               -> 
         match bInGlobalsScope with
         | false ->
+            let vas = (r.GetModuleByName modName).ValueAssignments |> Seq.find(fun x -> x.Name.Value = vasName.Value)
             match modName.Value = m.Name.Value with
-            | true      -> c_var.PrintRefValue1 (ToC vasName.Value)
-            | false     -> c_var.PrintRefValue2 (ToC modName.Value) (ToC vasName.Value)
+            | true      -> c_var.PrintRefValue1 vas.c_name
+            | false     -> c_var.PrintRefValue2 (ToC modName.Value) vas.c_name
         | true  ->
             let actValue = Ast.GetActualValue modName vasName r
             PrintAsn1Value actValue t bInGlobalsScope (tasName, dummy) m r

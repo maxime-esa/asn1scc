@@ -73,9 +73,10 @@ let rec PrintAsn1Value (v:Asn1Value) bChoicesInline bPrintRealNegsAsStrings (t:A
         | true      -> sv.PrintEnumValue (enmItem.CEnumName r Spark)
         | false     -> (ToC modName.Value) + "." + (sv.PrintEnumValue (enmItem.CEnumName r Spark))
     |RefValue(modName,vasName), _               -> 
+        let vas = (r.GetModuleByName modName).ValueAssignments |> Seq.find(fun x -> x.Name.Value = vasName.Value)
         match modName.Value = m.Name.Value with
-        | true      -> sv.PrintRefValue1 (ToC vasName.Value)
-        | false     -> sv.PrintRefValue2 (ToC modName.Value) (ToC vasName.Value)
+        | true      -> sv.PrintRefValue1 vas.ada_name
+        | false     -> sv.PrintRefValue2 (ToC modName.Value) vas.ada_name
     |StringValue(a), IA5String
     |StringValue(a), NumericString              -> 
         let min,max = uPER.GetSizebaleMinMax t.Kind t.Constraints r

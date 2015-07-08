@@ -225,6 +225,8 @@ let MapValueAssignment (r:ParameterizedAsn1Ast.AstRoot) (vas:ParameterizedAsn1As
             match vas.Scope with
             | ParameterizedAsn1Ast.GlobalScope      ->  Ast.GlobalScope
             | ParameterizedAsn1Ast.TypeScope(m,t)   ->  Ast.TypeScope(m,t)
+        c_name = vas.c_name
+        ada_name = vas.ada_name
     }
 
 

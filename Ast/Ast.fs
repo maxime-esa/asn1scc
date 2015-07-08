@@ -49,6 +49,8 @@ and TypeAssignment = {
 
 and ValueAssignment = {
     Name:StringLoc
+    c_name:string
+    ada_name:string
     Type:Asn1Type
     Value:Asn1Value
     Scope : ValueScope

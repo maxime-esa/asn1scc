@@ -221,7 +221,7 @@ let rec CheckValueType (t:Asn1Type) (v:Asn1Value) ast=
                                         | Some(AlwaysAbsent)   -> ()
                                         | _                    -> raise(SemanticError(v.Location, sprintf "missing value for component: %s" ch.Name.Value ))
                                             
-            let childrenStatus = children |> Seq.iter checkChild
+            let childrenStatus = children |>  Seq.filter(fun x -> not x.AcnInsertedField) |> Seq.iter checkChild
             chValues |> Seq.iter(fun v -> if not (children |> Seq.exists(fun c -> c.Name = (fst v))) then
                                             let unknownName = (fst v)
                                             let (nm, loc) = unknownName.AsTupple

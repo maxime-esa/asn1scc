@@ -37,7 +37,7 @@ let PrintTypeAss (t:TypeAssignment) (m:Asn1Module) (f:Asn1File) (r:AstRoot) (acn
 
 
 let PrintValueAss (v:ValueAssignment) (m:Asn1Module) (f:Asn1File) (r:AstRoot) = 
-    let sName = ToC v.Name.Value 
+    let sName = v.c_name
     let sTypeDecl= c_h.PrintTypeDeclaration v.Type [m.Name.Value; v.Name.Value] r
     let sVal = c_variables.PrintAsn1Value v.Value v.Type true (v.Name.Value,0) m r
     c_src.PrintUnnamedVariable sTypeDecl sName sVal

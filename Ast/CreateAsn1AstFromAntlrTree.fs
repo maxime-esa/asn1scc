@@ -406,12 +406,15 @@ let CreateTypeAssigment (astRoot:list<ITree>) (tree:ITree) (fileTokens:array<ITo
 
 let CreateValueAssigment (astRoot:list<ITree>) (tree:ITree) = 
     let alreadyTakenComments = System.Collections.Generic.List<IToken>()
+    let name = tree.GetChild(0).TextL;
     let typ = CreateType astRoot (tree.GetChild(1)) [||] alreadyTakenComments
     {
-        ValueAssignment.Name = tree.GetChild(0).TextL;
+        ValueAssignment.Name = name
         Type = typ
         Value = CreateValue astRoot (tree.GetChild(2)) 
         Scope = ParameterizedAsn1Ast.GlobalScope
+        c_name = ToC name.Value
+        ada_name = ToC name.Value
     }
 
 let CreateAsn1Module (astRoot:list<ITree>) (tree:ITree)   (fileTokens:array<IToken>) (alreadyTakenComments:System.Collections.Generic.List<IToken>)= 
@@ -445,11 +448,14 @@ let CreateAsn1Module (astRoot:list<ITree>) (tree:ITree)   (fileTokens:array<ITok
                         if ni.Type = asn1Parser.NUMBER_LST_ITEM then
                             let Value = CreateValue astRoot (ni.GetChild(1))
                             let vasName = ni.GetChild(0).TextL
+                            let c_name = ToC (tas.Value + "_" + ni.GetChild(0).Text)
                             yield   {
                                         ValueAssignment.Name = vasName
                                         Type = Type
                                         Value = Value
                                         Scope = scope
+                                        c_name = c_name
+                                        ada_name = c_name
                                     }
                     } |> Seq.toList
             namedItems)

@@ -148,7 +148,7 @@ let rec EmitTypeBody (t:ConstraintType) (path:list<string>)  (tasList:list<(List
             sc.JoinItems content bCanFail sNestedContent
 
         let rec printChildren  = function
-            |[]     -> null
+            |[]     -> sc.Emit_fixedSize_constraint()
             |x::xs  -> printChild x  (printChildren xs)
 
         printChildren itemsToCheck0

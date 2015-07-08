@@ -33,9 +33,9 @@ gcc_main(sFileNameWithoutExtension, arrsValueAssignments) ::= <<
 <arrsValueAssignments: {uv|<uv>}; separator="\n">
 >>
 
-PrintUnnamedVariable(sTypeDecl, sName, sValue) ::= "<sTypeDecl> <sName> = <sValue>;"
+PrintUnnamedVariable(sTypeDecl, sName, sValue) ::= "const <sTypeDecl> <sName> = <sValue>;"
 
-PrintValueAssignment(sTypeDecl, sName, sValue) ::= "<sTypeDecl> <sName> = <sValue>;"
+PrintValueAssignment(sTypeDecl, sName, sValue) ::= "const <sTypeDecl> <sName> = <sValue>;"
 
 
 

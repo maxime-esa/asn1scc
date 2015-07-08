@@ -31,7 +31,7 @@ let PrintTypeAss (t:TypeAssignment) (m:Asn1Module) (r:AstRoot) (acn:AcnTypes.Acn
     content.StrJoin("\n\n"), s2
 
 let PrintValueAss (v:ValueAssignment) (m:Asn1Module) (r:AstRoot) (state:State)=  
-    let sName = ToC v.Name.Value 
+    let sName = v.ada_name//ToC v.Name.Value 
     let sTypeDecl, _ = spark_spec.PrintType v.Type [m.Name.Value; v.Name.Value] None (ValueAssignment v,m,r) {spark_spec.State.nErrorCode = 0}
     let sValue = spark_variables.PrintAsn1Value v.Value true true v.Type (sTypeDecl,0) m r 
     match (IsOrContainsChoice v.Type r) with

@@ -35,7 +35,7 @@ let UpdateDeterminant determinantPath (kind:AcnTypes.LongReferenceKind, refs:seq
                 enms |> 
                 List.sortBy (
                     fun en -> 
-                        children |> Seq.findIndex (fun ch -> ch.uniqueName = en.uniqueName)
+                        children |> Seq.findIndex (fun ch -> ch.Name = en.Name)
                 )
             let arrsChEnumItems = Seq.map2 printItem children sortedEnms
             false, sa.ChoiceDependencyEnum sTasName arrsChEnumItems
@@ -685,9 +685,13 @@ let rec EmitTypeBodyAux (t:Asn1Type) (sTasName:string) (path:list<string>, pName
             let printChild (c:ChildInfo) =
                 let pName = match codec with Encode -> None | Decode -> Some(c.CName+"_tmp")
                 let newPath = path@[c.Name.Value]
-//                let newPath = match codec with Encode -> (path@[c.Name.Value]) | Decode -> ([c.CName+"_tmp"])
                 let sChildContent = EmitTypeBody c.Type sTasName (newPath, pName) tas m r acn codec 
-                sa.ChoiceChild_Enum sTasName c.CName (ToC  (r.TypePrefix +  c.Name.Value)) sChildContent (c.CName_Present Spark) codec                
+                let determinantType = GetActualType (GetTypeByPoint enmDet r acn) r
+                let enumValue = match determinantType.Kind with
+                                |Enumerated(enms) -> enms |> List.find(fun en -> en.Name = c.Name)
+                                |_ -> raise(BugErrorException(""))
+
+                sa.ChoiceChild_Enum sTasName c.CName (ToC  (r.TypePrefix +  enumValue.uniqueName)) sChildContent (c.CName_Present Spark) codec                
             let extFldPath = GetAccessFld (enmDet.AbsPath.Tail.Tail) (Same t) r 
             sa.Choice_Enum sTasName (children |> Seq.map printChild) extFldPath codec
         match Acn.GetChoiceEncodingClass path children acn with
