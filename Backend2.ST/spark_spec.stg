@@ -64,7 +64,10 @@ END <sPackageName>;
 
 
 
-PrintValueAssignment(sVasName, sTypeDecl, sValue) ::= "<sVasName> : CONSTANT <sTypeDecl>:= <sValue>;"
+PrintValueAssignment(sVasName, sTypeDecl, sValue) ::= <<
+<sVasName> : CONSTANT <sTypeDecl>:= <sValue>;
+pragma Export(C, <sVasName>, "<sVasName>");
+>>
 
 PrintValueAssignment_Choice(sVasName, sTypeDecl, sValue) ::= "FUNCTION <sVasName> RETURN <sTypeDecl>;"
 

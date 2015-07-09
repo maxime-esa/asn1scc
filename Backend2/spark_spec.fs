@@ -292,7 +292,7 @@ let SortValueAssigments (m:Asn1Module) (r:AstRoot) (acn:AcnTypes.AcnAstResolved)
     let allNodes = m.ValueAssignments |> List.map( fun tas -> (tas.Name.Value, GetValueDependencies tas))
     let independentNodes = allNodes |> List.filter(fun (_,list) -> List.isEmpty list) |> List.map(fun (n,l) -> n)
     let dependentNodes = allNodes |> List.filter(fun (_,list) -> not (List.isEmpty list) )
-    let sortedValueAss = DoTopologicalSort independentNodes dependentNodes (fun c -> SemanticError(emptyLocation, sprintf "qqRecursive types are not compatible with embedded systems.\nASN.1 grammar has cyclic dependencies: %A" c ))
+    let sortedValueAss = DoTopologicalSort independentNodes dependentNodes (fun c -> SemanticError(emptyLocation, sprintf "Recursive types are not compatible with embedded systems.\nASN.1 grammar has cyclic dependencies: %A" c ))
     let mp = m.ValueAssignments |> List.map(fun v -> v.Name.Value, v) |> Map.ofList
     sortedValueAss |> List.map(fun x -> mp.[x])
 
