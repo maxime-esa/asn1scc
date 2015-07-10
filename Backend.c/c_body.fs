@@ -43,7 +43,7 @@ let PrintValueAss (v:ValueAssignment) (m:Asn1Module) (f:Asn1File) (r:AstRoot) =
     c_src.PrintUnnamedVariable sTypeDecl sName sVal
 
 
-let PrintFile (f:Asn1File) outDir newFileExt (r:AstRoot) (acn:AcnTypes.AcnAstResolved)  =
+let PrintFile (fileIdx:int) (f:Asn1File) outDir newFileExt (r:AstRoot) (acn:AcnTypes.AcnAstResolved)  =
     let fileNameNoExtUpper = f.FileNameWithoutExtension
     let allImportedModules = f.Modules |> Seq.collect(fun m -> m.Imports) |> Seq.map(fun imp -> imp.Name.Value) |> Seq.distinct
     let includedModules  = seq {   
@@ -79,12 +79,16 @@ let PrintFile (f:Asn1File) outDir newFileExt (r:AstRoot) (acn:AcnTypes.AcnAstRes
         } |> Seq.toList |> Seq.distinctBy(fun (_,v,_,_,_,_) -> Ast.GetValueID v) |> Seq.map PrintUnnamedVariable |> Seq.toArray
     let content = c_src.main fileNameNoExtUpper unnamedVariables tases vases
     let fileName = Path.Combine(outDir, (f.FileNameWithoutExtension+newFileExt))
+    let content = FsUtils.replaceErrorCodes content "ERR_INSUFFICIENT_DATA" 1 fileIdx 1
+    let content = FsUtils.replaceErrorCodes content "ERR_INCORRECT_PER_STREAM" 2 fileIdx 1
+    let content = FsUtils.replaceErrorCodes content "ERR_INVALID_CHOICE_ALTERNATIVE" 3 fileIdx 1
+    let content = FsUtils.replaceErrorCodes content "ERR_INVALID_ENUM_VALUE" 4 fileIdx 1
     File.WriteAllText(fileName, content.Replace("\r",""))
 
 
 let DoWork (r:AstRoot) (acn:AcnTypes.AcnAstResolved) outDir  =
     c_h.DoWork r acn outDir ".h" 
-    r.Files |> Seq.iter(fun f -> PrintFile f outDir ".c" r acn )   
+    r.Files |> Seq.iteri(fun i f -> PrintFile i f outDir ".c" r acn )   
 
 
 let EmmitDefaultACNGrammar (r:AstRoot) outDir  =

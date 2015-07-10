@@ -372,3 +372,21 @@ let CompareLists (list1:List<StringLoc>) (list2:List<StringLoc>) excToThrow =
 //    
 
 
+let replaceErrorCodes (initialString:string) (patternToSearch:string) generalErrCode fileIdx initialCount =
+    let sw = new System.IO.StringWriter()
+    let rec replaceErrorCodes_aux (stringToProcess:string)  initialCount =
+        match stringToProcess.Contains(patternToSearch) with
+        | false -> sw.Write(stringToProcess)
+        | true  ->
+            let pos1 = stringToProcess.IndexOf(patternToSearch)
+            let str1 = stringToProcess.Substring(0,pos1)
+            let str2 = stringToProcess.Substring(pos1 + patternToSearch.Length)
+            let strRep = (generalErrCode<<<28) ||| (fileIdx<<<18) ||| initialCount
+            sw.Write(str1)    
+            sw.Write(strRep.ToString())    
+            replaceErrorCodes_aux str2  (initialCount+1)
+    replaceErrorCodes_aux initialString  initialCount
+    let ret = sw.ToString();
+    sw.Dispose()
+    ret
+    

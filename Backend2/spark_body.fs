@@ -50,7 +50,7 @@ let CollectNegativeReals (m:Asn1Module) (r:AstRoot)  =
     let negReals = VisitModule m r {DefaultVisitors with visitValue=OnValue}  (Set.ofList [])
     negReals |> Set.toList |> Seq.map(fun d -> (spark_variables.PrintRealValueAux d, d))
 
-let PrintModule (m:Asn1Module) (f:Asn1File) (r:AstRoot) (acn:AcnTypes.AcnAstResolved) outDir fileExt (state:State) =
+let PrintModule (fileIndex:int) (mdIndex:int) (m:Asn1Module) (f:Asn1File) (r:AstRoot) (acn:AcnTypes.AcnAstResolved) outDir fileExt (state:State) =
     let includedPackages = ss.rtlModuleName()::(m.Imports |> List.map (fun im -> ToC im.Name.Value))
     let acnBoolPatterns = spark_acn.CollectBoolPatterns m r
     let negRealConstants = CollectNegativeReals m r |> Seq.map(fun (nm, dv) -> ss.PrintNegativeRealConstant nm dv)
@@ -58,11 +58,17 @@ let PrintModule (m:Asn1Module) (f:Asn1File) (r:AstRoot) (acn:AcnTypes.AcnAstReso
     let vases, s2 = m.ValueAssignments|>List.filter(fun v ->IsOrContainsChoice v.Type r) |> foldMap(fun s vas -> PrintValueAss vas m r s) s1
     let content = ss.PrintPackageBody (ToC m.Name.Value) includedPackages negRealConstants acnBoolPatterns tases vases
     let fileName = Path.Combine(outDir, ((ToC m.Name.Value)+fileExt).ToLower())
+    let fileIdx = (fileIndex<<<5)||| mdIndex
+    let content = FsUtils.replaceErrorCodes content "adaasn1rtl.ERR_INSUFFICIENT_DATA" 1 fileIdx 1
+    let content = FsUtils.replaceErrorCodes content "adaasn1rtl.ERR_INCORRECT_PER_STREAM" 2 fileIdx 1
+    let content = FsUtils.replaceErrorCodes content "adaasn1rtl.ERR_INVALID_CHOICE_ALTERNATIVE" 3 fileIdx 1
+    let content = FsUtils.replaceErrorCodes content "adaasn1rtl.ERR_INCORRECT_STREAM" 4 fileIdx 1
+    let content = FsUtils.replaceErrorCodes content "adaasn1rtl.ERR_INCORRECT_DATA" 5 fileIdx 1
     File.WriteAllText(fileName, content.Replace("\r",""))
     s2
 
-let PrintFile (f:Asn1File) outDir newFileExt (r:AstRoot) (acn:AcnTypes.AcnAstResolved) (state:State) =
-    f.Modules |> Seq.filter(fun x -> (ModuleHasAdaBody x r)) |> Seq.fold (fun s m -> PrintModule m f r acn outDir newFileExt s) state
+let PrintFile (fileIndex:int) (f:Asn1File) outDir newFileExt (r:AstRoot) (acn:AcnTypes.AcnAstResolved) (state:State) =
+    f.Modules |> Seq.filter(fun x -> (ModuleHasAdaBody x r)) |> Seq.fold (fun (s,i) m -> (PrintModule fileIndex i m f r acn outDir newFileExt s, i+1)) (state,0) |> fst
 
 
 let GetRTLName () = ss.rtlModuleName()
@@ -70,6 +76,6 @@ let GetRTLName () = ss.rtlModuleName()
 let DoWork (r:AstRoot) (acn:AcnTypes.AcnAstResolved) outDir  =
     let r = spark_utils.MoveChoiceVasToPrivateModule r
     spark_spec.DoWork r acn outDir ".ads" |> ignore
-    r.Files |> Seq.fold(fun s f -> PrintFile f outDir ".adb" r acn s)  {State.nErrorCode = 1000} |> ignore
+    r.Files |> Seq.fold(fun (s:State,i) f -> (PrintFile i f outDir ".adb" r acn s, i+1))  ({State.nErrorCode = 1000},0) |> ignore
 
 
