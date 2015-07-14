@@ -1,0 +1,25 @@
+MOD1 DEFINITIONS AUTOMATIC TAGS ::= BEGIN
+
+	RGBCOLORS ::= ENUMERATED {
+		red,
+		green,
+		blue
+	}
+	CH1 ::= CHOICE {
+		left INTEGER(1..10),
+		right RGBCOLORS
+	}
+	
+	OTHERCOLORS ::= ENUMERATED {
+		red,
+		cyan,
+		magenta
+	}
+	
+	CH2 ::= CHOICE {
+		left INTEGER(1..10),
+		center OTHERCOLORS
+	}
+
+END
+

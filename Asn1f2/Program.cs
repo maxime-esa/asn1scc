@@ -76,6 +76,24 @@ namespace Asn1f2
 
         }
 
+        public static ParameterizedAsn1Ast.EnumRenamePolicy getRenamePolicy(CmdLineArgs.CmdLineArguments cmdArgs, ParameterizedAsn1Ast.EnumRenamePolicy defaultValue)
+        {
+            var renamePolicyStr = cmdArgs.GetOptionalArgument("renamePolicy", "xxx");
+            var renamePolicy = defaultValue;
+            if (renamePolicyStr == "0")
+                renamePolicy = ParameterizedAsn1Ast.EnumRenamePolicy.NoRenamePolicy;
+            else if (renamePolicyStr == "1")
+                renamePolicy = ParameterizedAsn1Ast.EnumRenamePolicy.SelectiveEnumerants;
+            else if (renamePolicyStr == "2")
+                renamePolicy = ParameterizedAsn1Ast.EnumRenamePolicy.AllEnumerants;
+            else if (renamePolicyStr!="xxx")
+            {
+                Console.Error.WriteLine("Invalid value for argument 'renamePolicy'\nValid values are 0,1,2");
+                Environment.Exit(Usage());
+            }
+
+            return renamePolicy;
+        }
 
 
         public static int CheckSuccess(IEnumerable<string> args)
@@ -113,6 +131,7 @@ namespace Asn1f2
                 new CmdLineArgs.CmdArg { HasValue = false, Name = "atc", Madatory=false}, 
                 new CmdLineArgs.CmdArg { HasValue = false, Name = "oss", Madatory=false}, 
                 new CmdLineArgs.CmdArg { HasValue = false, Name = "AdaUses", Madatory=false}, 
+                new CmdLineArgs.CmdArg { HasValue = true, Name = "renamePolicy", Madatory=false}, 
             });
             cmdArgs.CheckArguments();
             if (cmdArgs.HasArgument("h"))
@@ -171,15 +190,15 @@ namespace Asn1f2
 
 
             var asn1Ast0 = MapParamAstToNonParamAst.DoWork(CreateAsn1AstFromAntlrTree.CreateAstRoot(asn1Files, encodings.ToArray(),
-                    generateEqualFunctions, cmdArgs.GetOptionalArgument("typePrefix", ""), cmdArgs.HasArgument("oss"),
+                    generateEqualFunctions, cmdArgs.GetOptionalArgument("typePrefix", ""), cmdArgs.HasArgument("oss"), 
                     astXmlFile, icdUperHtmlFileName, icdAcnHtmlFileName));
 
             CheckAsn1.CheckFiles(asn1Ast0);
 
             if (astXmlFile != "")
             {
-
-                XmlAst.DoWork(EnsureUniqueEnumNames.DoWork(asn1Ast0));
+                var renamePolicy = getRenamePolicy(cmdArgs, ParameterizedAsn1Ast.EnumRenamePolicy.SelectiveEnumerants);
+                XmlAst.DoWork(EnsureUniqueEnumNames.DoWork(asn1Ast0, renamePolicy));
                 return 0;
             }
 
@@ -251,7 +270,10 @@ namespace Asn1f2
                 else if (customStgAstVer == "3")
                     astForCustomBackend = refTypesWithNoConstraints;
                 else if (customStgAstVer == "4")
-                    astForCustomBackend = EnsureUniqueEnumNames.DoWork(refTypesWithNoConstraints);
+                {
+                    var renamePolicy = getRenamePolicy(cmdArgs, ParameterizedAsn1Ast.EnumRenamePolicy.SelectiveEnumerants);
+                    astForCustomBackend = EnsureUniqueEnumNames.DoWork(refTypesWithNoConstraints, renamePolicy);
+                }
                 else
                 {
                     Console.Error.WriteLine("Invalid value of customStgAstVerion argument.\nPlease provide one of the following values:");
@@ -268,7 +290,8 @@ namespace Asn1f2
 
             if (cmdArgs.HasArgument("Ada"))
             {
-                var astForBackend = EnsureUniqueEnumNames.DoWork(refTypesWithNoConstraints);
+                var renamePolicy = getRenamePolicy(cmdArgs, ParameterizedAsn1Ast.EnumRenamePolicy.NoRenamePolicy);
+                var astForBackend = EnsureUniqueEnumNames.DoWork(refTypesWithNoConstraints, renamePolicy);
 
                 spark_body.DoWork(astForBackend, acnAst3, outDir);
 
@@ -302,7 +325,8 @@ namespace Asn1f2
                 WriteTextFile(Path.Combine(outDir, "ber.c"), Resource1.ber);
                 WriteTextFile(Path.Combine(outDir, "xer.c"), Resource1.xer);
 
-                var astForBackend = EnsureUniqueEnumNames.DoWork(refTypesWithNoConstraints);
+                var renamePolicy = getRenamePolicy(cmdArgs, ParameterizedAsn1Ast.EnumRenamePolicy.SelectiveEnumerants);
+                var astForBackend = EnsureUniqueEnumNames.DoWork(refTypesWithNoConstraints, renamePolicy);
                 c_body.DoWork(astForBackend, acnAst3, outDir);
 
                 if (bGenTestCases)
@@ -442,9 +466,13 @@ namespace Asn1f2
             Console.Error.WriteLine("\t -o outdir\t\tdirectory where all files are produced.");
             Console.Error.WriteLine("\t\t\t\tDefault is current directory");
             Console.Error.WriteLine("\t -atc\t\t\tcreate automatic test cases.");
-            Console.Error.WriteLine("\t\t\t\tDefault is current directory");
             Console.Error.WriteLine("\t -equal \t\tGenerate functions for testing type equality");
             Console.Error.WriteLine("\t\t\t\tWhen using Ada, compiler must support Ada2012");
+            Console.Error.WriteLine("\t -renamePolicy policy\tSpecify rename policy for enums");
+            Console.Error.WriteLine("\t\t\t\t0 no rename (Ada default)");
+            Console.Error.WriteLine("\t\t\t\t1 rename only conflicting enumerants (C default)");
+            Console.Error.WriteLine("\t\t\t\t2 rename all enumerants of an enum with at lest one conflicting enumerant");
+
             Console.Error.WriteLine();
             Console.Error.WriteLine();
             Console.Error.WriteLine("Example:");

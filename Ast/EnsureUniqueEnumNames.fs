@@ -8,7 +8,7 @@ open CloneTree
 
 type State =  string list
 
-let rec handleChoices (r:AstRoot) =
+let rec handleChoices (r:AstRoot) (renamePolicy:ParameterizedAsn1Ast.EnumRenamePolicy)=
     let doubleEnumNames = seq {
         for m in r.Modules do
             for tas in m.TypeAssignments do
@@ -36,15 +36,24 @@ let rec handleChoices (r:AstRoot) =
 
             match old.Kind with
             | Choice(children)    -> 
-                let newChildren, finalState = children |> foldMap CloneChild state
+                //let newChildren, finalState = children |> foldMap CloneChild state
+                let newChildren, finalState =
+                    match renamePolicy with
+                    | ParameterizedAsn1Ast.NoRenamePolicy           -> children, state
+                    | ParameterizedAsn1Ast.SelectiveEnumerants      -> children |> foldMap CloneChild state
+                    | ParameterizedAsn1Ast.AllEnumerants            -> 
+                        let newChildren, finalState = children |> foldMap CloneChild state
+                        let newPrefix = newChildren |> List.map(fun itm -> itm.uniqueName.Replace(itm.Name.Value,"")) |> List.maxBy(fun prf -> prf.Length)
+                        let newChildren = newChildren |> List.map(fun ch -> {ch with uniqueName = newPrefix + ch.Name.Value})
+                        newChildren, finalState
                 {old with Kind =  Choice(newChildren)}, finalState
             | _             -> defaultConstructors.cloneType old m key cons state
 
         let newTree = CloneTree r {defaultConstructors with cloneType =  CloneType; } doubleEnumNames |> fst
-        handleChoices newTree
+        handleChoices newTree renamePolicy
 
 
-let rec handleEnums (r:AstRoot) =
+let rec handleEnums (r:AstRoot) (renamePolicy:ParameterizedAsn1Ast.EnumRenamePolicy) =
     let doubleEnumNames = seq {
         for m in r.Modules do
             for tas in m.TypeAssignments do
@@ -69,16 +78,26 @@ let rec handleEnums (r:AstRoot) =
                             let newPrefix = key |> List.rev |> List.map ToC |> Seq.skipWhile(fun x -> old.uniqueName.Contains x) |> Seq.head
                             newPrefix + "_" + old.uniqueName
                     {old with uniqueName=newUniqueName}
-                {old with Kind =  Enumerated(itesm|> List.map copyItem)}, state
+                let newItems = 
+                    match renamePolicy with
+                    | ParameterizedAsn1Ast.NoRenamePolicy           -> itesm
+                    | ParameterizedAsn1Ast.SelectiveEnumerants      -> itesm|> List.map copyItem
+                    | ParameterizedAsn1Ast.AllEnumerants            -> 
+                        let newPrefix = itesm|> List.map copyItem |> List.map(fun itm -> itm.uniqueName.Replace(itm.Name.Value,"")) |> List.maxBy(fun prf -> prf.Length)
+                        itesm|> List.map (fun itm -> {itm with uniqueName = newPrefix + itm.uniqueName})
+                {old with Kind =  Enumerated(newItems)}, state
             | _             -> defaultConstructors.cloneType old m key cons state
 
         let newTree = CloneTree r {defaultConstructors with cloneType =  CloneType; } doubleEnumNames |> fst
-        handleEnums newTree
+        handleEnums newTree renamePolicy
 
 
-let DoWork (ast:AstRoot)=
-    let r1 = handleChoices ast
-    let r2 = handleEnums r1
-    r2
+let DoWork (ast:AstRoot) (renamePolicy:ParameterizedAsn1Ast.EnumRenamePolicy) =
+    match renamePolicy with
+    | ParameterizedAsn1Ast.NoRenamePolicy           -> ast
+    | _                                             ->
+        let r1 = handleChoices ast renamePolicy
+        let r2 = handleEnums r1 renamePolicy
+        r2
 
 

@@ -16,6 +16,10 @@ type AstRoot = {
     IcdAcnHtmlFileName:string
     CheckWithOss:bool
 }
+and EnumRenamePolicy =
+    | NoRenamePolicy
+    | SelectiveEnumerants
+    | AllEnumerants
 
 and Asn1File = {
     FileName:string;
