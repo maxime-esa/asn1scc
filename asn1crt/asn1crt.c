@@ -770,7 +770,7 @@ flag DecodeRealAsBinaryEncoding(BitStream* pBitStrm, int length, byte header, do
     int F;
     unsigned factor=1;
     int expLen;
-    int exp;
+    int exp = 0;
     int expFactor = 1;
     asn1SccUint N=0;
     int i;
@@ -805,7 +805,7 @@ flag DecodeRealAsBinaryEncoding(BitStream* pBitStrm, int length, byte header, do
         exp = exp<<8 | b;
     }
     length-=expLen;
-    
+
     for(i=0;i<length;i++) {
         byte b=0;
         if (!BitStream_ReadByte(pBitStrm, &b))
@@ -816,8 +816,8 @@ flag DecodeRealAsBinaryEncoding(BitStream* pBitStrm, int length, byte header, do
 
 //  *v = N*factor * pow(base,exp);
     *v = GetDoubleByMantissaAndExp(N*factor, expFactor*exp);
-    
-    if (sign<0) 
+
+    if (sign<0)
         *v = -(*v);
 
 
