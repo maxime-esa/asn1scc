@@ -137,7 +137,7 @@ let rec IsValueAllowed (c:Asn1Constraint) (v:Asn1Value) (isOfEnumType:bool) (ast
             | RefValue(modName,vasName)      -> IsAlphabetConstraintOK (GetBaseValue modName vasName ast) ac
             | _                             -> raise (BugErrorException(""))
         IsAlphabetConstraintOK v ac 
-    | UnionConstraint(c1,c2)            -> IsValueAllowed c1 v isOfEnumType ast || IsValueAllowed c2 v isOfEnumType ast
+    | UnionConstraint(c1,c2,_)            -> IsValueAllowed c1 v isOfEnumType ast || IsValueAllowed c2 v isOfEnumType ast
     | IntersectionConstraint(c1,c2)     -> IsValueAllowed c1 v isOfEnumType ast && IsValueAllowed c2 v isOfEnumType ast
     | AllExceptConstraint(c1)           -> not (IsValueAllowed c1 v isOfEnumType ast)
     | ExceptConstraint(c1,c2)           -> IsValueAllowed c1 v isOfEnumType ast && not(IsValueAllowed c2 v isOfEnumType ast)
@@ -305,7 +305,7 @@ let rec isConstraintValid (t:Asn1Type) (c:Asn1Constraint) ast =
         if not(CanHaveFromContraint t) then
             raise(SemanticError(t.Location, "Type does not support alphabet constraints"))
         isConstraintValid t c1 ast
-    | UnionConstraint(c1,c2)  | IntersectionConstraint(c1,c2) | ExceptConstraint(c1,c2) | RootConstraint2(c1,c2) ->
+    | UnionConstraint(c1,c2,_)  | IntersectionConstraint(c1,c2) | ExceptConstraint(c1,c2) | RootConstraint2(c1,c2) ->
         isConstraintValid t c1 ast
         isConstraintValid t c2 ast
     | AllExceptConstraint(c1) | RootConstraint(c1)       -> isConstraintValid t c1 ast

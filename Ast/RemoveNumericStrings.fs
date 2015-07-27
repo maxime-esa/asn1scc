@@ -16,7 +16,7 @@ let CloneType (old:Asn1Type) m (key:list<string>) (cons:Constructors<State>) (st
         let zero = {Asn1Value.Kind = StringValue("0".AsLoc); Location = emptyLocation}
         let nine = {Asn1Value.Kind = StringValue("9".AsLoc); Location = emptyLocation}
         let space = {Asn1Value.Kind = StringValue(" ".AsLoc); Location = emptyLocation}
-        let newConstraint = AlphabetContraint(UnionConstraint(RangeContraint(zero,nine, true, true),SingleValueContraint(space)))
+        let newConstraint = AlphabetContraint(UnionConstraint(RangeContraint(zero,nine, true, true),SingleValueContraint(space), false))
         {old with Kind = IA5String; Constraints = newConstraint::old.Constraints}, state
     | Enumerated(namedItems) ->
 

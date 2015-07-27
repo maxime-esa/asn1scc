@@ -107,7 +107,7 @@ let GetTypeValues (t:Asn1Type) (r:AstRoot) =
                     yield! Asn1ValuesFromConstraints c r min max zero
             | SizeContraint(sc)              -> yield! Asn1ValuesFromConstraints sc r min max zero
             | AlphabetContraint(fc)          -> yield! Asn1ValuesFromConstraints fc r min max zero
-            | UnionConstraint(a1,a2)         -> 
+            | UnionConstraint(a1,a2,_)         -> 
                 yield! Asn1ValuesFromConstraints a1 r min max zero
                 yield! Asn1ValuesFromConstraints a2 r min max zero
             | IntersectionConstraint(a1,a2)  ->
@@ -158,7 +158,7 @@ let rec GenerateValues (a:Asn1Type) modName (r:AstRoot) (acn:AcnTypes.AcnAstReso
                 | TypeInclusionConstraint(m,ts) -> ()
                 | SizeContraint(sc)             -> ()
                 | AlphabetContraint(fc)         -> ()
-                | UnionConstraint(a1,a2)        -> 
+                | UnionConstraint(a1,a2,_)        -> 
                     yield! GetValueFromSingleValueConstraint a1 
                     yield! GetValueFromSingleValueConstraint a2 
                 | IntersectionConstraint(a1,a2)  -> ()

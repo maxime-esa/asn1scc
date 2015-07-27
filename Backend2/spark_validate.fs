@@ -55,7 +55,7 @@ let rec PrintTypeContraint (t:ConstraintType) (path:list<string>) (c:Asn1Constra
     | RangeContraint_MIN_MAX      -> raise(BugErrorException "This constraint should have been removed")
     | SizeContraint(inCon)        -> PrintTypeContraint  (LengthOf t.Type) path inCon alphaName tasList m r
     | AlphabetContraint(inCon)    -> sc.callAlphaFunc alphaName p
-    | UnionConstraint(c1, c2)     -> sc.OR_Constraint (PrintTypeContraint t path c1 alphaName tasList m r) (PrintTypeContraint t path c2 alphaName tasList m r)
+    | UnionConstraint(c1, c2,_)     -> sc.OR_Constraint (PrintTypeContraint t path c1 alphaName tasList m r) (PrintTypeContraint t path c2 alphaName tasList m r)
     | IntersectionConstraint(c1,c2)-> sc.AND_Constraint (PrintTypeContraint t path c1 alphaName tasList m r) (PrintTypeContraint t path c2 alphaName tasList m r)
     | AllExceptConstraint(c1)      -> sc.AllExceptConstraint (PrintTypeContraint t path c1 alphaName tasList m r)
     | ExceptConstraint(c1,c2)      -> sc.ExceptConstraint (PrintTypeContraint t path c1 alphaName tasList m r) (PrintTypeContraint t path c2 alphaName tasList m r)

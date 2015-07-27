@@ -52,7 +52,7 @@ and CloneConstraint  (namedArgs:list<StringLoc*TemplateArgument>) (c:Asn1Constra
     | TypeInclusionConstraint(s1,s2)   -> TypeInclusionConstraint(s1,s2)
     | SizeContraint(c)                 -> SizeContraint(CloneConstraint namedArgs c)
     | AlphabetContraint(c)             -> AlphabetContraint(CloneConstraint namedArgs c)
-    | UnionConstraint(c1,c2)           -> UnionConstraint(CloneConstraint namedArgs c1, CloneConstraint namedArgs c2)
+    | UnionConstraint(c1,c2,b)           -> UnionConstraint(CloneConstraint namedArgs c1, CloneConstraint namedArgs c2, b)
     | IntersectionConstraint(c1,c2)    -> IntersectionConstraint(CloneConstraint namedArgs c1, CloneConstraint namedArgs c2)
     | AllExceptConstraint(c)           -> AllExceptConstraint(CloneConstraint namedArgs c)
     | ExceptConstraint(c1,c2)          -> ExceptConstraint(CloneConstraint namedArgs c1, CloneConstraint namedArgs c2)

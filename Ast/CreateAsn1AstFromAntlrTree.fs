@@ -74,7 +74,7 @@ let createDefaultConstraintsForEnumeratedTypes (tree:ITree) (namedItems:NamedIte
         let initialCon = createSingleValueConstraintFromNamedItem x
         xs |> List.fold(fun accConst ni -> 
                             let curCon = createSingleValueConstraintFromNamedItem ni
-                            UnionConstraint (accConst, curCon) ) initialCon
+                            UnionConstraint (accConst, curCon, true) ) initialCon
     
 
 let rec CreateType (astRoot:list<ITree>) (tree:ITree) (fileTokens:array<IToken>) (alreadyTakenComments:System.Collections.Generic.List<IToken>) : Asn1Type= 
@@ -283,7 +283,7 @@ and CreateConstraint (astRoot:list<ITree>) (tree:ITree) : Asn1Constraint option=
             let c1 = CreateConstraint  astRoot (tree.GetChild(0)) 
             let c2 = CreateConstraint  astRoot (tree.GetChild(1)) 
             match c1, c2 with
-            |Some(k1),Some(k2)  ->Some(UnionConstraint(k1 , k2 ))
+            |Some(k1),Some(k2)  ->Some(UnionConstraint(k1 , k2, false ))
             |Some(k1),None      -> None
             |None, Some(_)      -> None
             |None, None         -> None

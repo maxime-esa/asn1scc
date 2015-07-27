@@ -237,7 +237,7 @@ let GetIntTypeFromEnum (t:Asn1Type) (asn1:Ast.AstRoot)  (acn:AcnTypes.AcnAstReso
             | true  -> 
                 let encVals = GetEnumEncodingValues t asn1 Spark acn |> List.map(fun (_,vl) -> AsAsn1Val vl)|> List.map SingleValueContraint
                 match encVals with
-                |hd::hs   -> hs|>Seq.fold(fun acc x -> UnionConstraint(acc,x) ) hd    
+                |hd::hs   -> hs|>Seq.fold(fun acc x -> UnionConstraint(acc,x,true) ) hd    
                 | []      -> raise(BugErrorException("Empty enum"))
         {t with Kind = Integer; Constraints=[Con]}
     | _                -> raise(BugErrorException "Expecting Enum")

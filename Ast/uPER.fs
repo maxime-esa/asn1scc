@@ -61,7 +61,7 @@ let rec GetUperRangeAux (c:Asn1Constraint)  func funcNext funcPrev (ast:AstRoot)
         let val2 = if maxIsIn then (func v2) else (funcPrev (func v2))
         NegInf(val2)
     | RangeContraint_MIN_MAX            -> Full
-    | UnionConstraint(c1,c2)            -> uperUnion (GetUperRangeAux c1 func  funcNext funcPrev ast) (GetUperRangeAux c2 func  funcNext funcPrev ast)
+    | UnionConstraint(c1,c2,_)            -> uperUnion (GetUperRangeAux c1 func  funcNext funcPrev ast) (GetUperRangeAux c2 func  funcNext funcPrev ast)
     | IntersectionConstraint(c1,c2)     -> uperIntersection(GetUperRangeAux c1 func  funcNext funcPrev ast, GetUperRangeAux c2 func  funcNext funcPrev ast)
     | AllExceptConstraint(c1)           -> Full
     | ExceptConstraint(c1,c2)           -> GetUperRangeAux c1 func  funcNext funcPrev ast
@@ -177,7 +177,7 @@ let rec GetUperRangeFrom (kind:Asn1TypeKind, c:Asn1Constraint, ast:AstRoot) =
         let b = GetRefValAsString(v2).ToCharArray().[0]
         GetCharSetFromMinMax(kind, defaultSet.[0], b,true,maxIsIn)
     | RangeContraint_MIN_MAX           -> GetDefaultCharSet(kind)
-    | UnionConstraint(c1,c2)            -> CharSetUnion(GetUperRangeFrom(kind,c1,ast), GetUperRangeFrom(kind,c2,ast))
+    | UnionConstraint(c1,c2,_)            -> CharSetUnion(GetUperRangeFrom(kind,c1,ast), GetUperRangeFrom(kind,c2,ast))
     | IntersectionConstraint(c1,c2)     -> IntersectArrays(GetUperRangeFrom(kind,c1,ast), GetUperRangeFrom(kind,c2,ast))
     | AllExceptConstraint(c1)           -> GetDefaultCharSet(kind)
     | ExceptConstraint(c1,c2)           -> GetUperRangeFrom(kind,c1,ast)

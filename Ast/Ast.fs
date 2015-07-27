@@ -136,7 +136,7 @@ and Asn1Constraint =
     | TypeInclusionConstraint           of StringLoc*StringLoc     
     | SizeContraint                     of Asn1Constraint               
     | AlphabetContraint                 of Asn1Constraint           
-    | UnionConstraint                   of Asn1Constraint*Asn1Constraint
+    | UnionConstraint                   of Asn1Constraint*Asn1Constraint*bool //left,righ, virtual constraint
     | IntersectionConstraint            of Asn1Constraint*Asn1Constraint
     | AllExceptConstraint               of Asn1Constraint
     | ExceptConstraint                  of Asn1Constraint*Asn1Constraint
@@ -708,7 +708,7 @@ let rec GetConstraintValues (c:Asn1Constraint)  =
         | TypeInclusionConstraint(_)            -> ()
         | SizeContraint(c)                      -> yield! GetConstraintValues  c
         | AlphabetContraint(c)                  -> yield! GetConstraintValues  c
-        | UnionConstraint(a,b)                  -> yield! GetConstraintValues  a; yield! GetConstraintValues  b
+        | UnionConstraint(a,b,_)                  -> yield! GetConstraintValues  a; yield! GetConstraintValues  b
         | IntersectionConstraint(a,b)           -> yield! GetConstraintValues  a; yield! GetConstraintValues  b
         | AllExceptConstraint(c)                -> yield! GetConstraintValues  c
         | ExceptConstraint(a,b)                 -> yield! GetConstraintValues  a; yield! GetConstraintValues  b

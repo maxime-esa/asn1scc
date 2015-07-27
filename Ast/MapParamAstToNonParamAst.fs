@@ -165,7 +165,7 @@ and MapAsn1Constraint (r:ParameterizedAsn1Ast.AstRoot) (kind: ParameterizedAsn1A
     | ParameterizedAsn1Ast.TypeInclusionConstraint(s1,s2)   -> Ast.TypeInclusionConstraint(s1,s2)
     | ParameterizedAsn1Ast.SizeContraint(c)                 -> Ast.SizeContraint(MapAsn1Constraint r ParameterizedAsn1Ast.Integer c)
     | ParameterizedAsn1Ast.AlphabetContraint(c)             -> Ast.AlphabetContraint(MapAsn1Constraint r ParameterizedAsn1Ast.IA5String c)
-    | ParameterizedAsn1Ast.UnionConstraint(c1,c2)           -> Ast.UnionConstraint(MapAsn1Constraint r kind c1, MapAsn1Constraint r kind c2)
+    | ParameterizedAsn1Ast.UnionConstraint(c1,c2, b)           -> Ast.UnionConstraint(MapAsn1Constraint r kind c1, MapAsn1Constraint r kind c2, b)
     | ParameterizedAsn1Ast.IntersectionConstraint(c1,c2)    -> Ast.IntersectionConstraint(MapAsn1Constraint r kind c1, MapAsn1Constraint r kind c2)
     | ParameterizedAsn1Ast.AllExceptConstraint(c)           -> Ast.AllExceptConstraint(MapAsn1Constraint r kind c)
     | ParameterizedAsn1Ast.ExceptConstraint(c1,c2)          -> Ast.ExceptConstraint(MapAsn1Constraint r kind c1, MapAsn1Constraint r kind c2)

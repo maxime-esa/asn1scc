@@ -150,7 +150,7 @@ and Asn1Constraint =
     | TypeInclusionConstraint           of StringLoc*StringLoc     
     | SizeContraint                     of Asn1Constraint               
     | AlphabetContraint                 of Asn1Constraint           
-    | UnionConstraint                   of Asn1Constraint*Asn1Constraint
+    | UnionConstraint                   of Asn1Constraint*Asn1Constraint*bool //left,righ, virtual constraint
     | IntersectionConstraint            of Asn1Constraint*Asn1Constraint
     | AllExceptConstraint               of Asn1Constraint
     | ExceptConstraint                  of Asn1Constraint*Asn1Constraint

@@ -31,7 +31,10 @@ let rec PrintConstraint (c:Asn1Constraint) =
     | TypeInclusionConstraint(mn,nm)-> ASN.Print_TypeInclusionConstraint mn.Value       
     | SizeContraint(c)              -> ASN.Print_SizeContraint (PrintConstraint c)   
     | AlphabetContraint(c)          -> ASN.Print_AlphabetContraint (PrintConstraint c)   
-    | UnionConstraint(c1,c2)        -> ASN.Print_UnionConstraint (PrintConstraint c1) (PrintConstraint c2)   
+    | UnionConstraint(c1,c2,virtualCon)        -> 
+        match virtualCon with
+        | false -> ASN.Print_UnionConstraint (PrintConstraint c1) (PrintConstraint c2)   
+        | true  -> ""
     | IntersectionConstraint(c1,c2) -> ASN.Print_IntersectionConstraint (PrintConstraint c1) (PrintConstraint c2)          
     | AllExceptConstraint(c)        -> ASN.Print_AllExceptConstraint (PrintConstraint c)      
     | ExceptConstraint(c1,c2)       -> ASN.Print_ExceptConstraint (PrintConstraint c1) (PrintConstraint c2)                 

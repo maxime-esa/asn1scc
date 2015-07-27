@@ -90,7 +90,7 @@ and VisitConstraint (c:Asn1Constraint) (ct:ConstraintType) path m (r:AstRoot) vi
     | TypeInclusionConstraint(_)    -> s0
     | SizeContraint(c)          -> VisitConstraint c (LengthOf t) path m r vis s0
     | AlphabetContraint(c)      -> VisitConstraint c (AlphabetOf t) path m r vis s0
-    | UnionConstraint(c1,c2)    
+    | UnionConstraint(c1,c2,_)    
     | IntersectionConstraint(c1,c2)
     | ExceptConstraint(c1,c2)
     | RootConstraint2(c1,c2)    -> 
