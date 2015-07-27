@@ -2,6 +2,18 @@ group vdm;
 
 //delimiters "$", "$"
 
+/* VDM (Vienna Development Method) backend for ASN.1 data types
+   Known issues requiring changes in the compiler code
+     - the identifiers use dash and not underscores, we need both
+     - VDM type declaration can use either = or :: depending on the type
+     - Some type (Integer, Real) miss a template, kind is hardcoded in F#
+       (IntegerType, RealType)
+   Not implemented:
+     - Namespaces - we get module names which are ignored by now
+
+  (c) 2015 European Space Agency
+/
+
 
 /* Header of the file */
 RootXml(arrsFiles) ::= <<
