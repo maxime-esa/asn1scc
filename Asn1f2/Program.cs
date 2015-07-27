@@ -122,6 +122,7 @@ namespace Asn1f2
                 new CmdLineArgs.CmdArg { HasValue = true, Name = "ast", Madatory=false}, 
                 new CmdLineArgs.CmdArg { HasValue = true, Name = "customStg", Madatory=false}, 
                 new CmdLineArgs.CmdArg { HasValue = true, Name = "customStgAstVerion", Madatory=false}, 
+                new CmdLineArgs.CmdArg { HasValue = true, Name = "customStgAstVersion", Madatory=false}, 
                 new CmdLineArgs.CmdArg { HasValue = true, Name = "icdUper", Madatory=false}, 
                 new CmdLineArgs.CmdArg { HasValue = true, Name = "icdAcn", Madatory=false}, 
                 new CmdLineArgs.CmdArg { HasValue = false, Name = "vc", Madatory=false}, 
@@ -260,7 +261,7 @@ namespace Asn1f2
                     return 4;
                 }
 
-                var customStgAstVer = cmdArgs.GetOptionalArgument("customStgAstVerion", "1");
+                var customStgAstVer = cmdArgs.GetOptionalArgument("customStgAstVersion", cmdArgs.GetOptionalArgument("customStgAstVerion", "1"));
 
                 var astForCustomBackend = asn1Ast0;
                 if (customStgAstVer == "1")
@@ -276,7 +277,7 @@ namespace Asn1f2
                 }
                 else
                 {
-                    Console.Error.WriteLine("Invalid value of customStgAstVerion argument.\nPlease provide one of the following values:");
+                    Console.Error.WriteLine("Invalid value of customStgAstVesrion argument.\nPlease provide one of the following values:");
                     Console.Error.WriteLine("\t1\t==> Ast version where parameterized types have been removed");
                     Console.Error.WriteLine("\t2\t==> Ast version where inner types have been removed");
                     Console.Error.WriteLine("\t3\t==> Ast version where contraint reference types have been removed");
@@ -452,7 +453,7 @@ namespace Asn1f2
             Console.Error.WriteLine("\t -customStg stgFile.stg:outputFile");
             Console.Error.WriteLine("\t\t\t\tInvokes the custom stg file 'stgFile.stg' and produces the");
             Console.Error.WriteLine("\t\t\t\toutput file 'outputFile'");
-            Console.Error.WriteLine("\t -customStgAstVerion astVersionNumber");
+            Console.Error.WriteLine("\t -customStgAstVersion astVersionNumber");
             Console.Error.WriteLine("\t\t\t\twhere astVersionNumber is:");
             Console.Error.WriteLine("\t\t\t\t1\tparameterized types have been removed");
             Console.Error.WriteLine("\t\t\t\t2\tinner types have been removed");
