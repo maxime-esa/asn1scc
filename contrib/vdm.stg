@@ -42,10 +42,10 @@ ModuleXml(sName, sCName, arrsImportedModules, arrsExpTypes, arrsExpVars, arrsTas
 class $sCName$
 
 types
-    $arrsTases;separator="\n\n"$
+    $arrsTases;separator=";\n\n"$
 
 values
-    $arrsVases;separator="\n\n"$
+    $arrsVases;separator=";\n\n"$
 
 end $sCName$
 >>
@@ -59,16 +59,14 @@ ImportedMod(sName, sCName, arrsTypes, arrsVars) ::= <<
 /* A single Type Assignment, this is filled for all types of all modules.
 Use sCName which is the type name using underscores in place of dashes
 */
-TasXml(sName, nLine, nPos, sType, sCName) ::= <<
--- Type $sName$ is defined at line $nLine$, position $nPos$
-public $sCName$ = $sType$
+TasXml(sName, nLine, nPos, sType, sCName, sAssigOp) ::= <<
+public $sCName$ $sAssigOp$ $sType$
 >>
 
 
 /* A single Variable Assignment */
 VasXml(sName, nLine, nPos, sType, sCName) ::= <<
--- Variable $sName$ is defined at line $nLine$, position $nPos$,
-public dcl $sCName$ : $sType$;
+public $sCName$ : $sType$ = undefined;
 >>
 
 TypeGeneric(nLine, nPos, sSubType) ::= <<
@@ -104,6 +102,9 @@ OctetStringType () ::= "seq of char"
 IA5StringType () ::= "seq of char"
 
 NumericStringType () ::= "seq of char"
+
+AssigOpNormalType () ::= "="
+AssigOpSpecialType () ::= "::"
 
 
 /* Enumerated item, note the difference between sName, which is the enumerated
@@ -154,7 +155,8 @@ $sName$ : $sChildContent$
 
 /* Full sequence (record) type */
 SequenceType(arrsChildren) ::= <<
-$arrsChildren;separator="\n"$
+
+    $arrsChildren;separator="\n"$
 >>
 
 /* Sequence of (array) */
