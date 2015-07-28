@@ -2,10 +2,11 @@ Executive summary
 =================
 
 This is the source code of the ASN1SCC compiler - an ASN.1 compiler that
-targets C and Ada, while placing specific emphasis on embedded systems. You can
-read a comprehensive paper about it
-[here (PDF)](http://www.erts2012.org/site/0p2ruc89/7c-4.pdf), or a blog post
-with hands-on examples [here](http://users.softlab.ece.ntua.gr/~ttsiod/asn1.html).
+targets C and Ada, while placing specific emphasis on embedded systems.
+You can read a comprehensive paper about it
+[here (PDF)](http://web1.see.asso.fr/erts2012/Site/0P2RUC89/7C-4.pdf),
+or a blog post with hands-on examples
+[here](http://users.softlab.ece.ntua.gr/~ttsiod/asn1.html).
 Suffice to say, if you are developing for embedded systems, it will probably
 interest you.
 
