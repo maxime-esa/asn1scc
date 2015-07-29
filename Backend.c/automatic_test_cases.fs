@@ -33,7 +33,7 @@ let CreateHeaderFile (f:Asn1File) outDir (newFileExt:string) (r:AstRoot) (acn:Ac
         let sStar = (TypeStar tas.Type r)
         r.Encodings |> Seq.map(fun enc -> c_aux.PrintTypeAssignment_header sTasName sStar (GetEncodingString enc)) |> Seq.StrJoin "\n"
     let tases = sortedTas |> Seq.map(fun (m,tas) -> printTas tas ) 
-    let arrsUnnamedVariables = []                    
+    let arrsUnnamedVariables = []
     let content = c_aux.PrintAutomaticTestCasesHeaderFile (ToC fileNameNoExtUpper) f.FileNameWithoutExtension tases 
     let fileName = Path.Combine(outDir, (f.FileNameWithoutExtension+newFileExt).ToLower())
     File.WriteAllText(fileName, content.Replace("\r",""))
@@ -123,8 +123,21 @@ let CreateSourceFile (f:Asn1File) outDir (newFileExt:string) (r:AstRoot) (acn:Ac
                     yield file.FileNameWithoutExtension } |> Seq.toList 
     let sortedTas = c_h.SortTypeAssigments f r acn
     let tases = sortedTas |> Seq.map(fun (m,tas) -> PrintTypeAss tas m f r acn ) 
-    let arrsUnnamedVariables = []                    
-    let content = c_aux.PrintAutomaticTestCasesSourceFile headerFileName  tases 
+    let arrsUnnamedVariables = []
+    let printUpdateParamDeclarations (p:AcnTypes.AcnParameter) =
+        let foundTas = sortedTas |> List.tryFind(fun (m,tas)-> tas.Name.Value = p.TasName && p.ModName = m.Name.Value)
+        match foundTas with
+        | None -> ""
+        | Some(m, tas) ->
+                let sStar = (TypeStar tas.Type r)
+                let prmType = c_h.PrintParamType p m r
+                let prmStar = (TypeStar (Ast.AcnAsn1Type2Asn1Type p.Asn1Type) r)
+                let sTasName = GetTasCName tas.Name.Value r.TypePrefix
+                let prmName = ToC p.Name
+                c_aux.ACN_UpdateParamDecl sTasName sStar prmType prmName prmStar
+
+    let updateDeclarations = acn.Parameters |> List.map printUpdateParamDeclarations
+    let content = c_aux.PrintAutomaticTestCasesSourceFile headerFileName  updateDeclarations tases 
     let fileName = Path.Combine(outDir, (f.FileNameWithoutExtension+newFileExt).ToLower())
     File.WriteAllText(fileName, content.Replace("\r",""))
 

@@ -297,7 +297,7 @@ Null_empty_pattern() ::= "/*null, nothing to do */"
 
 
 
-Declare_EnumValue() ::= "asn1SccSint intVal;"
+Declare_EnumValue() ::= "asn1SccSint intVal = -1;"
 
 
 Enumerated_item_encode(p, sName, nItemIdxOrVal) ::= <<
