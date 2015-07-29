@@ -58,9 +58,10 @@ let rec PrintType (t:Asn1Type) modName (r:AstRoot) =
                 | Real                                                                                  -> Some (GetMinMax (GetTypeRange_real t.Kind t.Constraints r))
                 | Boolean | NullType | Choice(_) | Enumerated(_) | Sequence(_) | ReferenceType(_)       -> None
             let sModName = if md.Value=modName then null else md.Value
+            let sCModName = if sModName <> null then (ToC sModName) else null
             match uperRange with
-            | Some(sMin, sMax)  -> xml.RefTypeMinMax sMin sMax ts.Value sModName (ToC ts.Value) (ToC sModName)
-            | None              -> xml.RefType ts.Value sModName (ToC ts.Value) (ToC sModName)
+            | Some(sMin, sMax)  -> xml.RefTypeMinMax sMin sMax ts.Value sModName (ToC ts.Value) sCModName
+            | None              -> xml.RefType ts.Value sModName (ToC ts.Value) sCModName
 
     xml.TypeGeneric (BigInteger t.Location.srcLine) (BigInteger t.Location.charPos) (PrintTypeAux t)
 
