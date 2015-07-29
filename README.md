@@ -86,6 +86,11 @@ George Mamais (gmamais@gmail.com), Thanassis Tsiodras (ttsiodras@gmail.com)
 Changelog
 =========
 
+3.2.58
+------
+Minor bugfixes and improvements of the custom Stg backends
+New rename policy option
+
 3.2.3
 -----
 Added error message for unsupported string and UTCTime types
