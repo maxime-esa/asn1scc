@@ -3,16 +3,9 @@ group vdm;
 //delimiters "$", "$"
 
 /* VDM (Vienna Development Method) backend for ASN.1 data types
-   Known issues requiring changes in the compiler code
-     - the identifiers use dash and not underscores, we need both
-     - VDM type declaration can use either = or :: depending on the type
-     - Some type (Integer, Real) miss a template, kind is hardcoded in F#
-       (IntegerType, RealType)
-   Not implemented:
-     - Namespaces - we get module names which are ignored by now
 
   (c) 2015 European Space Agency
-/
+*/
 
 
 /* Header of the file */
@@ -28,7 +21,7 @@ $arrsModules;separator="\n"$
 
 
 /* Per ASN.1 module. you can use:
-  - the module name ($sName$)
+  - the module name (sName, sCName is the same but using underscores)
   - the list of types that are exported by this module.
     Example of use:
     $arrsExpTypes:{x|"$x$"};separator=", "$
@@ -96,7 +89,7 @@ RealType () ::= "real"
 
 BitStringType () ::= "seq of bool"
 
-/* Octet string in VDM ? */
+/* Octet string in VDM mapped to sequence of characters */
 OctetStringType () ::= "seq of char"
 
 IA5StringType () ::= "seq of char"
@@ -107,8 +100,8 @@ AssigOpNormalType () ::= "="
 AssigOpSpecialType () ::= "::"
 
 
-/* Enumerated item, note the difference between sName, which is the enumerated
-   name given in the input type, for example if you have
+/* Enumerated item, note the difference between sName and sCID:
+   sName is the enumerated name given in the input type, e.g. if you have
    MyType ::= ENUMERATED { a, b, c } then sName can be a, b or c
    and sCID which is a name built by the parser for removing ambiguities in
    some languages, e.g. if you have two types with the same enumerated name:
@@ -132,7 +125,7 @@ $arrsItems;separator=" | "$
 /* Choice field
    Choice are discriminated unions, they have a name per field and a type :
    MyCHOICE ::= CHOICE {
-       choice-a   Type-of-A,   -- choice-a is sName
+       choice-a   Type-of-A,   -- choice-a is sName, choice_a is sCName
        choice-b   Type-of-B,
        ...
   }
@@ -165,7 +158,7 @@ seq of $sChild$
 >>
 
 /* Reference to another type, with Min/Max subtype
-   Could be in a different module, check */
+   Could be in a different module */
 RefTypeMinMax(sMin, sMax, sName, sModName, sCName, sCModName) ::= <<
 $if(sCModName)$$sCModName$`$endif$$sCName$
 >>
