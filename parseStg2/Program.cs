@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Xml.Linq;
 using System.IO;
-
+using System.Text.RegularExpressions;
 
 /*
  
@@ -104,6 +104,36 @@ namespace parseStg2
             return "(\"" + p + "\"," + (p.StartsWith("arr") ? p + "|>Seq.toArray" : p) + " :>Object)";
         }
         
+        static IEnumerable<string> skipComments(IEnumerable<string> lines)
+        {
+            bool inComment = false;
+            foreach (string l in lines)
+            {
+                if (inComment)
+                {
+                    if (l.Contains("*/"))
+                    {
+                        inComment = false;
+                        yield return l.Split(new string[] { "*/" }, StringSplitOptions.None)[1];
+                    }
+                    else
+                        continue;
+                }
+
+                if (l.Contains("/*nogen*/"))
+                    yield return l;
+                else if (Regex.IsMatch(l, "/\\*.*\\*/"))
+                    yield return Regex.Replace(l, "/\\*.*\\*/", "");
+                else if (l.Contains("/*"))
+                {
+                    inComment = true;
+                    yield return l.Split(new string[] { "/*" }, StringSplitOptions.None)[1];
+                }
+                else
+                    yield return l;
+            }
+        }
+  
         static int ProcessSingle(XElement run, string curDir)
         {
             var inpFileName = Path.Combine(curDir, run.Element("input").Value);
@@ -146,7 +176,7 @@ namespace parseStg2
             }
 
             var functions =
-                    from line in File.ReadAllLines(inpFileName).Skip(1)
+                    from line in skipComments(File.ReadAllLines(inpFileName).Skip(1))
                     where line.Contains("::=") && !line.Contains("/*nogen*/") && !line.Contains("DEFINITIONS AUTOMATIC TAGS")
                     let declPart = line.Split(':')[0].Trim()
                     let Name = declPart.Split('(')[0].Trim()
