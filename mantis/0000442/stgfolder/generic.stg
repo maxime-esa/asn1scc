@@ -1,0 +1,127 @@
+group xml;
+
+//delimiters "$", "$"
+
+
+RootXml(arrsFiles) ::= <<
+#!/usr/bin/env python
+# ASN.1 Data model
+asn1Files = []
+asn1Modules = []
+exportedTypes = {}
+exportedVariables = {}
+importedModules = {}
+types = {}
+variables = {}
+$arrsFiles;separator="\n"$
+>>
+
+FileXml(sFileName, arrsModules) ::= <<
+asn1Files.append("$sFileName$")
+$arrsModules;separator="\n"$
+>>
+
+ModuleXml(sName, arrsImportedModules, arrsExpTypes, arrsExpVars, arrsTases, arrsVases) ::=<<
+asn1Modules.append("$sName$")
+exportedTypes["$sName$"] = [$arrsExpTypes:{x|"$x$"};separator=", "$]
+exportedVariables["$sName$"] = [$arrsExpVars:{x|"$x$"};separator=","$]
+importedModules["$sName$"] = [$arrsImportedModules;separator=","$]
+$arrsTases;separator="\n"$
+$arrsVases;separator="\n"$
+>>
+
+ImportedMod(sName, arrsTypes, arrsVars) ::= <<
+{"$sName$":{"ImportedTypes": [$arrsTypes:{t|"$t$"};separator=","$], "ImportedVariables": [$arrsVars:{t|"$t$"};separator=","$]}}
+>>
+
+TasXml(sName, nLine, nPos, sType) ::= <<
+types["$sName$"] = {
+    "Line": $nLine$, "CharPositionInLine": $nPos$, "type": {
+        $sType$
+    }
+}
+
+>>
+
+VasXml(sName, nLine, nPos, sType) ::= <<
+variables["$sName$"] = {
+    "Line": $nLine$, "CharPositionInLine": $nPos$, "type": {
+        $sType$
+    }
+}
+
+>>
+TypeGeneric(nLine, nPos, sSubType) ::= <<
+"Line": $nLine$, "CharPositionInLine": $nPos$, $sSubType$
+>>
+
+
+MinMaxType(sName, sMin, sMax) ::= <<
+"Kind": "$sName$", "Min": "$sMin$", "Max": "$sMax$"
+>>
+
+MinMaxType2(sName, sMin, sMax) ::= <<
+"Kind": "$sName$", "Min": "$sMin$", "Max": "$sMax$"
+>>
+
+BooleanType () ::= <<"Kind": "BooleanType">>
+
+NullType () ::= <<"Kind": "NullType">>
+
+
+EnumItem (sName, nVal, nLine, nPos, sCID) ::= <<
+"$sName$": {
+    "IntValue": $nVal$, "Line": $nLine$, "CharPositionInLine": $nPos$, "EnumID": "$sCID$"
+}
+>>
+
+EnumType(arrsItems) ::= <<
+"Kind": "EnumeratedType", "Extensible": "False", "ValuesAutoCalculated": "False", "EnumValues": {
+    $arrsItems;separator=", "$
+}
+>>
+
+
+ChoiceChild(sName, nLine, nPos, sChildContent, sNamePresent ) ::= <<
+"$sName$": {
+    "Line": $nLine$, "CharPositionInLine": $nPos$, "EnumID": "$sNamePresent$", "type": {
+        $sChildContent$
+    }
+}
+>>
+
+ChoiceType(arrsChildren) ::= <<
+"Kind": "ChoiceType", "Children": {
+    $arrsChildren;separator=", "$
+}
+>>
+
+
+SequenceChild(sName, bOptional, sDefVal, nLine, nPos, sChildContent ) ::= <<
+"$sName$": {
+    "Optional": "$bOptional$"$if(sDefVal)$, "DefaultValue": "$sDefVal$"$endif$, "Line": $nLine$, "CharPositionInLine": $nPos$, "type": {
+        $sChildContent$
+    }
+}
+>>
+
+SequenceType(arrsChildren) ::= <<
+"Kind": "SequenceType", "Children": {
+    $arrsChildren;separator=", "$
+}
+>>
+
+
+SequenceOfType(sMin, sMax, sChild) ::= <<
+"Kind": "SequenceOfType", "Min": "$sMin$", "Max": "$sMax$", "type": {
+    $sChild$
+}
+>>
+
+RefTypeMinMax(sMin, sMax, sName, sModName) ::= <<
+"Kind": "ReferenceType", "ReferencedTypeName": "$sName$", "Min": "$sMin$", "Max": "$sMax$"$if(sModName)$, "ReferencedModName": "$sModName$"$endif$
+>>
+
+RefType(sName, sModName) ::= <<
+"Kind": "ReferenceType", "ReferencedTypeName": "$sName$"$if(sModName)$, "ReferencedModName": "$sModName$"$endif$
+>>

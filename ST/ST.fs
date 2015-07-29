@@ -128,26 +128,31 @@ let get_group  fileName =
         let devFolder = match runsUnderMono() with
                         | true  -> @"/mnt/camelot/prj/DataModeling/ASN1_FSHARP/Backend2.ST"
                         | false -> @"C:\prj\DataModeling\ASN1_FSHARP\Backend2.ST\"
+        let custFolder =
+            match Path.GetDirectoryName fileName with
+            | ""    -> []
+            | _     -> [Path.GetFullPath(Path.Combine(System.IO.Directory.GetCurrentDirectory(), Path.GetDirectoryName fileName))] 
         let stgFoldres = match Directory.Exists devFolder with
-                         | true  -> [| applicationFolder; devFolder; (System.IO.Directory.GetCurrentDirectory ()) |]
-                         | false -> [| applicationFolder; (System.IO.Directory.GetCurrentDirectory ()) |]
+                         | true  -> [ applicationFolder; devFolder; (System.IO.Directory.GetCurrentDirectory ()) ] @ custFolder |> Seq.toArray
+                         | false -> [ applicationFolder; (System.IO.Directory.GetCurrentDirectory ()) ] @ custFolder |> Seq.toArray
         let grpLoader = CommonGroupLoader(StringTemplateGroup.DEFAULT_ERROR_LISTENER, stgFoldres)
                         
         StringTemplateGroup.RegisterGroupLoader(grpLoader);
+        let fileNameNotExt = Path.GetFileNameWithoutExtension(fileName)
         let HasDollarDelimeter () =
             let ContainsMagicLine (folder:string) =
-                let absPath = System.IO.Path.Combine(folder, fileName+".stg")
+                let absPath = System.IO.Path.Combine(folder, fileNameNotExt+".stg")
                 match System.IO.File.Exists absPath with
                 | false -> false
                 | true  ->
                     let lines = System.IO.File.ReadAllLines absPath
                     lines |> Array.exists (fun (l:string) -> l.Contains("delimiters \"$\", \"$\""))
             let a1 = stgFoldres |> Array.exists  ContainsMagicLine
-            let a2 = DollarDelimeterFiles |> Seq.exists ((=) fileName)
+            let a2 = DollarDelimeterFiles |> Seq.exists ((=) fileNameNotExt)
             a1 || a2
         let group = match HasDollarDelimeter () with
-                    |true   -> grpLoader.LoadGroup(fileName, null, typedefof<Antlr.StringTemplate.Language.DefaultTemplateLexer>);
-                    |false  -> grpLoader.LoadGroup(fileName);
+                    |true   -> grpLoader.LoadGroup(fileNameNotExt, null, typedefof<Antlr.StringTemplate.Language.DefaultTemplateLexer>);
+                    |false  -> grpLoader.LoadGroup(fileNameNotExt);
 
         group.RegisterAttributeRenderer(typedefof<BigInteger>, new BigIntegerFormatRenderer());
         group.RegisterAttributeRenderer(typedefof<UInt64>, new BasicFormatRenderer());

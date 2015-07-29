@@ -282,3 +282,15 @@ Asn1.userprefs
 /mantis/0000411/p0/b_ada_out/bin/debug/*.gcov
 /mantis/0000411/p2/b_ada_out/bin/debug/*.gcov
 /mantis/0000411/p2/b_c_out/*.gcov
+/mantis/0000412/out/02-PUS.c
+/mantis/0000412/out/02-PUS.h
+/mantis/0000412/out/02-pus_auto_tcs.c
+/mantis/0000412/out/02-pus_auto_tcs.h
+/mantis/0000412/out/Makefile
+/mantis/0000412/out/acn.c
+/mantis/0000412/out/asn1crt.c
+/mantis/0000412/out/asn1crt.h
+/mantis/0000412/out/ber.c
+/mantis/0000412/out/mainprogram.c
+/mantis/0000412/out/real.c
+/mantis/0000412/out/xer.c

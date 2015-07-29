@@ -285,7 +285,7 @@ namespace Asn1f2
                     return 4;
                 }
 
-                genericBackend.DoWork(astForCustomBackend, Path.GetFileNameWithoutExtension(stgFileName), outFileName);
+                genericBackend.DoWork(astForCustomBackend, stgFileName, outFileName);
             }
 
 
