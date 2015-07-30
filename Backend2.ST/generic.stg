@@ -34,7 +34,7 @@ ImportedMod(sName, sCName, arrsTypes, arrsVars) ::= <<
 {"$sName$":{"ImportedTypes": [$arrsTypes:{t|"$t$"};separator=","$], "ImportedVariables": [$arrsVars:{t|"$t$"};separator=","$]}}
 >>
 
-TasXml(sName, nLine, nPos, sType, sCName, sAssigOp) ::= <<
+TasXml(sName, nLine, nPos, sType, sCName, sAssigOp, sContract) ::= <<
 types["$sName$"] = {
     "Line": $nLine$, "CharPositionInLine": $nPos$, "type": {
         $sType$
@@ -138,4 +138,35 @@ RefTypeMinMax(sMin, sMax, sName, sModName, sCName, sCModName) ::= <<
 
 RefType(sName, sModName, sCName, sCModName) ::= <<
 "Kind": "ReferenceType", "ReferencedTypeName": "$sName$"$if(sModName)$, "ReferencedModName": "$sModName$"$endif$
+>>
+
+
+/* Possible additional information generated after the type itself */
+Contract(sTypePattern, sExpr) ::= <<
+>>
+
+/* Type pattern is used for pattern matching of the contract. In VDM it maps
+   to an instance of the type, e.g:
+   MyType = nat
+   inv inst >= 10 and inst <= 100   -- inst is the type pattern
+*/
+TypePatternCommonTypes() ::= ""
+
+/* Records have a more complex pattern in VDM: mk_Type(field1, ...) */
+TypePatternSequence(sName, sCName, arrsChildren) ::= <<
+>>
+
+/* Name used in the Sequence pattern to identify field names */
+SequencePatternChild(sName, sCName) ::= ""
+
+ContractExprMinMax(sPattern, sMin, sMax) ::= <<
+$sPattern$ >= $sMin$ and $sPattern$ <= $sMax$
+>>
+
+ContractExprSize(sPattern, sMin, sMax) ::= <<
+len $sPattern$ >= $sMin$ and len $sPattern$ <= $sMax$
+>>
+
+ContractExprSequence(arrsChildren) ::= <<
+$arrsChildren;separator=" and "$
 >>

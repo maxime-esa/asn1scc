@@ -96,18 +96,18 @@ let rec GetTypeUperRange (kind:Asn1TypeKind) (cons:list<Asn1Constraint>) (ast:As
                         | BitString, BitStringValue(bitVal)     -> bitVal.Value.Length
                         | BitString, OctetStringValue(bytes)    -> 8*bytes.Length
                         | OctetString, OctetStringValue(bytes)  -> bytes.Length
-                        | IA5String , StringValue(strVal)   
+                        | IA5String , StringValue(strVal)
                         | NumericString , StringValue(strVal)   -> strVal.Value.Length
                         | SequenceOf(_), SeqOfValue(vals)       -> vals.Length
                         | _                                     ->  raise (BugErrorException("Invalid combination"))
                     let vl = {Asn1Value.Kind = IntegerValue (loc length.AsBigInt); Location = emptyLocation}
                     yield SingleValueContraint vl
                 | _                 -> ()
-        } 
+        }
     match kind with
     | Integer       -> cons |> Intersect
     | BitString |IA5String | NumericString |OctetString  |SequenceOf(_) -> cons |> GetSizeConstraintsContent |> Intersect
-    | Boolean | Choice(_)| Enumerated(_) | NullType | Real |Sequence(_)  -> raise (BugErrorException(""))
+    | Boolean | Choice(_)| Enumerated(_) | NullType | Real |Sequence(_)  -> raise (BugErrorException("GetTypeUperRange error"))
     | ReferenceType(modName,tasName, _)       -> 
         let parType = GetBaseTypeByName modName tasName ast
         let mergedCons = parType.Constraints @ cons
