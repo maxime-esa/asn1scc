@@ -8,20 +8,18 @@ open uPER
 open CloneTree
 open spark_utils
 
-
-
+let GetMinMax uperRange = 
+    match uperRange with
+    | Concrete(min, max)      -> min.ToString(), max.ToString()
+    | PosInf(a)               -> a.ToString(), "MAX"
+    | NegInf(max)             -> "MIN", max.ToString()
+    | Full                    -> "MIN", "MAX"
+    | Empty                   -> raise(BugErrorException "")
+let handTypeWithMinMax name uperRange func =
+    let sMin, sMax = GetMinMax uperRange
+    func name sMin sMax (sMin=sMax)
 
 let rec PrintType (t:Asn1Type) modName (r:AstRoot) =
-    let GetMinMax uperRange = 
-        match uperRange with
-        | Concrete(min, max)      -> min.ToString(), max.ToString()
-        | PosInf(a)               -> a.ToString(), "MAX"
-        | NegInf(max)             -> "MIN", max.ToString()
-        | Full                    -> "MIN", "MAX"
-        | Empty                   -> raise(BugErrorException "")
-    let handTypeWithMinMax name uperRange func =
-        let sMin, sMax = GetMinMax uperRange
-        func name sMin sMax
     let PrintTypeAux (t:Asn1Type) =
         match t.Kind with
         | Integer               -> handTypeWithMinMax "IntegerType"     (GetTypeUperRange t.Kind t.Constraints r) xml.MinMaxType
@@ -74,7 +72,7 @@ let DoWork (r:AstRoot) =
     let PrintVas (vas: Ast.ValueAssignment) modName =
         xml.VasXml vas.Name.Value (BigInteger vas.Name.Location.srcLine) (BigInteger vas.Name.Location.charPos) (PrintType vas.Type modName r) (PrintAsn1.PrintAsn1Value vas.Value) (ToC vas.Name.Value)
     let PrintTas (tas:Ast.TypeAssignment) modName =
-        xml.TasXml tas.Name.Value (BigInteger tas.Name.Location.srcLine) (BigInteger tas.Name.Location.charPos) (PrintType tas.Type modName r) (ToC tas.Name.Value) (xml.AssigOpNormalType ())
+        xml.TasXml tas.Name.Value (BigInteger tas.Name.Location.srcLine) (BigInteger tas.Name.Location.charPos) (PrintType tas.Type modName r) (ToC tas.Name.Value) (xml.AssigOpNormalType ()) ""
     let PrintModule (m:Asn1Module) =
         let PrintImpModule (im:Ast.ImportedModule) =
             xml.ImportedMod im.Name.Value (ToC im.Name.Value) (im.Types |> Seq.map(fun x -> x.Value)) (im.Values |> Seq.map(fun x -> x.Value))

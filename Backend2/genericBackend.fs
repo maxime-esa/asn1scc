@@ -9,50 +9,84 @@ open uPER
 open CloneTree
 open spark_utils
 
+let GetMinMax uperRange =
+    match uperRange with
+    | Concrete(min, max)      -> min.ToString(), max.ToString()
+    | PosInf(a)               -> a.ToString(), "MAX"
+    | NegInf(max)             -> "MIN", max.ToString()
+    | Full                    -> "MIN", "MAX"
+    | Empty                   -> raise(BugErrorException "[genericBackend] GetMinMax error")
+
+let handTypeWithMinMax name uperRange func stgFileName =
+    let sMin, sMax = GetMinMax uperRange
+    func name sMin sMax (sMin=sMax) stgFileName
+
+let PrintContract (tas:Ast.TypeAssignment) (r:AstRoot) (stgFileName:string) =
+    let PrintPattern (tas:Ast.TypeAssignment) =
+        let t = tas.Type
+        match t.Kind with
+        | Integer | BitString | OctetString | Real | IA5String | NumericString | SequenceOf(_)     -> gen.TypePatternCommonTypes () stgFileName
+        | Boolean | NullType  | Enumerated(_)      | Choice(_)                                     -> null
+        | Sequence(children)    ->
+            let emitChild (c:ChildInfo) =
+                gen.SequencePatternChild c.Name.Value (ToC c.Name.Value) stgFileName
+            gen.TypePatternSequence tas.Name.Value (ToC tas.Name.Value) (children |> Seq.map emitChild) stgFileName
+        | ReferenceType(_, _, _) -> null
+    let rec PrintExpression (t:Asn1Type) (pattern:string) =
+        match t.Kind with
+        | Integer               -> handTypeWithMinMax pattern (GetTypeUperRange t.Kind t.Constraints r) gen.ContractExprMinMax stgFileName
+        | Real                  -> handTypeWithMinMax pattern (GetTypeRange_real t.Kind t.Constraints r) gen.ContractExprMinMax stgFileName
+        | OctetString | IA5String | NumericString | BitString -> handTypeWithMinMax pattern (GetTypeUperRange t.Kind t.Constraints r) gen.ContractExprSize stgFileName
+        | Boolean
+        | NullType
+        | Choice(_)
+        | Enumerated(_)         -> null
+        | Sequence(children)    ->
+             let emitChild (c:ChildInfo) =
+                 PrintExpression c.Type (gen.SequencePatternChild c.Name.Value (ToC c.Name.Value) stgFileName)
+             let childArray = children |> Seq.map emitChild |> Seq.filter (fun x -> x <> null)
+             gen.ContractExprSequence childArray stgFileName
+        | SequenceOf(_)         ->
+            let sMin, sMax = GetMinMax (GetTypeUperRange t.Kind t.Constraints r)
+            gen.ContractExprSize pattern sMin sMax (sMin = sMax) stgFileName
+        | ReferenceType(_,_, _) -> null
+
+    let pattern = PrintPattern tas
+    let expression = PrintExpression tas.Type pattern
+    gen.Contract pattern (if String.length(expression) > 0 then expression else null) stgFileName
 
 
-
-let rec PrintType (t:Asn1Type) modName (r:AstRoot) (stgFileName:string)=
-    let GetMinMax uperRange = 
-        match uperRange with
-        | Concrete(min, max)      -> min.ToString(), max.ToString()
-        | PosInf(a)               -> a.ToString(), "MAX"
-        | NegInf(max)             -> "MIN", max.ToString()
-        | Full                    -> "MIN", "MAX"
-        | Empty                   -> raise(BugErrorException "")
-    let handTypeWithMinMax name uperRange func =
-        let sMin, sMax = GetMinMax uperRange
-        func name sMin sMax stgFileName
+let rec PrintType (t:Asn1Type) modName (r:AstRoot) (stgFileName:string) =
     let PrintTypeAux (t:Asn1Type) =
         match t.Kind with
-        | Integer               -> handTypeWithMinMax (gen.IntegerType () stgFileName)         (GetTypeUperRange t.Kind t.Constraints r) gen.MinMaxType
-        | BitString             -> handTypeWithMinMax (gen.BitStringType () stgFileName)       (GetTypeUperRange t.Kind t.Constraints r) gen.MinMaxType2
-        | OctetString           -> handTypeWithMinMax (gen.OctetStringType () stgFileName)     (GetTypeUperRange t.Kind t.Constraints r) gen.MinMaxType2
-        | Real                  -> handTypeWithMinMax (gen.RealType () stgFileName)            (GetTypeRange_real t.Kind t.Constraints r) gen.MinMaxType
-        | IA5String             -> handTypeWithMinMax (gen.IA5StringType () stgFileName)       (GetTypeUperRange t.Kind t.Constraints r) gen.MinMaxType2
-        | NumericString         -> handTypeWithMinMax (gen.NumericStringType () stgFileName)   (GetTypeUperRange t.Kind t.Constraints r) gen.MinMaxType2
+        | Integer               -> handTypeWithMinMax (gen.IntegerType () stgFileName)         (GetTypeUperRange t.Kind t.Constraints r) gen.MinMaxType stgFileName
+        | BitString             -> handTypeWithMinMax (gen.BitStringType () stgFileName)       (GetTypeUperRange t.Kind t.Constraints r) gen.MinMaxType2 stgFileName
+        | OctetString           -> handTypeWithMinMax (gen.OctetStringType () stgFileName)     (GetTypeUperRange t.Kind t.Constraints r) gen.MinMaxType2 stgFileName
+        | Real                  -> handTypeWithMinMax (gen.RealType () stgFileName)            (GetTypeRange_real t.Kind t.Constraints r) gen.MinMaxType stgFileName
+        | IA5String             -> handTypeWithMinMax (gen.IA5StringType () stgFileName)       (GetTypeUperRange t.Kind t.Constraints r) gen.MinMaxType2 stgFileName
+        | NumericString         -> handTypeWithMinMax (gen.NumericStringType () stgFileName)   (GetTypeUperRange t.Kind t.Constraints r) gen.MinMaxType2 stgFileName
         | Boolean               -> gen.BooleanType () stgFileName
         | NullType              -> gen.NullType () stgFileName
-        | Choice(children)      -> 
+        | Choice(children)      ->
             let emitChild (c:ChildInfo) =
                 gen.ChoiceChild c.Name.Value (ToC c.Name.Value) (BigInteger c.Name.Location.srcLine) (BigInteger c.Name.Location.charPos) (PrintType c.Type modName r stgFileName) (c.CName_Present C) stgFileName
             gen.ChoiceType (children |> Seq.map emitChild) stgFileName
-        | Sequence(children)    -> 
+        | Sequence(children)    ->
             let emitChild (c:ChildInfo) =
                 match c.Optionality with
                 | Some(Default(vl)) -> gen.SequenceChild c.Name.Value (ToC c.Name.Value) true (PrintAsn1.PrintAsn1Value vl) (BigInteger c.Name.Location.srcLine) (BigInteger c.Name.Location.charPos) (PrintType c.Type modName r stgFileName) stgFileName
                 | _                 -> gen.SequenceChild c.Name.Value (ToC c.Name.Value) c.Optionality.IsSome null (BigInteger c.Name.Location.srcLine) (BigInteger c.Name.Location.charPos) (PrintType c.Type modName r stgFileName) stgFileName
             gen.SequenceType (children |> Seq.map emitChild) stgFileName
-        | Enumerated(items)     -> 
+        | Enumerated(items)     ->
             let emitItem (idx: int) (it : Ast.NamedItem) =
                 match it._value with
                 | Some(vl)  -> gen.EnumItem it.Name.Value (ToC it.Name.Value) (Ast.GetValueAsInt vl r) (BigInteger it.Name.Location.srcLine) (BigInteger it.Name.Location.charPos) (it.CEnumName r C) stgFileName
                 | None      -> gen.EnumItem it.Name.Value (ToC it.Name.Value) (BigInteger idx) (BigInteger it.Name.Location.srcLine) (BigInteger it.Name.Location.charPos) (it.CEnumName r C) stgFileName
             gen.EnumType (items |> Seq.mapi emitItem) stgFileName
-        | SequenceOf(child)     -> 
+        | SequenceOf(child)     ->
             let sMin, sMax = GetMinMax (GetTypeUperRange t.Kind t.Constraints r) 
             gen.SequenceOfType sMin sMax  (PrintType child modName r stgFileName) stgFileName
-        | ReferenceType(md,ts, _) ->  
+        | ReferenceType(md,ts, _) ->
             let uperRange = 
                 match (Ast.GetActualType t r).Kind with
                 | Integer | BitString | OctetString | IA5String | NumericString | SequenceOf(_)         -> Some (GetMinMax (GetTypeUperRange t.Kind t.Constraints r) )
@@ -63,7 +97,7 @@ let rec PrintType (t:Asn1Type) modName (r:AstRoot) (stgFileName:string)=
             match uperRange with
             | Some(sMin, sMax)  -> gen.RefTypeMinMax sMin sMax ts.Value sModName (ToC ts.Value) sCModName stgFileName
             | None              -> gen.RefType ts.Value sModName (ToC ts.Value) sCModName stgFileName
-            
+
     gen.TypeGeneric (BigInteger t.Location.srcLine) (BigInteger t.Location.charPos) (PrintTypeAux t) stgFileName
 
 
@@ -75,7 +109,7 @@ let DoWork (r:AstRoot) (stgFileName:string) (outFileName:string) =
     let PrintVas (vas: Ast.ValueAssignment) modName =
         gen.VasXml vas.Name.Value (BigInteger vas.Name.Location.srcLine) (BigInteger vas.Name.Location.charPos) (PrintType vas.Type modName r stgFileName) (ToC vas.Name.Value)  stgFileName
     let PrintTas (tas:Ast.TypeAssignment) modName =
-        gen.TasXml tas.Name.Value (BigInteger tas.Name.Location.srcLine) (BigInteger tas.Name.Location.charPos) (PrintType tas.Type modName r stgFileName) (ToC tas.Name.Value) (AssigOp tas.Type) stgFileName
+        gen.TasXml tas.Name.Value (BigInteger tas.Name.Location.srcLine) (BigInteger tas.Name.Location.charPos) (PrintType tas.Type modName r stgFileName) (ToC tas.Name.Value) (AssigOp tas.Type) (PrintContract tas r stgFileName) stgFileName
     let PrintModule (m:Asn1Module) =
         let PrintImpModule (im:Ast.ImportedModule) =
             gen.ImportedMod im.Name.Value (ToC im.Name.Value) (im.Types |> Seq.map(fun x -> x.Value)) (im.Values |> Seq.map(fun x -> x.Value)) stgFileName
@@ -84,7 +118,7 @@ let DoWork (r:AstRoot) (stgFileName:string) (outFileName:string) =
         gen.FileXml f.FileName (f.Modules |> Seq.map PrintModule) stgFileName
     let content = gen.RootXml (r.Files |> Seq.map PrintFile) stgFileName
     File.WriteAllText(outFileName, content.Replace("\r",""))
-    
+
 
 
 

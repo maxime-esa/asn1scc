@@ -35,7 +35,7 @@ ModuleXml(sName, sCName, arrsImportedModules, arrsExpTypes, arrsExpVars, arrsTas
 <VariablesAssignments>
     $arrsVases;separator="\n"$
 </VariablesAssignments>
-</Asn1Module >
+</Asn1Module>
 >>
 
 ImportedMod(sName, sCName, arrsTypes, arrsVars) ::= <<
@@ -49,7 +49,7 @@ ImportedMod(sName, sCName, arrsTypes, arrsVars) ::= <<
 </ImportedModule>
 >>
 
-TasXml(sName, nLine, nPos, sType, sCName, sAssigOp) ::= <<
+TasXml(sName, nLine, nPos, sType, sCName, sAssigOp, sContract) ::= <<
 <TypeAssignment Name="$sName$" Line="$nLine$" CharPositionInLine="$nPos$">
     $sType$
 </TypeAssignment>
@@ -69,11 +69,11 @@ TypeGeneric(nLine, nPos, sSubType) ::= <<
 >>
 
 
-MinMaxType(sName, sMin, sMax) ::= <<
+MinMaxType(sName, sMin, sMax, bFixedSize) ::= <<
 <$sName$ Min="$sMin$" Max="$sMax$"/>
 >>
 
-MinMaxType2(sName, sMin, sMax) ::= <<
+MinMaxType2(sName, sMin, sMax, bFixedSize) ::= <<
 <$sName$ Min="$sMin$" Max="$sMax$">
 </$sName$>
 >>
@@ -151,3 +151,12 @@ RefTypeMinMax(sMin, sMax, sName, sModName, sCName, sCModName) ::= <<
 RefType(sName, sModName, sCName, sCModName) ::= <<
 <ReferenceType ReferencedTypeName="$sName$"$if(sModName)$ ReferencedModName="$sModName$"$endif$/>
 >>
+
+/* Possible additional information generated after the type itself */
+Contract(sTypePattern, sExpr) ::= ""
+TypePatternCommonTypes() ::= ""
+TypePatternSequence(sName, sCName, arrsChildren) ::= ""
+SequencePatternChild(sName, sCName) ::= ""
+ContractExprMinMax(sPattern, sMin, sMax, bFixedSize) ::= ""
+ContractExprSize(sPattern, sMin, sMax, bFixedSize) ::= ""
+ContractExprSequence(arrsChildren) ::= ""
