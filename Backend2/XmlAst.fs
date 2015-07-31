@@ -72,7 +72,7 @@ let DoWork (r:AstRoot) =
     let PrintVas (vas: Ast.ValueAssignment) modName =
         xml.VasXml vas.Name.Value (BigInteger vas.Name.Location.srcLine) (BigInteger vas.Name.Location.charPos) (PrintType vas.Type modName r) (PrintAsn1.PrintAsn1Value vas.Value) (ToC vas.Name.Value)
     let PrintTas (tas:Ast.TypeAssignment) modName =
-        xml.TasXml tas.Name.Value (BigInteger tas.Name.Location.srcLine) (BigInteger tas.Name.Location.charPos) (PrintType tas.Type modName r) (ToC tas.Name.Value) (xml.AssigOpNormalType ())
+        xml.TasXml tas.Name.Value (BigInteger tas.Name.Location.srcLine) (BigInteger tas.Name.Location.charPos) (PrintType tas.Type modName r) (ToC tas.Name.Value) (xml.AssigOpNormalType ()) ""
     let PrintModule (m:Asn1Module) =
         let PrintImpModule (im:Ast.ImportedModule) =
             xml.ImportedMod im.Name.Value (ToC im.Name.Value) (im.Types |> Seq.map(fun x -> x.Value)) (im.Values |> Seq.map(fun x -> x.Value))

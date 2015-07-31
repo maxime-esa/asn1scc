@@ -52,7 +52,7 @@ ImportedMod(sName, sCName, arrsTypes, arrsVars) ::= ""
 Use sCName which is the type name using underscores in place of dashes
 */
 TasXml(sName, nLine, nPos, sType, sCName, sAssigOp, sContract) ::= <<
-public $sCName$ $sAssigOp$ $sType$ $sContract$
+public $sCName$ $sAssigOp$ $sType$$sContract$
 >>
 
 
@@ -184,7 +184,7 @@ $endif$
    MyType = nat
    inv inst >= 10 and inst <= 100   -- inst is the type pattern
 */
-TypePatternCommonTypes() ::= "inst"
+TypePatternCommonTypes() ::= "x"
 
 /* Records have a more complex pattern in VDM: mk_Type(field1, ...) */
 TypePatternSequence(sName, sCName, arrsChildren) ::= <<

@@ -35,7 +35,7 @@ ModuleXml(sName, sCName, arrsImportedModules, arrsExpTypes, arrsExpVars, arrsTas
 <VariablesAssignments>
     $arrsVases;separator="\n"$
 </VariablesAssignments>
-</Asn1Module >
+</Asn1Module>
 >>
 
 ImportedMod(sName, sCName, arrsTypes, arrsVars) ::= <<
@@ -49,7 +49,7 @@ ImportedMod(sName, sCName, arrsTypes, arrsVars) ::= <<
 </ImportedModule>
 >>
 
-TasXml(sName, nLine, nPos, sType, sCName, sAssigOp) ::= <<
+TasXml(sName, nLine, nPos, sType, sCName, sAssigOp, sContract) ::= <<
 <TypeAssignment Name="$sName$" Line="$nLine$" CharPositionInLine="$nPos$">
     $sType$
 </TypeAssignment>
