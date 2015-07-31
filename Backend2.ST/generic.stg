@@ -56,11 +56,11 @@ TypeGeneric(nLine, nPos, sSubType) ::= <<
 >>
 
 
-MinMaxType(sName, sMin, sMax) ::= <<
+MinMaxType(sName, sMin, sMax, bFixedSize) ::= <<
 "Kind": "$sName$", "Min": "$sMin$", "Max": "$sMax$"
 >>
 
-MinMaxType2(sName, sMin, sMax) ::= <<
+MinMaxType2(sName, sMin, sMax, bFixedSize) ::= <<
 "Kind": "$sName$", "Min": "$sMin$", "Max": "$sMax$"
 >>
 
@@ -159,13 +159,17 @@ TypePatternSequence(sName, sCName, arrsChildren) ::= <<
 /* Name used in the Sequence pattern to identify field names */
 SequencePatternChild(sName, sCName) ::= ""
 
-ContractExprMinMax(sPattern, sMin, sMax) ::= <<
+ContractExprMinMax(sPattern, sMin, sMax, bFixedSize) ::= <<
 $sPattern$ >= $sMin$ and $sPattern$ <= $sMax$
 >>
 
-ContractExprSize(sPattern, sMin, sMax) ::= <<
+
+ContractExprSize(sPattern, sMin, sMax, bFixedSize) ::= <<
+$if(bFixedSize)$
 len $sPattern$ >= $sMin$ and len $sPattern$ <= $sMax$
->>
+$else$
+len $sPattern$ = $sSize$
+$endif$
 
 ContractExprSequence(arrsChildren) ::= <<
 $arrsChildren;separator=" and "$

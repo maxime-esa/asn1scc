@@ -82,14 +82,14 @@ TypeGeneric(nLine, nPos, sSubType) ::= <<
 /* Type with Min and Max constraint. sName is the type kind
    This template is used for Integer and Real types; for others,
    see MinMaxType2 */
-MinMaxType(sName, sMin, sMax) ::= <<
+MinMaxType(sName, sMin, sMax, bFixedSize) ::= <<
 "kind": "$sName$", "Min": "$sMin$", "Max": "$sMax$"
 >>
 
 
 /* String types with size constraint: Bitstring, Octetstring, Ia5String,
    NumericString */
-MinMaxType2(sName, sMin, sMax) ::= <<
+MinMaxType2(sName, sMin, sMax, bFixedSize) ::= <<
 "kind": "$sName$", "Min": "$sMin$", "Max": "$sMax$"
 >>
 
@@ -200,3 +200,12 @@ RefTypeMinMax(sMin, sMax, sName, sModName, sCName, sCModName) ::= <<
 RefType(sName, sModName, sCName, sCModName) ::= <<
 "kind": "ReferenceType", "ReferencedTypeName": "$sName$"$if(sModName)$, "ReferencedModName": "$sModName$"$endif$
 >>
+
+/* Possible additional information generated after the type itself */
+Contract(sTypePattern, sExpr) ::= ""
+TypePatternCommonTypes() ::= ""
+TypePatternSequence(sName, sCName, arrsChildren) ::= ""
+SequencePatternChild(sName, sCName) ::= ""
+ContractExprMinMax(sPattern, sMin, sMax, bFixedSize) ::= ""
+ContractExprSize(sPattern, sMin, sMax, bFixedSize) ::= ""
+ContractExprSequence(arrsChildren) ::= ""

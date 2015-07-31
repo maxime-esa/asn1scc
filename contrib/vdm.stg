@@ -68,13 +68,13 @@ $sSubType$
 /* Type with Min and Max constraint. sName is the type kind
    This template is used for Integer and Real types; for others,
    see MinMaxType2 */
-MinMaxType(sName, sMin, sMax) ::= <<
+MinMaxType(sName, sMin, sMax, bFixedSize) ::= <<
 $sName$
 >>
 
 /* String types with size constraint: Bitstring, Octetstring, Ia5String,
    NumericString */
-MinMaxType2(sName, sMin, sMax) ::= <<
+MinMaxType2(sName, sMin, sMax, bFixedSize) ::= <<
 $sName$
 >>
 
@@ -171,9 +171,11 @@ $if(sCModName)$$sCModName$`$endif$$sCName$
 /* VDM allows declaration of constraints on types */
 Contract(sTypePattern, sExpr) ::= <<
 $if(sTypePattern)$
+$if(sExpr)$
 
 inv $sTypePattern$ ==
     $sExpr$
+$endif$
 $endif$
 >>
 
@@ -192,12 +194,16 @@ mk_$sCName$($arrsChildren;separator=", "$)
 /* Name used in the Sequence pattern to identify field names */
 SequencePatternChild(sName, sCName) ::= "$sCName$"
 
-ContractExprMinMax(sPattern, sMin, sMax) ::= <<
+ContractExprMinMax(sPattern, sMin, sMax, bFixedSize) ::= <<
 $sPattern$ >= $sMin$ and $sPattern$ <= $sMax$
 >>
 
-ContractExprSize(sPattern, sMin, sMax) ::= <<
+ContractExprSize(sPattern, sMin, sMax, bFixedSize) ::= <<
+$if(bFixedSize)$
+len $sPattern$ = $sMin$
+$else$
 len $sPattern$ >= $sMin$ and len $sPattern$ <= $sMax$
+$endif$
 >>
 
 ContractExprSequence(arrsChildren) ::= <<

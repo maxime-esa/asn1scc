@@ -69,11 +69,11 @@ TypeGeneric(nLine, nPos, sSubType) ::= <<
 >>
 
 
-MinMaxType(sName, sMin, sMax) ::= <<
+MinMaxType(sName, sMin, sMax, bFixedSize) ::= <<
 <$sName$ Min="$sMin$" Max="$sMax$"/>
 >>
 
-MinMaxType2(sName, sMin, sMax) ::= <<
+MinMaxType2(sName, sMin, sMax, bFixedSize) ::= <<
 <$sName$ Min="$sMin$" Max="$sMax$">
 </$sName$>
 >>
@@ -136,3 +136,12 @@ RefTypeMinMax(sMin, sMax, sName, sModName) ::= <<
 RefType(sName, sModName) ::= <<
 <ReferenceType ReferencedTypeName="$sName$"$if(sModName)$ ReferencedModName="$sModName$"$endif$/>
 >>
+
+/* Possible additional information generated after the type itself */
+Contract(sTypePattern, sExpr) ::= ""
+TypePatternCommonTypes() ::= ""
+TypePatternSequence(sName, sCName, arrsChildren) ::= ""
+SequencePatternChild(sName, sCName) ::= ""
+ContractExprMinMax(sPattern, sMin, sMax, bFixedSize) ::= ""
+ContractExprSize(sPattern, sMin, sMax, bFixedSize) ::= ""
+ContractExprSequence(arrsChildren) ::= ""

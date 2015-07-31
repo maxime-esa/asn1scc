@@ -8,20 +8,18 @@ open uPER
 open CloneTree
 open spark_utils
 
-
-
+let GetMinMax uperRange = 
+    match uperRange with
+    | Concrete(min, max)      -> min.ToString(), max.ToString()
+    | PosInf(a)               -> a.ToString(), "MAX"
+    | NegInf(max)             -> "MIN", max.ToString()
+    | Full                    -> "MIN", "MAX"
+    | Empty                   -> raise(BugErrorException "")
+let handTypeWithMinMax name uperRange func =
+    let sMin, sMax = GetMinMax uperRange
+    func name sMin sMax (sMin=sMax)
 
 let rec PrintType (t:Asn1Type) modName (r:AstRoot) =
-    let GetMinMax uperRange = 
-        match uperRange with
-        | Concrete(min, max)      -> min.ToString(), max.ToString()
-        | PosInf(a)               -> a.ToString(), "MAX"
-        | NegInf(max)             -> "MIN", max.ToString()
-        | Full                    -> "MIN", "MAX"
-        | Empty                   -> raise(BugErrorException "")
-    let handTypeWithMinMax name uperRange func =
-        let sMin, sMax = GetMinMax uperRange
-        func name sMin sMax
     let PrintTypeAux (t:Asn1Type) =
         match t.Kind with
         | Integer               -> handTypeWithMinMax "IntegerType"     (GetTypeUperRange t.Kind t.Constraints r) xml.MinMaxType

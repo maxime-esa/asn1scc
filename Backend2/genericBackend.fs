@@ -19,7 +19,7 @@ let GetMinMax uperRange =
 
 let handTypeWithMinMax name uperRange func stgFileName =
     let sMin, sMax = GetMinMax uperRange
-    func name sMin sMax stgFileName
+    func name sMin sMax (sMin=sMax) stgFileName
 
 let PrintContract (tas:Ast.TypeAssignment) (r:AstRoot) (stgFileName:string) =
     let PrintPattern (tas:Ast.TypeAssignment) =
@@ -31,19 +31,12 @@ let PrintContract (tas:Ast.TypeAssignment) (r:AstRoot) (stgFileName:string) =
             let emitChild (c:ChildInfo) =
                 gen.SequencePatternChild c.Name.Value (ToC c.Name.Value) stgFileName
             gen.TypePatternSequence tas.Name.Value (ToC tas.Name.Value) (children |> Seq.map emitChild) stgFileName
-        | ReferenceType(_, _, _) ->
-            match (Ast.GetActualType t r).Kind with
-            | Integer | BitString | OctetString | IA5String | NumericString | SequenceOf(_) | Real  -> gen.TypePatternCommonTypes () stgFileName
-            | Boolean | NullType | Choice(_) | Enumerated(_) | Sequence(_) | ReferenceType(_)       -> null
-
+        | ReferenceType(_, _, _) -> null
     let rec PrintExpression (t:Asn1Type) (pattern:string) =
         match t.Kind with
         | Integer               -> handTypeWithMinMax pattern (GetTypeUperRange t.Kind t.Constraints r) gen.ContractExprMinMax stgFileName
         | Real                  -> handTypeWithMinMax pattern (GetTypeRange_real t.Kind t.Constraints r) gen.ContractExprMinMax stgFileName
-        | OctetString
-        | IA5String
-        | NumericString
-        | BitString             -> handTypeWithMinMax pattern (GetTypeUperRange t.Kind t.Constraints r) gen.ContractExprSize stgFileName
+        | OctetString | IA5String | NumericString | BitString -> handTypeWithMinMax pattern (GetTypeUperRange t.Kind t.Constraints r) gen.ContractExprSize stgFileName
         | Boolean
         | NullType
         | Choice(_)
@@ -51,25 +44,16 @@ let PrintContract (tas:Ast.TypeAssignment) (r:AstRoot) (stgFileName:string) =
         | Sequence(children)    ->
              let emitChild (c:ChildInfo) =
                  PrintExpression c.Type (gen.SequencePatternChild c.Name.Value (ToC c.Name.Value) stgFileName)
-             gen.ContractExprSequence (children |> Seq.map emitChild) stgFileName
+             let childArray = children |> Seq.map emitChild |> Seq.filter (fun x -> x <> null)
+             gen.ContractExprSequence childArray stgFileName
         | SequenceOf(_)         ->
             let sMin, sMax = GetMinMax (GetTypeUperRange t.Kind t.Constraints r)
-            gen.ContractExprSize pattern sMin sMax stgFileName
-        | ReferenceType(_,_, _) ->
-            match (Ast.GetActualType t r).Kind with
-            | Integer ->
-                let sMin, sMax = GetMinMax (GetTypeUperRange t.Kind t.Constraints r)
-                gen.ContractExprMinMax pattern sMin sMax stgFileName
-            | Real    ->
-                let sMin, sMax = GetMinMax (GetTypeRange_real t.Kind t.Constraints r)
-                gen.ContractExprMinMax pattern sMin sMax stgFileName
-            | BitString | OctetString | IA5String | NumericString | SequenceOf(_)  ->
-                let sMin, sMax = GetMinMax (GetTypeUperRange t.Kind t.Constraints r)
-                gen.ContractExprSize pattern sMin sMax stgFileName
-            | _ -> null
+            gen.ContractExprSize pattern sMin sMax (sMin = sMax) stgFileName
+        | ReferenceType(_,_, _) -> null
 
     let pattern = PrintPattern tas
-    gen.Contract pattern (PrintExpression tas.Type pattern) stgFileName
+    let expression = PrintExpression tas.Type pattern
+    gen.Contract pattern (if String.length(expression) > 0 then expression else null) stgFileName
 
 
 let rec PrintType (t:Asn1Type) modName (r:AstRoot) (stgFileName:string) =
