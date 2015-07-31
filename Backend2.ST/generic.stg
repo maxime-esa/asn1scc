@@ -43,7 +43,7 @@ types["$sName$"] = {
 
 >>
 
-VasXml(sName, nLine, nPos, sType, sCName) ::= <<
+VasXml(sName, nLine, nPos, sType, sValue, sCName) ::= <<
 variables["$sName$"] = {
     "Line": $nLine$, "CharPositionInLine": $nPos$, "type": {
         $sType$
@@ -174,3 +174,19 @@ $endif$
 ContractExprSequence(arrsChildren) ::= <<
 $arrsChildren;separator=" and "$
 >>
+
+/* Print Values */
+Print_IntegerValue(nVal) ::= ""
+Print_RealValue(dVal) ::= ""
+Print_StringValue(v) ::= ""
+Print_TrueValue() ::= ""
+Print_FalseValue() ::= ""
+Print_BitStringValue(v) ::= ""
+Print_OctetStringValue(arruOctets) ::= ""
+Print_RefValue(sName) ::= ""
+Print_SeqOfValue(arrsValues) ::= ""
+Print_SeqValue_Child(sName, sChildValue) ::= ""
+Print_SeqValue(arrsValues) ::= ""
+Print_ChValue(sAltName,sAltValue) ::= ""
+Print_NullValue() ::= ""
+

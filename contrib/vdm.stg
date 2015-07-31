@@ -57,8 +57,8 @@ public $sCName$ $sAssigOp$ $sType$$sContract$
 
 
 /* A single Variable Assignment */
-VasXml(sName, nLine, nPos, sType, sCName) ::= <<
-public $sCName$ : $sType$ = undefined;
+VasXml(sName, nLine, nPos, sType, sValue, sCName) ::= <<
+public $sCName$ : $sType$ = $sValue$
 >>
 
 TypeGeneric(nLine, nPos, sSubType) ::= <<
@@ -82,7 +82,7 @@ BooleanType () ::= "bool"
 
 NullType () ::= "nil"
 
-IntegerType () ::= "nat"
+IntegerType () ::= "int"
 
 RealType () ::= "real"
 
@@ -209,3 +209,20 @@ $endif$
 ContractExprSequence(arrsChildren) ::= <<
 $arrsChildren;separator=" and "$
 >>
+
+/* Print Values */
+Print_IntegerValue(nVal) ::= "$nVal$"
+Print_RealValue(dVal) ::= "$dVal$"
+Print_StringValue(v) ::= <<"$v$">>
+Print_TrueValue() ::= "true"
+Print_FalseValue() ::= "false"
+Print_BitStringValue(v) ::= "$v$"
+Print_OctetStringValue(arruOctets) ::= <<'$arruOctets:{b|<b;format="X2">}$>>
+Print_RefValue(sName) ::= "<$sName$>"
+Print_SeqOfValue(arrsValues) ::= <<[$arrsValues; separator=", "$]>>
+Print_SeqValue_Child(sName, sChildValue) ::= "undefined"
+Print_SeqValue(arrsValues) ::= "undefined"
+Print_ChValue(sAltName,sAltValue) ::= "$sAltValue$"
+Print_NullValue() ::= "nil"
+
+

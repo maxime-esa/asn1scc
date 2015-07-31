@@ -64,8 +64,8 @@ types["$sName$"] = type("$sName$", (object,), {
 >>
 
 
-/* A single Variable Assignment */
-VasXml(sName, nLine, nPos, sType, sCName) ::= <<
+/* A single Variable Assignment (actual value not handled in python yet) */
+VasXml(sName, nLine, nPos, sType, sValue, sCName) ::= <<
 variables["$sName$"] = type("$sName$", (object,), {
     "Line": $nLine$, "CharPositionInLine": $nPos$, "type": type("$sName$_type", (object,), {
         $sType$
@@ -209,3 +209,19 @@ SequencePatternChild(sName, sCName) ::= ""
 ContractExprMinMax(sPattern, sMin, sMax, bFixedSize) ::= ""
 ContractExprSize(sPattern, sMin, sMax, bFixedSize) ::= ""
 ContractExprSequence(arrsChildren) ::= ""
+
+/* Print Values (not implemented yet for python) */
+Print_IntegerValue(nVal) ::= ""
+Print_RealValue(dVal) ::= ""
+Print_StringValue(v) ::= ""
+Print_TrueValue() ::= "true"
+Print_FalseValue() ::= "false"
+Print_BitStringValue(v) ::= ""
+Print_OctetStringValue(arruOctets) ::= ""
+Print_RefValue(sName) ::= ""
+Print_SeqOfValue(arrsValues) ::= ""
+Print_SeqValue_Child(sName, sChildValue) ::= ""
+Print_SeqValue(arrsValues) ::= ""
+Print_ChValue(sAltName,sAltValue) ::= ""
+Print_NullValue() ::= ""
+

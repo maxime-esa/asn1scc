@@ -21,6 +21,23 @@ let handTypeWithMinMax name uperRange func stgFileName =
     let sMin, sMax = GetMinMax uperRange
     func name sMin sMax (sMin=sMax) stgFileName
 
+let PrintCustomAsn1Value (vas: Ast.ValueAssignment) stgFileName =
+    let rec PrintValue (v: Asn1Value) =
+        match v.Kind with
+        |IntegerValue(v)         -> gen.Print_IntegerValue v.Value stgFileName
+        |RealValue(v)            -> gen.Print_RealValue v.Value stgFileName
+        |StringValue(v)          -> gen.Print_StringValue v.Value stgFileName
+        |BooleanValue(v)         -> if v.Value = true then gen.Print_TrueValue () stgFileName else gen.Print_FalseValue () stgFileName
+        |BitStringValue(v)       -> gen.Print_BitStringValue v.Value stgFileName
+        |OctetStringValue(v)     -> gen.Print_OctetStringValue (v |> Seq.map(fun x -> x.Value) |> Seq.toArray) stgFileName
+        |RefValue(mn,nm)         -> gen.Print_RefValue nm.Value stgFileName
+        |SeqOfValue(vals)        -> gen.Print_SeqOfValue (vals |> Seq.map PrintValue |> Seq.toArray) stgFileName
+        |SeqValue(vals)          -> gen.Print_SeqValue (vals |> Seq.map(fun (nm, v) -> gen.Print_SeqValue_Child nm.Value (PrintValue v) stgFileName ) |> Seq.toArray) stgFileName
+        |ChValue(nm,v)           -> gen.Print_ChValue nm.Value (PrintValue v) stgFileName
+        |NullValue               -> gen.Print_NullValue() stgFileName
+    PrintValue vas.Value
+
+
 let PrintContract (tas:Ast.TypeAssignment) (r:AstRoot) (stgFileName:string) =
     let PrintPattern (tas:Ast.TypeAssignment) =
         let t = tas.Type
@@ -107,7 +124,7 @@ let DoWork (r:AstRoot) (stgFileName:string) (outFileName:string) =
         | Sequence(_) -> gen.AssigOpSpecialType () stgFileName
         | _           -> gen.AssigOpNormalType () stgFileName
     let PrintVas (vas: Ast.ValueAssignment) modName =
-        gen.VasXml vas.Name.Value (BigInteger vas.Name.Location.srcLine) (BigInteger vas.Name.Location.charPos) (PrintType vas.Type modName r stgFileName) (ToC vas.Name.Value)  stgFileName
+        gen.VasXml vas.Name.Value (BigInteger vas.Name.Location.srcLine) (BigInteger vas.Name.Location.charPos) (PrintType vas.Type modName r stgFileName) (PrintCustomAsn1Value vas stgFileName) (ToC vas.Name.Value)  stgFileName
     let PrintTas (tas:Ast.TypeAssignment) modName =
         gen.TasXml tas.Name.Value (BigInteger tas.Name.Location.srcLine) (BigInteger tas.Name.Location.charPos) (PrintType tas.Type modName r stgFileName) (ToC tas.Name.Value) (AssigOp tas.Type) (PrintContract tas r stgFileName) stgFileName
     let PrintModule (m:Asn1Module) =
