@@ -664,7 +664,7 @@ void BitStream_EncodeReal(BitStream* pBitStrm, double v)
     byte header=0x80;
     int nExpLen;
     int nManLen;
-    int exp;
+    int exponent;
     asn1SccUint mantissa;
 
 
@@ -692,8 +692,8 @@ void BitStream_EncodeReal(BitStream* pBitStrm, double v)
         v=-v;
     }
 
-    CalculateMantissaAndExponent(v, &exp, &mantissa);
-    nExpLen = GetLengthInBytesOfSInt(exp);
+    CalculateMantissaAndExponent(v, &exponent, &mantissa);
+    nExpLen = GetLengthInBytesOfSInt(exponent);
     nManLen = GetLengthInBytesOfUInt(mantissa);
     assert(nExpLen<=3);
     if (nExpLen == 2)
@@ -709,13 +709,13 @@ void BitStream_EncodeReal(BitStream* pBitStrm, double v)
     BitStream_EncodeConstraintWholeNumber(pBitStrm, header, 0, 0xFF);
 
     /* encode exponent */
-    if (exp>=0) {
-        BitStream_AppendNBitZero(pBitStrm,nExpLen*8-GetNumberOfBitsForNonNegativeInteger((asn1SccUint)exp));
-        BitStream_EncodeNonNegativeInteger(pBitStrm,(asn1SccUint)exp);
+    if (exponent>=0) {
+        BitStream_AppendNBitZero(pBitStrm,nExpLen*8-GetNumberOfBitsForNonNegativeInteger((asn1SccUint)exponent));
+        BitStream_EncodeNonNegativeInteger(pBitStrm,(asn1SccUint)exponent);
     }
     else {
-        BitStream_AppendNBitOne(pBitStrm,nExpLen*8-GetNumberOfBitsForNonNegativeInteger((asn1SccUint)(-exp-1)));
-        BitStream_EncodeNonNegativeIntegerNeg(pBitStrm,(asn1SccUint)(-exp-1), 1);
+        BitStream_AppendNBitOne(pBitStrm,nExpLen*8-GetNumberOfBitsForNonNegativeInteger((asn1SccUint)(-exponent-1)));
+        BitStream_EncodeNonNegativeIntegerNeg(pBitStrm,(asn1SccUint)(-exponent-1), 1);
     }
 
 
@@ -770,7 +770,7 @@ flag DecodeRealAsBinaryEncoding(BitStream* pBitStrm, int length, byte header, do
     int F;
     unsigned factor=1;
     int expLen;
-    int exp = 0;
+    int exponent = 0;
     int expFactor = 1;
     asn1SccUint N=0;
     int i;
@@ -800,9 +800,9 @@ flag DecodeRealAsBinaryEncoding(BitStream* pBitStrm, int length, byte header, do
             return FALSE;
         if (!i) {
             if (b>0x7F)
-                exp=-1;
+                exponent=-1;
         }
-        exp = exp<<8 | b;
+        exponent = exponent<<8 | b;
     }
     length-=expLen;
 
@@ -815,7 +815,7 @@ flag DecodeRealAsBinaryEncoding(BitStream* pBitStrm, int length, byte header, do
 
 
 //  *v = N*factor * pow(base,exp);
-    *v = GetDoubleByMantissaAndExp(N*factor, expFactor*exp);
+    *v = GetDoubleByMantissaAndExp(N*factor, expFactor*exponent);
 
     if (sign<0)
         *v = -(*v);

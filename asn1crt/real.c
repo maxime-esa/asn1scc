@@ -26,32 +26,25 @@
 #define MantBitMask  0x000FFFFFFFFFFFFFULL
 #define MantBitMask2 0xFFE0000000000000ULL
 
-void CalculateMantissaAndExponent(double d, int* exp, asn1SccUint* mantissa)
+void CalculateMantissaAndExponent(double d, int* exponent, asn1SccUint* mantissa)
 {
-    //double dman = frexp(d,exp);
-    //*mantissa = (asn1SccUint)(MANTISSA_FACTOR*dman);
-    //(*exp) -= EXPONENET_FACTOR;
-
-
-    asn1SccUint *pl = NULL;
+    asn1SccUint* pl = NULL;
     asn1SccUint ll = 0;
 
-    *exp = 0;
+    *exponent = 0;
     *mantissa = 0;
 
     pl = (asn1SccUint*)&d;
 
     ll = *pl;
 
-
-    *exp = (int)(((ll & ExpoBitMask)>>52) - 1023 - 52);
+    *exponent = (int)(((ll & ExpoBitMask)>>52) - 1023 - 52);
 
     *mantissa = ll & MantBitMask;
     (*mantissa) |= 0x0010000000000000ULL;
-
 }
 
-double GetDoubleByMantissaAndExp(asn1SccUint mantissa, int exp)
+double GetDoubleByMantissaAndExp(asn1SccUint mantissa, int exponent)
 {
     union {
         double ret;
@@ -59,7 +52,7 @@ double GetDoubleByMantissaAndExp(asn1SccUint mantissa, int exp)
     } u;
    
     asn1SccUint ll = 0;
-    asn1SccUint exp2 = 0; 
+    asn1SccUint exponent2 = 0; 
 
     if (mantissa == 0)
         return 0.0;
@@ -67,19 +60,19 @@ double GetDoubleByMantissaAndExp(asn1SccUint mantissa, int exp)
 
     while ( (mantissa & MantBitMask2)>0) {
         mantissa>>=1;
-        exp += 1;
+        exponent += 1;
     }
     while ( (mantissa & 0x0010000000000000ULL) == 0) {
         mantissa<<=1;
-        exp += -1;
+        exponent += -1;
     }
 
 
-    exp2 = (asn1SccUint)(exp + 1023 + 52);
+    exponent2 = (asn1SccUint)(exponent + 1023 + 52);
 
 
     ll |= mantissa & MantBitMask;
-    ll |= (exp2<<52);
+    ll |= (exponent2<<52);
 
     u.u64 = ll;
 
