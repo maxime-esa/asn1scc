@@ -828,10 +828,11 @@ flag DecodeRealUsingDecimalEncoding(BitStream* pBitStrm, int length, byte header
 {
     ASSERT_OR_RETURN_FALSE(0);
 
-    pBitStrm = pBitStrm;
-    length = length;
-    header = header;
-    v = v;
+    (void) pBitStrm;
+    (void) length;
+    (void) header;
+    (void) v;
+
     return FALSE;
 }
 
