@@ -108,8 +108,10 @@ void BitStream_AppendBits(BitStream* pBitStrm, const byte* srcBuffer, int nbits)
         nbits-=8;
         i++;
     }
-    lastByte = (byte)(srcBuffer[i]>>(8-nbits));
-    BitStream_AppendPartialByte(pBitStrm, lastByte, (byte)nbits,FALSE);
+    if (nbits > 0) {
+      lastByte = (byte)(srcBuffer[i]>>(8-nbits));
+      BitStream_AppendPartialByte(pBitStrm, lastByte, (byte)nbits, FALSE);
+    }
 }
 
 void BitStream_AppendBit(BitStream* pBitStrm, flag v) 
