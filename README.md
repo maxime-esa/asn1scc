@@ -86,7 +86,7 @@ George Mamais (gmamais@gmail.com), Thanassis Tsiodras (ttsiodras@gmail.com)
 Changelog
 =========
 
-3.2.62
+3.2.61
 ------
 Minor bugfixes and improvements of the custom Stg backends
 New rename policy option
