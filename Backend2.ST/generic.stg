@@ -43,7 +43,7 @@ types["$sName$"] = {
 
 >>
 
-VasXml(sName, nLine, nPos, sType, sCName) ::= <<
+VasXml(sName, nLine, nPos, sType, sValue, sCName) ::= <<
 variables["$sName$"] = {
     "Line": $nLine$, "CharPositionInLine": $nPos$, "type": {
         $sType$
@@ -142,8 +142,7 @@ RefType(sName, sModName, sCName, sCModName) ::= <<
 
 
 /* Possible additional information generated after the type itself */
-Contract(sTypePattern, sExpr) ::= <<
->>
+Contract(sTypePattern, sExpr) ::= ""
 
 /* Type pattern is used for pattern matching of the contract. In VDM it maps
    to an instance of the type, e.g:
@@ -151,26 +150,29 @@ Contract(sTypePattern, sExpr) ::= <<
    inv inst >= 10 and inst <= 100   -- inst is the type pattern
 */
 TypePatternCommonTypes() ::= ""
-
 /* Records have a more complex pattern in VDM: mk_Type(field1, ...) */
-TypePatternSequence(sName, sCName, arrsChildren) ::= <<
->>
-
+TypePatternSequence(sName, sCName, arrsChildren) ::= ""
 /* Name used in the Sequence pattern to identify field names */
 SequencePatternChild(sName, sCName) ::= ""
 
-ContractExprMinMax(sPattern, sMin, sMax, bFixedSize) ::= <<
-$sPattern$ >= $sMin$ and $sPattern$ <= $sMax$
->>
+ContractExprMinMax(sPattern, sMin, sMax, bFixedSize) ::= ""
 
+ContractExprSize(sPattern, sMin, sMax, bFixedSize) ::= ""
 
-ContractExprSize(sPattern, sMin, sMax, bFixedSize) ::= <<
-$if(bFixedSize)$
-len $sPattern$ >= $sMin$ and len $sPattern$ <= $sMax$
-$else$
-len $sPattern$ = $sSize$
-$endif$
+ContractExprSequence(arrsChildren) ::= ""
 
-ContractExprSequence(arrsChildren) ::= <<
-$arrsChildren;separator=" and "$
->>
+/* Print Values */
+Print_IntegerValue(nVal) ::= ""
+Print_RealValue(dVal) ::= ""
+Print_StringValue(v) ::= ""
+Print_TrueValue() ::= ""
+Print_FalseValue() ::= ""
+Print_BitStringValue(v) ::= ""
+Print_OctetStringValue(arruOctets) ::= ""
+Print_RefValue(sName) ::= ""
+Print_SeqOfValue(arrsValues) ::= ""
+Print_SeqValue_Child(sName, sChildValue) ::= ""
+Print_SeqValue(arrsValues) ::= ""
+Print_ChValue(sAltName,sAltValue) ::= ""
+Print_NullValue() ::= ""
+
