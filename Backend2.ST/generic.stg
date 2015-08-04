@@ -142,8 +142,7 @@ RefType(sName, sModName, sCName, sCModName) ::= <<
 
 
 /* Possible additional information generated after the type itself */
-Contract(sTypePattern, sExpr) ::= <<
->>
+Contract(sTypePattern, sExpr) ::= ""
 
 /* Type pattern is used for pattern matching of the contract. In VDM it maps
    to an instance of the type, e.g:
@@ -151,29 +150,16 @@ Contract(sTypePattern, sExpr) ::= <<
    inv inst >= 10 and inst <= 100   -- inst is the type pattern
 */
 TypePatternCommonTypes() ::= ""
-
 /* Records have a more complex pattern in VDM: mk_Type(field1, ...) */
-TypePatternSequence(sName, sCName, arrsChildren) ::= <<
->>
-
+TypePatternSequence(sName, sCName, arrsChildren) ::= ""
 /* Name used in the Sequence pattern to identify field names */
 SequencePatternChild(sName, sCName) ::= ""
 
-ContractExprMinMax(sPattern, sMin, sMax, bFixedSize) ::= <<
-$sPattern$ >= $sMin$ and $sPattern$ <= $sMax$
->>
+ContractExprMinMax(sPattern, sMin, sMax, bFixedSize) ::= ""
 
+ContractExprSize(sPattern, sMin, sMax, bFixedSize) ::= ""
 
-ContractExprSize(sPattern, sMin, sMax, bFixedSize) ::= <<
-$if(bFixedSize)$
-len $sPattern$ >= $sMin$ and len $sPattern$ <= $sMax$
-$else$
-len $sPattern$ = $sSize$
-$endif$
-
-ContractExprSequence(arrsChildren) ::= <<
-$arrsChildren;separator=" and "$
->>
+ContractExprSequence(arrsChildren) ::= ""
 
 /* Print Values */
 Print_IntegerValue(nVal) ::= ""
