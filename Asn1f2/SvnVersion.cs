@@ -1,1 +1,1 @@
-namespace Asn1f2 { public class Svn    { public const string Version = "59";    }} 
+namespace Asn1f2 { public class Svn    { public const string Version = "60";    }} 
