@@ -86,10 +86,11 @@ George Mamais (gmamais@gmail.com), Thanassis Tsiodras (ttsiodras@gmail.com)
 Changelog
 =========
 
-3.2.58
+3.2.62
 ------
 Minor bugfixes and improvements of the custom Stg backends
 New rename policy option
+New VDM backend
 
 3.2.3
 -----
