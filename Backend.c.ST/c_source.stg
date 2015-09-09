@@ -48,7 +48,7 @@ PrintValueAssignment(sTypeDecl, sName, sValue) ::= "const <sTypeDecl> <sName> = 
 */
 
 PrintInitialize(sTasName, sStar, sContent, bIsString) ::= <<
-#ifndef _MSC_VER
+#if !defined(_MSC_VER) || _MSC_VER >= 1800
 void <sTasName>_Initialize(<sTasName><sStar> pVal)
 {
     static <sTasName> ret = 
