@@ -10,11 +10,11 @@ open ParameterizedAsn1Ast
 
 
 
-let rec CloneType  (namedArgs:list<StringLoc*TemplateArgument>) (old:Asn1Type) :Asn1Type =
+let rec CloneType  (r:AstRoot) (namedArgs:list<StringLoc*TemplateArgument>) (old:Asn1Type) :Asn1Type =
     let CloneChild (ch:ChildInfo) =
-        {ch with Type = CloneType namedArgs ch.Type; Optionality = match ch.Optionality with
-                                                                   | Some(Default(v))   -> Some(Default (CloneValue namedArgs v))
-                                                                   | _                  -> ch.Optionality}
+        {ch with Type = CloneType r namedArgs ch.Type; Optionality = match ch.Optionality with
+                                                                     | Some(Default(v))   -> Some(Default (CloneValue namedArgs v))
+                                                                     | _                  -> ch.Optionality}
     let cloneSeqChild  = function
         | ComponentsOf (x,y) -> ComponentsOf (x,y)
         | ChildInfo ch   -> ChildInfo (CloneChild ch)
@@ -23,7 +23,7 @@ let rec CloneType  (namedArgs:list<StringLoc*TemplateArgument>) (old:Asn1Type) :
         match old.Kind with
         | Sequence(children)  ->   Sequence(children |> List.map cloneSeqChild ), cons
         | Choice(children)    ->   Choice(children |> List.map CloneChild), cons
-        | SequenceOf(child)   ->   SequenceOf(CloneType namedArgs child ), cons
+        | SequenceOf(child)   ->   SequenceOf(CloneType r namedArgs child ), cons
         | ReferenceType(md,ts,args)    ->
             match args with
             | []        -> 
@@ -34,7 +34,9 @@ let rec CloneType  (namedArgs:list<StringLoc*TemplateArgument>) (old:Asn1Type) :
                     | _                                     -> raise(BugErrorException "")
                 | None              -> old.Kind, cons
 
-            | _         -> old.Kind,cons
+            | _         -> 
+                let specRefType : Asn1Type = SpecializeRefType r md ts args namedArgs
+                specRefType.Kind, (specRefType.Constraints|> List.map (CloneConstraint namedArgs))@cons
         | _                                        ->   old.Kind,cons
         
     {
@@ -88,7 +90,7 @@ and CloneValue  (namedArgs:list<StringLoc*TemplateArgument>) (v:Asn1Value) :Asn1
 
 and SpecializeType (r:AstRoot) (t:Asn1Type) =
     match t.Kind with
-    | ReferenceType(md,ts, args)   when args.Length>0 -> SpecializeRefType r md ts args
+    | ReferenceType(md,ts, args)   when args.Length>0 -> SpecializeRefType r md ts args []
     | ReferenceType(md,ts, args)    -> 
         let parmTas = getModuleByName r md |> getTasByName ts
         match parmTas.Parameters with
@@ -96,12 +98,17 @@ and SpecializeType (r:AstRoot) (t:Asn1Type) =
         | _     -> raise(SemanticError(t.Location, "Missing template arguments"))
     | _         -> t
 
-and SpecializeRefType (r:AstRoot) (mdName:StringLoc) (tsName:StringLoc) (args:list<TemplateArgument>) =
+and SpecializeRefType (r:AstRoot) (mdName:StringLoc) (tsName:StringLoc) (args:list<TemplateArgument>) (resolvedTeplateParams:list<StringLoc*TemplateArgument>) =
     let parmTas = getModuleByName r mdName |> getTasByName tsName
     let SpecializeTemplatizedArgument (arg:TemplateArgument) =
         match arg with
         | ArgValue(_)      -> arg
-        | ArgType(tp)      -> ArgType(SpecializeType r tp)
+        | ArgType(tp)      -> ArgType(SpecializeType r tp )
+        | TemplateParameter prmName   -> 
+            match resolvedTeplateParams |> Seq.tryFind (fun (prm,templArg) -> prm.Value = prmName.Value) with
+            | Some (prm, templArg)  -> templArg
+            | None                  -> 
+                raise (SemanticError(tsName.Location, sprintf "Template argument %s cannot be resolved" (prmName.Value) ))
 
     let args = args |> List.map SpecializeTemplatizedArgument
     match parmTas.Parameters.Length = args.Length with
@@ -114,9 +121,10 @@ and SpecializeRefType (r:AstRoot) (mdName:StringLoc) (tsName:StringLoc) (args:li
         | TypeParameter(_), ArgValue(_)     -> raise (SemanticError(tsName.Location, sprintf "Expecting type, not value"))
         | ValueParameter(_,_), ArgType(_)   -> raise (SemanticError(tsName.Location, sprintf "Expecting value, not type"))
         | ValueParameter(t,s), ArgValue(v)  -> (s,arg)
+        | _, TemplateParameter(_)   -> raise (SemanticError(tsName.Location, sprintf "Unexpected combination"))
     let namedArgs = List.zip args parmTas.Parameters |> List.map getNameArg
 
-    CloneType  namedArgs parmTas.Type
+    CloneType  r namedArgs parmTas.Type
 
 
 

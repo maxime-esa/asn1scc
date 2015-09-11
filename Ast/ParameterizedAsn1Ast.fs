@@ -94,6 +94,7 @@ and Asn1TypeKind =
 and TemplateArgument =
     | ArgType of Asn1Type
     | ArgValue of Asn1Value
+    | TemplateParameter of StringLoc    //name of parameter
 
 and NamedItem = {
     Name:StringLoc

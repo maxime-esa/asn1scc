@@ -1,0 +1,65 @@
+TC-GENERIC DEFINITIONS ::=  -- Data types shared by several services
+BEGIN
+
+Packet-Id {APID} ::= SEQUENCE {
+    packet-type           ENUMERATED {telemetry(0), telecommand(1)},
+    secondary-header-flag BOOLEAN,
+    apid                  APID     -- Mission-dependent list of APIDs
+}
+
+Packet-Sequence-Control ::= SEQUENCE {
+    sequence-flags        BIT STRING (SIZE(2)),
+    packet-sequence-count INTEGER (0..16383)
+} 
+
+END
+
+Command-Verification-Service DEFINITIONS ::=   -- Provide visibility overprocessing of incoming commands
+BEGIN
+
+IMPORTS Packet-Id,
+        Packet-Sequence-Control
+FROM TC-GENERIC;
+
+
+
+-- TM[1,1] Acknowledge successful acceptance of a command
+Acceptance-Report-Success {APID} ::= SEQUENCE {
+    packet-id       Packet-Id{APID},        -- Copy of the PACKET IF fields of the command being reported on
+    packet-seq-ctrl Packet-Sequence-Control -- Copy of the PACKET SEQUENCE CONTROL fields of the received command
+}
+
+
+-- TM[1,2] Acknowledge failure of acceptance check for a command
+Acceptance-Report-Failure {APID, Failure-type} ::= SEQUENCE {
+    packet-id       Packet-Id{APID},          -- Copy of the PACKET ID fields of the command being reported on
+    packet-seq-ctrl Packet-Sequence-Control, -- Copy of the PACKET SEQUENCE CONTROL fields of the received command
+    failure         Failure-type             -- Mission dependent failure code/data
+}
+
+END
+
+My-Project DEFINITIONS ::=   -- Project-specific tailoring of the PUS
+BEGIN
+IMPORTS Acceptance-Report-Success,
+        Acceptance-Report-Failure
+FROM Command-Verification-Service;
+
+-- List of project-specific APIDs
+Project-APID ::= ENUMERATED {aocs-sw, payload}
+
+Project-Failure ::= CHOICE {
+   wrong-checksum     NULL,        -- No specific parameter
+   some-other-failure Some-Failure-Data
+}
+
+Some-Failure-Data ::= BOOLEAN
+
+-- Project-specific subtype for the TM[1,1]
+Project-Acceptance-Report-Success ::= Acceptance-Report-Success {Project-APID}
+
+-- Project-specific subtype for the TM[1,2]
+Project-Acceptance-Report-Failure ::= Acceptance-Report-Failure {Project-APID, Project-Failure}
+
+END
+

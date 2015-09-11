@@ -77,7 +77,7 @@ let createDefaultConstraintsForEnumeratedTypes (tree:ITree) (namedItems:NamedIte
                             UnionConstraint (accConst, curCon, true) ) initialCon
     
 
-let rec CreateType (astRoot:list<ITree>) (tree:ITree) (fileTokens:array<IToken>) (alreadyTakenComments:System.Collections.Generic.List<IToken>) : Asn1Type= 
+let rec CreateType (tasParameters : TemplateParameter list) (astRoot:list<ITree>) (tree:ITree) (fileTokens:array<IToken>) (alreadyTakenComments:System.Collections.Generic.List<IToken>) : Asn1Type= 
     let children = getTreeChildren(tree)
     let typeNodes = children |> List.filter(fun x -> (not (ConstraintNodes |> List.exists(fun y -> y=x.Type) ) ) && (x.Type <> asn1Parser.TYPE_TAG) )
     let typeNode = List.head(typeNodes)
@@ -89,9 +89,9 @@ let rec CreateType (astRoot:list<ITree>) (tree:ITree) (fileTokens:array<IToken>)
         | asn1Parser.INTEGER_TYPE       -> Integer
         | asn1Parser.REAL               -> Real
         | asn1Parser.BOOLEAN            -> Boolean
-        | asn1Parser.CHOICE_TYPE        -> Choice(CreateChoiceChild  astRoot typeNode fileTokens alreadyTakenComments )
-        | asn1Parser.SEQUENCE_TYPE      -> Sequence(CreateSequenceChild  astRoot typeNode fileTokens alreadyTakenComments )
-        | asn1Parser.SET_TYPE           -> Sequence(CreateSequenceChild  astRoot typeNode fileTokens alreadyTakenComments )
+        | asn1Parser.CHOICE_TYPE        -> Choice(CreateChoiceChild  tasParameters astRoot typeNode fileTokens alreadyTakenComments )
+        | asn1Parser.SEQUENCE_TYPE      -> Sequence(CreateSequenceChild  tasParameters astRoot typeNode fileTokens alreadyTakenComments )
+        | asn1Parser.SET_TYPE           -> Sequence(CreateSequenceChild  tasParameters astRoot typeNode fileTokens alreadyTakenComments )
         | asn1Parser.ENUMERATED_TYPE    -> Enumerated(CreateNamedItems astRoot  typeNode fileTokens alreadyTakenComments)
         | asn1Parser.BIT_STRING_TYPE    -> BitString
         | asn1Parser.OCTECT_STING       -> OctetString
@@ -110,14 +110,27 @@ let rec CreateType (astRoot:list<ITree>) (tree:ITree) (fileTokens:array<IToken>)
                 match typeNode.GetOptChild asn1Parser.ACTUAL_PARAM_LIST with
                 | None              -> []
                 | Some(argList)     ->
-                    argList.Children |> List.map(fun x -> match x.Type with
-                                                          | asn1Parser.ACTUAL_TYPE_PARAM      ->  ArgType (CreateType astRoot (x.GetChild(0)) fileTokens alreadyTakenComments)
-                                                          | asn1Parser.ACTUAL_VALUE_PARAM     ->  ArgValue (CreateValue astRoot (x.GetChild(0)) )    
-                                                          | _                         ->  raise (BugErrorException("Bug in CrateType(refType)"))  )
+                    argList.Children |> 
+                    List.map(fun x -> 
+                        match x.Type with
+                        | asn1Parser.ACTUAL_TYPE_PARAM      ->  
+                            let argTypeTree = x.GetChild(0)
+                            let children = getTreeChildren(argTypeTree)
+                            let typeNodes = children |> List.filter(fun x -> (not (ConstraintNodes |> List.exists(fun y -> y=x.Type) ) ) && (x.Type <> asn1Parser.TYPE_TAG) )
+                            let typeNode = List.head(typeNodes)
+                            match typeNode.Type with
+                            | asn1Parser.REFERENCED_TYPE    ->
+                                let (md,ts) = CreateRefTypeContent(typeNode)
+                                match tasParameters |> Seq.tryFind (fun tp -> match tp with TypeParameter prmName | ValueParameter (_,prmName)  -> prmName.Value = ts.Value) with
+                                | Some _   -> TemplateParameter ts
+                                | None                  -> ArgType (CreateType tasParameters astRoot (x.GetChild(0)) fileTokens alreadyTakenComments)
+                            | _                             -> ArgType (CreateType tasParameters astRoot (x.GetChild(0)) fileTokens alreadyTakenComments)
+                        | asn1Parser.ACTUAL_VALUE_PARAM     ->  ArgValue (CreateValue astRoot (x.GetChild(0)) )    
+                        | _                         ->  raise (BugErrorException("Bug in CrateType(refType)"))  )
 
             ReferenceType(md, ts, templateArgs)
-        | asn1Parser.SEQUENCE_OF_TYPE   -> SequenceOf(CreateType  astRoot (getChildByType (typeNode, asn1Parser.TYPE_DEF)) fileTokens alreadyTakenComments )
-        | asn1Parser.SET_OF_TYPE        -> SequenceOf(CreateType  astRoot (getChildByType (typeNode, asn1Parser.TYPE_DEF)) fileTokens alreadyTakenComments )
+        | asn1Parser.SEQUENCE_OF_TYPE   -> SequenceOf(CreateType tasParameters astRoot (getChildByType (typeNode, asn1Parser.TYPE_DEF)) fileTokens alreadyTakenComments )
+        | asn1Parser.SET_OF_TYPE        -> SequenceOf(CreateType tasParameters astRoot (getChildByType (typeNode, asn1Parser.TYPE_DEF)) fileTokens alreadyTakenComments )
         | asn1Parser.UTF8String         -> raise (SemanticError (tree.Location, "UTF8String is not supported, use IA5String"))
         | asn1Parser.TeletexString      -> raise (SemanticError (tree.Location, "TeletexString is not supported, use IA5String"))
         | asn1Parser.VideotexString     -> raise (SemanticError (tree.Location, "VideotexString is not supported"))
@@ -141,14 +154,14 @@ let rec CreateType (astRoot:list<ITree>) (tree:ITree) (fileTokens:array<IToken>)
         Location = tree.Location
     }
 
-and CreateChoiceChild (astRoot:list<ITree>) (tree:ITree) (fileTokens:array<IToken>) (alreadyTakenComments:System.Collections.Generic.List<IToken>) = 
+and CreateChoiceChild (tasParameters : TemplateParameter list) (astRoot:list<ITree>) (tree:ITree) (fileTokens:array<IToken>) (alreadyTakenComments:System.Collections.Generic.List<IToken>) = 
     getChildrenByType(tree, asn1Parser.CHOICE_ITEM) |> 
     List.map(fun x ->
         match getTreeChildren(x) with
         | first::sec::tail  -> 
             { 
                 ChildInfo.Name = first.TextL; 
-                Type = CreateType astRoot sec fileTokens alreadyTakenComments ; 
+                Type = CreateType tasParameters astRoot sec fileTokens alreadyTakenComments ; 
                 Optionality=None; 
                 AcnInsertedField=false
                 Comments = Antlr.Comment.GetComments(fileTokens, alreadyTakenComments, fileTokens.[x.TokenStopIndex].Line, x.TokenStartIndex - 1, x.TokenStopIndex + 2)
@@ -218,7 +231,7 @@ and CreateValue (astRoot:list<ITree>) (tree:ITree ) : Asn1Value=
         Location = tree.Location
     }
 
-and CreateSequenceChild (astRoot:list<ITree>) (tree:ITree) (fileTokens:array<IToken>) (alreadyTakenComments:System.Collections.Generic.List<IToken>) : list<SequenceChild>= 
+and CreateSequenceChild (tasParameters : TemplateParameter list) (astRoot:list<ITree>) (tree:ITree) (fileTokens:array<IToken>) (alreadyTakenComments:System.Collections.Generic.List<IToken>) : list<SequenceChild>= 
     let CreateChild(x:ITree) = 
         match x.Type with
         | asn1Parser.SEQUENCE_ITEM ->
@@ -226,7 +239,7 @@ and CreateSequenceChild (astRoot:list<ITree>) (tree:ITree) (fileTokens:array<ITo
             let typeDef = getChildByType(x, asn1Parser.TYPE_DEF)
             let optionalVal = getOptionalChildByType(x, asn1Parser.OPTIONAL)
             let defVal = getOptionalChildByType(x, asn1Parser.DEFAULT_VALUE)
-            let chType = CreateType astRoot typeDef fileTokens alreadyTakenComments
+            let chType = CreateType tasParameters astRoot typeDef fileTokens alreadyTakenComments
             let chInfo =
                 { 
                     ChildInfo.Name = lid.TextL; 
@@ -388,26 +401,27 @@ let CreateTemplateParameter (astRoot:list<ITree>) (tree:ITree) (fileTokens:array
     match tree.Type with
     |asn1Parser.TYPE_PARAM  -> TypeParameter(tree.GetChild(0).TextL)
     |asn1Parser.VALUE_PARAM -> 
-        let Type = CreateType astRoot (tree.GetChild(0)) fileTokens alreadyTakenComments; 
+        let Type = CreateType [] astRoot (tree.GetChild(0)) fileTokens alreadyTakenComments; 
         ValueParameter (Type, tree.GetChild(1).TextL)
     | _ -> raise (BugErrorException("Bug in CreateConstraint"))
     
 
 let CreateTypeAssigment (astRoot:list<ITree>) (tree:ITree) (fileTokens:array<IToken>) (alreadyTakenComments:System.Collections.Generic.List<IToken>) = 
-    { 
-        TypeAssignment.Name = tree.GetChild(0).TextL;
-        Type = CreateType astRoot (tree.GetChild(1)) fileTokens alreadyTakenComments; 
-        Parameters = 
+    let parameters = 
             match tree.GetOptChild asn1Parser.PARAM_LIST with
             | None          -> []
             | Some(prmList) -> prmList.Children |> List.map(fun x -> CreateTemplateParameter astRoot x fileTokens alreadyTakenComments)
+    { 
+        TypeAssignment.Name = tree.GetChild(0).TextL;
+        Type = CreateType parameters astRoot (tree.GetChild(1)) fileTokens alreadyTakenComments; 
+        Parameters = parameters
         Comments = Antlr.Comment.GetComments(fileTokens, alreadyTakenComments, fileTokens.[tree.TokenStopIndex].Line, tree.TokenStartIndex - 1, tree.TokenStopIndex + 1)
     }
 
 let CreateValueAssigment (astRoot:list<ITree>) (tree:ITree) = 
     let alreadyTakenComments = System.Collections.Generic.List<IToken>()
     let name = tree.GetChild(0).TextL;
-    let typ = CreateType astRoot (tree.GetChild(1)) [||] alreadyTakenComments
+    let typ = CreateType [] astRoot (tree.GetChild(1)) [||] alreadyTakenComments
     {
         ValueAssignment.Name = name
         Type = typ
