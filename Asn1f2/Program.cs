@@ -194,6 +194,7 @@ namespace Asn1f2
                     generateEqualFunctions, cmdArgs.GetOptionalArgument("typePrefix", ""), cmdArgs.HasArgument("oss"), 
                     astXmlFile, icdUperHtmlFileName, icdAcnHtmlFileName));
 
+            //PrintAsn1.DoWork(asn1Ast0, outDir, ".0.asn1");
             CheckAsn1.CheckFiles(asn1Ast0);
 
             if (astXmlFile != "")

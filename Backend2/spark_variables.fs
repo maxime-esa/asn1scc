@@ -129,7 +129,7 @@ let rec PrintAsn1Value (v:Asn1Value) bChoicesInline bPrintRealNegsAsStrings (t:A
         | true  -> sv.PrintChoiceValue  (ToC sTasName) ch.CName chVal (ch.CName_Present Spark)
         | false -> sv.PrintChoiceValue_setters (ToC sTasName) ch.CName chVal
     | NullValue, NullType                           -> "0"
-    | _                                         -> raise(BugErrorException "Invalid Compination")
+    | _                                         -> raise(BugErrorException "Invalid combination")
 
 
 

@@ -192,3 +192,25 @@ let getTasByName  (tsName:StringLoc) (m:Asn1Module) =
 
 
 let getTypeAssigment r m t = m |> getModuleByName r |> getTasByName t
+
+let rec TryGetActualType (t:Asn1Type) (r:AstRoot) =
+    match t.Kind with
+    | ReferenceType(mn,tasname, _) ->
+        let mods = r.Files |> List.collect (fun x -> x.Modules) 
+        match  mods |> Seq.tryFind(fun m -> m.Name = mn) with
+        | Some newmod ->
+            match newmod.TypeAssignments |> Seq.tryFind(fun tas -> tas.Name.Value = tasname.Value) with
+            | Some tas  -> TryGetActualType tas.Type r
+            | None      -> None
+        | None              -> None
+    | _                         -> Some t
+
+
+let rec GetActualType (t:Asn1Type) (r:AstRoot) =
+    match t.Kind with
+    | ReferenceType(mn,tasname, _) ->
+        match TryGetActualType t r with
+        | Some t    -> t
+        | None      -> raise(SemanticError(tasname.Location, sprintf "Reference type: %s.%s can not be resolved" mn.Value tasname.Value ))
+    
+    | _                         -> t

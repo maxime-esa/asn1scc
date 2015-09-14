@@ -5,16 +5,30 @@ PrintAsn1File(arrsModules) ::= <<
 >>
 
 
-PrintModule(sName, arrsTas, arrsVas) ::= <<
+PrintModule(sName, arrsTas, arrsVas, sExports, arrsImportsFromModule) ::= <<
 <sName> DEFINITIONS AUTOMATIC TAGS ::= BEGIN
 
-<arrsTas: {tas|<tas>}; separator="\n">
+    EXPORTS
+        <sExports>
+    ;
+<if(arrsImportsFromModule)>
+    IMPORTS
+        <arrsImportsFromModule; separator="\n\n">
+    ;
+<endif>
 
-<arrsVas: {vas|<vas>}; separator="\n">
+    
+    <arrsTas: {tas|<tas>}; separator="\n">
+
+    <arrsVas: {vas|<vas>}; separator="\n">
 
 END
 >>
 
+
+PrintModuleImportFromModule(arrsImports, sModName) ::= <<
+<arrsImports; separator = ", "> FROM <sModName>
+>>
 
 PrintTypeAssigment(sName, sType) ::= "<sName> ::= <sType>"
 

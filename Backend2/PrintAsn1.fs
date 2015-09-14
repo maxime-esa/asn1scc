@@ -92,9 +92,17 @@ let PrintTypeAss (t:TypeAssignment) m = ASN.PrintTypeAssigment t.Name.Value (Pri
 let PrintValueAss (v:ValueAssignment) m = ASN.PrintValueAssigment v.Name.Value (PrintType v.Type m) (PrintAsn1Value v.Value)
 
 let PrintModule (m:Asn1Module) =
+    let exports =
+        match m.Exports with
+        | All               -> "ALL"
+        | OnlySome exps     -> exps |> Seq.StrJoin ", "
+    let importsFromModule =
+        m.Imports |>
+        List.map(fun im -> ASN.PrintModuleImportFromModule ( (im.Types @ im.Values) |> List.map(fun s -> s.Value)) im.Name.Value )
+
     let tases = m.TypeAssignments |> Seq.map(fun x -> PrintTypeAss x m) |> Seq.toArray
     let vases = m.ValueAssignments |> Seq.map(fun x -> PrintValueAss x m)|> Seq.toArray
-    ASN.PrintModule m.Name.Value tases vases
+    ASN.PrintModule m.Name.Value tases vases exports importsFromModule
 
 let PrintFile (f:Asn1File) outDir newFileExt =
     let modules = f.Modules |> Seq.map PrintModule |> Seq.toArray

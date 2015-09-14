@@ -126,29 +126,29 @@
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <Target Name="BeforeBuild">
-	<ItemGroup>
-		<ResourceFilesToCopy Include="$(SolutionDir)SPARK_RTL/adaasn1rtl.*" />
-		<ResourceFilesToCopy Include="$(SolutionDir)SPARK_RTL/IgnoredExaminerWarnings.wrn" />
-		<ResourceFilesToCopy Include="$(SolutionDir)SPARK_RTL/gnat.cfg" />
-		<ResourceFilesToCopy Include="$(SolutionDir)SPARK_RTL/run.sh" />
-		<ResourceFilesToCopy Include="$(SolutionDir)SPARK_RTL/GPS_project.gpr" />
-		<ResourceFilesToCopy Include="$(SolutionDir)asn1crt/asn1crt.c" />
-		<ResourceFilesToCopy Include="$(SolutionDir)asn1crt/asn1crt.h" />
-		<ResourceFilesToCopy Include="$(SolutionDir)asn1crt/Acn.c" />
-		<ResourceFilesToCopy Include="$(SolutionDir)asn1crt/ber.c" />
-		<ResourceFilesToCopy Include="$(SolutionDir)asn1crt/xer.c" />
-		<ResourceFilesToCopy Include="$(SolutionDir)asn1crt/real.c" />
-	</ItemGroup>
-	<PropertyGroup>
-		<ResourcesDir>$(ProjectDir)/Resources</ResourcesDir>
-	</PropertyGroup>
+    <ItemGroup>
+      <ResourceFilesToCopy Include="$(SolutionDir)SPARK_RTL/adaasn1rtl.*" />
+      <ResourceFilesToCopy Include="$(SolutionDir)SPARK_RTL/IgnoredExaminerWarnings.wrn" />
+      <ResourceFilesToCopy Include="$(SolutionDir)SPARK_RTL/gnat.cfg" />
+      <ResourceFilesToCopy Include="$(SolutionDir)SPARK_RTL/run.sh" />
+      <ResourceFilesToCopy Include="$(SolutionDir)SPARK_RTL/GPS_project.gpr" />
+      <ResourceFilesToCopy Include="$(SolutionDir)asn1crt/asn1crt.c" />
+      <ResourceFilesToCopy Include="$(SolutionDir)asn1crt/asn1crt.h" />
+      <ResourceFilesToCopy Include="$(SolutionDir)asn1crt/Acn.c" />
+      <ResourceFilesToCopy Include="$(SolutionDir)asn1crt/ber.c" />
+      <ResourceFilesToCopy Include="$(SolutionDir)asn1crt/xer.c" />
+      <ResourceFilesToCopy Include="$(SolutionDir)asn1crt/real.c" />
+    </ItemGroup>
+    <PropertyGroup>
+      <ResourcesDir>$(ProjectDir)/Resources</ResourcesDir>
+    </PropertyGroup>
     <MakeDir Directories="$(ResourcesDir)" />
     <Copy SourceFiles="@(ResourceFilesToCopy)" DestinationFolder="$(ResourcesDir)" />
   </Target>
   <Target Name="AfterBuild">
-	<ItemGroup>
-		<StgFilesToCopy Include="$(SolutionDir)*/*.stg" />
-	</ItemGroup>
-	<Copy SourceFiles="@(StgFilesToCopy)" DestinationFolder="$(OutputPath)" />
+    <ItemGroup>
+      <StgFilesToCopy Include="$(SolutionDir)*/*.stg" />
+    </ItemGroup>
+    <Copy SourceFiles="@(StgFilesToCopy)" DestinationFolder="$(OutputPath)" />
   </Target>
 </Project>
