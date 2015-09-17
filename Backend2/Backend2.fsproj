@@ -69,7 +69,6 @@
     <Compile Include="spark_body.fs" />
     <Compile Include="spark_automatic_test_cases.fs" />
     <Compile Include="spark_main.fs" />
-    <Compile Include="XmlAst.fs" />
     <Compile Include="icdUper.fs" />
     <Compile Include="genericBackend.fs" />
     <Compile Include="icdAcn.fs" />

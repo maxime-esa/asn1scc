@@ -18,8 +18,8 @@ FileXml(sFileName, arrsModules) ::= <<
 </Asn1File>
 >>
 
-ModuleXml(sName, sCName, arrsImportedModules, arrsExpTypes, arrsExpVars, arrsTases, arrsVases, bAllTypesExported) ::=<<
-<Asn1Module ID="$sName$" ExportAll="$bAllTypesExported$">
+ModuleXml(sName, sCName, arrsImportedModules, arrsExpTypes, arrsExpVars, arrsTases, arrsVases) ::=<<
+<Asn1Module ID="$sName$">
 <ExportedTypes>
     $arrsExpTypes:{x|<ExportedType Name="$x$" />};separator="\n"$ 
 </ExportedTypes>
@@ -161,17 +161,16 @@ ContractExprMinMax(sPattern, sMin, sMax, bFixedSize) ::= ""
 ContractExprSize(sPattern, sMin, sMax, bFixedSize) ::= ""
 ContractExprSequence(arrsChildren) ::= ""
 /* Print Values (not implemented yet for python) */
-Print_IntegerValue(nVal) ::= ""
-Print_RealValue(dVal) ::= ""
-Print_StringValue(v) ::= ""
+Print_IntegerValue(nVal) ::= "$nVal$"    
+Print_RealValue(dVal) ::= "$dVal$"       
+Print_StringValue(v) ::= "\"$v$\""     
 Print_TrueValue() ::= "true"
 Print_FalseValue() ::= "false"
-Print_BitStringValue(v) ::= ""
-Print_OctetStringValue(arruOctets) ::= ""
-Print_RefValue(sName) ::= ""
-Print_SeqOfValue(arrsValues) ::= ""
-Print_SeqValue_Child(sName, sChildValue) ::= ""
-Print_SeqValue(arrsValues) ::= ""
-Print_ChValue(sAltName,sAltValue) ::= ""
-Print_NullValue() ::= ""
-
+Print_BitStringValue(v) ::= "$v$"  
+Print_OctetStringValue(arruOctets) ::= "'$arruOctets:{b|$b;format=\"X2\"$}$'H"
+Print_RefValue(sName) ::= "$sName$"        
+Print_SeqOfValue(arrsValues) ::= "{$arrsValues: {ch|$ch$}; separator=\", \"$}"
+Print_SeqValue_Child(sName, sChildValue) ::= "$sName$ $sChildValue$"
+Print_SeqValue(arrsValues) ::= "{$arrsValues: {ch|$ch$}; separator=\", \"$}"        
+Print_ChValue(sAltName,sAltValue) ::= "$sAltName$:$sAltValue$"         
+Print_NullValue() ::= "NULL"       

@@ -171,7 +171,14 @@ namespace Asn1f2
                 encodings.Add(ParameterizedAsn1Ast.Asn1Encoding.BER);
 
             var asn1Files = ParseAsn1InputFiles(asn1InputFiles);
+
             var astXmlFile = cmdArgs.GetOptionalArgument("ast", "");
+            if (!String.IsNullOrEmpty(astXmlFile) && !(astXmlFile.ToLower().EndsWith(".xml")))
+            {
+                Console.Error.WriteLine("Invalid output filename '{0}'\nGenerated ast xml files must have an .xml extension.", astXmlFile);
+                return 4;
+            }
+
             var customStg = cmdArgs.GetOptionalArgument("customStg", "");
 
 
@@ -200,7 +207,11 @@ namespace Asn1f2
             if (astXmlFile != "")
             {
                 var renamePolicy = getRenamePolicy(cmdArgs, ParameterizedAsn1Ast.EnumRenamePolicy.SelectiveEnumerants);
-                XmlAst.DoWork(EnsureUniqueEnumNames.DoWork(asn1Ast0, renamePolicy));
+                var uniqueEnums = EnsureUniqueEnumNames.DoWork(asn1Ast0, renamePolicy);
+                //XmlAst.DoWork(uniqueEnums);
+
+                genericBackend.DoWork(uniqueEnums, "xml.stg", uniqueEnums.AstXmlAbsFileName);
+
                 return 0;
             }
 

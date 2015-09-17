@@ -1,0 +1,1196 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ASN1AST>
+    <Asn1File FileName="03-TERMA.asn1">
+        <Asn1Module ID="Standard-Datatypes" ExportAll="True">
+        <ExportedTypes>
+            <ExportedType Name="Standard-Boolean" />
+            <ExportedType Name="Unsigned-Integer" />
+            <ExportedType Name="Signed-Integer" />
+            <ExportedType Name="Real-1" />
+            <ExportedType Name="Real-2" /> 
+        </ExportedTypes>
+        <ExportedVariables>
+         
+        </ExportedVariables>
+        <ImportedModules>
+        </ImportedModules>
+        <TypeAssignments>
+            <TypeAssignment Name="Standard-Boolean" Line="6" CharPositionInLine="4">
+                <Type Line="6" CharPositionInLine="25">
+                    <BooleanType />
+                </Type>
+            </TypeAssignment>
+            <TypeAssignment Name="Unsigned-Integer" Line="9" CharPositionInLine="4">
+                <Type Line="9" CharPositionInLine="25">
+                    <IntegerType Min="0" Max="2147483647"/>
+                </Type>
+            </TypeAssignment>
+            <TypeAssignment Name="Signed-Integer" Line="12" CharPositionInLine="4">
+                <Type Line="12" CharPositionInLine="23">
+                    <IntegerType Min="-2147483648" Max="2147483647"/>
+                </Type>
+            </TypeAssignment>
+            <TypeAssignment Name="Real-1" Line="15" CharPositionInLine="4">
+                <Type Line="15" CharPositionInLine="15">
+                    <RealType Min="-1E+95" Max="1E+95"/>
+                </Type>
+            </TypeAssignment>
+            <TypeAssignment Name="Real-2" Line="19" CharPositionInLine="4">
+                <Type Line="19" CharPositionInLine="15">
+                    <RealType Min="-1E+300" Max="1E+300"/>
+                </Type>
+            </TypeAssignment>
+        </TypeAssignments>
+        <VariablesAssignments>
+        </VariablesAssignments>
+        </Asn1Module>
+        <Asn1Module ID="Event-Action" ExportAll="True">
+        <ExportedTypes>
+            <ExportedType Name="Event-Action-Service-Report" /> 
+        </ExportedTypes>
+        <ExportedVariables>
+         
+        </ExportedVariables>
+        <ImportedModules>
+        </ImportedModules>
+        <TypeAssignments>
+            <TypeAssignment Name="Event-Action-Service-Report" Line="27" CharPositionInLine="4">
+                <Type Line="27" CharPositionInLine="36">
+                    <ChoiceType>
+                        <ChoiceChild VarName="foo" Line="28" CharPositionInLine="8" EnumID ="foo_PRESENT">
+                            <Type Line="28" CharPositionInLine="12">
+                                <IntegerType Min="0" Max="10"/>
+                            </Type>
+                        </ChoiceChild>
+                    </ChoiceType>
+                </Type>
+            </TypeAssignment>
+        </TypeAssignments>
+        <VariablesAssignments>
+        </VariablesAssignments>
+        </Asn1Module>
+        <Asn1Module ID="Onboard-Monitoring" ExportAll="True">
+        <ExportedTypes>
+            <ExportedType Name="Onboard-Monitoring-Service-Report" />
+            <ExportedType Name="Check-Transition-Report" />
+            <ExportedType Name="Transition-Report" />
+            <ExportedType Name="Checking-Status" />
+            <ExportedType Name="Parameter-ID" />
+            <ExportedType Name="Parameter-Value" />
+            <ExportedType Name="On-Board-Time" /> 
+        </ExportedTypes>
+        <ExportedVariables>
+         
+        </ExportedVariables>
+        <ImportedModules>
+            <ImportedModule ID="Onboard-Parameters">
+                <ImportedTypes>
+                    <ImportedType Name="Parameter-ID" />
+                    <ImportedType Name="Parameter-Value" />
+                    <ImportedType Name="On-Board-Time" />
+                </ImportedTypes>
+                <ImportedVariables>
+                    <ImportedVariable Name="number-of-onboard-parameters" />
+                </ImportedVariables>
+            </ImportedModule>
+        </ImportedModules>
+        <TypeAssignments>
+            <TypeAssignment Name="Onboard-Monitoring-Service-Report" Line="45" CharPositionInLine="4">
+                <Type Line="45" CharPositionInLine="42">
+                    <ChoiceType>
+                        <ChoiceChild VarName="transition" Line="46" CharPositionInLine="8" EnumID ="transition_PRESENT">
+                            <Type Line="46" CharPositionInLine="19">
+                                <ReferenceType ReferencedTypeName="Check-Transition-Report" Min="0" Max="100"/>
+                            </Type>
+                        </ChoiceChild>
+                    </ChoiceType>
+                </Type>
+            </TypeAssignment>
+            <TypeAssignment Name="Check-Transition-Report" Line="49" CharPositionInLine="4">
+                <Type Line="49" CharPositionInLine="32">
+                    <SequenceOfType Min="0" Max="100">
+                        <Type Line="49" CharPositionInLine="78">
+                            <ReferenceType ReferencedTypeName="Transition-Report"/>
+                        </Type>
+                    </SequenceOfType>
+                </Type>
+            </TypeAssignment>
+            <TypeAssignment Name="Transition-Report" Line="51" CharPositionInLine="4">
+                <Type Line="51" CharPositionInLine="26">
+                    <SequenceType>
+                        <SequenceOrSetChild VarName="id" Optional="False" Line="52" CharPositionInLine="8">
+                            <Type Line="52" CharPositionInLine="11">
+                                <ReferenceType ReferencedTypeName="Parameter-ID" ReferencedModName="Onboard-Parameters"/>
+                            </Type>
+                        </SequenceOrSetChild>
+                        <SequenceOrSetChild VarName="value" Optional="False" Line="53" CharPositionInLine="8">
+                            <Type Line="53" CharPositionInLine="14">
+                                <ReferenceType ReferencedTypeName="Parameter-Value" ReferencedModName="Onboard-Parameters"/>
+                            </Type>
+                        </SequenceOrSetChild>
+                        <SequenceOrSetChild VarName="limit-crossed" Optional="False" Line="54" CharPositionInLine="8">
+                            <Type Line="54" CharPositionInLine="22">
+                                <ReferenceType ReferencedTypeName="Parameter-Value" ReferencedModName="Onboard-Parameters"/>
+                            </Type>
+                        </SequenceOrSetChild>
+                        <SequenceOrSetChild VarName="previous-checking-status" Optional="False" Line="55" CharPositionInLine="8">
+                            <Type Line="55" CharPositionInLine="33">
+                                <ReferenceType ReferencedTypeName="Checking-Status"/>
+                            </Type>
+                        </SequenceOrSetChild>
+                        <SequenceOrSetChild VarName="current-checking-status" Optional="False" Line="56" CharPositionInLine="8">
+                            <Type Line="56" CharPositionInLine="32">
+                                <ReferenceType ReferencedTypeName="Checking-Status"/>
+                            </Type>
+                        </SequenceOrSetChild>
+                        <SequenceOrSetChild VarName="transition-time" Optional="False" Line="57" CharPositionInLine="8">
+                            <Type Line="57" CharPositionInLine="24">
+                                <ReferenceType ReferencedTypeName="On-Board-Time" ReferencedModName="Onboard-Parameters"/>
+                            </Type>
+                        </SequenceOrSetChild>
+                    </SequenceType>
+                </Type>
+            </TypeAssignment>
+            <TypeAssignment Name="Checking-Status" Line="60" CharPositionInLine="4">
+                <Type Line="60" CharPositionInLine="24">
+                    <EnumeratedType Extensible="False" ValuesAutoCalculated="False">
+                        <EnumValues>
+                            <EnumValue StringValue="witin-limits" IntValue="0" Line="61" CharPositionInLine="8" EnumID ="witin_limits" />
+                            <EnumValue StringValue="unchecked" IntValue="1" Line="62" CharPositionInLine="8" EnumID ="unchecked" />
+                            <EnumValue StringValue="below-low-limit" IntValue="4" Line="63" CharPositionInLine="8" EnumID ="below_low_limit" />
+                            <EnumValue StringValue="above-high-limit" IntValue="5" Line="64" CharPositionInLine="8" EnumID ="above_high_limit" />
+                        </EnumValues>
+                    </EnumeratedType>
+                </Type>
+            </TypeAssignment>
+        </TypeAssignments>
+        <VariablesAssignments>
+        </VariablesAssignments>
+        </Asn1Module>
+        <Asn1Module ID="Telecommand-Verification" ExportAll="True">
+        <ExportedTypes>
+            <ExportedType Name="Telecommand-Packet-ID" />
+            <ExportedType Name="Verification-Failure-Code" />
+            <ExportedType Name="Telecommand-Verification-Service-Report" />
+            <ExportedType Name="Successful-Telecommand-Verification-Report" />
+            <ExportedType Name="Failing-Telecommand-Verification-Report" /> 
+        </ExportedTypes>
+        <ExportedVariables>
+         
+        </ExportedVariables>
+        <ImportedModules>
+        </ImportedModules>
+        <TypeAssignments>
+            <TypeAssignment Name="Telecommand-Packet-ID" Line="73" CharPositionInLine="4">
+                <Type Line="73" CharPositionInLine="30">
+                    <IntegerType Min="0" Max="10"/>
+                </Type>
+            </TypeAssignment>
+            <TypeAssignment Name="Verification-Failure-Code" Line="75" CharPositionInLine="4">
+                <Type Line="75" CharPositionInLine="34">
+                    <IntegerType Min="0" Max="10"/>
+                </Type>
+            </TypeAssignment>
+            <TypeAssignment Name="Telecommand-Verification-Service-Report" Line="77" CharPositionInLine="4">
+                <Type Line="77" CharPositionInLine="48">
+                    <ChoiceType>
+                        <ChoiceChild VarName="success" Line="78" CharPositionInLine="8" EnumID ="success_PRESENT">
+                            <Type Line="78" CharPositionInLine="16">
+                                <ReferenceType ReferencedTypeName="Successful-Telecommand-Verification-Report"/>
+                            </Type>
+                        </ChoiceChild>
+                        <ChoiceChild VarName="failure" Line="79" CharPositionInLine="8" EnumID ="failure_PRESENT">
+                            <Type Line="79" CharPositionInLine="16">
+                                <ReferenceType ReferencedTypeName="Failing-Telecommand-Verification-Report"/>
+                            </Type>
+                        </ChoiceChild>
+                    </ChoiceType>
+                </Type>
+            </TypeAssignment>
+            <TypeAssignment Name="Successful-Telecommand-Verification-Report" Line="82" CharPositionInLine="4">
+                <Type Line="82" CharPositionInLine="51">
+                    <SequenceType>
+                        <SequenceOrSetChild VarName="packet-id" Optional="False" Line="83" CharPositionInLine="8">
+                            <Type Line="83" CharPositionInLine="18">
+                                <ReferenceType ReferencedTypeName="Telecommand-Packet-ID" Min="0" Max="10"/>
+                            </Type>
+                        </SequenceOrSetChild>
+                    </SequenceType>
+                </Type>
+            </TypeAssignment>
+            <TypeAssignment Name="Failing-Telecommand-Verification-Report" Line="86" CharPositionInLine="4">
+                <Type Line="86" CharPositionInLine="48">
+                    <SequenceType>
+                        <SequenceOrSetChild VarName="packet-id" Optional="False" Line="87" CharPositionInLine="8">
+                            <Type Line="87" CharPositionInLine="18">
+                                <ReferenceType ReferencedTypeName="Telecommand-Packet-ID" Min="0" Max="10"/>
+                            </Type>
+                        </SequenceOrSetChild>
+                        <SequenceOrSetChild VarName="code" Optional="False" Line="88" CharPositionInLine="8">
+                            <Type Line="88" CharPositionInLine="13">
+                                <ReferenceType ReferencedTypeName="Verification-Failure-Code" Min="0" Max="10"/>
+                            </Type>
+                        </SequenceOrSetChild>
+                    </SequenceType>
+                </Type>
+            </TypeAssignment>
+        </TypeAssignments>
+        <VariablesAssignments>
+        </VariablesAssignments>
+        </Asn1Module>
+        <Asn1Module ID="Onboard-Parameters" ExportAll="True">
+        <ExportedTypes>
+            <ExportedType Name="Parameter-ID" />
+            <ExportedType Name="Parameter-ID-Set" />
+            <ExportedType Name="Parameter-Value" />
+            <ExportedType Name="Parameter-Value-Set" />
+            <ExportedType Name="Var-Bit-String" />
+            <ExportedType Name="Fixed-Bit-String-1" />
+            <ExportedType Name="Fixed-Bit-String-2" />
+            <ExportedType Name="Fixed-Bit-String-3" />
+            <ExportedType Name="Fixed-Bit-String-4" />
+            <ExportedType Name="Fixed-Bit-String-5" />
+            <ExportedType Name="Fixed-Bit-String-6" />
+            <ExportedType Name="Fixed-Bit-String-7" />
+            <ExportedType Name="Fixed-Bit-String-8" />
+            <ExportedType Name="Fixed-Bit-String-9" />
+            <ExportedType Name="Fixed-Bit-String-10" />
+            <ExportedType Name="Fixed-Bit-String-11" />
+            <ExportedType Name="Fixed-Bit-String-12" />
+            <ExportedType Name="Fixed-Bit-String-13" />
+            <ExportedType Name="Fixed-Bit-String-14" />
+            <ExportedType Name="Fixed-Bit-String-15" />
+            <ExportedType Name="Fixed-Bit-String-16" />
+            <ExportedType Name="Var-Octet-String" />
+            <ExportedType Name="Fixed-Octet-String-1" />
+            <ExportedType Name="Fixed-Octet-String-2" />
+            <ExportedType Name="Fixed-Octet-String-3" />
+            <ExportedType Name="Fixed-Octet-String-4" />
+            <ExportedType Name="Fixed-Octet-String-5" />
+            <ExportedType Name="Fixed-Octet-String-6" />
+            <ExportedType Name="Fixed-Octet-String-7" />
+            <ExportedType Name="Fixed-Octet-String-8" />
+            <ExportedType Name="Fixed-Octet-String-9" />
+            <ExportedType Name="Fixed-Octet-String-10" />
+            <ExportedType Name="Fixed-Octet-String-11" />
+            <ExportedType Name="Fixed-Octet-String-12" />
+            <ExportedType Name="Fixed-Octet-String-13" />
+            <ExportedType Name="Fixed-Octet-String-14" />
+            <ExportedType Name="Fixed-Octet-String-15" />
+            <ExportedType Name="Fixed-Octet-String-16" />
+            <ExportedType Name="Var-Character-String" />
+            <ExportedType Name="Fixed-Character-String-1" />
+            <ExportedType Name="Fixed-Character-String-2" />
+            <ExportedType Name="Fixed-Character-String-3" />
+            <ExportedType Name="Fixed-Character-String-4" />
+            <ExportedType Name="Fixed-Character-String-5" />
+            <ExportedType Name="Fixed-Character-String-6" />
+            <ExportedType Name="Fixed-Character-String-7" />
+            <ExportedType Name="Fixed-Character-String-8" />
+            <ExportedType Name="Fixed-Character-String-9" />
+            <ExportedType Name="Fixed-Character-String-10" />
+            <ExportedType Name="Fixed-Character-String-11" />
+            <ExportedType Name="Fixed-Character-String-12" />
+            <ExportedType Name="Fixed-Character-String-13" />
+            <ExportedType Name="Fixed-Character-String-14" />
+            <ExportedType Name="Fixed-Character-String-15" />
+            <ExportedType Name="Fixed-Character-String-16" />
+            <ExportedType Name="On-Board-Coarse-Time" />
+            <ExportedType Name="On-Board-Fine-Time" />
+            <ExportedType Name="Time-Component-Rep-Spec" />
+            <ExportedType Name="Time-Rep-Spec" />
+            <ExportedType Name="On-Board-Time" />
+            <ExportedType Name="Pus-Time" />
+            <ExportedType Name="Pus-Relative-Time" />
+            <ExportedType Name="Unsigned-Integer" /> 
+        </ExportedTypes>
+        <ExportedVariables>
+            <ExportedVariable Name="number-of-onboard-parameters" /> 
+        </ExportedVariables>
+        <ImportedModules>
+            <ImportedModule ID="Standard-Datatypes">
+                <ImportedTypes>
+                    <ImportedType Name="Unsigned-Integer" />
+                </ImportedTypes>
+                <ImportedVariables>
+                </ImportedVariables>
+            </ImportedModule>
+        </ImportedModules>
+        <TypeAssignments>
+            <TypeAssignment Name="Parameter-ID" Line="103" CharPositionInLine="4">
+                <Type Line="103" CharPositionInLine="21">
+                    <EnumeratedType Extensible="False" ValuesAutoCalculated="False">
+                        <EnumValues>
+                            <EnumValue StringValue="voltage-1" IntValue="0" Line="104" CharPositionInLine="8" EnumID ="voltage_1" />
+                            <EnumValue StringValue="voltage-2" IntValue="1" Line="105" CharPositionInLine="8" EnumID ="voltage_2" />
+                        </EnumValues>
+                    </EnumeratedType>
+                </Type>
+            </TypeAssignment>
+            <TypeAssignment Name="Parameter-ID-Set" Line="108" CharPositionInLine="4">
+                <Type Line="108" CharPositionInLine="25">
+                    <SequenceOfType Min="0" Max="100">
+                        <Type Line="108" CharPositionInLine="71">
+                            <ReferenceType ReferencedTypeName="Parameter-ID"/>
+                        </Type>
+                    </SequenceOfType>
+                </Type>
+            </TypeAssignment>
+            <TypeAssignment Name="Parameter-Value" Line="110" CharPositionInLine="4">
+                <Type Line="110" CharPositionInLine="24">
+                    <ChoiceType>
+                        <ChoiceChild VarName="type-1-0" Line="111" CharPositionInLine="8" EnumID ="type_1_0_PRESENT">
+                            <Type Line="111" CharPositionInLine="17">
+                                <ReferenceType ReferencedTypeName="Unsigned-Integer" Min="0" Max="2147483647" ReferencedModName="Standard-Datatypes"/>
+                            </Type>
+                        </ChoiceChild>
+                        <ChoiceChild VarName="type-1-1" Line="112" CharPositionInLine="8" EnumID ="type_1_1_PRESENT">
+                            <Type Line="112" CharPositionInLine="17">
+                                <ReferenceType ReferencedTypeName="Unsigned-Integer" Min="0" Max="2147483647" ReferencedModName="Standard-Datatypes"/>
+                            </Type>
+                        </ChoiceChild>
+                    </ChoiceType>
+                </Type>
+            </TypeAssignment>
+            <TypeAssignment Name="Parameter-Value-Set" Line="115" CharPositionInLine="4">
+                <Type Line="115" CharPositionInLine="28">
+                    <SequenceOfType Min="0" Max="100">
+                        <Type Line="115" CharPositionInLine="74">
+                            <ReferenceType ReferencedTypeName="Parameter-Value"/>
+                        </Type>
+                    </SequenceOfType>
+                </Type>
+            </TypeAssignment>
+            <TypeAssignment Name="Var-Bit-String" Line="117" CharPositionInLine="4">
+                <Type Line="117" CharPositionInLine="23">
+                    <SequenceOfType Min="0" Max="8">
+                        <Type Line="117" CharPositionInLine="48">
+                            <BooleanType />
+                        </Type>
+                    </SequenceOfType>
+                </Type>
+            </TypeAssignment>
+            <TypeAssignment Name="Fixed-Bit-String-1" Line="119" CharPositionInLine="4">
+                <Type Line="119" CharPositionInLine="28">
+                    <SequenceOfType Min="1" Max="1">
+                        <Type Line="119" CharPositionInLine="51">
+                            <BooleanType />
+                        </Type>
+                    </SequenceOfType>
+                </Type>
+            </TypeAssignment>
+            <TypeAssignment Name="Fixed-Bit-String-2" Line="120" CharPositionInLine="4">
+                <Type Line="120" CharPositionInLine="28">
+                    <SequenceOfType Min="2" Max="2">
+                        <Type Line="120" CharPositionInLine="51">
+                            <BooleanType />
+                        </Type>
+                    </SequenceOfType>
+                </Type>
+            </TypeAssignment>
+            <TypeAssignment Name="Fixed-Bit-String-3" Line="121" CharPositionInLine="4">
+                <Type Line="121" CharPositionInLine="28">
+                    <SequenceOfType Min="3" Max="3">
+                        <Type Line="121" CharPositionInLine="51">
+                            <BooleanType />
+                        </Type>
+                    </SequenceOfType>
+                </Type>
+            </TypeAssignment>
+            <TypeAssignment Name="Fixed-Bit-String-4" Line="122" CharPositionInLine="4">
+                <Type Line="122" CharPositionInLine="28">
+                    <SequenceOfType Min="4" Max="4">
+                        <Type Line="122" CharPositionInLine="51">
+                            <BooleanType />
+                        </Type>
+                    </SequenceOfType>
+                </Type>
+            </TypeAssignment>
+            <TypeAssignment Name="Fixed-Bit-String-5" Line="123" CharPositionInLine="4">
+                <Type Line="123" CharPositionInLine="28">
+                    <SequenceOfType Min="5" Max="5">
+                        <Type Line="123" CharPositionInLine="51">
+                            <BooleanType />
+                        </Type>
+                    </SequenceOfType>
+                </Type>
+            </TypeAssignment>
+            <TypeAssignment Name="Fixed-Bit-String-6" Line="124" CharPositionInLine="4">
+                <Type Line="124" CharPositionInLine="28">
+                    <SequenceOfType Min="6" Max="6">
+                        <Type Line="124" CharPositionInLine="51">
+                            <BooleanType />
+                        </Type>
+                    </SequenceOfType>
+                </Type>
+            </TypeAssignment>
+            <TypeAssignment Name="Fixed-Bit-String-7" Line="125" CharPositionInLine="4">
+                <Type Line="125" CharPositionInLine="28">
+                    <SequenceOfType Min="7" Max="7">
+                        <Type Line="125" CharPositionInLine="51">
+                            <BooleanType />
+                        </Type>
+                    </SequenceOfType>
+                </Type>
+            </TypeAssignment>
+            <TypeAssignment Name="Fixed-Bit-String-8" Line="126" CharPositionInLine="4">
+                <Type Line="126" CharPositionInLine="28">
+                    <SequenceOfType Min="8" Max="8">
+                        <Type Line="126" CharPositionInLine="51">
+                            <BooleanType />
+                        </Type>
+                    </SequenceOfType>
+                </Type>
+            </TypeAssignment>
+            <TypeAssignment Name="Fixed-Bit-String-9" Line="127" CharPositionInLine="4">
+                <Type Line="127" CharPositionInLine="28">
+                    <SequenceOfType Min="9" Max="9">
+                        <Type Line="127" CharPositionInLine="51">
+                            <BooleanType />
+                        </Type>
+                    </SequenceOfType>
+                </Type>
+            </TypeAssignment>
+            <TypeAssignment Name="Fixed-Bit-String-10" Line="128" CharPositionInLine="4">
+                <Type Line="128" CharPositionInLine="28">
+                    <SequenceOfType Min="10" Max="10">
+                        <Type Line="128" CharPositionInLine="51">
+                            <BooleanType />
+                        </Type>
+                    </SequenceOfType>
+                </Type>
+            </TypeAssignment>
+            <TypeAssignment Name="Fixed-Bit-String-11" Line="129" CharPositionInLine="4">
+                <Type Line="129" CharPositionInLine="28">
+                    <SequenceOfType Min="11" Max="11">
+                        <Type Line="129" CharPositionInLine="51">
+                            <BooleanType />
+                        </Type>
+                    </SequenceOfType>
+                </Type>
+            </TypeAssignment>
+            <TypeAssignment Name="Fixed-Bit-String-12" Line="130" CharPositionInLine="4">
+                <Type Line="130" CharPositionInLine="28">
+                    <SequenceOfType Min="12" Max="12">
+                        <Type Line="130" CharPositionInLine="51">
+                            <BooleanType />
+                        </Type>
+                    </SequenceOfType>
+                </Type>
+            </TypeAssignment>
+            <TypeAssignment Name="Fixed-Bit-String-13" Line="131" CharPositionInLine="4">
+                <Type Line="131" CharPositionInLine="28">
+                    <SequenceOfType Min="13" Max="13">
+                        <Type Line="131" CharPositionInLine="51">
+                            <BooleanType />
+                        </Type>
+                    </SequenceOfType>
+                </Type>
+            </TypeAssignment>
+            <TypeAssignment Name="Fixed-Bit-String-14" Line="132" CharPositionInLine="4">
+                <Type Line="132" CharPositionInLine="28">
+                    <SequenceOfType Min="14" Max="14">
+                        <Type Line="132" CharPositionInLine="51">
+                            <BooleanType />
+                        </Type>
+                    </SequenceOfType>
+                </Type>
+            </TypeAssignment>
+            <TypeAssignment Name="Fixed-Bit-String-15" Line="133" CharPositionInLine="4">
+                <Type Line="133" CharPositionInLine="28">
+                    <SequenceOfType Min="15" Max="15">
+                        <Type Line="133" CharPositionInLine="51">
+                            <BooleanType />
+                        </Type>
+                    </SequenceOfType>
+                </Type>
+            </TypeAssignment>
+            <TypeAssignment Name="Fixed-Bit-String-16" Line="134" CharPositionInLine="4">
+                <Type Line="134" CharPositionInLine="28">
+                    <SequenceOfType Min="16" Max="16">
+                        <Type Line="134" CharPositionInLine="51">
+                            <BooleanType />
+                        </Type>
+                    </SequenceOfType>
+                </Type>
+            </TypeAssignment>
+            <TypeAssignment Name="Var-Octet-String" Line="136" CharPositionInLine="4">
+                <Type Line="136" CharPositionInLine="25">
+                    <OctetStringType Min="0" Max="8">
+                    </OctetStringType>
+                </Type>
+            </TypeAssignment>
+            <TypeAssignment Name="Fixed-Octet-String-1" Line="138" CharPositionInLine="4">
+                <Type Line="138" CharPositionInLine="30">
+                    <OctetStringType Min="1" Max="1">
+                    </OctetStringType>
+                </Type>
+            </TypeAssignment>
+            <TypeAssignment Name="Fixed-Octet-String-2" Line="139" CharPositionInLine="4">
+                <Type Line="139" CharPositionInLine="30">
+                    <OctetStringType Min="2" Max="2">
+                    </OctetStringType>
+                </Type>
+            </TypeAssignment>
+            <TypeAssignment Name="Fixed-Octet-String-3" Line="140" CharPositionInLine="4">
+                <Type Line="140" CharPositionInLine="30">
+                    <OctetStringType Min="3" Max="3">
+                    </OctetStringType>
+                </Type>
+            </TypeAssignment>
+            <TypeAssignment Name="Fixed-Octet-String-4" Line="141" CharPositionInLine="4">
+                <Type Line="141" CharPositionInLine="30">
+                    <OctetStringType Min="4" Max="4">
+                    </OctetStringType>
+                </Type>
+            </TypeAssignment>
+            <TypeAssignment Name="Fixed-Octet-String-5" Line="142" CharPositionInLine="4">
+                <Type Line="142" CharPositionInLine="30">
+                    <OctetStringType Min="5" Max="5">
+                    </OctetStringType>
+                </Type>
+            </TypeAssignment>
+            <TypeAssignment Name="Fixed-Octet-String-6" Line="143" CharPositionInLine="4">
+                <Type Line="143" CharPositionInLine="30">
+                    <OctetStringType Min="6" Max="6">
+                    </OctetStringType>
+                </Type>
+            </TypeAssignment>
+            <TypeAssignment Name="Fixed-Octet-String-7" Line="144" CharPositionInLine="4">
+                <Type Line="144" CharPositionInLine="30">
+                    <OctetStringType Min="7" Max="7">
+                    </OctetStringType>
+                </Type>
+            </TypeAssignment>
+            <TypeAssignment Name="Fixed-Octet-String-8" Line="145" CharPositionInLine="4">
+                <Type Line="145" CharPositionInLine="30">
+                    <OctetStringType Min="8" Max="8">
+                    </OctetStringType>
+                </Type>
+            </TypeAssignment>
+            <TypeAssignment Name="Fixed-Octet-String-9" Line="146" CharPositionInLine="4">
+                <Type Line="146" CharPositionInLine="30">
+                    <OctetStringType Min="9" Max="9">
+                    </OctetStringType>
+                </Type>
+            </TypeAssignment>
+            <TypeAssignment Name="Fixed-Octet-String-10" Line="147" CharPositionInLine="4">
+                <Type Line="147" CharPositionInLine="30">
+                    <OctetStringType Min="10" Max="10">
+                    </OctetStringType>
+                </Type>
+            </TypeAssignment>
+            <TypeAssignment Name="Fixed-Octet-String-11" Line="148" CharPositionInLine="4">
+                <Type Line="148" CharPositionInLine="30">
+                    <OctetStringType Min="11" Max="11">
+                    </OctetStringType>
+                </Type>
+            </TypeAssignment>
+            <TypeAssignment Name="Fixed-Octet-String-12" Line="149" CharPositionInLine="4">
+                <Type Line="149" CharPositionInLine="30">
+                    <OctetStringType Min="12" Max="12">
+                    </OctetStringType>
+                </Type>
+            </TypeAssignment>
+            <TypeAssignment Name="Fixed-Octet-String-13" Line="150" CharPositionInLine="4">
+                <Type Line="150" CharPositionInLine="30">
+                    <OctetStringType Min="13" Max="13">
+                    </OctetStringType>
+                </Type>
+            </TypeAssignment>
+            <TypeAssignment Name="Fixed-Octet-String-14" Line="151" CharPositionInLine="4">
+                <Type Line="151" CharPositionInLine="30">
+                    <OctetStringType Min="14" Max="14">
+                    </OctetStringType>
+                </Type>
+            </TypeAssignment>
+            <TypeAssignment Name="Fixed-Octet-String-15" Line="152" CharPositionInLine="4">
+                <Type Line="152" CharPositionInLine="30">
+                    <OctetStringType Min="15" Max="15">
+                    </OctetStringType>
+                </Type>
+            </TypeAssignment>
+            <TypeAssignment Name="Fixed-Octet-String-16" Line="153" CharPositionInLine="4">
+                <Type Line="153" CharPositionInLine="30">
+                    <OctetStringType Min="16" Max="16">
+                    </OctetStringType>
+                </Type>
+            </TypeAssignment>
+            <TypeAssignment Name="Var-Character-String" Line="155" CharPositionInLine="4">
+                <Type Line="155" CharPositionInLine="29">
+                    <OctetStringType Min="0" Max="100">
+                    </OctetStringType>
+                </Type>
+            </TypeAssignment>
+            <TypeAssignment Name="Fixed-Character-String-1" Line="157" CharPositionInLine="4">
+                <Type Line="157" CharPositionInLine="34">
+                    <OctetStringType Min="1" Max="1">
+                    </OctetStringType>
+                </Type>
+            </TypeAssignment>
+            <TypeAssignment Name="Fixed-Character-String-2" Line="158" CharPositionInLine="4">
+                <Type Line="158" CharPositionInLine="34">
+                    <OctetStringType Min="2" Max="2">
+                    </OctetStringType>
+                </Type>
+            </TypeAssignment>
+            <TypeAssignment Name="Fixed-Character-String-3" Line="159" CharPositionInLine="4">
+                <Type Line="159" CharPositionInLine="34">
+                    <OctetStringType Min="3" Max="3">
+                    </OctetStringType>
+                </Type>
+            </TypeAssignment>
+            <TypeAssignment Name="Fixed-Character-String-4" Line="160" CharPositionInLine="4">
+                <Type Line="160" CharPositionInLine="34">
+                    <OctetStringType Min="4" Max="4">
+                    </OctetStringType>
+                </Type>
+            </TypeAssignment>
+            <TypeAssignment Name="Fixed-Character-String-5" Line="161" CharPositionInLine="4">
+                <Type Line="161" CharPositionInLine="34">
+                    <OctetStringType Min="5" Max="5">
+                    </OctetStringType>
+                </Type>
+            </TypeAssignment>
+            <TypeAssignment Name="Fixed-Character-String-6" Line="162" CharPositionInLine="4">
+                <Type Line="162" CharPositionInLine="34">
+                    <OctetStringType Min="6" Max="6">
+                    </OctetStringType>
+                </Type>
+            </TypeAssignment>
+            <TypeAssignment Name="Fixed-Character-String-7" Line="163" CharPositionInLine="4">
+                <Type Line="163" CharPositionInLine="34">
+                    <OctetStringType Min="7" Max="7">
+                    </OctetStringType>
+                </Type>
+            </TypeAssignment>
+            <TypeAssignment Name="Fixed-Character-String-8" Line="164" CharPositionInLine="4">
+                <Type Line="164" CharPositionInLine="34">
+                    <OctetStringType Min="8" Max="8">
+                    </OctetStringType>
+                </Type>
+            </TypeAssignment>
+            <TypeAssignment Name="Fixed-Character-String-9" Line="165" CharPositionInLine="4">
+                <Type Line="165" CharPositionInLine="34">
+                    <OctetStringType Min="9" Max="9">
+                    </OctetStringType>
+                </Type>
+            </TypeAssignment>
+            <TypeAssignment Name="Fixed-Character-String-10" Line="166" CharPositionInLine="4">
+                <Type Line="166" CharPositionInLine="34">
+                    <OctetStringType Min="10" Max="10">
+                    </OctetStringType>
+                </Type>
+            </TypeAssignment>
+            <TypeAssignment Name="Fixed-Character-String-11" Line="167" CharPositionInLine="4">
+                <Type Line="167" CharPositionInLine="34">
+                    <OctetStringType Min="11" Max="11">
+                    </OctetStringType>
+                </Type>
+            </TypeAssignment>
+            <TypeAssignment Name="Fixed-Character-String-12" Line="168" CharPositionInLine="4">
+                <Type Line="168" CharPositionInLine="34">
+                    <OctetStringType Min="12" Max="12">
+                    </OctetStringType>
+                </Type>
+            </TypeAssignment>
+            <TypeAssignment Name="Fixed-Character-String-13" Line="169" CharPositionInLine="4">
+                <Type Line="169" CharPositionInLine="34">
+                    <OctetStringType Min="13" Max="13">
+                    </OctetStringType>
+                </Type>
+            </TypeAssignment>
+            <TypeAssignment Name="Fixed-Character-String-14" Line="170" CharPositionInLine="4">
+                <Type Line="170" CharPositionInLine="34">
+                    <OctetStringType Min="14" Max="14">
+                    </OctetStringType>
+                </Type>
+            </TypeAssignment>
+            <TypeAssignment Name="Fixed-Character-String-15" Line="171" CharPositionInLine="4">
+                <Type Line="171" CharPositionInLine="34">
+                    <OctetStringType Min="15" Max="15">
+                    </OctetStringType>
+                </Type>
+            </TypeAssignment>
+            <TypeAssignment Name="Fixed-Character-String-16" Line="172" CharPositionInLine="4">
+                <Type Line="172" CharPositionInLine="34">
+                    <OctetStringType Min="16" Max="16">
+                    </OctetStringType>
+                </Type>
+            </TypeAssignment>
+            <TypeAssignment Name="On-Board-Coarse-Time" Line="174" CharPositionInLine="4">
+                <Type Line="174" CharPositionInLine="29">
+                    <OctetStringType Min="4" Max="4">
+                    </OctetStringType>
+                </Type>
+            </TypeAssignment>
+            <TypeAssignment Name="On-Board-Fine-Time" Line="176" CharPositionInLine="4">
+                <Type Line="176" CharPositionInLine="27">
+                    <OctetStringType Min="3" Max="3">
+                    </OctetStringType>
+                </Type>
+            </TypeAssignment>
+            <TypeAssignment Name="Time-Component-Rep-Spec" Line="178" CharPositionInLine="4">
+                <Type Line="178" CharPositionInLine="32">
+                    <IntegerType Min="0" Max="3"/>
+                </Type>
+            </TypeAssignment>
+            <TypeAssignment Name="Time-Rep-Spec" Line="180" CharPositionInLine="4">
+                <Type Line="180" CharPositionInLine="22">
+                    <SequenceType>
+                        <SequenceOrSetChild VarName="coarse-time-rep" Optional="False" Line="181" CharPositionInLine="7">
+                            <Type Line="181" CharPositionInLine="23">
+                                <ReferenceType ReferencedTypeName="Time-Component-Rep-Spec" Min="0" Max="3"/>
+                            </Type>
+                        </SequenceOrSetChild>
+                        <SequenceOrSetChild VarName="fine-time-rep" Optional="False" Line="182" CharPositionInLine="7">
+                            <Type Line="182" CharPositionInLine="21">
+                                <ReferenceType ReferencedTypeName="Time-Component-Rep-Spec" Min="0" Max="3"/>
+                            </Type>
+                        </SequenceOrSetChild>
+                    </SequenceType>
+                </Type>
+            </TypeAssignment>
+            <TypeAssignment Name="On-Board-Time" Line="185" CharPositionInLine="4">
+                <Type Line="185" CharPositionInLine="22">
+                    <SequenceType>
+                        <SequenceOrSetChild VarName="p-field" Optional="False" Line="186" CharPositionInLine="7">
+                            <Type Line="186" CharPositionInLine="15">
+                                <ReferenceType ReferencedTypeName="Time-Rep-Spec"/>
+                            </Type>
+                        </SequenceOrSetChild>
+                        <SequenceOrSetChild VarName="coarse-time" Optional="False" Line="187" CharPositionInLine="7">
+                            <Type Line="187" CharPositionInLine="19">
+                                <ReferenceType ReferencedTypeName="On-Board-Coarse-Time" Min="4" Max="4"/>
+                            </Type>
+                        </SequenceOrSetChild>
+                        <SequenceOrSetChild VarName="fine-time" Optional="False" Line="188" CharPositionInLine="7">
+                            <Type Line="188" CharPositionInLine="17">
+                                <ReferenceType ReferencedTypeName="On-Board-Fine-Time" Min="3" Max="3"/>
+                            </Type>
+                        </SequenceOrSetChild>
+                    </SequenceType>
+                </Type>
+            </TypeAssignment>
+            <TypeAssignment Name="Pus-Time" Line="191" CharPositionInLine="4">
+                <Type Line="191" CharPositionInLine="17">
+                    <ReferenceType ReferencedTypeName="On-Board-Time"/>
+                </Type>
+            </TypeAssignment>
+            <TypeAssignment Name="Pus-Relative-Time" Line="193" CharPositionInLine="4">
+                <Type Line="193" CharPositionInLine="26">
+                    <ReferenceType ReferencedTypeName="On-Board-Time"/>
+                </Type>
+            </TypeAssignment>
+        </TypeAssignments>
+        <VariablesAssignments>
+            <VariableAssignment Name="number-of-onboard-parameters" Line="101" CharPositionInLine="4">
+                <Type Line="101" CharPositionInLine="33">
+                    <IntegerType Min="MIN" Max="MAX"/>
+                </Type>
+                <Value>100</Value>
+            </VariableAssignment>
+        </VariablesAssignments>
+        </Asn1Module>
+        <Asn1Module ID="Event-Reporting" ExportAll="True">
+        <ExportedTypes>
+            <ExportedType Name="Report-ID" />
+            <ExportedType Name="Event-Reporting-Service-Report" />
+            <ExportedType Name="Normal-Progress-Report" />
+            <ExportedType Name="Error-Anomaly-Report" />
+            <ExportedType Name="Low-Severity-Error-Anomaly-Report" />
+            <ExportedType Name="Medium-Severity-Error-Anomaly-Report" />
+            <ExportedType Name="High-Severity-Error-Anomaly-Report" /> 
+        </ExportedTypes>
+        <ExportedVariables>
+         
+        </ExportedVariables>
+        <ImportedModules>
+        </ImportedModules>
+        <TypeAssignments>
+            <TypeAssignment Name="Report-ID" Line="201" CharPositionInLine="4">
+                <Type Line="201" CharPositionInLine="18">
+                    <IntegerType Min="0" Max="255"/>
+                </Type>
+            </TypeAssignment>
+            <TypeAssignment Name="Event-Reporting-Service-Report" Line="203" CharPositionInLine="4">
+                <Type Line="203" CharPositionInLine="39">
+                    <ChoiceType>
+                        <ChoiceChild VarName="normal" Line="204" CharPositionInLine="8" EnumID ="normal_PRESENT">
+                            <Type Line="204" CharPositionInLine="16">
+                                <ReferenceType ReferencedTypeName="Normal-Progress-Report"/>
+                            </Type>
+                        </ChoiceChild>
+                        <ChoiceChild VarName="anomaly" Line="205" CharPositionInLine="8" EnumID ="anomaly_PRESENT">
+                            <Type Line="205" CharPositionInLine="16">
+                                <ReferenceType ReferencedTypeName="Error-Anomaly-Report"/>
+                            </Type>
+                        </ChoiceChild>
+                    </ChoiceType>
+                </Type>
+            </TypeAssignment>
+            <TypeAssignment Name="Normal-Progress-Report" Line="208" CharPositionInLine="4">
+                <Type Line="208" CharPositionInLine="31">
+                    <SequenceType>
+                        <SequenceOrSetChild VarName="rid" Optional="False" Line="209" CharPositionInLine="8">
+                            <Type Line="209" CharPositionInLine="12">
+                                <ReferenceType ReferencedTypeName="Report-ID" Min="0" Max="255"/>
+                            </Type>
+                        </SequenceOrSetChild>
+                    </SequenceType>
+                </Type>
+            </TypeAssignment>
+            <TypeAssignment Name="Error-Anomaly-Report" Line="212" CharPositionInLine="4">
+                <Type Line="212" CharPositionInLine="29">
+                    <ChoiceType>
+                        <ChoiceChild VarName="low" Line="213" CharPositionInLine="8" EnumID ="low_PRESENT">
+                            <Type Line="213" CharPositionInLine="16">
+                                <ReferenceType ReferencedTypeName="Low-Severity-Error-Anomaly-Report"/>
+                            </Type>
+                        </ChoiceChild>
+                        <ChoiceChild VarName="medium" Line="214" CharPositionInLine="8" EnumID ="medium_PRESENT">
+                            <Type Line="214" CharPositionInLine="16">
+                                <ReferenceType ReferencedTypeName="Medium-Severity-Error-Anomaly-Report"/>
+                            </Type>
+                        </ChoiceChild>
+                        <ChoiceChild VarName="high" Line="215" CharPositionInLine="8" EnumID ="high_PRESENT">
+                            <Type Line="215" CharPositionInLine="16">
+                                <ReferenceType ReferencedTypeName="High-Severity-Error-Anomaly-Report"/>
+                            </Type>
+                        </ChoiceChild>
+                    </ChoiceType>
+                </Type>
+            </TypeAssignment>
+            <TypeAssignment Name="Low-Severity-Error-Anomaly-Report" Line="218" CharPositionInLine="4">
+                <Type Line="218" CharPositionInLine="42">
+                    <SequenceType>
+                        <SequenceOrSetChild VarName="rid" Optional="False" Line="219" CharPositionInLine="8">
+                            <Type Line="219" CharPositionInLine="12">
+                                <ReferenceType ReferencedTypeName="Report-ID" Min="0" Max="255"/>
+                            </Type>
+                        </SequenceOrSetChild>
+                    </SequenceType>
+                </Type>
+            </TypeAssignment>
+            <TypeAssignment Name="Medium-Severity-Error-Anomaly-Report" Line="221" CharPositionInLine="4">
+                <Type Line="221" CharPositionInLine="45">
+                    <SequenceType>
+                        <SequenceOrSetChild VarName="rid" Optional="False" Line="222" CharPositionInLine="8">
+                            <Type Line="222" CharPositionInLine="12">
+                                <ReferenceType ReferencedTypeName="Report-ID" Min="0" Max="255"/>
+                            </Type>
+                        </SequenceOrSetChild>
+                    </SequenceType>
+                </Type>
+            </TypeAssignment>
+            <TypeAssignment Name="High-Severity-Error-Anomaly-Report" Line="225" CharPositionInLine="4">
+                <Type Line="225" CharPositionInLine="43">
+                    <SequenceType>
+                        <SequenceOrSetChild VarName="rid" Optional="False" Line="226" CharPositionInLine="8">
+                            <Type Line="226" CharPositionInLine="12">
+                                <ReferenceType ReferencedTypeName="Report-ID" Min="0" Max="255"/>
+                            </Type>
+                        </SequenceOrSetChild>
+                    </SequenceType>
+                </Type>
+            </TypeAssignment>
+        </TypeAssignments>
+        <VariablesAssignments>
+        </VariablesAssignments>
+        </Asn1Module>
+        <Asn1Module ID="Service-Reports" ExportAll="True">
+        <ExportedTypes>
+            <ExportedType Name="Service-Report" />
+            <ExportedType Name="Event-Reporting-Service-Report" />
+            <ExportedType Name="Telecommand-Verification-Service-Report" />
+            <ExportedType Name="Onboard-Monitoring-Service-Report" />
+            <ExportedType Name="Event-Action-Service-Report" /> 
+        </ExportedTypes>
+        <ExportedVariables>
+         
+        </ExportedVariables>
+        <ImportedModules>
+            <ImportedModule ID="Event-Reporting">
+                <ImportedTypes>
+                    <ImportedType Name="Event-Reporting-Service-Report" />
+                </ImportedTypes>
+                <ImportedVariables>
+                </ImportedVariables>
+            </ImportedModule>
+            <ImportedModule ID="Telecommand-Verification">
+                <ImportedTypes>
+                    <ImportedType Name="Telecommand-Verification-Service-Report" />
+                </ImportedTypes>
+                <ImportedVariables>
+                </ImportedVariables>
+            </ImportedModule>
+            <ImportedModule ID="Onboard-Monitoring">
+                <ImportedTypes>
+                    <ImportedType Name="Onboard-Monitoring-Service-Report" />
+                </ImportedTypes>
+                <ImportedVariables>
+                </ImportedVariables>
+            </ImportedModule>
+            <ImportedModule ID="Event-Action">
+                <ImportedTypes>
+                    <ImportedType Name="Event-Action-Service-Report" />
+                </ImportedTypes>
+                <ImportedVariables>
+                </ImportedVariables>
+            </ImportedModule>
+        </ImportedModules>
+        <TypeAssignments>
+            <TypeAssignment Name="Service-Report" Line="241" CharPositionInLine="4">
+                <Type Line="241" CharPositionInLine="23">
+                    <ChoiceType>
+                        <ChoiceChild VarName="event-reporting-1" Line="242" CharPositionInLine="8" EnumID ="event_reporting_1_PRESENT">
+                            <Type Line="242" CharPositionInLine="26">
+                                <ReferenceType ReferencedTypeName="Event-Reporting-Service-Report" ReferencedModName="Event-Reporting"/>
+                            </Type>
+                        </ChoiceChild>
+                        <ChoiceChild VarName="telecommand-verification-1" Line="243" CharPositionInLine="8" EnumID ="telecommand_verification_1_PRESENT">
+                            <Type Line="243" CharPositionInLine="35">
+                                <ReferenceType ReferencedTypeName="Telecommand-Verification-Service-Report" ReferencedModName="Telecommand-Verification"/>
+                            </Type>
+                        </ChoiceChild>
+                        <ChoiceChild VarName="onboard-monitoring-1" Line="244" CharPositionInLine="8" EnumID ="onboard_monitoring_1_PRESENT">
+                            <Type Line="244" CharPositionInLine="29">
+                                <ReferenceType ReferencedTypeName="Onboard-Monitoring-Service-Report" ReferencedModName="Onboard-Monitoring"/>
+                            </Type>
+                        </ChoiceChild>
+                        <ChoiceChild VarName="event-action-1" Line="245" CharPositionInLine="8" EnumID ="event_action_1_PRESENT">
+                            <Type Line="245" CharPositionInLine="23">
+                                <ReferenceType ReferencedTypeName="Event-Action-Service-Report" ReferencedModName="Event-Action"/>
+                            </Type>
+                        </ChoiceChild>
+                    </ChoiceType>
+                </Type>
+            </TypeAssignment>
+        </TypeAssignments>
+        <VariablesAssignments>
+        </VariablesAssignments>
+        </Asn1Module>
+        <Asn1Module ID="Onboard-Monitoring-Dataview" ExportAll="True">
+        <ExportedTypes>
+            <ExportedType Name="Check-State" />
+            <ExportedType Name="Check-Transition" />
+            <ExportedType Name="Check-Transition-Set" />
+            <ExportedType Name="Check-Definition" />
+            <ExportedType Name="Standard-Boolean" />
+            <ExportedType Name="Application-Process-ID" />
+            <ExportedType Name="Parameter-ID" />
+            <ExportedType Name="Parameter-Value" />
+            <ExportedType Name="On-Board-Time" />
+            <ExportedType Name="Checking-Status" />
+            <ExportedType Name="Transition-Report" /> 
+        </ExportedTypes>
+        <ExportedVariables>
+            <ExportedVariable Name="monitoring-interval" />
+            <ExportedVariable Name="apid" /> 
+        </ExportedVariables>
+        <ImportedModules>
+            <ImportedModule ID="Standard-Datatypes">
+                <ImportedTypes>
+                    <ImportedType Name="Standard-Boolean" />
+                </ImportedTypes>
+                <ImportedVariables>
+                </ImportedVariables>
+            </ImportedModule>
+            <ImportedModule ID="Application-Processes">
+                <ImportedTypes>
+                    <ImportedType Name="Application-Process-ID" />
+                </ImportedTypes>
+                <ImportedVariables>
+                </ImportedVariables>
+            </ImportedModule>
+            <ImportedModule ID="Onboard-Parameters">
+                <ImportedTypes>
+                    <ImportedType Name="Parameter-ID" />
+                    <ImportedType Name="Parameter-Value" />
+                    <ImportedType Name="On-Board-Time" />
+                </ImportedTypes>
+                <ImportedVariables>
+                    <ImportedVariable Name="number-of-onboard-parameters" />
+                </ImportedVariables>
+            </ImportedModule>
+            <ImportedModule ID="Onboard-Monitoring">
+                <ImportedTypes>
+                    <ImportedType Name="Checking-Status" />
+                    <ImportedType Name="Transition-Report" />
+                </ImportedTypes>
+                <ImportedVariables>
+                </ImportedVariables>
+            </ImportedModule>
+        </ImportedModules>
+        <TypeAssignments>
+            <TypeAssignment Name="Check-State" Line="268" CharPositionInLine="4">
+                <Type Line="268" CharPositionInLine="20">
+                    <ReferenceType ReferencedTypeName="Transition-Report" ReferencedModName="Onboard-Monitoring"/>
+                </Type>
+            </TypeAssignment>
+            <TypeAssignment Name="Check-Transition" Line="272" CharPositionInLine="4">
+                <Type Line="272" CharPositionInLine="25">
+                    <ReferenceType ReferencedTypeName="Check-State"/>
+                </Type>
+            </TypeAssignment>
+            <TypeAssignment Name="Check-Transition-Set" Line="274" CharPositionInLine="4">
+                <Type Line="274" CharPositionInLine="29">
+                    <SequenceOfType Min="0" Max="100">
+                        <Type Line="274" CharPositionInLine="75">
+                            <ReferenceType ReferencedTypeName="Check-Transition"/>
+                        </Type>
+                    </SequenceOfType>
+                </Type>
+            </TypeAssignment>
+            <TypeAssignment Name="Check-Definition" Line="276" CharPositionInLine="4">
+                <Type Line="276" CharPositionInLine="25">
+                    <SequenceType>
+                        <SequenceOrSetChild VarName="lower-bound" Optional="False" Line="277" CharPositionInLine="8">
+                            <Type Line="277" CharPositionInLine="20">
+                                <ReferenceType ReferencedTypeName="Parameter-Value" ReferencedModName="Onboard-Parameters"/>
+                            </Type>
+                        </SequenceOrSetChild>
+                        <SequenceOrSetChild VarName="upper-bound" Optional="False" Line="278" CharPositionInLine="8">
+                            <Type Line="278" CharPositionInLine="20">
+                                <ReferenceType ReferencedTypeName="Parameter-Value" ReferencedModName="Onboard-Parameters"/>
+                            </Type>
+                        </SequenceOrSetChild>
+                    </SequenceType>
+                </Type>
+            </TypeAssignment>
+        </TypeAssignments>
+        <VariablesAssignments>
+            <VariableAssignment Name="monitoring-interval" Line="285" CharPositionInLine="4">
+                <Type Line="285" CharPositionInLine="24">
+                    <IntegerType Min="MIN" Max="MAX"/>
+                </Type>
+                <Value>1000</Value>
+            </VariableAssignment>
+            <VariableAssignment Name="apid" Line="287" CharPositionInLine="4">
+                <Type Line="287" CharPositionInLine="9">
+                    <ReferenceType ReferencedTypeName="Application-Process-ID" ReferencedModName="Application-Processes"/>
+                </Type>
+                <Value>unit-manager</Value>
+            </VariableAssignment>
+        </VariablesAssignments>
+        </Asn1Module>
+        <Asn1Module ID="Application-Processes" ExportAll="True">
+        <ExportedTypes>
+            <ExportedType Name="Application-Process-ID" /> 
+        </ExportedTypes>
+        <ExportedVariables>
+         
+        </ExportedVariables>
+        <ImportedModules>
+        </ImportedModules>
+        <TypeAssignments>
+            <TypeAssignment Name="Application-Process-ID" Line="295" CharPositionInLine="4">
+                <Type Line="295" CharPositionInLine="31">
+                    <EnumeratedType Extensible="False" ValuesAutoCalculated="False">
+                        <EnumValues>
+                            <EnumValue StringValue="time-packet" IntValue="0" Line="296" CharPositionInLine="7" EnumID ="time_packet" />
+                            <EnumValue StringValue="ground-if" IntValue="1" Line="297" CharPositionInLine="7" EnumID ="ground_if" />
+                            <EnumValue StringValue="unit-manager" IntValue="4" Line="298" CharPositionInLine="7" EnumID ="unit_manager" />
+                            <EnumValue StringValue="packet-router-cdmu" IntValue="5" Line="299" CharPositionInLine="7" EnumID ="packet_router_cdmu" />
+                            <EnumValue StringValue="idle" IntValue="2047" Line="300" CharPositionInLine="7" EnumID ="idle" />
+                        </EnumValues>
+                    </EnumeratedType>
+                </Type>
+            </TypeAssignment>
+        </TypeAssignments>
+        <VariablesAssignments>
+        </VariablesAssignments>
+        </Asn1Module>
+        <Asn1Module ID="TASTE-Directives" ExportAll="True">
+        <ExportedTypes>
+            <ExportedType Name="Simulink-Initializer-Excel-T" />
+            <ExportedType Name="Simulink-Script-T" />
+            <ExportedType Name="Taste-directive" /> 
+        </ExportedTypes>
+        <ExportedVariables>
+         
+        </ExportedVariables>
+        <ImportedModules>
+        </ImportedModules>
+        <TypeAssignments>
+            <TypeAssignment Name="Simulink-Initializer-Excel-T" Line="307" CharPositionInLine="0">
+                <Type Line="307" CharPositionInLine="33">
+                    <SequenceType>
+                        <SequenceOrSetChild VarName="filename" Optional="False" Line="309" CharPositionInLine="3">
+                            <Type Line="309" CharPositionInLine="15">
+                                <IA5StringType Min="1" Max="200">
+                                </IA5StringType>
+                            </Type>
+                        </SequenceOrSetChild>
+                        <SequenceOrSetChild VarName="col" Optional="False" Line="310" CharPositionInLine="3">
+                            <Type Line="310" CharPositionInLine="15">
+                                <IntegerType Min="0" Max="200"/>
+                            </Type>
+                        </SequenceOrSetChild>
+                        <SequenceOrSetChild VarName="line" Optional="False" Line="311" CharPositionInLine="3">
+                            <Type Line="311" CharPositionInLine="15">
+                                <IntegerType Min="0" Max="200"/>
+                            </Type>
+                        </SequenceOrSetChild>
+                    </SequenceType>
+                </Type>
+            </TypeAssignment>
+            <TypeAssignment Name="Simulink-Script-T" Line="314" CharPositionInLine="0">
+                <Type Line="314" CharPositionInLine="22">
+                    <SequenceType>
+                        <SequenceOrSetChild VarName="filename" Optional="False" Line="316" CharPositionInLine="3">
+                            <Type Line="316" CharPositionInLine="15">
+                                <IA5StringType Min="1" Max="200">
+                                </IA5StringType>
+                            </Type>
+                        </SequenceOrSetChild>
+                    </SequenceType>
+                </Type>
+            </TypeAssignment>
+            <TypeAssignment Name="Taste-directive" Line="319" CharPositionInLine="0">
+                <Type Line="319" CharPositionInLine="20">
+                    <ChoiceType>
+                        <ChoiceChild VarName="simulink-initializer-excel" Line="321" CharPositionInLine="3" EnumID ="simulink_initializer_excel_PRESENT">
+                            <Type Line="321" CharPositionInLine="30">
+                                <ReferenceType ReferencedTypeName="Simulink-Initializer-Excel-T"/>
+                            </Type>
+                        </ChoiceChild>
+                        <ChoiceChild VarName="simulink-script" Line="322" CharPositionInLine="3" EnumID ="simulink_script_PRESENT">
+                            <Type Line="322" CharPositionInLine="30">
+                                <ReferenceType ReferencedTypeName="Simulink-Script-T"/>
+                            </Type>
+                        </ChoiceChild>
+                    </ChoiceType>
+                </Type>
+            </TypeAssignment>
+        </TypeAssignments>
+        <VariablesAssignments>
+        </VariablesAssignments>
+        </Asn1Module>
+        <Asn1Module ID="TEST-CASE" ExportAll="True">
+        <ExportedTypes>
+            <ExportedType Name="MyPDU" /> 
+        </ExportedTypes>
+        <ExportedVariables>
+            <ExportedVariable Name="pdu1" /> 
+        </ExportedVariables>
+        <ImportedModules>
+        </ImportedModules>
+        <TypeAssignments>
+            <TypeAssignment Name="MyPDU" Line="331" CharPositionInLine="1">
+                <Type Line="331" CharPositionInLine="11">
+                    <IntegerType Min="MIN" Max="MAX"/>
+                </Type>
+            </TypeAssignment>
+        </TypeAssignments>
+        <VariablesAssignments>
+            <VariableAssignment Name="pdu1" Line="332" CharPositionInLine="1">
+                <Type Line="332" CharPositionInLine="6">
+                    <ReferenceType ReferencedTypeName="MyPDU" Min="MIN" Max="MAX"/>
+                </Type>
+                <Value>0</Value>
+            </VariableAssignment>
+        </VariablesAssignments>
+        </Asn1Module>
+    </Asn1File>
+</ASN1AST>
