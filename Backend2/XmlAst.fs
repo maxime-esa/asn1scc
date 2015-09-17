@@ -76,7 +76,7 @@ let DoWork (r:AstRoot) =
     let PrintModule (m:Asn1Module) =
         let PrintImpModule (im:Ast.ImportedModule) =
             xml.ImportedMod im.Name.Value (ToC im.Name.Value) (im.Types |> Seq.map(fun x -> x.Value)) (im.Values |> Seq.map(fun x -> x.Value))
-        xml.ModuleXml m.Name.Value (ToC m.Name.Value) (m.Imports |> Seq.map PrintImpModule) m.ExportedTypes m.ExportedVars (m.TypeAssignments |> Seq.map (fun t -> PrintTas t m.Name.Value)) (m.ValueAssignments |> Seq.map (fun t -> PrintVas t m.Name.Value)) (AllExported m)
+        xml.ModuleXml m.Name.Value (ToC m.Name.Value) (m.Imports |> Seq.map PrintImpModule) m.ExportedTypes m.ExportedVars (m.TypeAssignments |> Seq.map (fun t -> PrintTas t m.Name.Value)) (m.ValueAssignments |> Seq.map (fun t -> PrintVas t m.Name.Value)) //(AllExported m)
     let PrintFile (f:Asn1File) =
         xml.FileXml f.FileName (f.Modules |> Seq.map PrintModule)
     let content = xml.RootXml (r.Files |> Seq.map PrintFile)
