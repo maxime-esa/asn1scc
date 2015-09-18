@@ -1,0 +1,13 @@
+MOD1 DEFINITIONS AUTOMATIC TAGS ::= BEGIN
+
+	RGBCOLORS ::= ENUMERATED {
+		red,
+		green,
+		blue
+	}
+	
+	red INTEGER ::= 0
+	
+
+END
+

@@ -62,7 +62,9 @@ let rec handleEnums (r:AstRoot) (renamePolicy:ParameterizedAsn1Ast.EnumRenamePol
                     | Enumerated(itesm) -> 
                         let names = itesm |> List.map(fun x -> x.uniqueName)
                         yield! names
-                    | _                 -> () } |> Seq.toList |> List.keepDuplicates
+                    | _                 -> () 
+            for vas in m.ValueAssignments do
+                yield vas.Name.Value } |> Seq.toList |> List.keepDuplicates
 
     match doubleEnumNames with
     | []    -> r
