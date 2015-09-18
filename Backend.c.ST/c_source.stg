@@ -249,7 +249,7 @@ isEqual_Enumerated(p1, p2) ::= "<isEqual_Integer(p1=p1,p2=p2)>"
 isEqual_Boolean(p1, p2) ::= "ret = ( (<p1> && <p2>) || (!<p1> && !<p2>));"
 
 isEqual_Real(p1, p2) ::= <<
-ret = <p1> == 0.0 ? <p2> ==0.0 : (fabs((<p1> - <p2>) / <p1>) \< 0.00001);
+ret =  <p1> == <p2> ? TRUE : (<p1> == 0.0 ? <p2> ==0.0 : (fabs((<p1> - <p2>) / <p1>) \< 0.00001));
 >>
 
 isEqual_IA5String(p1, p2) ::= "ret = (strcmp(<p1>, <p2>) ==0);"

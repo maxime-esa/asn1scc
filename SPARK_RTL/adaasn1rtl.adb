@@ -22,11 +22,19 @@ PACKAGE BODY adaasn1rtl IS
    ERR_UNSUPPORTED_ENCODING    :CONSTANT INTEGER:= 1001;  --  Returned when the uPER encoding for REALs is not binary encoding
 
 
+
    FUNCTION Asn1Real_Equal(Left, Right: in Asn1Real) RETURN Boolean
    IS
+       ret : boolean;
    BEGIN
-       RETURN (IF Left = 0.0 THEN (Right = 0.0)
-               ELSE (ABS((Left - Right) / Left) < 0.00001));
+       IF Left = Right THEN
+           ret := true;
+       elsif Left = 0.0 THEN
+           ret := Right = 0.0;
+       ELSE
+           ret := ABS((Left - Right) / Left) < 0.00001;
+       END IF;
+       RETURN ret;
    END Asn1Real_Equal;
 
 
@@ -89,6 +97,26 @@ PACKAGE BODY adaasn1rtl IS
        END IF;
        RETURN ret;
    END To_Int;
+
+
+   FUNCTION Zero return Asn1Real is
+   BEGIN
+        return 0.0;
+   END Zero;
+
+   FUNCTION PLUS_INFINITY return Asn1Real
+   is
+      --# hide PLUS_INFINITY;
+   BEGIN
+        return 1.0/Zero;
+   END PLUS_INFINITY;
+
+   FUNCTION MINUS_INFINITY return Asn1Real
+   is
+      --# hide MINUS_INFINITY;
+   BEGIN
+        return -1.0/Zero;
+   END MINUS_INFINITY;
 
 
    FUNCTION RequiresReverse(dummy:BOOLEAN) return BOOLEAN
@@ -817,10 +845,10 @@ PACKAGE BODY adaasn1rtl IS
 
       IF RealVal>=0.0 AND RealVal<=0.0 THEN
          BitStream_AppendByte(S, K, 0, FALSE);
-      ELSIF RealVal >= Asn1Real'LAST THEN
+      ELSIF RealVal = PLUS_INFINITY THEN
          BitStream_AppendByte(S, K, 1, FALSE);
          BitStream_AppendByte(S, K, 16#40#, FALSE);
-      ELSIF RealVal <= Asn1Real'FIRST THEN
+      ELSIF RealVal = MINUS_INFINITY THEN
          BitStream_AppendByte(S, K, 1, FALSE);
          BitStream_AppendByte(S, K, 16#41#, FALSE);
       ELSE
@@ -973,10 +1001,10 @@ PACKAGE BODY adaasn1rtl IS
                BitStream_DecodeByte (S, K, Header, Result.Success);
                IF Result.Success  THEN
                    IF Header=16#40# THEN
-                       RealVal:=Asn1Real'Last;
+                       RealVal:= PLUS_INFINITY;
                        Result := ASN1_RESULT'(Success   => TRUE,ErrorCode => 0);
                    ELSIF Header=16#41# THEN
-                       RealVal:=Asn1Real'First;
+                       RealVal:= MINUS_INFINITY;
                        Result := ASN1_RESULT'(Success   => TRUE,ErrorCode => 0);
                    ELSIF (Header AND 16#80#)>0 THEN
                        UPER_Dec_Real_AsBinary(S, K, Header, Length-1, RealVal, Result);

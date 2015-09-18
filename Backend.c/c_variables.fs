@@ -49,6 +49,11 @@ let GetTasNameByKind kind (m:Asn1Module) (r:AstRoot) =
 
 let rec PrintAsn1Value (v:Asn1Value) (t:Asn1Type) (bInGlobalsScope:bool) (tasName:string, dummy:int) (m:Asn1Module) (r:AstRoot) = 
     let sTasName = tasName 
+    let printRealValue vl =
+        match System.Double.IsInfinity vl with
+        | true  -> if vl < 0.0 then "-INFINITY" else "INFINITY"
+        | false -> c_var.PrintRealValue vl
+
 
     match v.Kind, t.Kind with
     |_,ReferenceType(modName,tsName, _)           ->
@@ -58,8 +63,8 @@ let rec PrintAsn1Value (v:Asn1Value) (t:Asn1Type) (bInGlobalsScope:bool) (tasNam
                          | false -> (ToC modName.Value) + "." + Ast.GetTasCName tsName.Value r.TypePrefix
         PrintAsn1Value v  baseType bInGlobalsScope (newTasName,0)  m r
     |IntegerValue(a), Integer                   -> c_var.PrintIntValue a.Value
-    |IntegerValue(a), Real                      -> c_var.PrintRealValue (double a.Value)
-    |RealValue(a), Real                         -> c_var.PrintRealValue a.Value
+    |IntegerValue(a), Real                      -> printRealValue (double a.Value)
+    |RealValue(a), Real                         -> printRealValue a.Value
     |RefValue(modName,vasName), Enumerated(items)   -> 
         let enmItem = items |> Seq.find(fun x -> x.Name.Value = vasName.Value)
         c_var.PrintEnumValue (enmItem.CEnumName r C)

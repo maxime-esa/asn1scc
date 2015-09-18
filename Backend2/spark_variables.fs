@@ -14,10 +14,16 @@ open Asn1Values
 let GetRealVarName (str:string) =
     "MINUS" + str.Replace('.','_').Replace("-","_minus_").Replace("+","_plus_").Replace("__","_")
 
+let printRealValue (vl:double) =
+    match System.Double.IsInfinity vl with
+    | true  -> if vl < 0.0 then "adaasn1rtl.MINUS_INFINITY" else "adaasn1rtl.PLUS_INFINITY"
+    | false -> sv.PrintRealValue vl
+
+
 let PrintRealValueAux (a:double) =
     match a<0.0 with
-    | false -> sv.PrintRealValue a
-    | true  -> GetRealVarName (sv.PrintRealValue a)
+    | false -> printRealValue a
+    | true  -> GetRealVarName (printRealValue a)
 
 
 
@@ -65,8 +71,8 @@ let rec PrintAsn1Value (v:Asn1Value) bChoicesInline bPrintRealNegsAsStrings (t:A
                          | false -> (ToC modName.Value) + "." + Ast.GetTasCName tsName.Value r.TypePrefix
         PrintAsn1Value v bChoicesInline bPrintRealNegsAsStrings baseType (newTasName,0)  m r
     |IntegerValue(a), Integer                   -> sv.PrintIntValue a.Value
-    |IntegerValue(a), Real                      -> if bPrintRealNegsAsStrings then PrintRealValueAux (double a.Value) else sv.PrintRealValue (double a.Value)
-    |RealValue(a), Real                         -> if bPrintRealNegsAsStrings then PrintRealValueAux a.Value else sv.PrintRealValue a.Value
+    |IntegerValue(a), Real                      -> if bPrintRealNegsAsStrings then PrintRealValueAux (double a.Value) else printRealValue (double a.Value)
+    |RealValue(a), Real                         -> if bPrintRealNegsAsStrings then PrintRealValueAux a.Value else printRealValue a.Value
     |RefValue(modName,vasName), Enumerated(items)   -> 
         let enmItem = items |> Seq.find(fun x -> x.Name.Value = vasName.Value)
         match modName.Value = m.Name.Value with

@@ -676,14 +676,14 @@ void BitStream_EncodeReal(BitStream* pBitStrm, double v)
         return;
     }
 
-    if (v==HUGE_VAL) 
+    if (v == INFINITY ) 
     {
         BitStream_EncodeConstraintWholeNumber(pBitStrm, 1, 0, 0xFF);
         BitStream_EncodeConstraintWholeNumber(pBitStrm, 0x40, 0, 0xFF);
         return;
     }
 
-    if (v==-HUGE_VAL)
+    if (v == -INFINITY)
     {
         BitStream_EncodeConstraintWholeNumber(pBitStrm, 1, 0, 0xFF);
         BitStream_EncodeConstraintWholeNumber(pBitStrm, 0x41, 0, 0xFF);
@@ -748,13 +748,13 @@ flag BitStream_DecodeReal(BitStream* pBitStrm, double* v)
 
     if (header==0x40)
     {
-        *v = HUGE_VAL;
+        *v = INFINITY;
         return TRUE;
     }
 
     if (header==0x41)
     {
-        *v = -HUGE_VAL;
+        *v = -INFINITY;
         return TRUE;
     }
     if (header & 0x80) 

@@ -32,6 +32,10 @@ IS
    SUBTYPE OctetArray8 IS  OctetBuffer(RANGE_1_8);
    SUBTYPE OctetArray100 IS  OctetBuffer(RANGE_1_100);
 
+   FUNCTION PLUS_INFINITY return Asn1Real;
+   FUNCTION MINUS_INFINITY return Asn1Real;
+
+
    FUNCTION Asn1Real_Equal(Left, Right: in Asn1Real) RETURN Boolean;
    FUNCTION Asn1Boolean_Equal(Left, Right: in Asn1Boolean) RETURN Boolean;
    FUNCTION Asn1Int_Equal(Left, Right: in Asn1Int) RETURN Boolean;
