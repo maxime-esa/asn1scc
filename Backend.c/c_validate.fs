@@ -119,7 +119,7 @@ let rec EmitTypeBody (t:ConstraintType) (path:list<string>)  (m:Asn1Module) (r:A
                           |Some(s)  -> s
                           |None     -> ""
             let sChildBody = EmitTypeBody (Same c.Type) chKey m r
-            let sChildName = c.CName
+            let sChildName = c.CName ProgrammingLanguage.C
             let content = 
                 match k with
                 | 0     -> sChildBody 

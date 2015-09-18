@@ -101,33 +101,33 @@ let rec PrintAsn1Value (v:Asn1Value) (t:Asn1Type) (bInGlobalsScope:bool) (tasNam
         c_var.PrintSequenceOfValue (min=max)  arrChVals 
     | SeqValue(childVals), Sequence(children)   ->
         let PrintChild (ch:ChildInfo) (chv:Asn1Value) = 
-            c_var.PrintSequenceValueChild ch.CName (PrintAsn1Value chv ch.Type bInGlobalsScope (GetTasNameByKind ch.Type.Kind m r, 0) m r)
+            c_var.PrintSequenceValueChild (ch.CName ProgrammingLanguage.C) (PrintAsn1Value chv ch.Type bInGlobalsScope (GetTasNameByKind ch.Type.Kind m r, 0) m r)
 
 
         let optChildren = seq {
             for ch in children |> Seq.filter(fun c -> c.Optionality.IsSome) do
                 match ch.Optionality, childVals |> Seq.tryFind(fun (chName, _)  -> chName.Value = ch.Name.Value) with
-                | _,Some(_)             -> yield c_var.PrintSequenceValue_child_exists ch.CName "1"
-                //| Some(Default(_)),_    -> yield sv.PrintSequenceValue_child_exists ch.CName "1"
-                | _,None                -> yield c_var.PrintSequenceValue_child_exists ch.CName "0"  } 
+                | _,Some(_)             -> yield c_var.PrintSequenceValue_child_exists (ch.CName ProgrammingLanguage.C) "1"
+                //| Some(Default(_)),_    -> yield sv.PrintSequenceValue_child_exists (ch.CName ProgrammingLanguage.C) "1"
+                | _,None                -> yield c_var.PrintSequenceValue_child_exists (ch.CName ProgrammingLanguage.C) "0"  } 
         let arrChildren = 
             seq {
                 for ch in children  do
                     match childVals |> Seq.tryFind(fun (chName, _)  -> chName.Value = ch.Name.Value) with
-                    | Some(chName, chVal)       -> yield c_var.PrintSequenceValueChild ch.CName (PrintAsn1Value chVal ch.Type bInGlobalsScope (GetTasNameByKind ch.Type.Kind m r, 0) m r)
+                    | Some(chName, chVal)       -> yield c_var.PrintSequenceValueChild (ch.CName ProgrammingLanguage.C) (PrintAsn1Value chVal ch.Type bInGlobalsScope (GetTasNameByKind ch.Type.Kind m r, 0) m r)
                     | None                      -> 
                         match ch.Optionality with
-                        |Some(Default(defVal))  ->  yield c_var.PrintSequenceValueChild ch.CName (PrintAsn1Value defVal ch.Type bInGlobalsScope (GetTasNameByKind ch.Type.Kind m r, 0) m r)
+                        |Some(Default(defVal))  ->  yield c_var.PrintSequenceValueChild (ch.CName ProgrammingLanguage.C) (PrintAsn1Value defVal ch.Type bInGlobalsScope (GetTasNameByKind ch.Type.Kind m r, 0) m r)
                         |Some(Optional)         ->  
                             let initVal = GetDefaultValueByType ch.Type m r 
-                            yield c_var.PrintSequenceValueChild ch.CName (PrintAsn1Value initVal  ch.Type bInGlobalsScope (GetTasNameByKind ch.Type.Kind m r, 0) m r)
+                            yield c_var.PrintSequenceValueChild (ch.CName ProgrammingLanguage.C) (PrintAsn1Value initVal  ch.Type bInGlobalsScope (GetTasNameByKind ch.Type.Kind m r, 0) m r)
                         |_                      -> () 
             } |> Seq.toList
         c_var.PrintSequenceValue arrChildren optChildren
     | ChValue(altName,altVal), Choice(children)     -> 
         let ch = children |> Seq.find(fun c -> c.Name.Value = altName.Value)
         let chVal = PrintAsn1Value altVal ch.Type bInGlobalsScope (GetTasNameByKind ch.Type.Kind m r, 0) m r
-        c_var.PrintChoiceValue  (ch.CName_Present C) ch.CName chVal
+        c_var.PrintChoiceValue  (ch.CName_Present C) (ch.CName ProgrammingLanguage.C) chVal
     | NullValue, NullType                           -> "0"
     | _                                         -> raise(BugErrorException "Invalid Combination")
 

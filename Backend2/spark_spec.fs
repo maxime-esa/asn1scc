@@ -56,16 +56,16 @@ let PrintTasDeclaration (t:TypeAssignment) (m:Asn1Module) (r:AstRoot) (state:Sta
         let sTypeDecl, s1 = PrintType t.Type [m.Name.Value; t.Name.Value] None (TypeAssignment t,m,r) state
         ss.PRIMITIVE_tas_decl sName sTypeDecl, s1
     |Sequence(children)   ->
-        let optionalChildren = children |> Seq.filter(fun c -> c.Optionality.IsSome) |> Seq.map(fun c -> ss.SEQUENCE_tas_decl_child_bit c.CName)
+        let optionalChildren = children |> Seq.filter(fun c -> c.Optionality.IsSome) |> Seq.map(fun c -> ss.SEQUENCE_tas_decl_child_bit (c.CName ProgrammingLanguage.Spark))
         let printChild (s:State) (c:ChildInfo) =
             let typeDecl,s1 = PrintType c.Type [m.Name.Value; t.Name.Value; c.Name.Value] (Some t.Type) (TypeAssignment t,m,r) s
-            ss.SEQUENCE_tas_decl_child c.CName typeDecl, s1 
+            ss.SEQUENCE_tas_decl_child (c.CName ProgrammingLanguage.Spark) typeDecl, s1 
         let arrChildren, newState =   children |> List.filter(fun c -> not c.AcnInsertedField) |> foldMap printChild state
         ss.SEQUENCE_tas_decl sName arrChildren optionalChildren,  newState
     |Choice(children)  -> 
         let printChild (s:State) (c:ChildInfo) =
             let typeDecl,s1 = PrintType c.Type [m.Name.Value; t.Name.Value; c.Name.Value] (Some t.Type) (TypeAssignment t,m,r) s
-            ss.CHOICE_tas_decl_child sName c.CName typeDecl (c.CName_Present Spark), s1 
+            ss.CHOICE_tas_decl_child sName (c.CName ProgrammingLanguage.Spark) typeDecl (c.CName_Present Spark), s1 
         let arrChildren, newState =   children |> foldMap printChild state
         let arrChPresent = children |> List.map(fun c -> (c.CName_Present  Spark))
         let nIndexMax = BigInteger ((Seq.length children)-1)
@@ -315,7 +315,7 @@ let PrintModule (m:Asn1Module) (f:Asn1File) (r:AstRoot) (acn:AcnTypes.AcnAstReso
             let sTasName = t.GetCName r.TypePrefix
             let printChild (c:ChildInfo) =
                 let typeDecl,_ = PrintType c.Type [m.Name.Value; t.Name.Value; c.Name.Value] (Some t.Type) (TypeAssignment t,m,r) {State.nErrorCode = 0}
-                ss.CHOICE_tas_decl_priv_child c.CName typeDecl (c.CName_Present Spark)
+                ss.CHOICE_tas_decl_priv_child (c.CName ProgrammingLanguage.Spark) typeDecl (c.CName_Present Spark)
             ss.CHOICE_tas_decl_priv sTasName (children.Head.CName_Present Spark) (children |> Seq.map printChild)
         choices |> Seq.map ChoicePrivate
     let content = ss.PrintPackageSpec (ToC m.Name.Value) includedPackages tases vases arrPrivChoices

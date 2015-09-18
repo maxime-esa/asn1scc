@@ -96,9 +96,9 @@ let rec EmitTypeBody (t:Asn1Type) (sTag:string) (nLevel:BigInteger) (sTasName:st
                     let sChildContent = EmitTypeBody c.Type (quote c.Name.Value) (nLevel + 1I) sTasName (path@[c.Name.Value], None) m r codec
                     match c.Optionality with
                     |None                 ->  
-                        xer.Sequence_mandatory_child c.CName sChildContent c.Name.Value codec
+                        xer.Sequence_mandatory_child (c.CName ProgrammingLanguage.C) sChildContent c.Name.Value codec
                     |Some(_)        ->
-                        xer.Sequence_optional_child pp c.CName sChildContent c.Name.Value codec
+                        xer.Sequence_optional_child pp (c.CName ProgrammingLanguage.C) sChildContent c.Name.Value codec
             c_src.JoinItems content sNestedContent 
 
         let  printChildren (lst:list<SequenceEncStatement>)= 

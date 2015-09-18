@@ -53,18 +53,22 @@ let rec handleChoices (r:AstRoot) (renamePolicy:ParameterizedAsn1Ast.EnumRenameP
         handleChoices newTree renamePolicy
 
 
+
 let rec handleEnums (r:AstRoot) (renamePolicy:ParameterizedAsn1Ast.EnumRenamePolicy) =
-    let doubleEnumNames = seq {
-        for m in r.Modules do
-            for tas in m.TypeAssignments do
-                for t in GetMySelfAndChildren tas.Type  do
-                    match t.Kind with
-                    | Enumerated(itesm) -> 
-                        let names = itesm |> List.map(fun x -> x.uniqueName)
-                        yield! names
-                    | _                 -> () 
-            for vas in m.ValueAssignments do
-                yield vas.Name.Value } |> Seq.toList |> List.keepDuplicates
+    let doubleEnumNames = 
+        seq {
+            for m in r.Modules do
+                for tas in m.TypeAssignments do
+                    for t in GetMySelfAndChildren tas.Type  do
+                        match t.Kind with
+                        | Enumerated(itesm) -> 
+                            let names = itesm |> List.map(fun x -> x.uniqueName)
+                            yield! names
+                        | _                 -> () 
+                for vas in m.ValueAssignments do
+                    yield vas.Name.Value 
+                yield! Ast.c_keyworkds
+        } |> Seq.toList |> List.keepDuplicates
 
     match doubleEnumNames with
     | []    -> r

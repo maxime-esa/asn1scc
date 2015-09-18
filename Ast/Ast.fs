@@ -264,8 +264,20 @@ let GetTasCName name typePrefix = ToC(typePrefix + name)
 type TypeAssignment with
     member tas.GetCName typePrefix = GetTasCName tas.Name.Value typePrefix 
 
+
+let c_keyworkds =  [ "auto"; "break"; "case"; "char"; "const"; "continue"; "default"; "do"; "double"; "else"; "enum"; "extern"; "float"; "for"; "goto"; "if"; "int"; "long"; "register"; "return"; "short"; "signed"; "sizeof"; "static"; "struct"; "switch"; "typedef"; "union"; "unsigned"; "void"; "volatile"; "while"; ]
+
 type ChildInfo with
-    member c.CName = ToC  (c.Name.Value)
+    member c.CName (lang:ProgrammingLanguage) = 
+        match lang with
+        | Ada   | Spark     -> ToC  (c.Name.Value)
+        | C                 -> 
+            match c_keyworkds |> Seq.exists ( (=) c.Name.Value) with
+            | true  -> ToC  "kw_" + (c.Name.Value)
+            | false -> ToC  (c.Name.Value)
+        | Html              -> ToC  (c.Name.Value)
+        | Unknown           -> ToC  (c.Name.Value)
+
     member c.CName_Present  (lang:ProgrammingLanguage) = 
         match lang with
         |Ada

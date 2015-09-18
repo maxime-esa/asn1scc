@@ -77,7 +77,7 @@ let rec EmitTypeBody (t:Asn1Type) (path:list<string>)  (m:Asn1Module) (r:AstRoot
     | Sequence(children)    ->
         let asn1Children = children |> List.filter(fun x -> not x.AcnInsertedField)
         let arrChildren =
-            asn1Children |> Seq.map(fun c -> si.isEqual_Sequence_Child p1 p2 c.Optionality.IsSome c.CName (fieldTypeName c.Type))
+            asn1Children |> Seq.map(fun c -> si.isEqual_Sequence_Child p1 p2 c.Optionality.IsSome (c.CName ProgrammingLanguage.Spark) (fieldTypeName c.Type))
 
         si.isEqual_Sequence p1 p2 arrChildren
 

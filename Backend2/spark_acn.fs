@@ -279,7 +279,7 @@ let EmitUpdate_param_functions(tas:TypeAssignment) (m:Asn1Module) (r:AstRoot)  (
         | _                 -> false
     let printNestedItemsChoice (p:AcnTypes.AcnParameter) (children:list<ChildInfo>)  = 
         let PrntChild (ch:ChildInfo, (bCheck:bool, updStm:string)) =
-            sa.PrintAcn_update_param_body_choice_child ch.CName updStm bCheck (ch.CName_Present Spark)
+            sa.PrintAcn_update_param_body_choice_child (ch.CName ProgrammingLanguage.Spark) updStm bCheck (ch.CName_Present Spark)
         let prmAccessPath = ToC (p.Name)
         let path = [m.Name.Value; tas.Name.Value; p.Name]
         let point = AcnTypes.Point.ParamPoint(path)
@@ -586,16 +586,16 @@ let rec EmitTypeBodyAux (t:Asn1Type) (sTasName:string) (path:list<string>, pName
                 match childItem with
                 | UpdateExistsStatement(c)     -> 
                     match Acn.GetPresenseEncodingClass path c acn with
-                    | Some(Acn.LikeUPER)           -> sa.Sequence_optChild p c.CName errCode codec
+                    | Some(Acn.LikeUPER)           -> sa.Sequence_optChild p (c.CName ProgrammingLanguage.Spark) errCode codec
                     | Some(Acn.PresBool(extFld))    -> 
                         let extFldPath = GetAccessFld (extFld.AbsPath.Tail.Tail) (Same t) r 
-                        sa.Sequence_optChild_pres_bool p c.CName extFldPath codec
+                        sa.Sequence_optChild_pres_bool p (c.CName ProgrammingLanguage.Spark) extFldPath codec
                     | Some(Acn.PresInt(extFld, nVal)) ->
                         let extFldPath = GetAccessFld (extFld.AbsPath.Tail.Tail) (Same t) r 
-                        sa.Sequence_optChild_pres_int p c.CName extFldPath nVal codec
+                        sa.Sequence_optChild_pres_int p (c.CName ProgrammingLanguage.Spark) extFldPath nVal codec
                     | Some(Acn.PresStr(extFld, sVal)) ->
                         let extFldPath = GetAccessFld (extFld.AbsPath.Tail.Tail) (Same t) r 
-                        sa.Sequence_optChild_pres_str p c.CName extFldPath sVal codec
+                        sa.Sequence_optChild_pres_str p (c.CName ProgrammingLanguage.Spark) extFldPath sVal codec
                     | None      -> raise(BugErrorException "")
                 | AcnUpdateStatement(upStm)     ->
                     match codec with
@@ -604,7 +604,7 @@ let rec EmitTypeBodyAux (t:Asn1Type) (sTasName:string) (path:list<string>, pName
                 | ChildEncDecStatement(c)     -> 
                     let bHasDef= match c.Optionality with Some(Default(v)) ->true |_  ->false
                     let sChildContent = EmitTypeBody c.Type sTasName (path@[c.Name.Value], None) tas m r acn codec 
-                    sa.Sequence_Child p c.CName c.Optionality.IsSome sChildContent bHasDef codec
+                    sa.Sequence_Child p (c.CName ProgrammingLanguage.Spark) c.Optionality.IsSome sChildContent bHasDef codec
             let bResult = DoesItemAffectsResult childItem
             sa.JoinItems sTasName content sNestedContent requiredBitsSoFar bRequiresAssert bResult codec
         let  printChildren lst= 
@@ -655,15 +655,15 @@ let rec EmitTypeBodyAux (t:Asn1Type) (sTasName:string) (path:list<string>, pName
             let nMax = BigInteger(Seq.length children) - 1I
             let nBits = (GetNumberOfBitsForNonNegativeInteger (nMax-nMin))
             let printChild (i:int) (c:ChildInfo) =
-                let pName = match codec with Encode -> None | Decode -> Some(c.CName+"_tmp")
+                let pName = match codec with Encode -> None | Decode -> Some((c.CName ProgrammingLanguage.Spark) + "_tmp")
                 let newPath = path@[c.Name.Value]
                 let sChildContent = EmitTypeBody c.Type sTasName (newPath, pName) tas m r acn codec 
-                sa.ChoiceChild sTasName c.CName sChildContent (BigInteger i) nBits (c.CName_Present Spark) codec
+                sa.ChoiceChild sTasName (c.CName ProgrammingLanguage.Spark) sChildContent (BigInteger i) nBits (c.CName_Present Spark) codec
             let arrChildren = children |> Seq.mapi printChild
             sa.Choice sTasName arrChildren nMax nBits codec
         let Choice_presWhen() =
             let printChild (i:int) (c:ChildInfo) =
-                let pName = match codec with Encode -> None | Decode -> Some(c.CName+"_tmp")
+                let pName = match codec with Encode -> None | Decode -> Some((c.CName ProgrammingLanguage.Spark) + "_tmp")
                 let newPath = path@[c.Name.Value]
                 let sChildContent = EmitTypeBody c.Type sTasName (newPath, pName) tas m r acn codec 
                 let printCondition = function
@@ -678,12 +678,12 @@ let rec EmitTypeBodyAux (t:Asn1Type) (sTasName:string) (path:list<string>, pName
                         sa.ChoiceChild_preWhen_str_condition extFldPath sVal
                     | _                         -> raise(BugErrorException "")
                 let conds = Acn.GetPresenseConditions path c acn |> Seq.map printCondition
-                sa.ChoiceChild_preWhen sTasName c.CName sChildContent conds (i=0)  (c.CName_Present Spark) codec
+                sa.ChoiceChild_preWhen sTasName (c.CName ProgrammingLanguage.Spark) sChildContent conds (i=0)  (c.CName_Present Spark) codec
             let arrChildren = children |> Seq.mapi printChild
             sa.Choice_preWhen  sTasName arrChildren  codec          
         let Choice_enm (enmDet:AcnTypes.Point) =
             let printChild (c:ChildInfo) =
-                let pName = match codec with Encode -> None | Decode -> Some(c.CName+"_tmp")
+                let pName = match codec with Encode -> None | Decode -> Some((c.CName ProgrammingLanguage.Spark) + "_tmp")
                 let newPath = path@[c.Name.Value]
                 let sChildContent = EmitTypeBody c.Type sTasName (newPath, pName) tas m r acn codec 
                 let determinantType = GetActualType (GetTypeByPoint enmDet r acn) r
@@ -691,7 +691,7 @@ let rec EmitTypeBodyAux (t:Asn1Type) (sTasName:string) (path:list<string>, pName
                                 |Enumerated(enms) -> enms |> List.find(fun en -> en.Name = c.Name)
                                 |_ -> raise(BugErrorException(""))
 
-                sa.ChoiceChild_Enum sTasName c.CName (ToC  (r.TypePrefix +  enumValue.uniqueName)) sChildContent (c.CName_Present Spark) codec                
+                sa.ChoiceChild_Enum sTasName (c.CName ProgrammingLanguage.Spark) (ToC  (r.TypePrefix +  enumValue.uniqueName)) sChildContent (c.CName_Present Spark) codec                
             let extFldPath = GetAccessFld (enmDet.AbsPath.Tail.Tail) (Same t) r 
             sa.Choice_Enum sTasName (children |> Seq.map printChild) extFldPath codec
         match Acn.GetChoiceEncodingClass path children acn with
@@ -806,7 +806,7 @@ let CollectLocalVars (t:Asn1Type) (tas:TypeAssignment) (m:Asn1Module) (r:AstRoot
         | Choice(children) when codec = Decode -> 
             let handleChild (c:ChildInfo) =
                 let typeDecl,_ = spark_spec.PrintType c.Type [m.Name.Value; tas.Name.Value; c.Name.Value] (Some tas.Type) (TypeAssignment tas,m,r) {spark_spec.State.nErrorCode = 0}
-                CHOICE_TMP_FLD(c.CName, typeDecl)
+                CHOICE_TMP_FLD(c.CName ProgrammingLanguage.Spark, typeDecl)
             let cldnd = children |> List.map handleChild
             match Acn.GetChoiceEncodingClass path children acn with
             | Some(Acn.EnumDeterminant(extFld))  -> (cldnd@state)
@@ -826,7 +826,7 @@ let CollectLocalVars (t:Asn1Type) (tas:TypeAssignment) (m:Asn1Module) (r:AstRoot
                     [REF_TYPE_PARAM(varName, fldType)]
             let handleAcnInsertedChild (c:ChildInfo) =
                 let chPath = path@[c.Name.Value]
-                let varName = c.CName
+                let varName = c.CName ProgrammingLanguage.Spark
                 let fldType,_ = spark_spec.PrintType c.Type chPath (Some t) (TypeAssignment tas,m,r) {nErrorCode = 0}
                 REF_TYPE_PARAM(varName, fldType)
             let handleUptdateChildTmpVars (c:ChildInfo) =

@@ -104,12 +104,12 @@ and  EmitTypeBody (t:Asn1Type) (sTasName:string) (path:list<string>, pName:strin
         let printChild (k:int, c:ChildInfo) requiredBitsSoFar sNestedContent = 
             let content, bRequiresResultCheck = 
                 match k with
-                | 0     -> su.Sequence_optChild p c.CName errCode codec, false
+                | 0     -> su.Sequence_optChild p (c.CName ProgrammingLanguage.Spark) errCode codec, false
                 | _     -> 
                     let bHasDef= match c.Optionality with Some(Default(v)) ->true |_  ->false
                     let sChildContent = EmitTypeBody c.Type sTasName (path@[c.Name.Value], None) m r codec 
                     let bRequiresResultCheck = UperEncodeFuncRequiresResult c.Type r
-                    let content = su.Sequence_Child p c.CName c.Optionality.IsSome sChildContent bHasDef codec
+                    let content = su.Sequence_Child p (c.CName ProgrammingLanguage.Spark) c.Optionality.IsSome sChildContent bHasDef codec
                     content, bRequiresResultCheck
             su.JoinItems sTasName content sNestedContent requiredBitsSoFar bRequiresResultCheck codec
 
@@ -165,10 +165,10 @@ and  EmitTypeBody (t:Asn1Type) (sTasName:string) (path:list<string>, pName:strin
         let nBits = (GetNumberOfBitsForNonNegativeInteger (nMax-nMin))
         let printChild (i:int) (c:ChildInfo) =
             //let newPath = match codec with Encode -> (path@[c.Name.Value]) | Decode -> ([c.CName+"_tmp"])
-            let pName = match codec with Encode -> None | Decode -> Some(c.CName+"_tmp")
+            let pName = match codec with Encode -> None | Decode -> Some((c.CName ProgrammingLanguage.Spark) + "_tmp")
             let newPath = path@[c.Name.Value]
             let sChildContent = EmitTypeBody c.Type sTasName (newPath, pName) m r codec 
-            su.ChoiceChild sTasName c.CName sChildContent (BigInteger i) nBits  (c.CName_Present Spark) codec
+            su.ChoiceChild sTasName (c.CName ProgrammingLanguage.Spark) sChildContent (BigInteger i) nBits  (c.CName_Present Spark) codec
         let arrChildren = children |> Seq.mapi printChild
         su.Choice sTasName arrChildren nMax nBits codec
 
@@ -206,7 +206,7 @@ let CollectLocalVars (t:Asn1Type) (tas:TypeAssignment) (m:Asn1Module) (r:AstRoot
         | Choice(children) when codec = Decode -> 
             let handleChild (c:ChildInfo) =
                 let typeDecl,_ = spark_spec.PrintType c.Type [m.Name.Value; tas.Name.Value; c.Name.Value] (Some tas.Type) (TypeAssignment tas,m,r) {spark_spec.State.nErrorCode = 0}
-                CHOICE_TMP_FLD(c.CName, typeDecl)
+                CHOICE_TMP_FLD(c.CName ProgrammingLanguage.Spark, typeDecl)
             let cldnd = children |> List.map handleChild
             CHOICE_IDX::(cldnd@state)
         | _             -> state

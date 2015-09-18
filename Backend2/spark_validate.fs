@@ -136,7 +136,7 @@ let rec EmitTypeBody (t:ConstraintType) (path:list<string>)  (tasList:list<(List
                           |Some(s)  -> s
                           |None     -> ""
             let sChildBody = EmitTypeBody (Same c.Type) chKey tasList m r
-            let sChildName = c.CName
+            let sChildName = c.CName ProgrammingLanguage.Spark
             let content, bCanFail = 
                 match k with
                 | -1    -> sc.Emit_fixedSize_constraint(), false
@@ -162,7 +162,7 @@ let rec EmitTypeBody (t:ConstraintType) (path:list<string>)  (tasList:list<(List
                 match HasValidateFunc c.Type r with
                 | true ->  EmitTypeBody (Same c.Type) chKey tasList m r
                 | false -> sc.Emit_fixedSize_constraint()
-            sc.Emit_choice_child c.CName sChildBody (c.CName_Present Spark)
+            sc.Emit_choice_child (c.CName ProgrammingLanguage.Spark) sChildBody (c.CName_Present Spark)
 
         let arrChildren = children |> List.map printChild 
         let sTasName = GetTasCName (path |> Seq.nth 1) r.TypePrefix

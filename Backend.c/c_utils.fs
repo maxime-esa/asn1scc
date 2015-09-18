@@ -104,8 +104,14 @@ let rec GetTypeAccessPathPriv (pVal:string) (path:list<string>) (r:AstRoot) =
             | SequenceOf(_)      -> 
                 let i = path |> Seq.filter ((=) "#") |> Seq.length
                 parResult+ arr+"[i" + i.ToString() + "]"
-            | Sequence(children) -> parResult + (ToC myFldName)
-            | Choice(children)   -> parResult+u+"." + (ToC myFldName)
+            | Sequence(children) -> 
+                match children |> Seq.tryFind(fun ch -> ch.Name.Value = myFldName) with
+                | Some ch   -> parResult + (ch.CName ProgrammingLanguage.C)
+                | None      -> parResult + (ToC myFldName)
+            | Choice(children)   -> 
+                match children |> Seq.tryFind(fun ch -> ch.Name.Value = myFldName) with
+                | Some ch       -> parResult+u+"." + (ch.CName ProgrammingLanguage.C)
+                | None          -> parResult+u+"." + (ToC myFldName)
             |   _       -> raise (BugErrorException(""))
         result + GetDot(t)
 
@@ -200,7 +206,7 @@ let GetPointAccessPath (p:AcnTypes.Point) (r:AstRoot) (acn:AcnTypes.AcnAstResolv
                 let thisChild = children |> Seq.find(fun x -> x.Name.Value = chName)
                 match thisChild.AcnInsertedField with
                 | false -> GetTypeAccessPath absPath  r
-                | true  -> thisChild.CName
+                | true  -> thisChild.CName ProgrammingLanguage.C
             | _                     -> GetTypeAccessPath absPath  r
         | _                       -> GetTypeAccessPath absPath  r
     | AcnTypes.ParamPoint(absPath)  ->    
@@ -246,8 +252,8 @@ let GetPointAccessPathPtr (p:AcnTypes.Point) (r:AstRoot) (acn:AcnTypes.AcnAstRes
                 match thisChild.AcnInsertedField with
                 | false -> GetTypeAccessPathPtr absPath  r
                 | true  -> match (Ast.GetActualType thisChild.Type r).Kind with
-                           | IA5String | NumericString  -> thisChild.CName
-                           | _                          -> "&" + thisChild.CName
+                           | IA5String | NumericString  -> thisChild.CName ProgrammingLanguage.C
+                           | _                          -> "&" + (thisChild.CName ProgrammingLanguage.C)
             | _                     -> GetTypeAccessPathPtr absPath  r
         | _                       -> GetTypeAccessPathPtr absPath  r
     | AcnTypes.ParamPoint(absPath)  ->    

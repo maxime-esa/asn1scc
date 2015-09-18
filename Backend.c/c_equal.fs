@@ -66,7 +66,7 @@ let rec EmitTypeBody (t:Asn1Type) (path:list<string>)  (m:Asn1Module) (r:AstRoot
             let content = 
                 match c.Optionality with
                 | Some(Default(_)) -> "ret = TRUE;"
-                | _                -> c_src.isEqual_Sequence_child p1 p2 c.Optionality.IsSome c.CName sChildBody
+                | _                -> c_src.isEqual_Sequence_child p1 p2 c.Optionality.IsSome (c.CName ProgrammingLanguage.C) sChildBody
             c_src.JoinItems content sNestedContent
 
         let rec printChildren  = function

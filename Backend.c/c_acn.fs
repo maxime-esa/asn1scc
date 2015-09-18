@@ -97,7 +97,7 @@ let HandleChildUpdate (ch:ChildInfo) (parentPath:list<string>) (sTasName:string)
     let childDependencies = acn_backend_logic.GroupReferences childPoint r acn
     let chAccessFld = match ch.AcnInsertedField with
                       | false -> GetTypeAccessPath chPath r
-                      | true  -> ch.CName
+                      | true  -> (ch.CName ProgrammingLanguage.C)
     let GetTmpVar i = ToC ((chPath.Tail.StrJoin "_") + "_" + i.ToString())
     let tmpVar0 = GetTmpVar 0
     let HandleChildReference refIndex (kind:AcnTypes.LongReferenceKind, refs:seq<AcnTypes.LongReferenceResolved>)  =
@@ -593,16 +593,16 @@ let rec EmitTypeBodyAux (t:Asn1Type) (sTasName:string) (path:list<string>, altPa
                         let index = uPERoptionalChildren |> Seq.findIndex(fun ch -> ch.Name.Value = c.Name.Value)
                         let nByteIndex = BigInteger (index / 8)
                         let sAndMask=System.String.Format("{0:X2}", 0x80 >>>(index % 8) )
-                        c_acn.Sequence_presense_optChild pp c.CName errCode sBitMaskName nByteIndex sAndMask codec
+                        c_acn.Sequence_presense_optChild pp (c.CName ProgrammingLanguage.C) errCode sBitMaskName nByteIndex sAndMask codec
                     | Some(Acn.PresBool(extFld))    -> 
                         let extFldPath = GetPointAccessPath extFld  r acn//GetTypeAccessPath (extFld.AbsPath.Tail.Tail)  r 
-                        c_acn.Sequence_presense_optChild_pres_bool pp c.CName extFldPath codec
+                        c_acn.Sequence_presense_optChild_pres_bool pp (c.CName ProgrammingLanguage.C) extFldPath codec
                     | Some(Acn.PresInt(extFld, nVal)) ->
                         let extFldPath = GetPointAccessPath extFld  r acn //GetTypeAccessPath (extFld.AbsPath.Tail.Tail)  r 
-                        c_acn.Sequence_presense_optChild_pres_int pp c.CName extFldPath nVal codec
+                        c_acn.Sequence_presense_optChild_pres_int pp (c.CName ProgrammingLanguage.C) extFldPath nVal codec
                     | Some(Acn.PresStr(extFld, sVal)) ->
                         let extFldPath = GetPointAccessPath extFld  r acn //GetTypeAccessPath (extFld.AbsPath.Tail.Tail)  r 
-                        c_acn.Sequence_presense_optChild_pres_str pp c.CName extFldPath sVal codec
+                        c_acn.Sequence_presense_optChild_pres_str pp (c.CName ProgrammingLanguage.C) extFldPath sVal codec
                     | None      -> raise(BugErrorException "")
                 | AcnUpdateStatement(upStm)     ->
                     match codec with
@@ -615,25 +615,25 @@ let rec EmitTypeBodyAux (t:Asn1Type) (sTasName:string) (path:list<string>, altPa
                         | false     ->  None
                         | true      -> 
                             match (Ast.GetActualType c.Type r).Kind with
-                            | IA5String | NumericString -> Some(c.CName, c.CName)
+                            | IA5String | NumericString -> Some(c.CName ProgrammingLanguage.C, c.CName ProgrammingLanguage.C)
                             | _                         -> 
                                 let mdName = path.Head
                                 let tsName = path.Tail.Head
                                 match acn.Parameters |> Seq.exists(fun x-> x.ModName = mdName && x.TasName = tsName && x.Name = c.Name.Value) with
                                 | true  -> 
                                     match codec with
-                                    | Encode    -> Some(c.CName, "&" + c.CName)
-                                    | Decode    -> Some("*" + c.CName, c.CName)
-                                | false -> Some(c.CName, "&" + c.CName)
+                                    | Encode    -> Some(c.CName ProgrammingLanguage.C, "&" + (c.CName ProgrammingLanguage.C))
+                                    | Decode    -> Some("*" + (c.CName ProgrammingLanguage.C), c.CName ProgrammingLanguage.C)
+                                | false -> Some(c.CName ProgrammingLanguage.C, "&" + (c.CName ProgrammingLanguage.C))
                     let sChildContent = EmitTypeBody c.Type sTasName (childPath, chAccPath) tas m r acn codec 
                     match c.Optionality with
-                    | None      -> c_acn.Sequence_mandatory_child c.CName sChildContent codec
+                    | None      -> c_acn.Sequence_mandatory_child (c.CName ProgrammingLanguage.C) sChildContent codec
                     | Some(Default(vl))  ->
                         let sDefaultValue = c_variables.PrintAsn1Value vl c.Type false (sTasName,0) m r
                         let sChildTypeDeclaration = c_h.PrintTypeDeclaration c.Type childPath r
-                        c_acn.Sequence_default_child pp c.CName sChildContent sChildTypeDeclaration sDefaultValue codec
+                        c_acn.Sequence_default_child pp (c.CName ProgrammingLanguage.C) sChildContent sChildTypeDeclaration sDefaultValue codec
                     | _                 ->
-                        c_acn.Sequence_optional_child pp c.CName sChildContent codec
+                        c_acn.Sequence_optional_child pp (c.CName ProgrammingLanguage.C) sChildContent codec
             c_acn.JoinItems content sNestedContent //requiredBitsSoFar bRequiresAssert  
         let  printChildren lst= 
             let rec printChildrenAux  = function
@@ -791,7 +791,7 @@ let CollectLocalVars (t:Asn1Type) (tas:TypeAssignment) (m:Asn1Module) (r:AstRoot
                     [REF_TYPE_PARAM(varName, fldType)]
             let handleAcnInsertedChild (c:ChildInfo) =
                 let chPath = path@[c.Name.Value]
-                let varName = c.CName
+                let varName = c.CName ProgrammingLanguage.C
                 let fldType = c_h.PrintTypeDeclaration c.Type chPath r 
                 REF_TYPE_PARAM(varName, fldType)
             let handleUptdateChildTmpVars (c:ChildInfo) =

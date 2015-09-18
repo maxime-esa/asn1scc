@@ -110,19 +110,19 @@ let rec PrintAsn1Value (v:Asn1Value) bChoicesInline bPrintRealNegsAsStrings (t:A
         let optChildren = seq {
             for ch in children |> Seq.filter(fun c -> c.Optionality.IsSome) do
                 match ch.Optionality, childVals |> Seq.tryFind(fun (chName, _)  -> chName.Value = ch.Name.Value) with
-                | _,Some(_)             -> yield sv.PrintSequenceValue_child_exists ch.CName "1"
-                | Some(Default(_)),_    -> yield sv.PrintSequenceValue_child_exists ch.CName "1"
-                | _,None                -> yield sv.PrintSequenceValue_child_exists ch.CName "0"  } 
+                | _,Some(_)             -> yield sv.PrintSequenceValue_child_exists (ch.CName ProgrammingLanguage.Spark) "1"
+                | Some(Default(_)),_    -> yield sv.PrintSequenceValue_child_exists (ch.CName ProgrammingLanguage.Spark) "1"
+                | _,None                -> yield sv.PrintSequenceValue_child_exists (ch.CName ProgrammingLanguage.Spark) "0"  } 
         let arrChildren = seq {
             for ch in children  do
                 match childVals |> Seq.tryFind(fun (chName, _)  -> chName.Value = ch.Name.Value) with
-                | Some(chName, chVal)       -> yield sv.PrintSequenceValueChild ch.CName (PrintAsn1Value chVal bChoicesInline bPrintRealNegsAsStrings ch.Type (GetTasNameByKind ch.Type.Kind m r, 0) m r)
+                | Some(chName, chVal)       -> yield sv.PrintSequenceValueChild (ch.CName ProgrammingLanguage.Spark) (PrintAsn1Value chVal bChoicesInline bPrintRealNegsAsStrings ch.Type (GetTasNameByKind ch.Type.Kind m r, 0) m r)
                 | None                      -> 
                     match ch.Optionality with
-                    |Some(Default(defVal))  ->  yield sv.PrintSequenceValueChild ch.CName (PrintAsn1Value defVal bChoicesInline bPrintRealNegsAsStrings ch.Type (GetTasNameByKind ch.Type.Kind m r, 0) m r)
+                    |Some(Default(defVal))  ->  yield sv.PrintSequenceValueChild (ch.CName ProgrammingLanguage.Spark) (PrintAsn1Value defVal bChoicesInline bPrintRealNegsAsStrings ch.Type (GetTasNameByKind ch.Type.Kind m r, 0) m r)
                     |Some(Optional)         ->  
                         let initVal = GetDefaultValueByType ch.Type m r 
-                        yield sv.PrintSequenceValueChild ch.CName (PrintAsn1Value initVal bChoicesInline bPrintRealNegsAsStrings ch.Type (GetTasNameByKind ch.Type.Kind m r, 0) m r)
+                        yield sv.PrintSequenceValueChild (ch.CName ProgrammingLanguage.Spark) (PrintAsn1Value initVal bChoicesInline bPrintRealNegsAsStrings ch.Type (GetTasNameByKind ch.Type.Kind m r, 0) m r)
                     |_                      -> () } |> Seq.toList
         let allChildren = match Seq.isEmpty optChildren with
                           | true     -> arrChildren
@@ -132,8 +132,8 @@ let rec PrintAsn1Value (v:Asn1Value) bChoicesInline bPrintRealNegsAsStrings (t:A
         let ch = children |> Seq.find(fun c -> c.Name.Value = altName.Value)
         let chVal = PrintAsn1Value altVal bChoicesInline bPrintRealNegsAsStrings ch.Type (GetTasNameByKind ch.Type.Kind m r, 0) m r
         match bChoicesInline with
-        | true  -> sv.PrintChoiceValue  (ToC sTasName) ch.CName chVal (ch.CName_Present Spark)
-        | false -> sv.PrintChoiceValue_setters (ToC sTasName) ch.CName chVal
+        | true  -> sv.PrintChoiceValue  (ToC sTasName) (ch.CName ProgrammingLanguage.Spark) chVal (ch.CName_Present Spark)
+        | false -> sv.PrintChoiceValue_setters (ToC sTasName) (ch.CName ProgrammingLanguage.Spark) chVal
     | NullValue, NullType                           -> "0"
     | _                                         -> raise(BugErrorException "Invalid combination")
 

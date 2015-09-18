@@ -19,7 +19,7 @@ let rec PrintTypeDeclaration (t:Asn1Type)  (p:list<string>) (r:AstRoot) =
             |Empty                    -> raise(SemanticError(t.Location, "SEQUENCE OF or OCTET STRING ended up with no (or invalid) constraints"))
             |_                         -> raise(BugErrorException "SEQUENCE OF or OCTET STRING etc has no constraints")
     let PrintChoiceSeqChild (child:ChildInfo) =
-        ch.PrintSeq_ChoiceChild  (PrintTypeDeclaration child.Type (p@[child.Name.Value]) r) child.CName (TypeArrayPostfix child.Type r)
+        ch.PrintSeq_ChoiceChild  (PrintTypeDeclaration child.Type (p@[child.Name.Value]) r) (child.CName ProgrammingLanguage.C) (TypeArrayPostfix child.Type r)
 
     match t.Kind with
     | Integer       -> 
@@ -53,7 +53,7 @@ let rec PrintTypeDeclaration (t:Asn1Type)  (p:list<string>) (r:AstRoot) =
                             (children |> Seq.map PrintChoiceSeqChild ) 
     | Sequence(chldrn)  ->
         let children = chldrn |> Seq.filter(fun x -> not x.AcnInsertedField)
-        let optChilden = children |> Seq.filter(fun x -> x.Optionality.IsSome) |> Seq.map(fun x -> x.CName) 
+        let optChilden = children |> Seq.filter(fun x -> x.Optionality.IsSome) |> Seq.map(fun x -> x.CName ProgrammingLanguage.C) 
         ch.Declare_Sequence (children |> Seq.map PrintChoiceSeqChild |> Seq.toArray) optChilden 
     | SequenceOf(child) ->
         let nMin, nMax = SizeableTypeUperRange()

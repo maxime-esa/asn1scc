@@ -120,24 +120,24 @@ and  EmitTypeBody (t:Asn1Type) (sTasName:string) (path:list<string>, altPath:(st
         let printChild (k:int, c:ChildInfo) sNestedContent = 
             let content = 
                 match k with
-                | 0     -> c_src.uper_Sequence_optChild p c.CName codec
+                | 0     -> c_src.uper_Sequence_optChild p (c.CName ProgrammingLanguage.C) codec
                 | _     ->
                     let childPath =  path@[c.Name.Value]
                     let sChildContent = EmitTypeBody c.Type sTasName (childPath, None) m r codec 
                     match c.Optionality with
                     |None                 ->  
-                        c_src.uper_Sequence_mandatory_child c.CName sChildContent codec
+                        c_src.uper_Sequence_mandatory_child (c.CName ProgrammingLanguage.C) sChildContent codec
                     |Some(optCase)        ->
                         let index = optionalChildren |> Seq.findIndex(fun ch -> ch.Name.Value = c.Name.Value)
                         let nByteIndex = BigInteger (index / 8)
                         let sAndMask=System.String.Format("{0:X2}", 0x80 >>>(index % 8) )
                         match optCase with
                         |Optional |AlwaysPresent |AlwaysAbsent   ->  
-                            c_src.uper_Sequence_optional_child pp c.CName sChildContent sBitMaskName nByteIndex sAndMask codec
+                            c_src.uper_Sequence_optional_child pp (c.CName ProgrammingLanguage.C) sChildContent sBitMaskName nByteIndex sAndMask codec
                         |Default(dv)    ->
                             let sDefaultValue = c_variables.PrintAsn1Value dv c.Type false (sTasName,0) m r
                             let sChildTypeDeclaration = c_h.PrintTypeDeclaration c.Type childPath r
-                            c_src.uper_Sequence_default_child pp c.CName sChildContent sBitMaskName nByteIndex sAndMask sChildTypeDeclaration sDefaultValue codec
+                            c_src.uper_Sequence_default_child pp (c.CName ProgrammingLanguage.C) sChildContent sBitMaskName nByteIndex sAndMask sChildTypeDeclaration sDefaultValue codec
             c_src.JoinItems content sNestedContent 
 
         let  printChildren (lst:list<int*ChildInfo>)= 
