@@ -11,6 +11,21 @@ Blue() ::= "#379CEE"
 
 ItemNumber(nIndex) ::= "Item #$nIndex$"
 
+
+Integer()       ::= "INTEGER"
+BitString()     ::= "BIT-STRING"
+OctetString()   ::= "OCTET-STRING"
+Boolean()       ::= "BOOLEAN"
+Choice()        ::= "CHOICE"
+Enumerated()    ::= "ENUMERATED"
+IA5String()     ::= "IA5String"
+NumericString() ::= "NumericString"
+NullType()      ::= "NULL"
+Real()          ::= "REAL"
+Sequence()      ::= "SEQUENCE"
+SequenceOf()    ::= "SEQUENCE-OF"
+
+
 // HTML formatting for the input ASN.1 grammar (new in version 3.2.x)
 
 // Lower/greater than symbols (< and >) must be replaced with HTML code
@@ -668,5 +683,6 @@ $endif$
 </body>
 </html>
 >>
+
 
 

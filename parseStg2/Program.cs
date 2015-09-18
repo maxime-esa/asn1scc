@@ -208,17 +208,23 @@ namespace parseStg2
                                 "()";
                         if (groupedFunc.Count() == 1)
                         {
-                            if (inpFileNoExt != "generic")
-                            {
-                                txt.WriteLine("let {0} {1} =", func.name, paramerters);
-                                txt.WriteLine("    {0}", lng);
-                                txt.WriteLine("    ST.call \"{0}\" \"{1}\" [{2}]", inpFileNoExt, func.name, prms);
-                            }
-                            else
+                            if (inpFileNoExt == "generic")
                             {
                                 txt.WriteLine("let {0} {1} (fileName:string) =", func.name, paramerters);
                                 txt.WriteLine("    {0}", lng);
                                 txt.WriteLine("    ST.call {0} \"{1}\" [{2}]", "fileName", func.name, prms);
+                            }
+                            else if (inpFileNoExt == "icd_uper" || inpFileNoExt == "icd_acn")
+                            {
+                                txt.WriteLine("let {0} (fileName:string) {1}  =", func.name, paramerters);
+                                txt.WriteLine("    {0}", lng);
+                                txt.WriteLine("    ST.call {0} \"{1}\" [{2}]", "fileName", func.name, prms);
+                            }
+                            else
+                            {
+                                txt.WriteLine("let {0} {1} =", func.name, paramerters);
+                                txt.WriteLine("    {0}", lng);
+                                txt.WriteLine("    ST.call \"{0}\" \"{1}\" [{2}]", inpFileNoExt, func.name, prms);
                             }
                         }
                         else

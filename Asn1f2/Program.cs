@@ -52,10 +52,7 @@ namespace Asn1f2
         {
             try
             {
-
-                int ret = CheckSuccess(args);
-                if (ret != 0)
-                    return ret;
+                return CheckSuccess(args);
             }
             catch (asn1Parser.SyntaxErrorException ex)
             {
@@ -72,7 +69,6 @@ namespace Asn1f2
                 return 2;
             }
 
-            return 0;
 
         }
 
@@ -121,6 +117,8 @@ namespace Asn1f2
                 new CmdLineArgs.CmdArg { HasValue = true, Name = "wordSize", Madatory=false}, 
                 new CmdLineArgs.CmdArg { HasValue = true, Name = "ast", Madatory=false}, 
                 new CmdLineArgs.CmdArg { HasValue = true, Name = "customStg", Madatory=false}, 
+                new CmdLineArgs.CmdArg { HasValue = true, Name = "customIcdUper", Madatory=false}, 
+                new CmdLineArgs.CmdArg { HasValue = true, Name = "customIcdAcn", Madatory=false}, 
                 new CmdLineArgs.CmdArg { HasValue = true, Name = "customStgAstVerion", Madatory=false}, 
                 new CmdLineArgs.CmdArg { HasValue = true, Name = "customStgAstVersion", Madatory=false}, 
                 new CmdLineArgs.CmdArg { HasValue = true, Name = "icdUper", Madatory=false}, 
@@ -179,7 +177,6 @@ namespace Asn1f2
                 return 4;
             }
 
-            var customStg = cmdArgs.GetOptionalArgument("customStg", "");
 
 
             var icdUperHtmlFileName = cmdArgs.GetOptionalArgument("icdUper", "");
@@ -250,31 +247,21 @@ namespace Asn1f2
 
             var bGenTestCases = cmdArgs.HasArgument("atc");
 
+            string[] astVersions = { "1", "2", "3", "4" };
+            var customStgAstVer = cmdArgs.GetOptionalArgument("customStgAstVersion", cmdArgs.GetOptionalArgument("customStgAstVerion", "1"));
+            if (!astVersions.Contains(customStgAstVer))
+            {
+                Console.Error.WriteLine("Invalid value of customStgAstVesrion argument.\nPlease provide one of the following values:");
+                Console.Error.WriteLine("\t1\t==> Ast version where parameterized types have been removed");
+                Console.Error.WriteLine("\t2\t==> Ast version where inner types have been removed");
+                Console.Error.WriteLine("\t3\t==> Ast version where contraint reference types have been removed");
+                Console.Error.WriteLine("\t4\t==> Ast version where Enumerated names are unique (required by C backend)");
+                return 4;
+            }
+
+            var customStg = cmdArgs.GetOptionalArgument("customStg", "");
             if (customStg != "")
             {
-                var files = customStg.Split(':');
-                if (files.Length != 2)
-                {
-                    files = customStg.Split(new string[] { "::" }, StringSplitOptions.RemoveEmptyEntries);
-                    if (files.Length != 2)
-                    {
-                        Console.Error.WriteLine("Invalid usage of customStg argument. Please use ':' to seperate the stg file with output file");
-                        Console.Error.WriteLine("E.g. -customStg mystg.stg:output.txt ");
-                        Console.Error.WriteLine("Under windows, you may user double :: to separate the stg file with output file");
-                        Console.Error.WriteLine("E.g. -customStg c:\\mystg.stg::c:\\output.txt ");
-                        return 4;
-                    }
-                }
-                var stgFileName = files.First();
-                var outFileName = files.Last();
-                if (!File.Exists(stgFileName))
-                {
-                    Console.Error.WriteLine("Custom stg file '{0}' does not exist", stgFileName);
-                    return 4;
-                }
-
-                var customStgAstVer = cmdArgs.GetOptionalArgument("customStgAstVersion", cmdArgs.GetOptionalArgument("customStgAstVerion", "1"));
-
                 var astForCustomBackend = asn1Ast0;
                 if (customStgAstVer == "1")
                     astForCustomBackend = asn1Ast0;
@@ -287,18 +274,33 @@ namespace Asn1f2
                     var renamePolicy = getRenamePolicy(cmdArgs, ParameterizedAsn1Ast.EnumRenamePolicy.SelectiveEnumerants);
                     astForCustomBackend = EnsureUniqueEnumNames.DoWork(refTypesWithNoConstraints, renamePolicy);
                 }
-                else
-                {
-                    Console.Error.WriteLine("Invalid value of customStgAstVesrion argument.\nPlease provide one of the following values:");
-                    Console.Error.WriteLine("\t1\t==> Ast version where parameterized types have been removed");
-                    Console.Error.WriteLine("\t2\t==> Ast version where inner types have been removed");
-                    Console.Error.WriteLine("\t3\t==> Ast version where contraint reference types have been removed");
-                    Console.Error.WriteLine("\t4\t==> Ast version where Enumerated names are unique (required by C backend)");
-                    return 4;
-                }
 
-                genericBackend.DoWork(astForCustomBackend, stgFileName, outFileName);
+                exportCustomStg(cmdArgs, customStg, "customStg", (stgFileName, outFileName) =>
+                { 
+                    genericBackend.DoWork(astForCustomBackend, stgFileName, outFileName); 
+                });
             }
+
+            var customIcdUper = cmdArgs.GetOptionalArgument("customIcdUper", "");
+            if (customIcdUper != "")
+            {
+                exportCustomStg(cmdArgs, customIcdUper, "customIcdUper", (stgFileName, outFileName) =>
+                {
+                    var noInnerasn1Ast2 = ReplaceInnerTypes.DoWork(asn1Ast, acnAstResolved, true);
+                    icdUper.DoWork(stgFileName, noInnerasn1Ast2.Item1, acnAst3, outFileName);
+                });
+            }
+
+            var customIcdAcn = cmdArgs.GetOptionalArgument("customIcdAcn", "");
+            if (customIcdAcn != "")
+            {
+                exportCustomStg(cmdArgs, customIcdAcn, "customIcdAcn", (stgFileName, outFileName) =>
+                {
+                    var noInnerasn1Ast2 = ReplaceInnerTypes.DoWork(asn1Ast, acnAstResolved, true);
+                    icdAcn.DoWork(stgFileName, noInnerasn1Ast2.Item1, acnAstResolved, outFileName);
+                });
+            }
+
 
 
             if (cmdArgs.HasArgument("Ada"))
@@ -365,12 +367,16 @@ namespace Asn1f2
                 if (cmdArgs.HasArgument("icdUper"))
                 {
                     var noInnerasn1Ast2 = ReplaceInnerTypes.DoWork(asn1Ast, acnAstResolved, true);
-                    icdUper.DoWork(noInnerasn1Ast2.Item1, acnAst3, outDir);
+                    var htmlFileName = Path.Combine(outDir, noInnerasn1Ast2.Item1.IcdUperHtmlFileName);
+                    icdUper.DoWork("icd_uper.stg", noInnerasn1Ast2.Item1, acnAst3, htmlFileName);
                 }
                 if (cmdArgs.HasArgument("icdAcn"))
                 {
                     var noInnerasn1Ast2 = ReplaceInnerTypes.DoWork(asn1Ast, acnAstResolved, true);
-                    icdAcn.DoWork(noInnerasn1Ast2.Item1, acnAstResolved, outDir);
+                    var htmlFileName = Path.Combine(outDir, noInnerasn1Ast2.Item1.IcdAcnHtmlFileName);
+                    icdAcn.DoWork("icd_acn.stg", noInnerasn1Ast2.Item1, acnAstResolved, htmlFileName);
+                    var cssFileName = Path.ChangeExtension(htmlFileName, ".css");
+                    icdAcn.emitCss("icd_acn.stg", noInnerasn1Ast2.Item1, acnAstResolved, cssFileName);
                 }
                 
             }
@@ -435,6 +441,36 @@ namespace Asn1f2
             return parsedInputFiles;
         }
 
+
+
+        static void exportCustomStg(CmdLineArgs.CmdLineArguments cmdArgs, String customStg, String cmdLingName, Action<string, string> backendInvocation)
+        {
+            var files = customStg.Split(':');
+            if (files.Length != 2)
+            {
+                files = customStg.Split(new string[] { "::" }, StringSplitOptions.RemoveEmptyEntries);
+                if (files.Length != 2)
+                {
+                    Console.Error.WriteLine("Invalid usage of {0} argument. Please use ':' to seperate the stg file with output file", cmdLingName);
+                    Console.Error.WriteLine("E.g. -{0} mystg.stg:output.txt ", cmdLingName);
+                    Console.Error.WriteLine("Under windows, you may user double :: to separate the stg file with output file");
+                    Console.Error.WriteLine("E.g. -{0} c:\\mystg.stg::c:\\output.txt ", cmdLingName);
+                    Environment.Exit(4);
+                }
+            }
+            var stgFileName = files.First();
+            var outFileName = files.Last();
+            if (!File.Exists(stgFileName))
+            {
+                Console.Error.WriteLine("Custom stg file '{0}' does not exist", stgFileName);
+                Environment.Exit(4);
+            }
+
+
+            backendInvocation(stgFileName, outFileName);
+        }
+
+
         static int Usage()
         {
             var procName = "asn1";
@@ -462,15 +498,27 @@ namespace Asn1f2
             //Console.Error.WriteLine();
             Console.Error.WriteLine("\t -ast file.xml          Produces an XML file of the parsed input ASN.1");
             Console.Error.WriteLine("\t\t\t\tgrammar.(No encoders/decoders are produced)");
+            
             Console.Error.WriteLine("\t -customStg stgFile.stg:outputFile");
             Console.Error.WriteLine("\t\t\t\tInvokes the custom stg file 'stgFile.stg' and produces the");
             Console.Error.WriteLine("\t\t\t\toutput file 'outputFile'");
+
             Console.Error.WriteLine("\t -customStgAstVersion astVersionNumber");
             Console.Error.WriteLine("\t\t\t\twhere astVersionNumber is:");
             Console.Error.WriteLine("\t\t\t\t1\tparameterized types have been removed");
             Console.Error.WriteLine("\t\t\t\t2\tinner types have been removed");
             Console.Error.WriteLine("\t\t\t\t3\tconstraint reference types have been removed");
             Console.Error.WriteLine("\t\t\t\t4\tEnumerated names are unique (required by C backend)");
+
+            Console.Error.WriteLine("\t -customIcdUper stgFile.stg:outputFile");
+            Console.Error.WriteLine("\t\t\t\tInvokes the custom stg file 'stgFile.stg' using the icdUper backend");
+            Console.Error.WriteLine("\t\t\t\tand produces the output file 'outputFile'");
+
+            Console.Error.WriteLine("\t -customIcdAcn stgFile.stg:outputFile");
+            Console.Error.WriteLine("\t\t\t\tInvokes the custom stg file 'stgFile.stg' using the icdAcn backend");
+            Console.Error.WriteLine("\t\t\t\tand produces the output file 'outputFile'");
+
+
             Console.Error.WriteLine("\t -icdUper file.html     Produces an Interface Control Document for");
             Console.Error.WriteLine("\t\t\t\tthe input ASN.1 grammar for uPER encoding");
             Console.Error.WriteLine("\t -icdAcn file.html      Produces an Interface Control Document for ");

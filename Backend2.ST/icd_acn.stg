@@ -2,6 +2,41 @@ group icd_acn;
 
 //delimiters "$", "$"
 
+NewLine() ::= "<br/>"
+OddRow() ::= "OddRow"
+EvenRow() ::= "EvenRow"
+
+
+Integer()       ::= "INTEGER"
+BitString()     ::= "BIT-STRING"
+OctetString()   ::= "OCTET-STRING"
+Boolean()       ::= "BOOLEAN"
+Choice()        ::= "CHOICE"
+Enumerated()    ::= "ENUMERATED"
+IA5String()     ::= "IA5String"
+NumericString() ::= "NumericString"
+NullType()      ::= "NULL"
+Real()          ::= "REAL"
+Sequence()      ::= "SEQUENCE"
+SequenceOf()    ::= "SEQUENCE-OF"
+
+
+EmitRowWith3Dots() ::= <<
+<tr class="CommentRow">
+<td class="threeDots" colspan="7"> <p>. . .</p> </td>
+</tr>
+>>
+
+EmmitFilePart2(sFileName, sAsn1Content) ::= <<
+<div style="width: 100%">
+<h1 >File : $sFileName$</h1>
+<div style="width: 100%; white-space:pre; font-family:Courier New; font-size:small">
+$sAsn1Content$
+</div>
+</div>
+>>
+
+
 EmitModule(sModName, sAsn1FileName, soAcnFileName, arrsComments, arrsTases) ::= <<
 <div style="width: 100%">
 <h1>Module $sModName$</h1>
@@ -16,6 +51,13 @@ $arrsComments;separator="\n<br/>\n"$
 $arrsTases;separator="\n"$
 </div>
 >>
+
+
+EmmitTass(sTypeContent) ::= <<
+$sTypeContent$
+&nbsp;<br/>
+>>
+
 
 ItemNumber(nIndex) ::= "Item #$nIndex$"
 
@@ -36,6 +78,19 @@ StringLiteral(sStringLiteral) ::= <<
 TasName(sTasName, sTasNameC) ::= <<
 <a name="ACN_$sTasNameC$"></a><a href="#ICD_$sTasNameC$"><font color="#B8860B"><b>$sTasName$</b></font></a>
 >>
+
+TasName2(sTasName, sTasNameC) ::= <<
+<a href="#ASN1_$sTasNameC$"><font color="#000000">$sTasName$</font></a>
+>>
+
+BlueTas(sBlueTasC,sTasName) ::= <<
+<a name="ASN1_$sBlueTasC$">$sTasName$</a>
+>>
+
+Asn1Token(sKeyword) ::= <<
+<b><font color="#5F9EA0">$sKeyword$</font></b>
+>>
+
 
 Comment(sComment) ::= <<
 <font color="#008000"><i>$sComment$</i></font>
@@ -136,6 +191,21 @@ EmmitChoiceIndexComment() ::= <<
 Special field used by ACN to indicate which choice alternative is present.
 >>
 
+EmmitChoiceChild(sCssClass, nIndex, sName, sComment,  sType, sConstraint, sMin, sMax) ::= <<
+<tr class="$sCssClass$">
+<td class="no">$nIndex$</td>
+<td class="field">$sName$</td>
+<td class="comment">$sComment$</td>
+<td class="type">$sType$</td>
+<td class="constraint">$sConstraint$</td>
+<td class="min">$sMin$</td>
+<td class="max">$sMax$</td>
+</tr>
+>>
+
+EmmitSeqChild_RefType(sRefName, sRefNameC) ::= <<
+<a href="#ICD_$sRefNameC$">$sRefName$</a>
+>>
 
 
 

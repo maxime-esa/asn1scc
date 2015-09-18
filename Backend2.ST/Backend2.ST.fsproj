@@ -53,7 +53,7 @@
     </When>
     <Otherwise>
       <PropertyGroup>
-        <MonoCallPrefix/>
+        <MonoCallPrefix />
       </PropertyGroup>
     </Otherwise>
   </Choose>
@@ -115,7 +115,7 @@
     </None>
     <Compile Include="xml.gen.fs" />
     <None Include="icd_uper.stg">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
     <Compile Include="icd_uper.gen.fs" />
     <Compile Include="generic.gen.fs" />
@@ -124,7 +124,7 @@
     </None>
     <Compile Include="icd_acn.gen.fs" />
     <None Include="icd_acn.stg">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
     <Compile Include="python.gen.fs" />
     <None Include="python.stg">
