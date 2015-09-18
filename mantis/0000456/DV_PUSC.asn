@@ -1,0 +1,9 @@
+TC-GENERIC DEFINITIONS ::=  -- Data types shared by several services
+BEGIN
+
+Scalartypes-Unsigned9 ::= INTEGER (0..	18446744073709551615)
+
+
+
+END
+
