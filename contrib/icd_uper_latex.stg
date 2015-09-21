@@ -16,8 +16,8 @@ ItemNumber(nIndex) ::= <<
 Item $nIndex$
 >>
 
-Orange() ::= "#FF8f00"
-Blue() ::= "#379CEE"
+Orange() ::= ""
+Blue() ::= ""
 
 Integer()       ::= "INTEGER"
 BitString()     ::= "BIT-STRING"
@@ -33,36 +33,27 @@ Sequence()      ::= "SEQUENCE"
 SequenceOf()    ::= "SEQUENCE-OF"
 
 
-// HTML formatting for the input ASN.1 grammar (new in version 3.2.x)
+// Lower/greater than symbols (< and >)
+LeftDiple() ::= "<"
+RightDiple() ::= ">"
 
-// Lower/greater than symbols (< and >) must be replaced with HTML code
-LeftDiple() ::= "&lt;"
-RightDiple() ::= "&gt;"
+BlueTas(sBlueTasC,sTasName) ::= "$sTasName$~\ref{app:ASN1_$sBlueTasC$}"
 
-BlueTas(sBlueTasC,sTasName) ::= <<
-<a name="ASN1_$sBlueTasC$">$sTasName$</a>
->>
+Asn1Token(sKeyword) ::= "$sKeyword$"
 
-Asn1Token(sKeyword) ::= <<
-<b><font color="#5F9EA0">$sKeyword$</font></b>
->>
+StringLiteral(sStringLiteral) ::= "$sStringLiteral$"
 
-StringLiteral(sStringLiteral) ::= <<
-<font color="#A31515">$sStringLiteral$</font>
->>
 
 TasName(sTasName, sTasNameC) ::= <<
-<a name="ASN1_$sTasNameC$"></a><a href="#ICD_$sTasNameC$"><font color="#B8860B"><b>$sTasName$</b></font></a>
+\label{app:ASN1_$sTasNameC$}
+$sTasName$~\ref{app:ICD_$sTasNameC$}
 >>
 
 TasName2(sTasName, sTasNameC) ::= <<
-<a href="#ASN1_$sTasNameC$"><font color="#000000">$sTasName$</font></a>
+$sTasName$~\ref{app:ASN1_$sTasNameC$}
 >>
 
-Comment(sComment) ::= <<
-<font color="#008000"><i>$sComment$</i></font>
->>
-
+Comment(sComment) ::= "$sComment$"
 
 RealSizeExplained() ::= <<
 why?~\ref{app:REAL_SIZE_EXPLAINED123}
