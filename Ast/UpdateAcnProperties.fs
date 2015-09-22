@@ -110,7 +110,8 @@ let DoWork (ast:AstRoot) (acn:AcnTypes.AcnAst) =
                                     |None               ->
                                         yield {
                                                 ChildInfo.Name = {StringLoc.Value = acnChildName; Location= acnChild.Location}
-                                                uniqueName = acnChildName
+                                                c_name = ToC2 acnChildName
+                                                ada_name = ToC2  acnChildName
                                                 Type =  match acnChild.ImpMode with
                                                         | AcnTypes.RecordField       -> raise(BugErrorException "Child exists in ASN.1")
                                                         | AcnTypes.AcnTypeImplMode.LocalVariable(asn1Type) | AcnTypes.FunctionParameter(asn1Type) ->

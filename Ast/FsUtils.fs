@@ -21,6 +21,9 @@ let option = new OptionBuilder()
 
 let ToC (str:string) =  str.Replace('-','_').Replace('.','_').Replace("#","elm")
 
+let ToC2  =  ToC
+
+
 type stringL  = (string*int)
 
 type BigIntL  = (BigInteger*int)
@@ -77,6 +80,8 @@ type ByteLoc = PrimitiveWithLocation<byte>
 
 type System.String with
     member x.AsLoc = StringLoc.ByValue x
+    member s1.icompare(s2: string) =
+        System.String.Equals(s1, s2, System.StringComparison.CurrentCultureIgnoreCase);;
 
 exception SemanticError of SrcLoc*string
 exception BugErrorException of string
@@ -225,6 +230,14 @@ module List =
             | []    -> keepDuplicates xs
             | _     -> x::(keepDuplicates (xs |> List.filter ((<>) x)))
 
+    let rec keepDuplicatesI (lst:string list) =
+        match lst with
+        | []   -> []
+        | x::xs -> 
+            let dups = xs |> List.filter (fun l -> l.icompare x)
+            match dups with
+            | []    -> keepDuplicatesI xs
+            | _     -> x::(keepDuplicatesI (xs |> List.filter (fun l -> not (l.icompare x))))
 
 let mutable _globalID = 1000
 let GetGlobalID() =

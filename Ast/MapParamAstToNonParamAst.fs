@@ -110,7 +110,8 @@ and MapAsn1Optionality (r:ParameterizedAsn1Ast.AstRoot) (kind: ParameterizedAsn1
 and MapChildInfo (r:ParameterizedAsn1Ast.AstRoot)  (c:ParameterizedAsn1Ast.ChildInfo) :Ast.ChildInfo =
     {
         Ast.ChildInfo.Name = c.Name
-        uniqueName = c.Name.Value
+        ada_name = ToC2 c.Name.Value
+        c_name = ToC2 c.Name.Value
         Type = MapAsn1Type r c.Type
         Optionality = match c.Optionality with
                       |None -> None
@@ -122,7 +123,8 @@ and MapChildInfo (r:ParameterizedAsn1Ast.AstRoot)  (c:ParameterizedAsn1Ast.Child
 and MapNamedItem (r:ParameterizedAsn1Ast.AstRoot)  (n:ParameterizedAsn1Ast.NamedItem) :Ast.NamedItem =
     {
         Ast.NamedItem.Name = n.Name
-        uniqueName = n.Name.Value
+        c_name = ToC2 (r.TypePrefix + n.Name.Value)
+        ada_name = ToC2 (r.TypePrefix + n.Name.Value)
         _value = match n._value with
                  | None -> None
                  | Some(x)  -> Some (MapAsn1Value r ParameterizedAsn1Ast.Integer x)
@@ -212,6 +214,8 @@ let MapTypeAssignment (r:ParameterizedAsn1Ast.AstRoot) (tas:ParameterizedAsn1Ast
     {
         Ast.TypeAssignment.Name = tas.Name
         Type = MapAsn1Type r tas.Type
+        c_name = ToC2 tas.Name.Value
+        ada_name = ToC2 tas.Name.Value
         Comments = tas.Comments
     }
 

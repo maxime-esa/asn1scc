@@ -68,7 +68,7 @@ def RunTestCase(asn1, acn, behavior, expErrMsg):
     asn1File = targetDir+os.sep+"sample1.asn1"
     acnFile = targetDir+os.sep+"sample1.acn"
     res = mysystem(
-        "Asn1f2.exe  -" + language + "  -ACN -typePrefix gmamais_ " +
+        "Asn1f2.exe  -" + language + "  -ACN -typePrefix gmamais_ -renamePolicy 2 " +
         "-equal -atc -o '" + resolvedir(targetDir) + "' '" + resolvedir(asn1File) +
         "' '" + resolvedir(acnFile)+"' >tmp.err 2>&1", True)
     ferr = open("tmp.err", 'r')

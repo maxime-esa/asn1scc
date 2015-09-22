@@ -427,8 +427,8 @@ let CreateValueAssigment (astRoot:list<ITree>) (tree:ITree) =
         Type = typ
         Value = CreateValue astRoot (tree.GetChild(2)) 
         Scope = ParameterizedAsn1Ast.GlobalScope
-        c_name = ToC name.Value
-        ada_name = ToC name.Value
+        c_name = ToC2 name.Value
+        ada_name = ToC2 name.Value
     }
 
 let CreateAsn1Module (astRoot:list<ITree>) (tree:ITree)   (fileTokens:array<IToken>) (alreadyTakenComments:System.Collections.Generic.List<IToken>)= 
@@ -462,7 +462,7 @@ let CreateAsn1Module (astRoot:list<ITree>) (tree:ITree)   (fileTokens:array<ITok
                         if ni.Type = asn1Parser.NUMBER_LST_ITEM then
                             let Value = CreateValue astRoot (ni.GetChild(1))
                             let vasName = ni.GetChild(0).TextL
-                            let c_name = ToC (tas.Value + "_" + ni.GetChild(0).Text)
+                            let c_name = ToC2 (tas.Value + "_" + ni.GetChild(0).Text)
                             yield   {
                                         ValueAssignment.Name = vasName
                                         Type = Type

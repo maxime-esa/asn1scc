@@ -155,7 +155,7 @@ let AcnHouseKeeping (oldAsn1:AstRoot) (acn:AcnAstResolved) (tas:NewTas) : AcnAst
 let CloneModule (oldAsn1:AstRoot) (old:Asn1Module) (cons:Constructors<State>) (state:State)  = 
     let thisModTasses = state.newTases |>List.filter(fun tas -> tas.ModName = old.Name.Value) 
     let restState = {state with newTases = state.newTases|>List.filter(fun tas -> tas.ModName <> old.Name.Value) }
-    let newTasses = thisModTasses |> List.map (fun tas -> {TypeAssignment.Name = tas.TasName.AsLoc ; Type = tas.Type; Comments = [||]} )
+    let newTasses = thisModTasses |> List.map (fun tas -> {TypeAssignment.Name = tas.TasName.AsLoc ; c_name = ToC2 tas.TasName; ada_name = ToC2 tas.TasName; Type = tas.Type; Comments = [||]} )
     let newAcn = thisModTasses |> List.fold(fun curAcn tas -> AcnHouseKeeping oldAsn1 curAcn tas) restState.acn
     defaultConstructors.createModule oldAsn1 {old with TypeAssignments = old.TypeAssignments @ newTasses} cons {restState with acn=newAcn  }    
     

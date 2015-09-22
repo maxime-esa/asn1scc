@@ -47,7 +47,7 @@ let PrintChoiceGetters (t:TypeAssignment) (m:Asn1Module) (r:AstRoot)  =
         let sTasName = GetTasCName t.Name.Value r.TypePrefix
         let printChild (c:ChildInfo) =
             let typeDecl,_ = spark_spec.PrintType c.Type [m.Name.Value; t.Name.Value; c.Name.Value] (Some t.Type) (TypeAssignment t,m,r) {spark_spec.State.nErrorCode = 0}
-            si.CHOICE_setters_body_child sTasName (c.CName ProgrammingLanguage.C) typeDecl (c.CName_Present Spark)
+            si.CHOICE_setters_body_child sTasName (c.CName ProgrammingLanguage.Spark) typeDecl (c.CName_Present Spark)
         si.CHOICE_setters_body sTasName (children |> Seq.map printChild)
     |_              -> ""
 

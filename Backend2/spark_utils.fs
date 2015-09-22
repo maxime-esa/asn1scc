@@ -69,12 +69,14 @@ let GetAccessFldPriv vl (path:list<string>) (t:ConstraintType) (r:AstRoot)  =
         | single::[]   ->   ToC single
         | _            -> 
             match tas().Type.Kind with
-            | Choice(_) ->
+            | Choice(children) ->
                 match path with
                 | modName::tasName::[] -> vl
                 | modName::tasName::fldName::[] ->
                     let sTasName = GetTasCName tasName r.TypePrefix
-                    sTasName+"_"+(ToC fldName)+"_get("+vl+")"
+                    match children |> Seq.tryFind (fun ch -> ch.Name.Value = fldName) with
+                    | Some ch   -> sTasName+"_"+(ch.CName ProgrammingLanguage.Spark)+"_get("+vl+")"
+                    | None      -> sTasName+"_"+(ToC fldName)+"_get("+vl+")"
                 | _                      -> raise(BugErrorException "Invalid path")
             | _         ->
                 match path with
@@ -93,7 +95,8 @@ let GetAccessFldPriv vl (path:list<string>) (t:ConstraintType) (r:AstRoot)  =
                             let ch = children |> Seq.find(fun x -> x.Name.Value = lastName)
                             match ch.AcnInsertedField with
                             | true  -> ToC lastName
-                            | false -> retValue
+                            | false -> 
+                                vl::([ch.CName ProgrammingLanguage.Spark]) |> Seq.StrJoin "."
                         | _                    -> retValue
 
                 | _                      -> raise(BugErrorException "Invalid path")

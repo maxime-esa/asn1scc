@@ -691,7 +691,7 @@ let rec EmitTypeBodyAux (t:Asn1Type) (sTasName:string) (path:list<string>, pName
                                 |Enumerated(enms) -> enms |> List.find(fun en -> en.Name = c.Name)
                                 |_ -> raise(BugErrorException(""))
 
-                sa.ChoiceChild_Enum sTasName (c.CName ProgrammingLanguage.Spark) (ToC  (r.TypePrefix +  enumValue.uniqueName)) sChildContent (c.CName_Present Spark) codec                
+                sa.ChoiceChild_Enum sTasName (c.CName ProgrammingLanguage.Spark) enumValue.ada_name sChildContent (c.CName_Present Spark) codec                
             let extFldPath = GetAccessFld (enmDet.AbsPath.Tail.Tail) (Same t) r 
             sa.Choice_Enum sTasName (children |> Seq.map printChild) extFldPath codec
         match Acn.GetChoiceEncodingClass path children acn with

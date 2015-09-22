@@ -1,4 +1,4 @@
-TC-GENERIC DEFINITIONS ::=  -- Data types shared by several services
+MYMOD DEFINITIONS ::=  
 BEGIN
 
 MyEnum ::= ENUMERATED {default, user-defined}
@@ -16,3 +16,4 @@ MyStruct ::= SEQUENCE {
 
 END
 
+--TCFS     01-keywords.acn

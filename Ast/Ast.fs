@@ -44,6 +44,8 @@ and  ImportedModule = {
 
 and TypeAssignment = {
     Name:StringLoc
+    c_name:string
+    ada_name:string
     Type:Asn1Type
     Comments: string array
 }
@@ -85,14 +87,16 @@ and Asn1TypeKind =
 
 and NamedItem = {
     Name:StringLoc
-    uniqueName:string
+    c_name:string
+    ada_name:string
     _value:Asn1Value option
     Comments: string array
 }
 
 and ChildInfo = {
         Name:StringLoc;
-        uniqueName:string
+        c_name:string
+        ada_name:string
         Type:Asn1Type;
         Optionality:Asn1Optionality option
         AcnInsertedField:bool
@@ -179,12 +183,32 @@ type Codec =
     |Encode
     |Decode
 
+let c_keyworkds =  [ "auto"; "break"; "case"; "char"; "const"; "continue"; "default"; "do"; "double"; "else"; "enum"; "extern"; "float"; "for"; "goto"; "if"; "int"; "long"; "register"; "return"; "short"; "signed"; "sizeof"; "static"; "struct"; "switch"; "typedef"; "union"; "unsigned"; "void"; "volatile"; "while"; ]
+
+let ada_keyworkds =  [ "abort"; "else"; "new"; "return"; "abs"; "elsif"; "not"; "reverse"; "abstract"; "end"; "null"; "accept"; "entry"; "select"; "access"; "exception"; "of"; "separate"; "aliased"; "exit"; "or"; "some"; "all"; "others"; "subtype"; "and"; "for"; "out"; "synchronized"; "array"; "function"; "overriding"; "at"; "tagged"; "generic"; "package"; "task"; "begin"; "goto"; "pragma"; "terminate"; "body"; "private"; "then"; "if"; "procedure"; "type"; "case"; "in"; "protected"; "constant"; "interface"; "until"; "is"; "raise"; "use"; "declare"; "range"; "delay"; "limited"; "record"; "when"; "delta"; "loop"; "rem"; "while"; "digits"; "renames"; "with"; "do"; "mod"; "requeue"; "xor" ]
+
 type ProgrammingLanguage =
     |C
     |Ada
     |Spark
     |Html
     |Unknown
+    with 
+        member l.cmp (s1:string) (s2:string) =
+            match l with
+            |C          -> s1 = s2
+            |Ada
+            |Spark      -> s1.icompare s2
+            |Html       -> s1 = s2
+            |Unknown    -> s1 = s2
+        member l.keywords = 
+            match l with
+            |C          -> c_keyworkds
+            |Ada
+            |Spark      -> ada_keyworkds
+            |Html       -> []
+            |Unknown    -> []
+        
 
 type AstRoot with
     member r.Modules = seq { for f in r.Files do yield! f.Modules} |> Seq.toList
@@ -208,7 +232,7 @@ type Asn1File with
 
 
 type Asn1Module with
-    member m.CName = ToC m.Name.Value
+    member m.CName = ToC2 m.Name.Value
     member this.ExportedTypes =
         match this.Exports with
         | All   -> 
@@ -259,31 +283,22 @@ type Asn1Module with
             | []               -> raise (SemanticError(loc, sprintf "No value assignment with name '%s' exists" n))
 
 
-let GetTasCName name typePrefix = ToC(typePrefix + name)
+let GetTasCName name typePrefix = ToC2(typePrefix + name)
 
 type TypeAssignment with
     member tas.GetCName typePrefix = GetTasCName tas.Name.Value typePrefix 
 
 
-let c_keyworkds =  [ "auto"; "break"; "case"; "char"; "const"; "continue"; "default"; "do"; "double"; "else"; "enum"; "extern"; "float"; "for"; "goto"; "if"; "int"; "long"; "register"; "return"; "short"; "signed"; "sizeof"; "static"; "struct"; "switch"; "typedef"; "union"; "unsigned"; "void"; "volatile"; "while"; ]
 
 type ChildInfo with
     member c.CName (lang:ProgrammingLanguage) = 
         match lang with
-        | Ada   | Spark     -> ToC  (c.Name.Value)
-        | C                 -> 
-            match c_keyworkds |> Seq.exists ( (=) c.Name.Value) with
-            | true  -> ToC  "kw_" + (c.Name.Value)
-            | false -> ToC  (c.Name.Value)
-        | Html              -> ToC  (c.Name.Value)
-        | Unknown           -> ToC  (c.Name.Value)
+        | Ada   | Spark     -> c.ada_name
+        | C                 -> c.c_name
+        | Html              -> raise(BugErrorException "invalid language")
+        | Unknown           -> raise(BugErrorException "invalid language")
 
-    member c.CName_Present  (lang:ProgrammingLanguage) = 
-        match lang with
-        |Ada
-        |Spark  -> (ToC c.uniqueName) + "_PRESENT"
-        |C      -> (ToC c.uniqueName) + "_PRESENT"
-        | _     -> raise(BugErrorException "")
+    member c.CName_Present  (lang:ProgrammingLanguage) = (c.CName lang) + "_PRESENT"
     member c.AlwaysPresent = 
         match c.Optionality with
         | Some(AlwaysPresent)   -> true
@@ -297,9 +312,9 @@ type NamedItem with
     member c.CEnumName (r:AstRoot) (lang:ProgrammingLanguage) = 
         match lang with
         |Ada
-        |Spark  -> ToC (r.TypePrefix +  c.uniqueName) //ToC (r.TypePrefix +  c.Name.Value)
-        |C      -> ToC (r.TypePrefix +  c.uniqueName)
-        | _     -> raise(BugErrorException "")
+        |Spark  -> c.ada_name 
+        |C      -> c.c_name
+        | _     -> raise(BugErrorException "invalid language")
         
 
 let GetLongNameByKey_Asn1 (key:seq<string>) = (key |> Seq.skip 1).StrJoin("-").Replace("#","elm")
