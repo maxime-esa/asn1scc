@@ -16,8 +16,44 @@ ItemNumber(nIndex) ::= <<
 Item $nIndex$
 >>
 
-Orange() ::= "#FF8f00"
-Blue() ::= "#379CEE"
+Orange() ::= ""
+Blue() ::= ""
+
+Integer()       ::= "INTEGER"
+BitString()     ::= "BIT-STRING"
+OctetString()   ::= "OCTET-STRING"
+Boolean()       ::= "BOOLEAN"
+Choice()        ::= "CHOICE"
+Enumerated()    ::= "ENUMERATED"
+IA5String()     ::= "IA5String"
+NumericString() ::= "NumericString"
+NullType()      ::= "NULL"
+Real()          ::= "REAL"
+Sequence()      ::= "SEQUENCE"
+SequenceOf()    ::= "SEQUENCE-OF"
+
+
+// Lower/greater than symbols (< and >)
+LeftDiple() ::= "<"
+RightDiple() ::= ">"
+
+BlueTas(sBlueTasC,sTasName) ::= "$sTasName$~\ref{app:ASN1_$sBlueTasC$}"
+
+Asn1Token(sKeyword) ::= "$sKeyword$"
+
+StringLiteral(sStringLiteral) ::= "$sStringLiteral$"
+
+
+TasName(sTasName, sTasNameC) ::= <<
+\label{app:ASN1_$sTasNameC$}
+$sTasName$~\ref{app:ICD_$sTasNameC$}
+>>
+
+TasName2(sTasName, sTasNameC) ::= <<
+$sTasName$~\ref{app:ASN1_$sTasNameC$}
+>>
+
+Comment(sComment) ::= "$sComment$"
 
 RealSizeExplained() ::= <<
 why?~\ref{app:REAL_SIZE_EXPLAINED123}
