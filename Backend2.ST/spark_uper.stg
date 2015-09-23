@@ -244,14 +244,27 @@ END IF;
 
 
 Sequence_encode(p, arrsChildren, sTasName, bRequiresInit) ::= <<
+<if(arrsChildren)>
 <arrsChildren; separator="\n">
+
+<else>
+null;
+
+<endif>
 >>
 
 
 Sequence_decode(p, arrsChildren, sTasName, bRequiresInit) ::= <<
 <if(bRequiresInit)>val := <sTasName>_Init;<endif>
 
+<if(arrsChildren)>
 <arrsChildren; separator="\n">
+
+<else>
+result := <rtlModuleName()>.ASN1_RESULT'(Success => TRUE, ErrorCode => 0);
+
+
+<endif>
 >>
 
 

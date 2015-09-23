@@ -557,7 +557,7 @@ let rec EmitTypeBodyAux (t:Asn1Type) (sTasName:string) (path:list<string>, pName
             acn.Parameters |> Seq.exists(fun x -> x.ModName = m.Name.Value && x.TasName=tas.Name.Value && x.Name = ch.Name.Value) 
 
         let bRequiresInit = match children |> List.filter(fun x -> not (ChildIsParameter x)) with
-                            | []    -> false
+                            | []    -> true
                             | x::[] -> x.Optionality.IsSome
                             | _     -> true
         let DoesItemAffectsResult childItem =
@@ -622,7 +622,9 @@ let rec EmitTypeBodyAux (t:Asn1Type) (sTasName:string) (path:list<string>, pName
                         let requiredBitsForThis = requiredBitsForChild x
                         let newRequiredBitsSoFar = requiredBitsForThis + requiredBitsSoFar
                         printChildItem x newRequiredBitsSoFar (requiredBitsForThis>0I) (printChildrenAux xs newRequiredBitsSoFar)
-            printChildrenAux lst 0I
+            match lst with
+            | []    -> []
+            | _     -> [printChildrenAux lst 0I]
 
         let DecOutPrmsInit = 
             acn.Parameters 
@@ -647,7 +649,7 @@ let rec EmitTypeBodyAux (t:Asn1Type) (sTasName:string) (path:list<string>, pName
                        | AcnUpdateStatement(_)          -> false
                        | ChildEncDecStatement(c)        -> c.Optionality.IsSome
 
-        sa.Sequence p [(printChildren statements)] sTasName bRequiresInit DecOutPrmsInit bResultRequiresInit codec 
+        sa.Sequence p (printChildren statements) sTasName bRequiresInit DecOutPrmsInit bResultRequiresInit codec 
 
     | Choice(children)                      -> 
         let Choice_like_uPER() = 

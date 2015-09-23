@@ -122,6 +122,7 @@ SEQUENCE_tas_decl_child_bit(sName) ::= "<sName>:<rtlModuleName()>.BIT;"
 SEQUENCE_tas_decl_child(sName, sType) ::= "<sName> : <sType>;"
 
 SEQUENCE_tas_decl(sName, arrsChildren, arrsOptionalChildren) ::= <<
+<if(arrsChildren)>
 <if (arrsOptionalChildren)>
 TYPE <sName>_EXIST IS RECORD
     <arrsOptionalChildren; separator="\n">
@@ -136,6 +137,13 @@ TYPE <sName> IS RECORD
 
     <endif>
 END RECORD;
+
+<else>
+TYPE <sName> IS RECORD 
+    null;
+END RECORD;
+
+<endif>
 >>
 
 

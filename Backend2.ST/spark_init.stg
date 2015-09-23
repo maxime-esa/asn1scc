@@ -146,7 +146,7 @@ isEqual_Sequence_Child(p1, p2, bIsOptional, sChName, sInnerTypeName) ::= <<
 
 isEqual_Sequence(p1, p2, arrsChildren) ::= <<
 begin
-    return <arrsChildren; separator=" and ">;
+    return <if(arrsChildren)><arrsChildren; separator=" and "><else>true<endif>;
 >>
 
 

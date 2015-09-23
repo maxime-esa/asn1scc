@@ -97,7 +97,7 @@ and  EmitTypeBody (t:Asn1Type) (sTasName:string) (path:list<string>, pName:strin
         let d2 = asn1Children |> List.map(fun c -> (1,c))
         let decodedParts = d1@d2
         let bRequiresInit = match asn1Children with
-                            | []    -> false
+                            | []    -> true
                             | x::[] -> x.Optionality.IsSome
                             | _     -> true
 
@@ -126,9 +126,10 @@ and  EmitTypeBody (t:Asn1Type) (sTasName:string) (path:list<string>, pName:strin
                         let requiredBitsForThis = requiredBitsForChild x
                         let newRequiredBitsSoFar = requiredBitsForThis + requiredBitsSoFar
                         printChild x newRequiredBitsSoFar (printChildrenAux xs newRequiredBitsSoFar)
-            printChildrenAux lst 0I
-
-        su.Sequence p [(printChildren decodedParts)] sTasName bRequiresInit codec 
+            match lst with
+            | []    -> []
+            | _     -> [printChildrenAux lst 0I]
+        su.Sequence p (printChildren decodedParts) sTasName bRequiresInit codec 
     | SequenceOf(_) | OctetString | BitString->
         let index = "I1"
         

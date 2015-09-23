@@ -491,3 +491,5 @@ Asn1.userprefs
 /mantis/0000449 - C or Ada keywords not escaped in code generation/out_c/xer.o
 /mantis/0000449 - C or Ada keywords not escaped in code generation/out_c
 /mantis/0000449 - C or Ada keywords not escaped in code generation/out_ada
+/mantis/0000460 - Support for empty sequences/out_c
+/mantis/0000460 - Support for empty sequences/out_ada
