@@ -40,15 +40,9 @@ PrintSequenceValue_child_exists(sName, sExistsBit) ::= "<sName> => <sExistsBit>"
 PrintSequenceValue_Exists(sTasName, arrsOptionalPresentFields) ::="Exist => <sTasName>_EXIST'(<arrsOptionalPresentFields; wrap, anchor,  separator=\",\">)"
 
 PrintSequenceValue(sTasName,arrsChildren) ::= <<
-<if(arrsChildren)>
 <sTasName>'(
-    <arrsChildren; separator=",\n">
+    <if(arrsChildren)><arrsChildren; separator=",\n"><else>null record<endif>
     )
-
-<else>
-<sTasName>'(null record)
-
-<endif>
 >>
 
 
