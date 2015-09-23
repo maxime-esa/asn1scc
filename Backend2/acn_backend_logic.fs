@@ -226,8 +226,9 @@ let rec GenerateValues (a:Asn1Type) modName (r:AstRoot) (acn:AcnTypes.AcnAstReso
                 let chVals = (GenerateValues (RemoveWithComponents (Ast.GetActualType child r) r) modName r acn)
                 for chVal in chVals do 
                     yield SeqOfValue ([1I..min] |> List.map(fun i -> {Asn1Value.Kind=chVal; Location=emptyLocation}))
-                    if min <> max then
-                        yield SeqOfValue ([1I..max] |> List.map(fun i -> {Asn1Value.Kind=chVal; Location=emptyLocation}))
+                    let newMax = if max <= 100000I then max else 100000I
+                    if min < newMax && min <> newMax then
+                        yield SeqOfValue ([1I..newMax] |> List.map(fun i -> {Asn1Value.Kind=chVal; Location=emptyLocation}))
             
             | Sequence(childrn)    ->
                 let children = childrn |> List.filter(fun x -> not x.AcnInsertedField)

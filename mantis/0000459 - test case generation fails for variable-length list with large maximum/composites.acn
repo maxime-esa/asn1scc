@@ -1,0 +1,29 @@
+--
+--   Copyright (c) 2015 European Space Agency
+--    All Rights Reserved
+--
+--    Project:    SOIS Electronic Data Sheets
+--
+--    Module:     composites.acn
+--
+--    Author:     SOIS EDS Tooling  (internal unreleased version)
+--
+--
+
+Composites DEFINITIONS ::= BEGIN
+
+Composites-Byte [size 8,encoding pos-int]
+
+Composites-Long [size 64,endianness big,encoding twos-complement]
+
+
+
+Composites-VarPacket1 []
+{
+  f1 Composites-Long [align-to-next byte],
+  list [size f1]
+}
+
+
+
+END
