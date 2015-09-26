@@ -61,6 +61,7 @@
     <Compile Include="c_variables.fs" />
     <Compile Include="c_h.fs" />
     <Compile Include="c_validate.fs" />
+    <Compile Include="c_validate2.fs" />
     <Compile Include="c_equal.fs" />
     <Compile Include="c_uper.fs" />
     <Compile Include="c_acn.fs" />
