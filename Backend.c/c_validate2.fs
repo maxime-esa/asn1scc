@@ -102,9 +102,6 @@ and ValidatedContraintExpression =
 
 
 
-type State = {
-        types   : Asn1Type list
-    }
 
 
 let createValidationAst (lang:Ast.ProgrammingLanguage) (app:AstRoot) =
@@ -125,16 +122,16 @@ let createValidationAst (lang:Ast.ProgrammingLanguage) (app:AstRoot) =
         (fun r f m vas t v -> 0)
 
         //6. refTypeFunc r f m ref newActType refCons
-        (fun r f m mdName tasName newActType refCons -> RefTypedValidateTypeStatementsBlock {RefTypedValidateTypeStatementsBlock.accessPath=""; refencedTasFunc=(mdName, tasName)})
+        (fun s mdName tasName newActType refCons -> RefTypedValidateTypeStatementsBlock {RefTypedValidateTypeStatementsBlock.accessPath=""; refencedTasFunc=(mdName, tasName)})
 
         //7. baseTypeFunc 
-        (fun r f m t newCons -> BaseTypedValidateTypeStatementBlock {BaseTypedValidateTypeStatementBlock.accessPath=""; returnErrorCode=0; validatedContraintExpressions=newCons})
+        (fun s t newCons -> BaseTypedValidateTypeStatementBlock {BaseTypedValidateTypeStatementBlock.accessPath=""; returnErrorCode=0; validatedContraintExpressions=newCons})
 
         //8. enmItemFunc 
-        (fun r f m t newEnmItems newCons -> BaseTypedValidateTypeStatementBlock {BaseTypedValidateTypeStatementBlock.accessPath=""; returnErrorCode=0; validatedContraintExpressions=newCons})
+        (fun s t newEnmItems newCons -> BaseTypedValidateTypeStatementBlock {BaseTypedValidateTypeStatementBlock.accessPath=""; returnErrorCode=0; validatedContraintExpressions=newCons})
 
         //9. seqOfTypeFunc 
-        (fun  r f m t  newInnerType newCons -> 
+        (fun  s t  newInnerType newCons -> 
             SeqOfTypedValidateTypeStatementsBlock
                 {
                     SeqOfTypedValidateTypeStatementsBlock.accessPath = ""
@@ -146,7 +143,7 @@ let createValidationAst (lang:Ast.ProgrammingLanguage) (app:AstRoot) =
         )
 
         //10. seqTypeFunc 
-        (fun  r f m t newChildren newCons   ->
+        (fun  s t newChildren newCons   ->
             SequenceTypedValidateTypeStatementsBlock
                 {
                     SequenceTypedValidateTypeStatementsBlock.accessPath = ""
@@ -156,7 +153,7 @@ let createValidationAst (lang:Ast.ProgrammingLanguage) (app:AstRoot) =
         )
 
         //11. chTypeFunc 
-        (fun r f m t newChildren newCons ->
+        (fun s t newChildren newCons ->
             ChoiceTypedValidateTypeStatementsBlock
                 {
                     ChoiceTypedValidateTypeStatementsBlock.accessPath = ""
@@ -166,7 +163,7 @@ let createValidationAst (lang:Ast.ProgrammingLanguage) (app:AstRoot) =
         )
 
         //12. sequenceChildFunc 
-        (fun  r f m chInfo newType newDefValue ->
+        (fun  s chInfo newType newDefValue ->
             match chInfo.Optionality with
             | Some AlwaysAbsent     -> NeverPresentChild ""
             | Some AlwaysPresent    -> AlwaysPresentChild("", newType)
@@ -176,83 +173,83 @@ let createValidationAst (lang:Ast.ProgrammingLanguage) (app:AstRoot) =
         )
 
         //13. choiceChildFunc 
-        (fun r f m   chInfo newType -> (chInfo.CName_Present lang, newType) )
+        (fun s   chInfo newType -> (chInfo.CName_Present lang, newType) )
 
         //14. refValueFunc  
-        (fun r f m t (md,vs) newActVal -> vs)
+        (fun s t (md,vs) newActVal -> vs)
 
         //15. enumValueFunc 
-        (fun r f m t actType enmItem  ni -> enmItem.CEnumName r lang)
+        (fun s t actType enmItem  ni -> enmItem.CEnumName s.r lang)
 
         //16. intValFunc 
-        (fun r f m t actType bi  -> bi.ToString())
+        (fun s t actType bi  -> bi.ToString())
 
         //17. realValFunc 
-        (fun r f m t actType d  -> d.ToString())
+        (fun s t actType d  -> d.ToString())
 
         //18. ia5StringValFunc
-        (fun r f m t actType s  -> "\"" + s + "\"") 
+        (fun s t actType str  -> "\"" + str + "\"") 
         //19. numStringValFunc 
-        (fun r f m t actType s  -> "\"" + s + "\"")
+        (fun s t actType str  -> "\"" + str + "\"")
 
         //20. boolValFunc 
-        (fun r f m t actType b  -> c_var.PrintBooleanValue b)
+        (fun s t actType b  -> c_var.PrintBooleanValue b)
 
         //21. octetStringValueFunc 
-        (fun r f m t actType b -> "octec string value")
+        (fun s t actType b -> "octec string value")
 
         //22. bitStringValueFunc 
-        (fun r f m t actType b -> "bit string value")
+        (fun s t actType b -> "bit string value")
 
         //23. nullValueFunc 
-        (fun r f m t actType  -> "0")
+        (fun s t actType  -> "0")
 
         //24. seqOfValueFunc 
-        (fun r f m t actType  newVals -> "sequence of value")
+        (fun s t actType  newVals -> "sequence of value")
 
         //25. seqValueFunc 
-        (fun r f m t actType newValues -> "sequence value")
+        (fun s t actType newValues -> "sequence value")
 
         //26. chValueFunc
-        (fun  r f m t actType name newValue-> "choice value")
+        (fun  s t actType name newValue-> "choice value")
 
         //27. singleValueContraintFunc 
-        (fun r f m t ck actType newValue -> 
+        (fun s t ck actType newValue -> 
             match t.Kind with
             | NumericString | IA5String -> StringEqualExpr (actType.AccessPath,newValue)
             | _                         -> PrimEqualExpr (actType.AccessPath,newValue))
 
         //28. rangeContraintFunc 
-        (fun r f m t ck actType newValue1 newValue2 b1 b2 -> RangeExpr(actType.AccessPath, (newValue1, b1), (newValue2, b2)))
+        (fun s t ck actType newValue1 newValue2 b1 b2 -> RangeExpr(actType.AccessPath, (newValue1, b1), (newValue2, b2)))
 
         //29. greaterThanContraintFunc
-        (fun r f m t ck actType newValue  b -> GreaterThan(actType.AccessPath, (newValue, b)))
+        (fun s t ck actType newValue  b -> GreaterThan(actType.AccessPath, (newValue, b)))
 
         //30. lessThanContraintFunc
-        (fun r f m t ck actType newValue  b -> LesserThan(actType.AccessPath, (newValue, b)))
+        (fun s t ck actType newValue  b -> LesserThan(actType.AccessPath, (newValue, b)))
 
         //31. alwaysTtrueContraintFunc
-        (fun r f m t checContent actType -> AlwaysTrue)
+        (fun s t checContent actType -> AlwaysTrue)
 
         //32. typeInclConstraintFunc
-        (fun r f m t actType (md,tas) -> raise(BugErrorException "This constraint should have been removed"))
+        (fun s t actType (md,tas) -> raise(BugErrorException "This constraint should have been removed"))
 
         //33. unionConstraintFunc
-        (fun r f m t actType nc1 nc2 -> BinaryOpExpr (LogicalAnd, nc1, nc2))
+        (fun s t actType nc1 nc2 -> BinaryOpExpr (LogicalAnd, nc1, nc2))
 
         //34. intersectionConstraintFunc
-        (fun r f m t actType nc1 nc2 -> BinaryOpExpr (LogicalOr, nc1, nc2))
+        (fun s t actType nc1 nc2 -> BinaryOpExpr (LogicalOr, nc1, nc2))
 
         //35. notConstraintFunc
-        (fun r f m t actType nc      -> NotExpr nc)
+        (fun s t actType nc      -> NotExpr nc)
 
         //36. exceptConstraintFunc
-        (fun r f m t actType nc1 nc2 -> BinaryOpExpr (LogicalAnd, nc1, NotExpr nc2))
+        (fun s t actType nc1 nc2 -> BinaryOpExpr (LogicalAnd, nc1, NotExpr nc2))
 
         //37. rootConstraintFunc
-        (fun r f m t actType nc -> nc)
+        (fun s t actType nc -> nc)
 
         //38. root2ConstraintFunc
-        (fun r f m t actType nc1 nc2 -> BinaryOpExpr (LogicalAnd, nc1, nc2))
+        (fun s t actType nc1 nc2 -> BinaryOpExpr (LogicalAnd, nc1, nc2))
 
         app
