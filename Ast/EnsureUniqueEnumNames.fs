@@ -8,6 +8,54 @@ open CloneTree
 
 type State =  string list
 
+
+let rec handleEnumChoices (r:AstRoot) (renamePolicy:ParameterizedAsn1Ast.EnumRenamePolicy)=
+    let doubleEnumNames = seq {
+        for m in r.Modules do
+            for tas in m.TypeAssignments do
+                for t in GetMySelfAndChildren tas.Type  do
+                    match t.Kind with
+                    | Choice(children)  -> 
+                        let names = children |> List.map(fun x -> x.present_when_name)
+                        yield! names
+                    | _                 -> () } |> Seq.toList |> List.keepDuplicatesI
+
+    match doubleEnumNames with
+    | []    -> r
+    | _     ->
+        let CloneType (old:Asn1Type) m (key:list<string>) (cons:Constructors<State>) (state:State) =
+            let CloneChild s (ch:ChildInfo) =
+                let t,ns = cons.cloneType ch.Type m (key@[ch.Name.Value]) cons s
+                let newUniqueName =
+                    match state |> Seq.exists (ch.present_when_name.icompare) with
+                    | false     -> ch.present_when_name
+                    | true      ->
+                        let newPrefix = key |> List.rev |> List.map ToC |> Seq.skipWhile(fun x -> ch.present_when_name.Contains x) |> Seq.head
+                        newPrefix + "_" + ch.present_when_name
+            
+                {ch with Type = t; present_when_name = ToC2 newUniqueName},ns
+
+            match old.Kind with
+            | Choice(children)    -> 
+                //let newChildren, finalState = children |> foldMap CloneChild state
+                let newChildren, finalState =
+                    match renamePolicy with
+                    | ParameterizedAsn1Ast.NoRenamePolicy           -> children, state
+                    | ParameterizedAsn1Ast.SelectiveEnumerants      -> children |> foldMap CloneChild state
+                    | ParameterizedAsn1Ast.AllEnumerants            -> 
+                        let newChildren, finalState = children |> foldMap CloneChild state
+                        let newPrefix = newChildren |> List.map(fun itm -> itm.present_when_name.Replace(ToC2 itm.Name.Value,"")) |> List.maxBy(fun prf -> prf.Length)
+                        let newChildren = 
+                                children |> List.map(fun ch -> {ch with present_when_name = newPrefix + ch.present_when_name})
+                            
+                        newChildren, finalState
+                {old with Kind =  Choice(newChildren)}, finalState
+            | _             -> defaultConstructors.cloneType old m key cons state
+
+        let newTree = CloneTree r {defaultConstructors with cloneType =  CloneType; } doubleEnumNames |> fst
+        handleEnumChoices newTree  renamePolicy
+
+(*
 let rec handleChoices (r:AstRoot) (lang:ProgrammingLanguage) (renamePolicy:ParameterizedAsn1Ast.EnumRenamePolicy)=
     let doubleEnumNames0 = seq {
         for m in r.Modules do
@@ -40,11 +88,11 @@ let rec handleChoices (r:AstRoot) (lang:ProgrammingLanguage) (renamePolicy:Param
                     | false     -> ch.CName lang
                     | true      ->
                         let newPrefix = key |> List.rev |> List.map ToC |> Seq.skipWhile(fun x -> (ch.CName lang).Contains x) |> Seq.head
-                        newPrefix + "" + (ch.CName lang)
+                        newPrefix + "_" + (ch.CName lang)
             
                 match lang with
-                | ProgrammingLanguage.C-> {ch with Type = t; c_name = ToC2 newUniqueName.L1},ns
-                | ProgrammingLanguage.Ada | ProgrammingLanguage.Spark   -> {ch with Type = t; ada_name = ToC2 newUniqueName.L1},ns
+                | ProgrammingLanguage.C-> {ch with Type = t; c_name = ToC2 newUniqueName},ns
+                | ProgrammingLanguage.Ada | ProgrammingLanguage.Spark   -> {ch with Type = t; ada_name = ToC2 newUniqueName},ns
                 | _                                                     -> ch, state
 
             match old.Kind with
@@ -71,15 +119,16 @@ let rec handleChoices (r:AstRoot) (lang:ProgrammingLanguage) (renamePolicy:Param
 
         let newTree = CloneTree r {defaultConstructors with cloneType =  CloneType; } doubleEnumNames |> fst
         handleChoices newTree lang renamePolicy
+*)
 
-
-let rec handleSequences (r:AstRoot) (lang:ProgrammingLanguage) (renamePolicy:ParameterizedAsn1Ast.EnumRenamePolicy)=
+let rec handleSequencesAndChoices (r:AstRoot) (lang:ProgrammingLanguage) (renamePolicy:ParameterizedAsn1Ast.EnumRenamePolicy)=
     let doubleEnumNames = seq {
         for m in r.Modules do
             for tas in m.TypeAssignments do
                 for t in GetMySelfAndChildren tas.Type  do
                     match t.Kind with
-                    | Sequence(children)  -> 
+                    | Sequence(children)   
+                    | Choice(children)  -> 
                         let names = 
                             children |> 
                             List.filter(fun x -> lang.keywords |> Seq.exists(lang.cmp (x.CName lang) )) |>
@@ -99,14 +148,15 @@ let rec handleSequences (r:AstRoot) (lang:ProgrammingLanguage) (renamePolicy:Par
                     | false     -> ch.CName lang
                     | true      ->
                         let newPrefix = key |> List.rev |> List.map ToC |> Seq.skipWhile(fun x -> (ch.CName lang).Contains x) |> Seq.head
-                        newPrefix + "" + (ch.CName lang)
+                        newPrefix + "_" + (ch.CName lang)
             
                 match lang with
-                | ProgrammingLanguage.C-> {ch with Type = t; c_name = ToC2 newUniqueName.L1},ns
-                | ProgrammingLanguage.Ada | ProgrammingLanguage.Spark   -> {ch with Type = t; ada_name = ToC2 newUniqueName.L1},ns
+                | ProgrammingLanguage.C-> {ch with Type = t; c_name = ToC2 newUniqueName},ns
+                | ProgrammingLanguage.Ada | ProgrammingLanguage.Spark   -> {ch with Type = t; ada_name = ToC2 newUniqueName},ns
                 | _                                                     -> ch, state
 
             match old.Kind with
+            | Choice(children)    
             | Sequence(children)    -> 
                 let newChildren, finalState =
                     match renamePolicy with
@@ -114,21 +164,24 @@ let rec handleSequences (r:AstRoot) (lang:ProgrammingLanguage) (renamePolicy:Par
                     | ParameterizedAsn1Ast.SelectiveEnumerants      -> children |> foldMap CloneChild state
                     | ParameterizedAsn1Ast.AllEnumerants            -> 
                         let newChildren, finalState = children |> foldMap CloneChild state
-                        let newPrefix = newChildren |> List.map(fun itm -> (itm.CName lang).Replace(itm.Name.Value,"")) |> List.maxBy(fun prf -> prf.Length)
+                        let newPrefix = newChildren |> List.map(fun itm -> (itm.CName lang).Replace(ToC2 itm.Name.Value,"")) |> List.maxBy(fun prf -> prf.Length)
                         let newChildren = 
                             match lang with
                             | ProgrammingLanguage.C-> 
-                                newChildren |> List.map(fun ch -> {ch with c_name = newPrefix + ch.c_name})
+                                children |> List.map(fun ch -> {ch with c_name = newPrefix + ch.c_name})
                             | ProgrammingLanguage.Ada | ProgrammingLanguage.Spark   -> 
-                                newChildren |> List.map(fun ch -> {ch with ada_name = newPrefix + ch.ada_name})
+                                children |> List.map(fun ch -> {ch with ada_name = newPrefix + ch.ada_name})
                             | _                                                     -> raise(BugErrorException "handleSequences")
                             
                         newChildren, finalState
-                {old with Kind =  Sequence(newChildren)}, finalState
+                match old.Kind with
+                | Choice(children)    -> {old with Kind =  Choice(newChildren)}, finalState
+                | Sequence(children)  -> {old with Kind =  Sequence(newChildren)}, finalState
+                | _                   -> raise (BugErrorException "impossible case in handleSequencesAndChoices")
             | _             -> defaultConstructors.cloneType old m key cons state
 
         let newTree = CloneTree r {defaultConstructors with cloneType =  CloneType; } doubleEnumNames |> fst
-        handleSequences newTree lang renamePolicy
+        handleSequencesAndChoices newTree lang renamePolicy
 
 
 
@@ -176,7 +229,7 @@ let rec handleEnums (r:AstRoot) (renamePolicy:ParameterizedAsn1Ast.EnumRenamePol
                     | ParameterizedAsn1Ast.NoRenamePolicy           -> itesm
                     | ParameterizedAsn1Ast.SelectiveEnumerants      -> itesm|> List.map copyItem
                     | ParameterizedAsn1Ast.AllEnumerants            -> 
-                        let newPrefix = itesm|> List.map copyItem |> List.map(fun itm -> (itm.CEnumName r lang).Replace(itm.Name.Value,"")) |> List.maxBy(fun prf -> prf.Length)
+                        let newPrefix = itesm|> List.map copyItem |> List.map(fun itm -> (itm.CEnumName r lang).Replace(ToC2 itm.Name.Value,"")) |> List.maxBy(fun prf -> prf.Length)
                         match lang with
                         | ProgrammingLanguage.C->  itesm|> List.map (fun itm -> {itm with c_name = newPrefix + itm.c_name})
                         | ProgrammingLanguage.Ada | ProgrammingLanguage.Spark   -> 
@@ -194,12 +247,11 @@ let DoWork (ast:AstRoot) (renamePolicy:ParameterizedAsn1Ast.EnumRenamePolicy)  =
     match renamePolicy with
     | ParameterizedAsn1Ast.NoRenamePolicy           -> ast
     | _                                             ->
-        let r1_c = handleChoices ast ProgrammingLanguage.C renamePolicy
-        let r1_ada = handleChoices r1_c ProgrammingLanguage.Ada renamePolicy
-        let r2_c = handleEnums r1_ada renamePolicy ProgrammingLanguage.C
+        let r1 = handleEnumChoices ast  renamePolicy
+        let r2_c = handleEnums r1 renamePolicy ProgrammingLanguage.C
         let r2_ada = handleEnums r2_c renamePolicy ProgrammingLanguage.Ada
-        let r3_c = handleSequences r2_ada ProgrammingLanguage.C renamePolicy
-        let r3_ada = handleSequences r3_c ProgrammingLanguage.Ada renamePolicy
+        let r3_c = handleSequencesAndChoices r2_ada ProgrammingLanguage.C renamePolicy
+        let r3_ada = handleSequencesAndChoices r3_c ProgrammingLanguage.Ada renamePolicy
 
         r3_ada
 

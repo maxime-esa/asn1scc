@@ -112,6 +112,7 @@ and MapChildInfo (r:ParameterizedAsn1Ast.AstRoot)  (c:ParameterizedAsn1Ast.Child
         Ast.ChildInfo.Name = c.Name
         ada_name = ToC2 c.Name.Value
         c_name = ToC2 c.Name.Value
+        present_when_name = ToC2 c.Name.Value
         Type = MapAsn1Type r c.Type
         Optionality = match c.Optionality with
                       |None -> None

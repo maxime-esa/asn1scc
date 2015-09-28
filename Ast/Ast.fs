@@ -96,7 +96,8 @@ and NamedItem = {
 and ChildInfo = {
         Name:StringLoc;
         c_name:string
-        ada_name:string
+        ada_name:string                     
+        present_when_name:string // used only by choices. Does not contain the "_PRESENT". Not to be used directly by backends.
         Type:Asn1Type;
         Optionality:Asn1Optionality option
         AcnInsertedField:bool
@@ -298,7 +299,7 @@ type ChildInfo with
         | Html              -> raise(BugErrorException "invalid language")
         | Unknown           -> raise(BugErrorException "invalid language")
 
-    member c.CName_Present  (lang:ProgrammingLanguage) = (c.CName lang) + "_PRESENT"
+    member c.CName_Present  (lang:ProgrammingLanguage) = c.present_when_name + "_PRESENT"
     member c.AlwaysPresent = 
         match c.Optionality with
         | Some(AlwaysPresent)   -> true
