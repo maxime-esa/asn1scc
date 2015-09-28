@@ -402,6 +402,18 @@ str_VarSize_decode(p, i, sInternalItem, nSizeMin, nSizeMax) ::= <<
 >>
 
 
+str_VarSize_null_terminated_encode(p, nSizeMax, sNullCharacter) ::= <<
+Acn_Enc_String_NullTerminated(pBitStrm, <p>, <nSizeMax>, '<sNullCharacter>');
+>>
+
+str_VarSize_null_terminated_decode(p, nSizeMax, sNullCharacter) ::= <<
+ret = Acn_Dec_String_NullTerminated(pBitStrm, <p>, <nSizeMax>, '<sNullCharacter>');
+<A()>
+>>
+
+
+
+
 str_external_field_encode(p, i, sInternalItem, nSizeMin, nSizeMax,  sExtFld) ::= <<
 nCount = strlen(<p>);
 ret = (nCount >= <nSizeMin>) && (nCount \<= <nSizeMax>);

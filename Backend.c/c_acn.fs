@@ -467,7 +467,7 @@ let rec EmitTypeBodyAux (t:Asn1Type) (sTasName:string) (path:list<string>, altPa
         let extFld  min max (fldPath:AcnTypes.Point)= 
             let extFldPath = GetPointAccessPath fldPath  r acn//GetTypeAccessPath (fldPath.AbsPath.Tail.Tail)  r 
             c_acn.str_external_field p index intItem min max extFldPath codec
-        let nullTerm max       = raise(BugErrorException "Null terminated is not implemented yet")
+        let nullTerm max       = c_acn.str_VarSize_null_terminated p max "0" codec
         handleSizeableType auto fixSize extFld nullTerm
     | SequenceOf(_) | OctetString ->
         let intItem, IntItemMin, IntItemMax = EmitInternalItem_min_max ()

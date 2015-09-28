@@ -942,6 +942,38 @@ flag Acn_Dec_Real_IEEE754_64_little_endian(BitStream* pBitStrm, double* pRealVal
 
 
 
+/* String functions*/
+
+void Acn_Enc_String_NullTerminated(BitStream* pBitStrm, const char* strVal, asn1SccSint max, char null_character)
+{
+    asn1SccSint i = 0;
+    while ( (strVal[i] != NULL) && (i<max)) {
+        BitStream_AppendByte(pBitStrm, strVal[i], FALSE);
+        i++;
+    }
+    BitStream_AppendByte(pBitStrm, null_character, FALSE);
+}
+
+flag Acn_Dec_String_NullTerminated(BitStream* pBitStrm, char* strVal, asn1SccSint max, char null_character)
+{
+    asn1SccSint i = 0;
+    byte decodedCharacter;
+    while (i<=max) {
+        if (!BitStream_ReadByte(pBitStrm, &decodedCharacter))
+            return FALSE;
+        if (decodedCharacter != null_character) {
+            strVal[i] = decodedCharacter;
+            i++;
+        } else {
+            strVal[i] = 0x0;
+            i++;
+            return TRUE;
+        }
+    }
+
+    return FALSE;
+
+}
 
 
 

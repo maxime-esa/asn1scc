@@ -488,11 +488,12 @@ and CheckConsistencyOfAsn1TypeWithAcnProperties (t:ITree) asn1Type absPath (prop
             | _             -> ()
     | Ast.Choice(_)         ->
         CheckChoice t asn1Type absPath props ast r
-    | Ast.IA5String | Ast.NumericString | Ast.OctetString | Ast.BitString | Ast.SequenceOf(_)  ->
+//    | Ast.IA5String | Ast.NumericString | Ast.OctetString | Ast.BitString | Ast.SequenceOf(_)  ->
+    | Ast.OctetString | Ast.BitString | Ast.SequenceOf(_)  ->
         let uperRange = uPER.GetTypeUperRange asn1Type.Kind asn1Type.Constraints r
         match GetSizeProperty props ast.Constants with
         | None  -> ()
-        | Some(SizeNullTerminated, l)   -> raise(SemanticError(l, "'size null-terminated' is supported only Integer types and when encoding is ASCII"))
+        | Some(SizeNullTerminated, l)   -> raise(SemanticError(l, "Acn proporty 'size null-terminated' is supported only in IA5String and NumericString string types and in Integer types and when encoding is ASCII"))
         | Some(SizeFixed(nItems), l)    ->
             let asn1Min, asn1Max = uPER.GetSizebaleMinMax asn1Type.Kind asn1Type.Constraints r
             match asn1Min = asn1Max, asn1Max = nItems with

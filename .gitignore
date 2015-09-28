@@ -494,3 +494,12 @@ Asn1.userprefs
 /mantis/0000460 - Support for empty sequences/out_c
 /mantis/0000460 - Support for empty sequences/out_ada
 /mantis/0000459 - test case generation fails for variable-length list with large maximum/out_c
+/asn1crt/ipch
+/asn1crt/_UpgradeReport_Files
+/asn1crt/Backup
+/asn1crt/Debug
+/asn1crt/asn1crt.sdf
+/asn1crt/asn1crt.opensdf
+/asn1crt/UpgradeLog.XML
+/asn1crt/asn1crt.vcxproj.filters
+/asn1crt/asn1crt.vcxproj.user
