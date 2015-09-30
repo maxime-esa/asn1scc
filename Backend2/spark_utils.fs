@@ -310,12 +310,12 @@ module SparkDeps =
             | Acn.Real_IEEE754_32_little_endian
             | Acn.Real_IEEE754_64_little_endian -> false
         | OctetString | BitString -> 
-            let encClass = Acn.GetSizeableEncodingClass a path r acn emptyLocation 
+            let encClass = Acn.GetSizeableEncodingClass_ a path r acn emptyLocation 
             match encClass with
             | Acn.ExternalField(_)  -> false
             | _                     -> DecodingResultDependsOnData_uper a r
         |  SequenceOf(child)-> 
-            let encClass = Acn.GetSizeableEncodingClass a path r acn emptyLocation 
+            let encClass = Acn.GetSizeableEncodingClass_ a path r acn emptyLocation 
             match encClass with
             | Acn.ExternalField(_)  
             | Acn.FixedSize(_)      -> DecodingResultDependsOnData_acn child (path@["#"]) r acn
@@ -411,12 +411,12 @@ module SparkDeps =
             | _                         -> IntegerEncodingInAcnIsVariableSize a r acn
         |IA5String | NumericString      -> true
         | OctetString | BitString -> 
-            let encClass = Acn.GetSizeableEncodingClass a path r acn emptyLocation 
+            let encClass = Acn.GetSizeableEncodingClass_ a path r acn emptyLocation 
             match encClass with
             | Acn.ExternalField(_)  -> false
             | _                     -> KIndexDependsOnData_uper a r
         | SequenceOf(child)      -> 
-            let encClass = Acn.GetSizeableEncodingClass a path r acn emptyLocation 
+            let encClass = Acn.GetSizeableEncodingClass_ a path r acn emptyLocation 
             match encClass with
             | Acn.ExternalField(_)   
             | Acn.FixedSize(_)      -> DecodingResultDependsOnData_acn child (path@["#"]) r acn

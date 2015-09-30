@@ -72,6 +72,43 @@ type SizeableEncodingClass =
     | ExternalField of AcnTypes.Point
     | NullTerminated
 
+type StringEncodingClassKind =
+    | Acn_Enc_String_Ascii_FixSize                                                           //
+    | Acn_Enc_String_Ascii_Null_Teminated                   of byte                          //null character
+    | Acn_Enc_String_Ascii_External_Field_Determinant       of AcnTypes.Point                //external field
+    | Acn_Enc_String_Ascii_Internal_Field_Determinant       of BigInteger*BigInteger         //asn1 min value, internal length determinant size in bits
+    | Acn_Enc_String_CharIndex_FixSize                      of char[]                        //allowed char set
+    | Acn_Enc_String_CharIndex_External_Field_Determinant   of char[]*AcnTypes.Point         //allowed char set, external field
+    | Acn_Enc_String_CharIndex_Internal_Field_Determinant   of char[]*BigInteger*BigInteger  //allowed char set, asn1 min value, internal length determinant size in bits
+    with 
+        member x.IsAsccii =
+            match x with
+            | Acn_Enc_String_Ascii_FixSize                           -> true
+            | Acn_Enc_String_Ascii_Null_Teminated                 _  -> true
+            | Acn_Enc_String_Ascii_External_Field_Determinant     _  -> true
+            | Acn_Enc_String_Ascii_Internal_Field_Determinant     _  -> true
+            | Acn_Enc_String_CharIndex_FixSize                    _  -> false
+            | Acn_Enc_String_CharIndex_External_Field_Determinant _  -> false
+            | Acn_Enc_String_CharIndex_Internal_Field_Determinant _  -> false
+        member x.IsExtField =
+            match x with
+            | Acn_Enc_String_Ascii_FixSize                           -> false
+            | Acn_Enc_String_Ascii_Null_Teminated                 _  -> false
+            | Acn_Enc_String_Ascii_External_Field_Determinant     _  -> true
+            | Acn_Enc_String_Ascii_Internal_Field_Determinant     _  -> false
+            | Acn_Enc_String_CharIndex_FixSize                    _  -> false
+            | Acn_Enc_String_CharIndex_External_Field_Determinant _  -> true
+            | Acn_Enc_String_CharIndex_Internal_Field_Determinant _  -> false
+
+type StringEncodingClass = {
+    kind : StringEncodingClassKind
+    maxAsn1SizeValue : BigInteger
+    maxSizeInBits    : BigInteger
+    minSizeInBits    : BigInteger
+    characterSizeInBits : BigInteger
+}
+
+
 type sizePropertyPriv =
     | SP_Fixed          of int
     | SP_NullTerminated
@@ -87,6 +124,11 @@ let GetSizeProperty  (a:Asn1Type) encProperty (acn:AcnTypes.AcnAstResolved) =
     match a.AcnProperties |> List.choose(fun x -> match x with SizeProperty(a) -> Some a | _ -> None ) with     
     | hd::_ -> (sizeToPriv hd acn)
     | []    -> raise(BugErrorException "mandatory property missing")
+
+let tryGetSizeProperty  (a:Asn1Type) (acn:AcnTypes.AcnAstResolved) =
+    match a.AcnProperties |> List.choose(fun x -> match x with SizeProperty(a) -> Some a | _ -> None ) with     
+    | hd::_ -> Some (sizeToPriv hd acn)
+    | []    -> None
 
 
 let GetIntEncodingClass (a:Asn1Type) (asn1:Ast.AstRoot) (acn:AcnTypes.AcnAstResolved) errLoc =
@@ -129,10 +171,10 @@ let GetIntEncodingClass (a:Asn1Type) (asn1:Ast.AstRoot) (acn:AcnTypes.AcnAstReso
 
   
 
-let GetSizeableEncodingClass (a:Asn1Type) (absPath:AcnTypes.AbsPath) (asn1:Ast.AstRoot) (acn:AcnTypes.AcnAstResolved) errLoc =
+let GetSizeableEncodingClass_ (a:Asn1Type) (absPath:AcnTypes.AbsPath) (asn1:Ast.AstRoot) (acn:AcnTypes.AcnAstResolved) errLoc =
     let rec GetSizePropertyAux  (kind:Asn1TypeKind) cons  props =
         match kind with
-        | IA5String | NumericString | OctetString | BitString(_) | SequenceOf(_)->
+        | OctetString | BitString(_) | SequenceOf(_)->
             match props |> List.choose(fun x -> match x with SizeProperty(a) -> Some a | _ -> None ) with     
             | hd::_ -> match hd with
                         | AcnTypes.sizeProperty.Fixed(c)            -> FixedSize (AcnTypes.EvaluateConstant acn.Constants c)
@@ -141,8 +183,74 @@ let GetSizeableEncodingClass (a:Asn1Type) (absPath:AcnTypes.AbsPath) (asn1:Ast.A
                 match acn.References |> Seq.tryFind(fun x -> x.decType.AbsPath = absPath && x.Kind = AcnTypes.SizeDeterminant) with
                 | Some(r)       ->  ExternalField (r.determinant)
                 | None          ->  AutoSize
-        | _     -> raise(BugErrorException "Invalid property")
+        | _     -> raise(BugErrorException "GetSizeableEncodingClass: Invalid function call")
     GetSizePropertyAux a.Kind a.Constraints a.AcnProperties
+
+
+let GetStringEncodingClass (a:Asn1Type) (absPath:AcnTypes.AbsPath) (asn1:Ast.AstRoot) (acn:AcnTypes.AcnAstResolved) errLoc =
+    let GetStringEncodingClassAux  (kind:Asn1TypeKind) cons  (props:AcnProperty list) =
+        match kind with
+        | IA5String | NumericString ->
+            let asn1Min, asn1Max = uPER.GetSizebaleMinMax a.Kind a.Constraints asn1
+            let bAsn1FixedSize = asn1Min = asn1Max
+            let bAsciiEncoding =
+                match GetEncodingProperty a asn1 with
+                | Some Ascii     -> true
+                | _              -> false
+            
+            let sizeClass = 
+                match props |> List.choose(fun x -> match x with SizeProperty(a) -> Some a | _ -> None ) with     
+                | hd::_ -> 
+                    match hd with
+                    | AcnTypes.sizeProperty.Fixed(c)            -> FixedSize (AcnTypes.EvaluateConstant acn.Constants c)
+                    | AcnTypes.sizeProperty.NullTerminated      -> NullTerminated
+                | []    -> 
+                    match acn.References |> Seq.tryFind(fun x -> x.decType.AbsPath = absPath && x.Kind = AcnTypes.SizeDeterminant) with
+                    | Some(r)       ->  ExternalField (r.determinant)
+                    | None          ->  AutoSize
+
+            let alphaCons = a.Constraints |> List.filter(fun x -> match x with AlphabetContraint(_) -> true |_ -> false)
+            let alphaSet = uPER.GetTypeUperRangeFrom (a.Kind, a.Constraints, asn1)
+            let lengthDeterminantSize = GetNumberOfBitsForNonNegativeInteger (asn1Max-asn1Min)
+            let charSizeInBits =
+                match  bAsciiEncoding with
+                | true      -> 8I
+                | false     -> GetNumberOfBitsForNonNegativeInteger (BigInteger (alphaSet.Length - 1))
+            let kind, minSizeInBits, maxSizeInBits = 
+                match  bAsciiEncoding, bAsn1FixedSize, sizeClass  with
+                | true, true, AutoSize                                          -> Acn_Enc_String_Ascii_FixSize, asn1Max*charSizeInBits,  asn1Max*charSizeInBits
+                | true, true, NullTerminated                                    -> Acn_Enc_String_Ascii_Null_Teminated (byte 0), (asn1Max+1I)*charSizeInBits, (asn1Max+1I)*charSizeInBits
+                | true, true, FixedSize(nItems)    when nItems = asn1Max        -> Acn_Enc_String_Ascii_FixSize, asn1Max*charSizeInBits,  asn1Max*charSizeInBits
+                | true, true, FixedSize(nItems)                                 -> raise(BugErrorException(sprintf "size property value should be set to %A" asn1Max))
+                | true, true, ExternalField fld                                 -> Acn_Enc_String_Ascii_External_Field_Determinant fld, asn1Max*charSizeInBits,  asn1Max*charSizeInBits
+
+                | true, false, AutoSize                                         -> Acn_Enc_String_Ascii_Internal_Field_Determinant (asn1Min, lengthDeterminantSize), lengthDeterminantSize + asn1Min*charSizeInBits, lengthDeterminantSize + asn1Max*charSizeInBits
+                | true, false, NullTerminated                                   -> Acn_Enc_String_Ascii_Null_Teminated (byte 0), (asn1Max+1I)*charSizeInBits, (asn1Max+1I)*charSizeInBits
+                | true, false, FixedSize(nItems)                                -> raise(BugErrorException(sprintf "The size constraints of the ASN.1  allows variable items (%A .. %A). Therefore, you should either remove the size property (in which case the size determinant will be encoded automatically exactly like uPER), or use a an Integer field as size determinant" asn1Min asn1Max))
+                | true, false, ExternalField fld                                -> Acn_Enc_String_Ascii_External_Field_Determinant fld, asn1Max*charSizeInBits,  asn1Max*charSizeInBits
+
+                | false, true, AutoSize                                         -> Acn_Enc_String_CharIndex_FixSize alphaSet, asn1Max*charSizeInBits,  asn1Max*charSizeInBits 
+                | false, true, NullTerminated                                   -> raise(BugErrorException(sprintf "when a string type has the acn property 'size null-terminated' it must also have the acn property 'encoding ASCII'" ))
+                | false, true, FixedSize(nItems)    when nItems = asn1Max       -> Acn_Enc_String_CharIndex_FixSize alphaSet, asn1Max*charSizeInBits,  asn1Max*charSizeInBits
+                | false, true, FixedSize(nItems)                                -> raise(BugErrorException(sprintf "size property value should be set to %A" asn1Max))
+                | false, true, ExternalField fld                                -> Acn_Enc_String_CharIndex_External_Field_Determinant (alphaSet,fld), asn1Max*charSizeInBits,  asn1Max*charSizeInBits
+
+                | false, false, AutoSize                                        -> Acn_Enc_String_CharIndex_Internal_Field_Determinant (alphaSet, asn1Min, lengthDeterminantSize), lengthDeterminantSize + asn1Min*charSizeInBits, lengthDeterminantSize + asn1Max*charSizeInBits
+                | false, false, NullTerminated                                  -> raise(BugErrorException(sprintf "when a string type has the acn property 'size null-terminated' it must also have the acn property 'encoding ASCII'" ))
+                | false, false, FixedSize(nItems)                               -> raise(BugErrorException(sprintf "The size constraints of the ASN.1  allows variable items (%A .. %A). Therefore, you should either remove the size property (in which case the size determinant will be encoded automatically exactly like uPER), or use a an Integer field as size determinant" asn1Min asn1Max))
+                | false, false, ExternalField fld                               -> Acn_Enc_String_CharIndex_External_Field_Determinant (alphaSet, fld), asn1Min*charSizeInBits, asn1Max*charSizeInBits
+
+            { 
+                StringEncodingClass.kind = kind
+                maxAsn1SizeValue = asn1Max
+                maxSizeInBits    = maxSizeInBits
+                minSizeInBits    = minSizeInBits
+                characterSizeInBits = charSizeInBits
+            }
+
+        | _     -> raise(BugErrorException "GetStringEncodingClass: Invalid function call")
+    GetStringEncodingClassAux a.Kind a.Constraints a.AcnProperties
+
     
 type RealEncodingClass =
     | Real_uPER
@@ -258,7 +366,7 @@ let rec RequiredBitsForAcnEncodingInt (t:Asn1Type) (absPath:AcnTypes.AbsPath) (a
             |Integer_uPER                                   -> 
                 match uPER.uperGetMaxSizeInBits t.Kind t.Constraints asn1 with
                 | Bounded(nBits)            -> nBits
-                | Infinite                  -> raise(BugErrorException "")
+                | Infinite                  -> raise(BugErrorException "impossible case in RequiredBitsForAcnEncodingInt")
             |PositiveInteger_ConstSize_8                    -> (8I)
             |PositiveInteger_ConstSize_big_endian_16        -> (16I)
             |PositiveInteger_ConstSize_little_endian_16     -> (16I)
@@ -328,11 +436,10 @@ let rec RequiredBitsForAcnEncodingInt (t:Asn1Type) (absPath:AcnTypes.AbsPath) (a
                                                         let childSize,_ = RequiredBitsForAcnEncodingInt ch.Type (absPath@[ch.Name.Value]) asn1 acn
                                                         max accSize childSize ) 0I
             indexSize + maxChildSize
-        | IA5String | NumericString | OctetString | BitString(_) | SequenceOf(_)->
-            let encClass = GetSizeableEncodingClass t absPath asn1 acn emptyLocation 
+        | OctetString | BitString(_) | SequenceOf(_)->
+            let encClass = GetSizeableEncodingClass_ t absPath asn1 acn emptyLocation 
             let innerItemSize = 
                 match t.Kind with
-                |IA5String | NumericString   -> 7I
                 | OctetString                -> 8I
                 | BitString(_)               -> 1I
                 | SequenceOf(innerType)      -> RequiredBitsForAcnEncodingInt innerType (absPath@["#"]) asn1 acn |> fst
@@ -352,6 +459,10 @@ let rec RequiredBitsForAcnEncodingInt (t:Asn1Type) (absPath:AcnTypes.AbsPath) (a
                 match uPER.GetTypeUperRange t.Kind t.Constraints asn1 with
                 | Concrete(_,b)     -> innerItemSize*b+innerItemSize
                 | _                 -> raise(SemanticError(emptyLocation, "Invalid Size"))
+
+        | IA5String | NumericString ->
+            let encClass = GetStringEncodingClass t absPath asn1 acn emptyLocation 
+            encClass.maxSizeInBits
 
     let nBits = calcSize + alignSize
     nBits, BigInteger(System.Math.Ceiling(double(nBits)/8.0))
@@ -445,11 +556,10 @@ let rec RequiredMinBitsForAcnEncodingInt (t:Asn1Type) (absPath:AcnTypes.AbsPath)
                                                         let childSize,_ = RequiredMinBitsForAcnEncodingInt ch.Type (absPath@[ch.Name.Value]) asn1 acn
                                                         min accSize childSize ) maxChildSize
             indexSize + minChildSize
-        | IA5String | NumericString | OctetString | BitString(_) | SequenceOf(_)->
-            let encClass = GetSizeableEncodingClass t absPath asn1 acn emptyLocation 
+        | OctetString | BitString(_) | SequenceOf(_)->
+            let encClass = GetSizeableEncodingClass_ t absPath asn1 acn emptyLocation 
             let innerItemSize = 
                 match t.Kind with
-                |IA5String | NumericString   -> 7I
                 | OctetString                -> 8I
                 | BitString(_)               -> 1I
                 | SequenceOf(innerType)      -> RequiredMinBitsForAcnEncodingInt innerType (absPath@["#"]) asn1 acn |> fst
@@ -469,6 +579,9 @@ let rec RequiredMinBitsForAcnEncodingInt (t:Asn1Type) (absPath:AcnTypes.AbsPath)
                 match uPER.GetTypeUperRange t.Kind t.Constraints asn1 with
                 | Concrete(a,_)     -> innerItemSize*a+innerItemSize
                 | _                 -> raise(SemanticError(emptyLocation, "Invalid Size"))
+        | IA5String | NumericString         ->
+            let encClass = GetStringEncodingClass t absPath asn1 acn emptyLocation 
+            encClass.minSizeInBits
 
     let nBits = calcSize + alignSize
     nBits, BigInteger(System.Math.Ceiling(double(nBits)/8.0))

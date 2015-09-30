@@ -192,28 +192,6 @@ let rec printType stgFileName (tas:Ast.TypeAssignment) (t:Ast.Asn1Type) path (m:
     | IA5String   
     | BitString   
     | SequenceOf(_)  -> 
-        let ChildRow (lineFrom:BigInteger) (i:BigInteger) =
-            let sClass = if i % 2I = 0I then icd_acn.EvenRow stgFileName () else icd_acn.OddRow stgFileName ()
-            let nIndex = lineFrom + i
-            let sFieldName = icd_acn.ItemNumber stgFileName i
-            let sComment = ""
-            let sType, sAsn1Constraints, sMinBits, sMaxBits = 
-                match t.Kind with
-                | SequenceOf(child) ->
-                    let ret = child.Constraints |> Seq.map PrintAsn1.PrintConstraint |> Seq.StrJoin "" 
-                    let ret = ( if ret.Trim() ="" then "N.A." else ret)
-                    let sMaxBits, sMaxBytes = getAcnMax child (path@["#"]) r acn
-                    let sMinBits, sMinBytes = getAcnMin child (path@["#"]) r acn
-                    match child.Kind with
-                    | ReferenceType(md,ts,_)   -> icd_acn.EmmitSeqChild_RefType stgFileName ts.Value (ToC ts.Value), ret, sMinBits, sMaxBits
-                    | _                        -> Kind2Name stgFileName child, ret, sMinBits, (sMaxBits+sMaxBitsExplained)
-                | IA5String                    -> "ASCII CHARACTER", "", "8","8"
-                | NumericString                -> "NUMERIC CHARACTER", "", "8","8"
-                | OctetString                  -> "OCTET", "", "8", "8"
-                | BitString                    -> "BIT", "", "1","1"
-                | _                            -> raise(BugErrorException "")
-            icd_acn.EmmitChoiceChild stgFileName sClass nIndex sFieldName sComment  sType sAsn1Constraints sMinBits sMaxBits
-
         let nMax =
             match (uPER.GetTypeUperRange t.Kind t.Constraints  r) with
             | Concrete(_,b)                        -> b
@@ -222,27 +200,91 @@ let rec printType stgFileName (tas:Ast.TypeAssignment) (t:Ast.Asn1Type) path (m:
             | NegInf(_)                            -> raise(BugErrorException "")
         let sFixedLengthComment = sprintf "Length is Fixed equal to %A, so no length determinant is encoded." nMax
         let arRows, sExtraComment =
-            match Acn.GetSizeableEncodingClass t path r acn emptyLocation,  nMax>=2I with
-            | Acn.FixedSize(nSize), true      -> (ChildRow 0I 1I)::(icd_acn.EmitRowWith3Dots stgFileName ())::(ChildRow 0I nMax)::[], sFixedLengthComment
-            | Acn.FixedSize(nSize), false     -> (ChildRow 0I 1I)::[], sFixedLengthComment
-            | Acn.AutoSize ,_                 ->
-                let nLengthSize = match (uPER.GetTypeUperRange t.Kind t.Constraints  r) with
-                                  | Concrete(a,b)                           -> (GetNumberOfBitsForNonNegativeInteger(b-a)) 
-                                  | NegInf(_)  | PosInf(_) | Empty | Full   -> raise(BugErrorException "")
+            match t.Kind with
+            | OctetString   | BitString   | SequenceOf(_)  -> 
+                let ChildRow (lineFrom:BigInteger) (i:BigInteger) =
+                    let sClass = if i % 2I = 0I then icd_acn.EvenRow stgFileName () else icd_acn.OddRow stgFileName ()
+                    let nIndex = lineFrom + i
+                    let sFieldName = icd_acn.ItemNumber stgFileName i
+                    let sComment = ""
+                    let sType, sAsn1Constraints, sMinBits, sMaxBits = 
+                        match t.Kind with
+                        | SequenceOf(child) ->
+                            let ret = child.Constraints |> Seq.map PrintAsn1.PrintConstraint |> Seq.StrJoin "" 
+                            let ret = ( if ret.Trim() ="" then "N.A." else ret)
+                            let sMaxBits, sMaxBytes = getAcnMax child (path@["#"]) r acn
+                            let sMinBits, sMinBytes = getAcnMin child (path@["#"]) r acn
+                            match child.Kind with
+                            | ReferenceType(md,ts,_)   -> icd_acn.EmmitSeqChild_RefType stgFileName ts.Value (ToC ts.Value), ret, sMinBits, sMaxBits
+                            | _                        -> Kind2Name stgFileName child, ret, sMinBits, (sMaxBits+sMaxBitsExplained)
+                        | OctetString                  -> "OCTET", "", "8", "8"
+                        | BitString                    -> "BIT", "", "1","1"
+                        | _                            -> raise(BugErrorException "")
+                    icd_acn.EmmitChoiceChild stgFileName sClass nIndex sFieldName sComment  sType sAsn1Constraints sMinBits sMaxBits
+                match Acn.GetSizeableEncodingClass_ t path r acn emptyLocation,  nMax>=2I with
+                | Acn.FixedSize(nSize), true      -> (ChildRow 0I 1I)::(icd_acn.EmitRowWith3Dots stgFileName ())::(ChildRow 0I nMax)::[], sFixedLengthComment
+                | Acn.FixedSize(nSize), false     -> (ChildRow 0I 1I)::[], sFixedLengthComment
+                | Acn.AutoSize ,_                 ->
+                    let nLengthSize = match (uPER.GetTypeUperRange t.Kind t.Constraints  r) with
+                                      | Concrete(a,b)                           -> (GetNumberOfBitsForNonNegativeInteger(b-a)) 
+                                      | NegInf(_)  | PosInf(_) | Empty | Full   -> raise(BugErrorException "")
+                    let comment = "Special field used by ACN indicating the number of items."
+                    let ret = t.Constraints |> Seq.map PrintAsn1.PrintConstraint |> Seq.StrJoin "" 
+                    let sCon = ( if ret.Trim() ="" then "N.A." else ret)
+
+                    let lengthLine = icd_acn.EmmitChoiceChild stgFileName (icd_acn.OddRow stgFileName ()) 1I "Length" comment    "unsigned int" sCon (nLengthSize.ToString()) (nLengthSize.ToString())
+                    match nLengthSize>0I,nMax>=2I with
+                    | true,true  -> lengthLine::(ChildRow 1I 1I)::(icd_acn.EmitRowWith3Dots stgFileName ())::(ChildRow 1I nMax)::[], ""
+                    | true,false -> lengthLine::(ChildRow 1I 1I)::[], ""
+                    | false, true-> (ChildRow 0I 1I)::(icd_acn.EmitRowWith3Dots stgFileName ())::(ChildRow 0I nMax)::[], sFixedLengthComment
+                    | false, false->(ChildRow 0I 1I)::[], sFixedLengthComment
+                | Acn.ExternalField(fld), true    -> (ChildRow 0I 1I)::(icd_acn.EmitRowWith3Dots stgFileName ())::(ChildRow 0I nMax)::[], sprintf "Length determined by external field %s" (printPoint fld)
+                | Acn.ExternalField(fld), false   -> (ChildRow 0I 1I)::[], sprintf "Length is determined by the external field: %s" (printPoint fld)
+                | Acn.NullTerminated,_        -> [],""
+            | NumericString  | IA5String    ->
+                let encClass = Acn.GetStringEncodingClass t path r acn emptyLocation
+                let sType = 
+                    match encClass.kind.IsAsccii, t.Kind  with
+                    | true, IA5String                    -> "ASCII CHARACTER"
+                    | true, NumericString                -> "NUMERIC CHARACTER"
+                    | false, IA5String                   -> "POSITIVE INTEGER"
+                    | false, NumericString               -> "POSITIVE INTEGER"
+                    | _                            -> raise(BugErrorException "Impossible case")
+                let ChildRow (lineFrom:BigInteger) (i:BigInteger) =
+                    let sClass = if i % 2I = 0I then icd_acn.EvenRow stgFileName () else icd_acn.OddRow stgFileName ()
+                    let nIndex = lineFrom + i
+                    let sFieldName = icd_acn.ItemNumber stgFileName i
+                    let sComment = ""
+                    icd_acn.EmmitChoiceChild stgFileName sClass nIndex sFieldName sComment  sType "" (encClass.characterSizeInBits.ToString()) (encClass.characterSizeInBits.ToString())
+                let NullRow (lineFrom:BigInteger) (i:BigInteger) =
+                    let sClass = if i % 2I = 0I then icd_acn.EvenRow stgFileName () else icd_acn.OddRow stgFileName ()
+                    let nIndex = lineFrom + i
+                    let sFieldName = icd_acn.ItemNumber stgFileName i
+                    let sComment = "NULL Character"
+                    icd_acn.EmmitChoiceChild stgFileName sClass nIndex sFieldName sComment  sType "" (encClass.characterSizeInBits.ToString()) (encClass.characterSizeInBits.ToString())
+                
                 let comment = "Special field used by ACN indicating the number of items."
                 let ret = t.Constraints |> Seq.map PrintAsn1.PrintConstraint |> Seq.StrJoin "" 
                 let sCon = ( if ret.Trim() ="" then "N.A." else ret)
 
-                let lengthLine = icd_acn.EmmitChoiceChild stgFileName (icd_acn.OddRow stgFileName ()) 1I "Length" comment    "unsigned int" sCon (nLengthSize.ToString()) (nLengthSize.ToString())
-                match nLengthSize>0I,nMax>=2I with
-                | true,true  -> lengthLine::(ChildRow 1I 1I)::(icd_acn.EmitRowWith3Dots stgFileName ())::(ChildRow 1I nMax)::[], ""
-                | true,false -> lengthLine::(ChildRow 1I 1I)::[], ""
-                | false, true-> (ChildRow 0I 1I)::(icd_acn.EmitRowWith3Dots stgFileName ())::(ChildRow 0I nMax)::[], sFixedLengthComment
-                | false, false->(ChildRow 0I 1I)::[], sFixedLengthComment
-            | Acn.ExternalField(fld), true    -> (ChildRow 0I 1I)::(icd_acn.EmitRowWith3Dots stgFileName ())::(ChildRow 0I nMax)::[], sprintf "Length determined by external field %s" (printPoint fld)
-            | Acn.ExternalField(fld), false   -> (ChildRow 0I 1I)::[], sprintf "Length is determined by the external field: %s" (printPoint fld)
+                match encClass.kind with
+                | Acn.Acn_Enc_String_Ascii_FixSize                                  -> (ChildRow 0I 1I)::(icd_acn.EmitRowWith3Dots stgFileName ())::(ChildRow 0I nMax)::[], sFixedLengthComment
+                | Acn.Acn_Enc_String_Ascii_Null_Teminated nullChar                  -> (ChildRow 0I 1I)::(icd_acn.EmitRowWith3Dots stgFileName ())::(ChildRow 0I nMax)::(NullRow 0I (nMax+1I))::[],""
+                | Acn.Acn_Enc_String_Ascii_External_Field_Determinant refPoint      -> (ChildRow 0I 1I)::(icd_acn.EmitRowWith3Dots stgFileName ())::(ChildRow 0I nMax)::[], sprintf "Length determined by external field %s" (printPoint refPoint)
+                | Acn.Acn_Enc_String_Ascii_Internal_Field_Determinant (asn1Min,lenDetSize)    -> 
+                    let lengthLine = icd_acn.EmmitChoiceChild stgFileName (icd_acn.OddRow stgFileName ()) 1I "Length" comment    "unsigned int" sCon (lenDetSize.ToString()) (lenDetSize.ToString())
+                    lengthLine::(ChildRow 1I 1I)::(icd_acn.EmitRowWith3Dots stgFileName ())::(ChildRow 1I nMax)::[], ""
+                | Acn.Acn_Enc_String_CharIndex_FixSize  charSet                     -> (ChildRow 0I 1I)::(icd_acn.EmitRowWith3Dots stgFileName ())::(ChildRow 0I nMax)::[], sFixedLengthComment
+                | Acn.Acn_Enc_String_CharIndex_External_Field_Determinant (charSet, refPoint)   ->  (ChildRow 0I 1I)::(icd_acn.EmitRowWith3Dots stgFileName ())::(ChildRow 0I nMax)::[], sprintf "Length determined by external field %s" (printPoint refPoint)
+                | Acn.Acn_Enc_String_CharIndex_Internal_Field_Determinant (charSet, asn1Min,lenDetSize) -> 
+                    let lengthLine = icd_acn.EmmitChoiceChild stgFileName (icd_acn.OddRow stgFileName ()) 1I "Length" comment    "unsigned int" sCon (lenDetSize.ToString()) (lenDetSize.ToString())
+                    lengthLine::(ChildRow 1I 1I)::(icd_acn.EmitRowWith3Dots stgFileName ())::(ChildRow 1I nMax)::[], ""
+            | _                 -> raise(BugErrorException "Impossible case")
 
-            | Acn.NullTerminated,_        -> [],""
+
+
+
+
 
         let sCommentLine = match sCommentLine with
                            | null | ""  -> sExtraComment

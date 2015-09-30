@@ -1,10 +1,24 @@
 TEST-CASE DEFINITIONS AUTOMATIC TAGS::= BEGIN
 
-	MyPDU ::= IA5String(SIZE(1..20))
+	StrFix01 ::= IA5String(SIZE(5))
+	StrFixAlpha01 ::= IA5String(SIZE(5))(FROM("ABCD"))
+
+	StrFix02 ::= IA5String(SIZE(5))
+	StrFixAlpha02 ::= IA5String(SIZE(5))(FROM("ABCD"))
+
+	StrFix03 ::= IA5String(SIZE(5))
+	StrFixAlpha03 ::= IA5String(SIZE(5))(FROM("ABCD"))
 	
-	pdu1 MyPDU ::= "George Mamais"
+	StrVar01 ::= IA5String(SIZE(1..20))
+	StrVarAlpha01 ::= IA5String(SIZE(1..20))(FROM("ABCD"))
+	
+	StrVar02 ::= IA5String(SIZE(1..20))
+	StrVarAlpha02 ::= IA5String(SIZE(1..20))(FROM("ABCD"))
+
+	MyPDU ::= INTEGER
+	pdu1 MyPDU ::= 0
 	
 END
 
 
---TCLS     MyPDU[size null-terminated]
+--TCFS     006.acn

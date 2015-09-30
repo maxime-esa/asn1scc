@@ -488,9 +488,8 @@ and CheckConsistencyOfAsn1TypeWithAcnProperties (t:ITree) asn1Type absPath (prop
             | _             -> ()
     | Ast.Choice(_)         ->
         CheckChoice t asn1Type absPath props ast r
-//    | Ast.IA5String | Ast.NumericString | Ast.OctetString | Ast.BitString | Ast.SequenceOf(_)  ->
     | Ast.OctetString | Ast.BitString | Ast.SequenceOf(_)  ->
-        let uperRange = uPER.GetTypeUperRange asn1Type.Kind asn1Type.Constraints r
+        //let uperRange = uPER.GetTypeUperRange asn1Type.Kind asn1Type.Constraints r
         match GetSizeProperty props ast.Constants with
         | None  -> ()
         | Some(SizeNullTerminated, l)   -> raise(SemanticError(l, "Acn proporty 'size null-terminated' is supported only in IA5String and NumericString string types and in Integer types and when encoding is ASCII"))
@@ -499,8 +498,41 @@ and CheckConsistencyOfAsn1TypeWithAcnProperties (t:ITree) asn1Type absPath (prop
             match asn1Min = asn1Max, asn1Max = nItems with
             | true, true        -> ()
             | true, false       -> raise(SemanticError(l, sprintf "size property value should be set to %A" asn1Max))
-            | false, _          -> raise(SemanticError(l, sprintf "The size constraints of the ASN.1  allows multiple items (%A .. %A). Therefore, you should either remove the size property (in which case the size determinant will be encoded automatically exactly like uPER), or use a an Integer field as size determinant" asn1Min asn1Max))
+            | false, _          -> raise(SemanticError(l, sprintf "The size constraints of the ASN.1  allows variable items (%A .. %A). Therefore, you should either remove the size property (in which case the size determinant will be encoded automatically exactly like uPER), or use a an Integer field as size determinant" asn1Min asn1Max))
         | Some (SizeField flds, l) -> ()
+    | Ast.IA5String | Ast.NumericString | Ast.OctetString | Ast.BitString | Ast.SequenceOf(_)  ->
+        let asn1Min, asn1Max = uPER.GetSizebaleMinMax asn1Type.Kind asn1Type.Constraints r
+        let bAsn1FixedSize = asn1Min = asn1Max
+        let characterEncoding =  GetEncodingPropery props
+        let bAsciiEncoding, loc =
+            match characterEncoding with
+            | Some (Ascii, loc)     -> true, loc
+            | _                     -> false, t.Location
+        let sizeProp = GetSizeProperty props ast.Constants
+
+        match  bAsciiEncoding, bAsn1FixedSize, sizeProp  with
+        | true, true, None                                                      -> ()   (* Acn_Enc_String_Ascii_No_Length_Determinant() *) 
+        | true, true, Some(SizeNullTerminated, l)                               -> ()   (* Acn_Enc_String_Ascii_Null_Teminated() *) 
+        | true, true, Some(SizeFixed(nItems), l)    when nItems = asn1Max       -> ()   (* Acn_Enc_String_Ascii_No_Length_Determinant() *) 
+        | true, true, Some(SizeFixed(nItems), l)                                -> raise(SemanticError(l, sprintf "size property value should be set to %A" asn1Max))
+        | true, true, Some (SizeField flds, l)                                  -> ()   (* Acn_Enc_String_Ascii_External_Field_Determinant *) 
+
+        | true, false, None                                                     -> ()   (* Acn_Enc_String_Ascii_Internal_Field_Determinant() *) 
+        | true, false, Some(SizeNullTerminated, l)                              -> ()   (* Acn_Enc_String_Ascii_Null_Teminated() *) 
+        | true, false, Some(SizeFixed(nItems), l)                               -> raise(SemanticError(l, sprintf "The size constraints of the ASN.1  allows variable items (%A .. %A). Therefore, you should either remove the size property (in which case the size determinant will be encoded automatically exactly like uPER), or use a an Integer field as size determinant" asn1Min asn1Max))
+        | true, false, Some (SizeField flds, l)                                 -> ()   (* Acn_Enc_String_Ascii_External_Field_Determinant *) 
+
+        | false, true, None                                                      -> ()   (* Acn_Enc_String_CharIndex_No_Length_Determinant() *) 
+        | false, true, Some(SizeNullTerminated, l)                               -> raise(SemanticError(l, sprintf "when a string type has the acn property 'size null-terminated' it must also have the acn property 'encoding ASCII'" ))
+        | false, true, Some(SizeFixed(nItems), l)    when nItems = asn1Max       -> ()   (* Acn_Enc_String_CharIndex_No_Length_Determinant() *) 
+        | false, true, Some(SizeFixed(nItems), l)                                -> raise(SemanticError(l, sprintf "size property value should be set to %A" asn1Max))
+        | false, true, Some (SizeField flds, l)                                  -> ()   (* Acn_Enc_String_CharIndex_External_Field_Determinant *) 
+
+        | false, false, None                                                     -> ()   (* Acn_Enc_String_CharIndex_Internal_Field_Determinant() *) 
+        | false, false, Some(SizeNullTerminated, l)                              -> raise(SemanticError(l, sprintf "when a string type has the acn property 'size null-terminated' it must also have the acn property 'encoding ASCII'" ))
+        | false, false, Some(SizeFixed(nItems), l)                               -> raise(SemanticError(l, sprintf "The size constraints of the ASN.1  allows variable items (%A .. %A). Therefore, you should either remove the size property (in which case the size determinant will be encoded automatically exactly like uPER), or use a an Integer field as size determinant" asn1Min asn1Max))
+        | false, false, Some (SizeField flds, l)                                 -> ()   (* Acn_Enc_String_CharIndex_External_Field_Determinant *) 
+
     | _           -> ()
 
 and BalladerProperties = [acnParser.PRESENT_WHEN; acnParser.ALIGNTONEXT;]

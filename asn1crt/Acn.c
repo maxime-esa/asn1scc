@@ -943,21 +943,107 @@ flag Acn_Dec_Real_IEEE754_64_little_endian(BitStream* pBitStrm, double* pRealVal
 
 
 /* String functions*/
-
-void Acn_Enc_String_NullTerminated(BitStream* pBitStrm, const char* strVal, asn1SccSint max, char null_character)
+void Acn_Enc_String_Ascii_FixSize(BitStream* pBitStrm, asn1SccSint max, const char* strVal)
 {
     asn1SccSint i = 0;
-    while ( (strVal[i] != NULL) && (i<max)) {
+    while (i<max) {
         BitStream_AppendByte(pBitStrm, strVal[i], FALSE);
         i++;
     }
+}
+
+asn1SccSint Acn_Enc_String_Ascii_private(BitStream* pBitStrm, asn1SccSint max, const char* strVal) 
+{
+    asn1SccSint i = 0;
+    while ( (strVal[i] != '\0') && (i<max)) {
+        BitStream_AppendByte(pBitStrm, strVal[i], FALSE);
+        i++;
+    }
+    return i;
+}
+
+void Acn_Enc_String_Ascii_Null_Teminated                (BitStream* pBitStrm, asn1SccSint max, char null_character, const char* strVal)
+{
+    Acn_Enc_String_Ascii_private(pBitStrm, max, strVal);
     BitStream_AppendByte(pBitStrm, null_character, FALSE);
 }
 
-flag Acn_Dec_String_NullTerminated(BitStream* pBitStrm, char* strVal, asn1SccSint max, char null_character)
+
+void Acn_Enc_String_Ascii_External_Field_Determinant    (BitStream* pBitStrm, asn1SccSint max, asn1SccSint* extSizeDeterminatFld, const char* strVal)
+{
+    *extSizeDeterminatFld = Acn_Enc_String_Ascii_private(pBitStrm, max, strVal);
+}
+
+void Acn_Enc_String_Ascii_Internal_Field_Determinant    (BitStream* pBitStrm, asn1SccSint max, asn1SccSint min, const char* strVal)
+{
+    int strLen = strlen(strVal);
+    BitStream_EncodeConstraintWholeNumber(pBitStrm, strLen <= max ? strLen : max, min, max);
+    Acn_Enc_String_Ascii_private(pBitStrm, max, strVal);
+}
+
+void Acn_Enc_String_CharIndex_FixSize  (BitStream* pBitStrm, asn1SccSint max, byte allowedCharSet[], int charSetSize, const char* strVal)
+{
+    asn1SccSint i = 0;
+    while (i<max) {
+	    int charIndex = GetCharIndex(strVal[i], allowedCharSet, charSetSize);
+	    BitStream_EncodeConstraintWholeNumber(pBitStrm, charIndex, 0, charSetSize-1);
+        i++;
+    }
+
+}
+
+asn1SccSint Acn_Enc_String_CharIndex_private(BitStream* pBitStrm, asn1SccSint max, byte allowedCharSet[], int charSetSize, const char* strVal) 
+{
+    asn1SccSint i = 0;
+    while ( (strVal[i] != '\0') && (i<max)) {
+	    int charIndex = GetCharIndex(strVal[i], allowedCharSet, charSetSize);
+	    BitStream_EncodeConstraintWholeNumber(pBitStrm, charIndex, 0, charSetSize-1);
+        i++;
+    }
+    return i;
+}
+
+
+void Acn_Enc_String_CharIndex_External_Field_Determinant(BitStream* pBitStrm, asn1SccSint max, byte allowedCharSet[], int charSetSize, asn1SccSint* extSizeDeterminatFld, const char* strVal)
+{
+    *extSizeDeterminatFld = Acn_Enc_String_CharIndex_private(pBitStrm, max, allowedCharSet, charSetSize, strVal);
+}
+
+void Acn_Enc_String_CharIndex_Internal_Field_Determinant(BitStream* pBitStrm, asn1SccSint max, byte allowedCharSet[], int charSetSize, asn1SccSint min, const char* strVal)
+{
+    int strLen = strlen(strVal);
+    BitStream_EncodeConstraintWholeNumber(pBitStrm, strLen <= max ? strLen : max, min, max);
+    Acn_Enc_String_CharIndex_private(pBitStrm, max, allowedCharSet, charSetSize, strVal);
+}
+
+
+
+flag Acn_Dec_String_Ascii_private(BitStream* pBitStrm, asn1SccSint max,  asn1SccSint charactersToDecode, char* strVal)
 {
     asn1SccSint i = 0;
     byte decodedCharacter;
+    memset(strVal, 0x0, (size_t)max+1);
+    while (i<charactersToDecode) {
+        if (!BitStream_ReadByte(pBitStrm, &decodedCharacter))
+            return FALSE;
+        strVal[i] = decodedCharacter;
+        i++;
+    }
+    return TRUE;
+}
+
+
+flag Acn_Dec_String_Ascii_FixSize(BitStream* pBitStrm, asn1SccSint max, char* strVal)
+{
+    return Acn_Dec_String_Ascii_private(pBitStrm, max, max, strVal);
+}
+
+
+flag Acn_Dec_String_Ascii_Null_Teminated(BitStream* pBitStrm, asn1SccSint max, char null_character, char* strVal)
+{
+    asn1SccSint i = 0;
+    byte decodedCharacter;
+    memset(strVal, 0x0, (size_t)max+1);
     while (i<=max) {
         if (!BitStream_ReadByte(pBitStrm, &decodedCharacter))
             return FALSE;
@@ -965,8 +1051,6 @@ flag Acn_Dec_String_NullTerminated(BitStream* pBitStrm, char* strVal, asn1SccSin
             strVal[i] = decodedCharacter;
             i++;
         } else {
-            strVal[i] = 0x0;
-            i++;
             return TRUE;
         }
     }
@@ -975,11 +1059,53 @@ flag Acn_Dec_String_NullTerminated(BitStream* pBitStrm, char* strVal, asn1SccSin
 
 }
 
+flag Acn_Dec_String_Ascii_External_Field_Determinant    (BitStream* pBitStrm, asn1SccSint max, asn1SccSint extSizeDeterminatFld, char* strVal)
+{
+    return Acn_Dec_String_Ascii_private(pBitStrm, max, extSizeDeterminatFld<=max? extSizeDeterminatFld : max, strVal);
+}
+
+flag Acn_Dec_String_Ascii_Internal_Field_Determinant    (BitStream* pBitStrm, asn1SccSint max, asn1SccSint min, char* strVal)
+{
+    asn1SccSint nCount;
+    if (!BitStream_DecodeConstraintWholeNumber(pBitStrm, &nCount, min, max)) 
+        return FALSE;
+
+    return Acn_Dec_String_Ascii_private(pBitStrm, max, nCount<=max? nCount : max, strVal);
+
+}
+
+flag Acn_Dec_String_CharIndex_private(BitStream* pBitStrm, asn1SccSint max,  asn1SccSint charactersToDecode, byte allowedCharSet[], int charSetSize, char* strVal)
+{
+    asn1SccSint i = 0;
+    memset(strVal, 0x0, (size_t)max+1);
+    while (i<charactersToDecode) {
+        asn1SccSint charIndex = 0;
+        if (!BitStream_DecodeConstraintWholeNumber(pBitStrm, &charIndex, 0, charSetSize-1))
+            return FALSE;
+        strVal[i] = allowedCharSet[charIndex];
+        i++;
+    }
+    return TRUE;
+}
 
 
+flag Acn_Dec_String_CharIndex_FixSize (BitStream* pBitStrm, asn1SccSint max, byte allowedCharSet[], int charSetSize, char* strVal)
+{
+    return Acn_Dec_String_CharIndex_private(pBitStrm, max, max, allowedCharSet, charSetSize, strVal);
+}
 
+flag Acn_Dec_String_CharIndex_External_Field_Determinant(BitStream* pBitStrm, asn1SccSint max, byte allowedCharSet[], int charSetSize, asn1SccSint extSizeDeterminatFld, char* strVal)
+{
+    return Acn_Dec_String_CharIndex_private(pBitStrm, max, extSizeDeterminatFld <= max ? extSizeDeterminatFld : max, allowedCharSet, charSetSize, strVal);
+}
 
-
+flag Acn_Dec_String_CharIndex_Internal_Field_Determinant(BitStream* pBitStrm, asn1SccSint max, byte allowedCharSet[], int charSetSize, asn1SccSint min, char* strVal)
+{
+    asn1SccSint nCount;
+    if (!BitStream_DecodeConstraintWholeNumber(pBitStrm, &nCount, min, max)) 
+        return FALSE;
+    return Acn_Dec_String_CharIndex_private(pBitStrm, max, nCount <= max ? nCount : max, allowedCharSet, charSetSize, strVal);
+}
 
 
 

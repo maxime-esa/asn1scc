@@ -325,7 +325,7 @@ type Statement =
 
 let rec EmitTypeBodyAux (t:Asn1Type) (sTasName:string) (path:list<string>, pName:string option)  (tas:TypeAssignment) (m:Asn1Module) (r:AstRoot) (acn:AcnTypes.AcnAstResolved) codec =
     let handleSizeableType auto fixedSize extFld nullTerm =
-        let encClass = Acn.GetSizeableEncodingClass t path r acn emptyLocation 
+        let encClass = Acn.GetSizeableEncodingClass_ t path r acn emptyLocation 
         let (min, max) = match uPER.GetTypeUperRange t.Kind t.Constraints r with
                             | Concrete(a, b)    -> (a,b)
                             | _                 -> raise(BugErrorException "Expecting size constraint")
@@ -448,6 +448,7 @@ let rec EmitTypeBodyAux (t:Asn1Type) (sTasName:string) (path:list<string>, pName
             let arrItems = Acn.GetEnumEncodingValues t r Spark acn |> Seq.map(fun (sname,vl) -> sai.Enumerated_item p sname vl codec)
             sai.EnumeratedEncValues p sTasName arrItems sActualCodecFunc codec
     | IA5String | NumericString -> 
+        (*
         let intItem, IntItemMin, IntItemMax = EmitInternalItem_min_max ()
         let auto min max       = sa.str_VarSize p sTasName index intItem min max (GetNumberOfBitsForNonNegativeInteger (max-min)) IntItemMin IntItemMax aligmVal codec
         let fixSize size       = sa.str_FixedSize p sTasName index intItem size IntItemMin IntItemMax aligmVal codec
@@ -456,6 +457,28 @@ let rec EmitTypeBodyAux (t:Asn1Type) (sTasName:string) (path:list<string>, pName
             sa.str_external_field p sTasName index intItem min max IntItemMin IntItemMax extFldPath aligmVal codec
         let nullTerm max       = raise(BugErrorException "Null terminated is not implemented yet")
         handleSizeableType auto fixSize extFld nullTerm
+        *)
+        let encClass = Acn.GetStringEncodingClass t path r acn emptyLocation 
+        match encClass.kind with
+        | Acn.Acn_Enc_String_Ascii_FixSize                                  -> 
+            sa.Acn_String_Ascii_FixSize p encClass.maxAsn1SizeValue codec
+        | Acn.Acn_Enc_String_Ascii_Null_Teminated nullChar                  -> 
+            sa.Acn_String_Ascii_Null_Teminated p encClass.maxAsn1SizeValue (nullChar.ToString()) codec
+        | Acn.Acn_Enc_String_Ascii_External_Field_Determinant refPoint      -> 
+            let extField = GetPointAccessPath refPoint  r acn
+            sa.Acn_String_Ascii_External_Field_Determinant p encClass.maxAsn1SizeValue extField codec
+        | Acn.Acn_Enc_String_Ascii_Internal_Field_Determinant (asn1Min,_)    -> 
+            sa.Acn_String_Ascii_Internal_Field_Determinant p encClass.maxAsn1SizeValue asn1Min codec
+        | Acn.Acn_Enc_String_CharIndex_FixSize  charSet                     -> 
+            let arrAsciiCodes = charSet |> Array.map(fun x -> BigInteger (System.Convert.ToInt32 x))
+            sa.Acn_String_CharIndex_FixSize p encClass.maxAsn1SizeValue arrAsciiCodes (BigInteger charSet.Length) codec
+        | Acn.Acn_Enc_String_CharIndex_External_Field_Determinant (charSet, refPoint)    ->  
+            let extField = GetPointAccessPath refPoint  r acn
+            let arrAsciiCodes = charSet |> Array.map(fun x -> BigInteger (System.Convert.ToInt32 x))
+            sa.Acn_String_CharIndex_External_Field_Determinant p encClass.maxAsn1SizeValue arrAsciiCodes (BigInteger charSet.Length) extField codec
+        | Acn.Acn_Enc_String_CharIndex_Internal_Field_Determinant (charSet, asn1Min,_) -> 
+            let arrAsciiCodes = charSet |> Array.map(fun x -> BigInteger (System.Convert.ToInt32 x))
+            sa.Acn_String_CharIndex_Internal_Field_Determinant p encClass.maxAsn1SizeValue arrAsciiCodes (BigInteger charSet.Length) asn1Min codec
     | SequenceOf(_) | OctetString | BitString->
         let intItem, IntItemMin, IntItemMax = EmitInternalItem_min_max ()
         let auto min max   = su.oct_sqf_VarSize sTasName p index intItem min max (GetNumberOfBitsForNonNegativeInteger (max-min)) IntItemMin IntItemMax aligmVal codec 
@@ -762,30 +785,34 @@ let CollectBoolPatterns (m:Asn1Module) (r:AstRoot)  =
 let CollectLocalVars (t:Asn1Type) (tas:TypeAssignment) (m:Asn1Module) (r:AstRoot) (acn:AcnTypes.AcnAstResolved) codec =
     let OnType_collerLocalVariables (t:Asn1Type) (path:list<string>) (parent:option<Asn1Type>) (ass:Assignment) (m:Asn1Module) (r:AstRoot) (state:list<LOCAL_VARIABLE>) = 
         match t.Kind with
-        | SequenceOf(_) | OctetString | BitString | IA5String | NumericString-> 
-            let encClass = Acn.GetSizeableEncodingClass t path r acn emptyLocation 
+        | SequenceOf(_) | OctetString | BitString -> 
+            let encClass = Acn.GetSizeableEncodingClass_ t path r acn emptyLocation 
+            let newState =
+                let s0 = (SEQUENCE_OF_INDEX (1,true))::state
+                match (GetTypeUperRange t.Kind t.Constraints r) with
+                | Concrete(a,b) when  a=b   ->  s0
+                | Concrete(a,b)   -> 
+                    match codec, encClass with
+                    | Decode, Acn.FixedSize(_)     -> LENGTH::s0
+                    | Decode, Acn.AutoSize(_)      -> LENGTH::s0
+                    | _                            -> s0
+                | _                 -> raise (BugErrorException("Unsupported configuration"))
+            newState
+        | IA5String | NumericString-> 
+            let encClass = Acn.GetStringEncodingClass t path r acn emptyLocation 
             let newState =
                 let s0 = (SEQUENCE_OF_INDEX (1,true))::state
                 match (GetTypeUperRange t.Kind t.Constraints r) with
                 | Concrete(a,b) when  a=b   -> 
-                    match t.Kind, codec, encClass with
-                    | IA5String, Encode, Acn.ExternalField(_)       -> LENGTH::s0
-                    | NumericString, Encode, Acn.ExternalField(_)   -> LENGTH::s0
-                    | _                                         -> s0
+                    match codec, encClass.kind.IsExtField with
+                    | Encode, true      -> LENGTH::s0
+                    | _                 -> s0
                 | Concrete(a,b)   -> 
-                    match t.Kind with 
-                    | SequenceOf(_) | OctetString | BitString -> match codec, encClass with
-                                                                 | Decode, Acn.FixedSize(_)     -> LENGTH::s0
-                                                                 | Decode, Acn.AutoSize(_)      -> LENGTH::s0
-                                                                 | _                            -> s0
-                    | IA5String | NumericString               -> match codec, encClass with
-                                                                 | Decode, Acn.ExternalField(_)     -> s0
-                                                                 | _                                -> LENGTH::s0
-                    | _                                       -> raise (BugErrorException(""))
+                    match codec, encClass.kind.IsExtField with
+                    | Decode, true     -> s0
+                    | _                -> LENGTH::s0
                 | _                 -> raise (BugErrorException("Unsupported configuration"))
-            match t.Kind with
-            |IA5String | NumericString -> CHAR_VAL::newState
-            |_                         -> newState
+            CHAR_VAL::newState
         | Integer   when codec = Decode     ->
             let rootCons = t.Constraints |> Seq.filter(fun x -> match x with RootConstraint(a) |RootConstraint2(a,_) -> true |_ -> false) 
             match (Seq.isEmpty rootCons) with
