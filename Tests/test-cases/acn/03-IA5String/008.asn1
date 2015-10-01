@@ -1,6 +1,6 @@
 TEST-CASE DEFINITIONS AUTOMATIC TAGS::= BEGIN
 
-	MyPDU ::= IA5String(SIZE(20))(FROM("A".."Z"|"a".."z"|" "))
+	MyPDU ::= IA5String(SIZE(20))
 	pdu1 MyPDU ::= "George Mamais       "
 	
 END

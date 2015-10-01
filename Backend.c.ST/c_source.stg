@@ -140,7 +140,7 @@ flag <sName>_CharsAreValid(const char* pVal)
     flag ret=TRUE;
     int i=0;
 
-    while ((pVal[i] != NULL) && ret) {
+    while ((pVal[i] != '\0') && ret) {
         ret = ret && (<arrsAlphaConBody; separator=" && ">);
         i = i + 1;
     }

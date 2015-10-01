@@ -1,14 +1,13 @@
 TEST-CASE DEFINITIONS AUTOMATIC TAGS::= BEGIN
 
-	MyPDU ::= IA5String(SIZE(20))(FROM("A".."Z"|"a".."z"|" "))
+	MyPDU ::= IA5String(SIZE(1..20))(FROM("A".."Z"|"a".."z"|" "))
 	pdu1 MyPDU ::= "George Mamais       "
 	
 END
 
 -- ASCII encodings
---TCLS     MyPDU[encoding ASCII, size 20]
 --TCLS     MyPDU[encoding ASCII, size null-terminated]
+--TCLS     MyPDU[encoding ASCII]
 
 -- char index encodings
 --TCLS     MyPDU[]
---TCLS     MyPDU[size 20]

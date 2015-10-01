@@ -132,7 +132,7 @@ ret = Acn_Dec_String_Ascii_External_Field_Determinant(pBitStrm, <nAsn1Max>, <sEx
 
 Acn_String_Ascii_Internal_Field_Determinant_encode(p, nAsn1Max, nAsn1Min) ::= "Acn_Enc_String_Ascii_Internal_Field_Determinant(pBitStrm, <nAsn1Max>, <nAsn1Min>, <p>);"
 Acn_String_Ascii_Internal_Field_Determinant_decode(p, nAsn1Max, nAsn1Min) ::= <<
-ret = Acn_Enc_String_Ascii_Internal_Field_Determinant(pBitStrm, <nAsn1Max>, <nAsn1Min>, <p>);
+ret = Acn_Dec_String_Ascii_Internal_Field_Determinant(pBitStrm, <nAsn1Max>, <nAsn1Min>, <p>);
 <A()>
 >>
 

@@ -540,8 +540,8 @@ and BalladerProperties = [acnParser.PRESENT_WHEN; acnParser.ALIGNTONEXT;]
 and AllowedPropertiesPerType = function
     | Ast.Integer           -> [acnParser.ENCODING; acnParser.SIZE; acnParser.ENDIANNES]
     | Ast.Real              -> [acnParser.ENCODING; acnParser.ENDIANNES]
-    | Ast.IA5String         -> [acnParser.SIZE]
-    | Ast.NumericString     -> [acnParser.SIZE]
+    | Ast.IA5String         -> [acnParser.ENCODING; acnParser.SIZE]
+    | Ast.NumericString     -> [acnParser.ENCODING; acnParser.SIZE]
     | Ast.OctetString       -> [acnParser.SIZE]
     | Ast.NullType          -> [acnParser.PATTERN]
     | Ast.BitString         -> [acnParser.SIZE]
@@ -557,8 +557,8 @@ and MandatoryAcnPropertiesPerType asn1Kind : List<int> =
     match asn1Kind with
     | Ast.Integer           -> [acnParser.ENCODING; acnParser.SIZE; ]   //ADJUST = 0, ENDIANNES=big
     | Ast.Real              -> [acnParser.ENCODING; ]   //ENDIANNES=big
-    | Ast.IA5String         -> [acnParser.SIZE]     // pointing to a field
-    | Ast.NumericString     -> [acnParser.SIZE]     // pointing to a field
+    | Ast.IA5String         -> []     // pointing to a field
+    | Ast.NumericString     -> []     // pointing to a field
     | Ast.OctetString       -> [acnParser.SIZE]     // pointing to a field
     | Ast.NullType          -> []                   // pattern = ''
     | Ast.BitString         -> [acnParser.SIZE]     // pointing to a field

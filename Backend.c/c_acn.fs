@@ -778,7 +778,7 @@ let CollectLocalVars (t:Asn1Type) (tas:TypeAssignment) (m:Asn1Module) (r:AstRoot
                     | _                            -> s0
                 | _                 -> raise (BugErrorException("Unsupported configuration"))
             newState
-        | IA5String | NumericString-> 
+(*        | IA5String | NumericString-> 
             let encClass = Acn.GetStringEncodingClass t path r acn emptyLocation 
             let newState =
                 let s0 = (SEQUENCE_OF_INDEX 1)::state
@@ -794,7 +794,8 @@ let CollectLocalVars (t:Asn1Type) (tas:TypeAssignment) (m:Asn1Module) (r:AstRoot
                     | Decode, Acn.Acn_Enc_String_Ascii_External_Field_Determinant _         -> s0
                     | _                                -> LENGTH::s0
                 | _                 -> raise (BugErrorException("Unsupported configuration"))
-            CHAR_VAL::newState
+            CHAR_VAL::newState 
+*)
         | Integer   when codec = Decode     ->
             let rootCons = t.Constraints |> Seq.filter(fun x -> match x with RootConstraint(a) |RootConstraint2(a,_) -> true |_ -> false) 
             match (Seq.isEmpty rootCons) with

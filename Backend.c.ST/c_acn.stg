@@ -363,7 +363,7 @@ ret = Acn_Dec_String_Ascii_Null_Teminated(pBitStrm, <nAsn1Max>, <sNull>, <p>);
 <A()>
 >>
 
-Acn_String_Ascii_External_Field_Determinant_encode(p, nAsn1Max, sExtFld) ::= "Acn_Enc_String_Ascii_External_Field_Determinant(pBitStrm, <nAsn1Max>, <sExtFld>, <p>);"
+Acn_String_Ascii_External_Field_Determinant_encode(p, nAsn1Max, sExtFld) ::= "Acn_Enc_String_Ascii_External_Field_Determinant(pBitStrm, <nAsn1Max>, <p>);"
 Acn_String_Ascii_External_Field_Determinant_decode(p, nAsn1Max, sExtFld) ::= <<
 ret = Acn_Dec_String_Ascii_External_Field_Determinant(pBitStrm, <nAsn1Max>, <sExtFld>, <p>);
 <A()>
@@ -371,10 +371,13 @@ ret = Acn_Dec_String_Ascii_External_Field_Determinant(pBitStrm, <nAsn1Max>, <sEx
 
 Acn_String_Ascii_Internal_Field_Determinant_encode(p, nAsn1Max, nAsn1Min) ::= "Acn_Enc_String_Ascii_Internal_Field_Determinant(pBitStrm, <nAsn1Max>, <nAsn1Min>, <p>);"
 Acn_String_Ascii_Internal_Field_Determinant_decode(p, nAsn1Max, nAsn1Min) ::= <<
-ret = Acn_Enc_String_Ascii_Internal_Field_Determinant(pBitStrm, <nAsn1Max>, <nAsn1Min>, <p>);
+ret = Acn_Dec_String_Ascii_Internal_Field_Determinant(pBitStrm, <nAsn1Max>, <nAsn1Min>, <p>);
 <A()>
 >>
 
+PrintAlphabet2(arrnCharSet) ::= <<
+static byte allowedCharSet[] = {<arrnCharSet:{ch|0x<ch;format="X2">}; wrap, anchor, separator=",">}; 
+>>
 
 Acn_String_CharIndex_FixSize_encode(p, nAsn1Max, arrnAlphabetAsciiCodes, nCharSetSize) ::= <<
 <PrintAlphabet2(arrnAlphabetAsciiCodes)>
@@ -389,7 +392,7 @@ ret = Acn_Dec_String_CharIndex_FixSize(pBitStrm, <nAsn1Max>, allowedCharSet, <nC
 
 Acn_String_CharIndex_External_Field_Determinant_encode(p, nAsn1Max, arrnAlphabetAsciiCodes, nCharSetSize, sExtFld) ::= <<
 <PrintAlphabet2(arrnAlphabetAsciiCodes)>
-Acn_Enc_String_CharIndex_External_Field_Determinant(pBitStrm, <nAsn1Max>, allowedCharSet, <nCharSetSize>, <sExtFld>, <p>);
+Acn_Enc_String_CharIndex_External_Field_Determinant(pBitStrm, <nAsn1Max>, allowedCharSet, <nCharSetSize>, <p>);
 >>
 
 Acn_String_CharIndex_External_Field_Determinant_decode(p, nAsn1Max, arrnAlphabetAsciiCodes, nCharSetSize, sExtFld) ::= <<

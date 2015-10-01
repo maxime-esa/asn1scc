@@ -969,9 +969,9 @@ void Acn_Enc_String_Ascii_Null_Teminated                (BitStream* pBitStrm, as
 }
 
 
-void Acn_Enc_String_Ascii_External_Field_Determinant    (BitStream* pBitStrm, asn1SccSint max, asn1SccSint* extSizeDeterminatFld, const char* strVal)
+void Acn_Enc_String_Ascii_External_Field_Determinant    (BitStream* pBitStrm, asn1SccSint max, const char* strVal)
 {
-    *extSizeDeterminatFld = Acn_Enc_String_Ascii_private(pBitStrm, max, strVal);
+    Acn_Enc_String_Ascii_private(pBitStrm, max, strVal);
 }
 
 void Acn_Enc_String_Ascii_Internal_Field_Determinant    (BitStream* pBitStrm, asn1SccSint max, asn1SccSint min, const char* strVal)
@@ -1004,9 +1004,9 @@ asn1SccSint Acn_Enc_String_CharIndex_private(BitStream* pBitStrm, asn1SccSint ma
 }
 
 
-void Acn_Enc_String_CharIndex_External_Field_Determinant(BitStream* pBitStrm, asn1SccSint max, byte allowedCharSet[], int charSetSize, asn1SccSint* extSizeDeterminatFld, const char* strVal)
+void Acn_Enc_String_CharIndex_External_Field_Determinant(BitStream* pBitStrm, asn1SccSint max, byte allowedCharSet[], int charSetSize, const char* strVal)
 {
-    *extSizeDeterminatFld = Acn_Enc_String_CharIndex_private(pBitStrm, max, allowedCharSet, charSetSize, strVal);
+    Acn_Enc_String_CharIndex_private(pBitStrm, max, allowedCharSet, charSetSize, strVal);
 }
 
 void Acn_Enc_String_CharIndex_Internal_Field_Determinant(BitStream* pBitStrm, asn1SccSint max, byte allowedCharSet[], int charSetSize, asn1SccSint min, const char* strVal)
