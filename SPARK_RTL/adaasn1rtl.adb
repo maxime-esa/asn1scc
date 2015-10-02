@@ -2336,6 +2336,152 @@ PACKAGE BODY adaasn1rtl IS
     END Acn_Dec_NullType;
 
 
+     PROCEDURE Acn_Enc_String_Ascii_FixSize(S : in out BitArray; K : in out Natural; strVal : in String)
+     IS
+         I:Integer:=strVal'First;
+     BEGIN
+         WHILE I<=strVal'Last - 1 LOOP
+             --# assert I>=1 AND I<=str'Last-1;
+             UPER_Enc_ConstraintWholeNumber(S, K, Asn1Int(CharacterPos(strVal(I))), 0, 8);
+
+             I:=I+1;
+         END LOOP;
+
+     END Acn_Enc_String_Ascii_FixSize;
+
+
+     PROCEDURE Acn_Dec_String_Ascii_FixSize(S : in BitArray; K : in out DECODE_PARAMS; strVal : in out String; Result:OUT ASN1_RESULT)
+     IS
+         I:Integer:=strVal'First;
+         charIndex:Integer;
+     BEGIN
+	 Result := ASN1_RESULT'(Success   => TRUE,ErrorCode => ERR_INSUFFICIENT_DATA);
+         WHILE I<=strVal'Last - 1 and Result.Success LOOP
+             --# assert I>=1 AND I<=str'Last-1;
+             UPER_Dec_ConstraintWholeNumberInt(S, K, charIndex, 0, 255, 8, Result.Success);
+             strVal(i) := Character'Val(charIndex);
+
+             I:=I+1;
+         END LOOP;
+         strVal(strVal'Last) := NUL;
+     END Acn_Dec_String_Ascii_FixSize;
+
+
+
+    PROCEDURE Acn_Enc_String_Ascii_Null_Teminated(S : in out BitArray; K : in out Natural; null_character : in Integer; strVal : in String)
+     IS
+         I:Integer:=strVal'First;
+    BEGIN
+          WHILE I<=strVal'Last - 1 AND THEN strVal(I)/=NUL LOOP
+             --# assert I>=1 AND I<=str'Last-1;
+             UPER_Enc_ConstraintWholeNumber(S, K, Asn1Int(CharacterPos(strVal(I))), 0, 8);
+
+             I:=I+1;
+          END LOOP;
+          UPER_Enc_ConstraintWholeNumber(S, K, Asn1Int(null_character), 0, 8);
+
+    END Acn_Enc_String_Ascii_Null_Teminated;
+
+    PROCEDURE Acn_Dec_String_Ascii_Null_Teminated(S : in BitArray; K : in out DECODE_PARAMS; null_character : in Integer; strVal : out String; Result:OUT ASN1_RESULT)
+    IS
+         I:Integer:=strVal'First;
+         charIndex:Integer:=65; -- ascii code of 'A'. Let's hope that 'A' will never be null Character
+    BEGIN
+        Result := ASN1_RESULT'(Success   => TRUE,ErrorCode => ERR_INSUFFICIENT_DATA);
+        WHILE result.Success AND THEN I<=strVal'Last AND THEN charIndex/=null_character LOOP
+             --# assert I>=1 AND I<=str'Last;
+             UPER_Dec_ConstraintWholeNumberInt(S, K, charIndex, 0, 255, 8, result.Success);
+             strVal(i) := Character'Val(charIndex);
+
+             I:=I+1;
+        END LOOP;
+        WHILE I <= strVal'Last LOOP
+            strVal(I) := NUL;
+             I:=I+1;
+        END LOOP;
+
+    END Acn_Dec_String_Ascii_Null_Teminated;
+
+
+
+
+    PROCEDURE Acn_Enc_String_Ascii_Internal_Field_Determinant(S : in out BitArray; K : in out Natural; asn1Min: Asn1Int; nLengthDeterminantSizeInBits : IN Integer; strVal : in String)
+     IS
+         I:Integer:=strVal'First;
+    BEGIN
+          UPER_Enc_ConstraintWholeNumber(S, K, Asn1Int(getStringSize(strVal)), asn1Min, nLengthDeterminantSizeInBits);
+          WHILE I<=strVal'Last - 1 AND THEN strVal(I)/=NUL LOOP
+             --# assert I>=1 AND I<=str'Last-1;
+             UPER_Enc_ConstraintWholeNumber(S, K, Asn1Int(CharacterPos(strVal(I))), 0, 8);
+
+             I:=I+1;
+          END LOOP;
+
+    END Acn_Enc_String_Ascii_Internal_Field_Determinant;
+
+    PROCEDURE Acn_Dec_String_Ascii_Internal_Field_Determinant(S : in BitArray; K : in out DECODE_PARAMS; asn1Min: Asn1Int; nLengthDeterminantSizeInBits : IN Integer; strVal : out String; Result:OUT ASN1_RESULT)
+    IS
+         I:Integer:=strVal'First;
+         nSize:Integer;
+         asn1Max:Integer := strVal'Last - 1;
+         charIndex:Integer;
+    BEGIN
+        Result := ASN1_RESULT'(Success   => TRUE,ErrorCode => ERR_INSUFFICIENT_DATA);
+
+        UPER_Dec_ConstraintWholeNumberInt(S, K, nSize, Integer(asn1Min), asn1Max, nLengthDeterminantSizeInBits, result.Success);
+        WHILE result.Success AND THEN I<=strVal'Last-1 AND THEN I <=  nSize LOOP
+             --# assert I>=1 AND I<=str'Last-1;
+             UPER_Dec_ConstraintWholeNumberInt(S, K, charIndex, 0, 255, 8, result.Success);
+             strVal(i) := Character'Val(charIndex);
+
+             I:=I+1;
+        END LOOP;
+        WHILE I <= strVal'Last LOOP
+            strVal(I) := NUL;
+             I:=I+1;
+        END LOOP;
+
+
+    END Acn_Dec_String_Ascii_Internal_Field_Determinant;
+
+
+
+
+    PROCEDURE Acn_Enc_String_Ascii_External_Field_Determinant(S : in out BitArray; K : in out Natural; strVal : in String)
+     IS
+         I:Integer:=strVal'First;
+    BEGIN
+          WHILE I<=strVal'Last - 1 AND THEN strVal(I)/=NUL LOOP
+             --# assert I>=1 AND I<=str'Last-1;
+             UPER_Enc_ConstraintWholeNumber(S, K, Asn1Int(CharacterPos(strVal(I))), 0, 8);
+
+             I:=I+1;
+          END LOOP;
+
+    END Acn_Enc_String_Ascii_External_Field_Determinant;
+
+    PROCEDURE Acn_Dec_String_Ascii_External_Field_Determinant(S : in BitArray; K : in out DECODE_PARAMS; extSizeDeterminatFld : IN Asn1Int; strVal : out String; Result:OUT ASN1_RESULT)
+    IS
+         I:Integer:=strVal'First;
+         charIndex:Integer;
+    BEGIN
+        Result := ASN1_RESULT'(Success   => TRUE,ErrorCode => ERR_INSUFFICIENT_DATA);
+
+        WHILE result.Success AND THEN I<=strVal'Last-1 AND THEN I <=  Integer(extSizeDeterminatFld) LOOP
+             --# assert I>=1 AND I<=str'Last-1;
+             UPER_Dec_ConstraintWholeNumberInt(S, K, charIndex, 0, 255, 8, result.Success);
+             strVal(i) := Character'Val(charIndex);
+
+             I:=I+1;
+        END LOOP;
+        WHILE I <= strVal'Last LOOP
+            strVal(I) := NUL;
+             I:=I+1;
+        END LOOP;
+
+
+    END Acn_Dec_String_Ascii_External_Field_Determinant;
+
 
 END adaasn1rtl;
 

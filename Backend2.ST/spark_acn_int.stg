@@ -198,3 +198,52 @@ IF result.Success THEN
     end case;
 END IF;
 >>
+
+
+// Strings
+
+
+
+Acn_String_Ascii_FixSize_encode(p, nAsn1Max) ::= "<rtlModuleName()>.Acn_Enc_String_Ascii_FixSize(S, K, <p>);"
+Acn_String_Ascii_FixSize_decode(p, nAsn1Max) ::= "<rtlModuleName()>.Acn_Dec_String_Ascii_FixSize(S, K, <p>, result);"
+
+Acn_String_Ascii_Null_Teminated_encode(p, nAsn1Max, sNull) ::= "<rtlModuleName()>.Acn_Enc_String_Ascii_Null_Teminated(S, K, <sNull>, <p>);"
+Acn_String_Ascii_Null_Teminated_decode(p, nAsn1Max, sNull) ::= "<rtlModuleName()>.Acn_Dec_String_Ascii_Null_Teminated(S, K, <sNull>, <p>, result);"
+
+Acn_String_Ascii_External_Field_Determinant_encode(p, nAsn1Max, sExtFld) ::= "<rtlModuleName()>.Acn_Enc_String_Ascii_External_Field_Determinant(S, K, <p>);"
+Acn_String_Ascii_External_Field_Determinant_decode(p, nAsn1Max, sExtFld) ::= "<rtlModuleName()>.Acn_Dec_String_Ascii_External_Field_Determinant(S, K, <sExtFld>, <p>, result);"
+
+Acn_String_Ascii_Internal_Field_Determinant_encode(p, nAsn1Max, nAsn1Min, nInternalLengthDeterminantSizeInBits) ::= "<rtlModuleName()>.Acn_Enc_String_Ascii_Internal_Field_Determinant(S, K, <nAsn1Min>, <nInternalLengthDeterminantSizeInBits>, <p>);"
+Acn_String_Ascii_Internal_Field_Determinant_decode(p, nAsn1Max, nAsn1Min, nInternalLengthDeterminantSizeInBits) ::= "<rtlModuleName()>.Acn_Dec_String_Ascii_Internal_Field_Determinant(S, K, <nAsn1Min>, <nInternalLengthDeterminantSizeInBits>, <p>, result);"
+
+
+Acn_String_CharIndex_FixSize_encode(p, nAsn1Max, arrnAlphabetAsciiCodes, nCharSetSize) ::= <<
+<PrintAlphabet2(arrnAlphabetAsciiCodes)>
+<rtlModuleName()>.Acn_Enc_String_CharIndex_FixSize(pBitStrm, <nAsn1Max>, allowedCharSet, <nCharSetSize>, <p>);
+>>
+
+Acn_String_CharIndex_FixSize_decode(p, nAsn1Max, arrnAlphabetAsciiCodes, nCharSetSize) ::= <<
+<PrintAlphabet2(arrnAlphabetAsciiCodes)>
+<rtlModuleName()>.Acn_Dec_String_CharIndex_FixSize(pBitStrm, <nAsn1Max>, allowedCharSet, <nCharSetSize>, <p>);
+>>
+
+Acn_String_CharIndex_External_Field_Determinant_encode(p, nAsn1Max, arrnAlphabetAsciiCodes, nCharSetSize, sExtFld) ::= <<
+<PrintAlphabet2(arrnAlphabetAsciiCodes)>
+<rtlModuleName()>.Acn_Enc_String_CharIndex_External_Field_Determinant(pBitStrm, <nAsn1Max>, allowedCharSet, <nCharSetSize>, <sExtFld>, <p>);
+>>
+
+Acn_String_CharIndex_External_Field_Determinant_decode(p, nAsn1Max, arrnAlphabetAsciiCodes, nCharSetSize, sExtFld) ::= <<
+<PrintAlphabet2(arrnAlphabetAsciiCodes)>
+<rtlModuleName()>.Acn_Dec_String_CharIndex_External_Field_Determinant(pBitStrm, <nAsn1Max>, allowedCharSet, <nCharSetSize>, <sExtFld>, <p>);
+>>
+
+Acn_String_CharIndex_Internal_Field_Determinant_encode(p, nAsn1Max, arrnAlphabetAsciiCodes, nCharSetSize, nAsn1Min) ::= <<
+<PrintAlphabet2(arrnAlphabetAsciiCodes)>
+<rtlModuleName()>.Acn_Enc_String_CharIndex_Internal_Field_Determinant(pBitStrm, <nAsn1Max>, allowedCharSet, <nCharSetSize>, <nAsn1Min>, <p>);
+>>
+
+Acn_String_CharIndex_Internal_Field_Determinant_decode(p, nAsn1Max, arrnAlphabetAsciiCodes, nCharSetSize, nAsn1Min) ::= <<
+<PrintAlphabet2(arrnAlphabetAsciiCodes)>
+<rtlModuleName()>.Acn_Dec_String_CharIndex_Internal_Field_Determinant(pBitStrm, <nAsn1Max>, allowedCharSet, <nCharSetSize>, <nAsn1Min>, <p>);
+>>
+

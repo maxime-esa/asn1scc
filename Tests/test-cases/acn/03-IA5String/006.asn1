@@ -10,5 +10,5 @@ END
 --TCLS     MyPDU[encoding ASCII, size null-terminated]
 
 -- char index encodings
---TCLS     MyPDU[]
---TCLS     MyPDU[size 20]
+-- -TCLS     MyPDU[]
+-- -TCLS     MyPDU[size 20]

@@ -461,24 +461,24 @@ let rec EmitTypeBodyAux (t:Asn1Type) (sTasName:string) (path:list<string>, pName
         let encClass = Acn.GetStringEncodingClass t path r acn emptyLocation 
         match encClass.kind with
         | Acn.Acn_Enc_String_Ascii_FixSize                                  -> 
-            sa.Acn_String_Ascii_FixSize p encClass.maxAsn1SizeValue codec
+            sai.Acn_String_Ascii_FixSize p encClass.maxAsn1SizeValue codec
         | Acn.Acn_Enc_String_Ascii_Null_Teminated nullChar                  -> 
-            sa.Acn_String_Ascii_Null_Teminated p encClass.maxAsn1SizeValue (nullChar.ToString()) codec
+            sai.Acn_String_Ascii_Null_Teminated p encClass.maxAsn1SizeValue (nullChar.ToString()) codec
         | Acn.Acn_Enc_String_Ascii_External_Field_Determinant refPoint      -> 
             let extField = GetPointAccessPath refPoint  r acn
-            sa.Acn_String_Ascii_External_Field_Determinant p encClass.maxAsn1SizeValue extField codec
-        | Acn.Acn_Enc_String_Ascii_Internal_Field_Determinant (asn1Min,_)    -> 
-            sa.Acn_String_Ascii_Internal_Field_Determinant p encClass.maxAsn1SizeValue asn1Min codec
+            sai.Acn_String_Ascii_External_Field_Determinant p encClass.maxAsn1SizeValue extField codec
+        | Acn.Acn_Enc_String_Ascii_Internal_Field_Determinant (asn1Min,internalLengthDeterminantSizeInBits)    -> 
+            sai.Acn_String_Ascii_Internal_Field_Determinant p encClass.maxAsn1SizeValue asn1Min internalLengthDeterminantSizeInBits codec
         | Acn.Acn_Enc_String_CharIndex_FixSize  charSet                     -> 
             let arrAsciiCodes = charSet |> Array.map(fun x -> BigInteger (System.Convert.ToInt32 x))
-            sa.Acn_String_CharIndex_FixSize p encClass.maxAsn1SizeValue arrAsciiCodes (BigInteger charSet.Length) codec
+            sai.Acn_String_CharIndex_FixSize p encClass.maxAsn1SizeValue arrAsciiCodes (BigInteger charSet.Length) codec
         | Acn.Acn_Enc_String_CharIndex_External_Field_Determinant (charSet, refPoint)    ->  
             let extField = GetPointAccessPath refPoint  r acn
             let arrAsciiCodes = charSet |> Array.map(fun x -> BigInteger (System.Convert.ToInt32 x))
-            sa.Acn_String_CharIndex_External_Field_Determinant p encClass.maxAsn1SizeValue arrAsciiCodes (BigInteger charSet.Length) extField codec
+            sai.Acn_String_CharIndex_External_Field_Determinant p encClass.maxAsn1SizeValue arrAsciiCodes (BigInteger charSet.Length) extField codec
         | Acn.Acn_Enc_String_CharIndex_Internal_Field_Determinant (charSet, asn1Min,_) -> 
             let arrAsciiCodes = charSet |> Array.map(fun x -> BigInteger (System.Convert.ToInt32 x))
-            sa.Acn_String_CharIndex_Internal_Field_Determinant p encClass.maxAsn1SizeValue arrAsciiCodes (BigInteger charSet.Length) asn1Min codec
+            sai.Acn_String_CharIndex_Internal_Field_Determinant p encClass.maxAsn1SizeValue arrAsciiCodes (BigInteger charSet.Length) asn1Min codec
     | SequenceOf(_) | OctetString | BitString->
         let intItem, IntItemMin, IntItemMax = EmitInternalItem_min_max ()
         let auto min max   = su.oct_sqf_VarSize sTasName p index intItem min max (GetNumberOfBitsForNonNegativeInteger (max-min)) IntItemMin IntItemMax aligmVal codec 
@@ -798,7 +798,7 @@ let CollectLocalVars (t:Asn1Type) (tas:TypeAssignment) (m:Asn1Module) (r:AstRoot
                     | _                            -> s0
                 | _                 -> raise (BugErrorException("Unsupported configuration"))
             newState
-        | IA5String | NumericString-> 
+(*        | IA5String | NumericString-> 
             let encClass = Acn.GetStringEncodingClass t path r acn emptyLocation 
             let newState =
                 let s0 = (SEQUENCE_OF_INDEX (1,true))::state
@@ -813,6 +813,7 @@ let CollectLocalVars (t:Asn1Type) (tas:TypeAssignment) (m:Asn1Module) (r:AstRoot
                     | _                -> LENGTH::s0
                 | _                 -> raise (BugErrorException("Unsupported configuration"))
             CHAR_VAL::newState
+*)
         | Integer   when codec = Decode     ->
             let rootCons = t.Constraints |> Seq.filter(fun x -> match x with RootConstraint(a) |RootConstraint2(a,_) -> true |_ -> false) 
             match (Seq.isEmpty rootCons) with
