@@ -14,4 +14,4 @@ END
 --TCLS     MyPDU[] { a1 AT1[], a2[size a1, encoding ASCII]} 
 --TCLS     MyPDU[] { a2[size null-terminated, encoding ASCII]} 
 -- char index encodings
--- TCLS     MyPDU[] { a1 AT1[], a2[size a1]} 
+--TCLS     MyPDU[] { a1 AT1[], a2[size a1]} 

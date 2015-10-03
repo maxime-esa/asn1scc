@@ -470,15 +470,15 @@ let rec EmitTypeBodyAux (t:Asn1Type) (sTasName:string) (path:list<string>, pName
         | Acn.Acn_Enc_String_Ascii_Internal_Field_Determinant (asn1Min,internalLengthDeterminantSizeInBits)    -> 
             sai.Acn_String_Ascii_Internal_Field_Determinant p encClass.maxAsn1SizeValue asn1Min internalLengthDeterminantSizeInBits codec
         | Acn.Acn_Enc_String_CharIndex_FixSize  charSet                     -> 
-            let arrAsciiCodes = charSet |> Array.map(fun x -> BigInteger (System.Convert.ToInt32 x))
-            sai.Acn_String_CharIndex_FixSize p encClass.maxAsn1SizeValue arrAsciiCodes (BigInteger charSet.Length) codec
+            let nCharSize = GetNumberOfBitsForNonNegativeInteger (BigInteger(charSet.Length) - 1I)
+            sai.Acn_String_CharIndex_FixSize p sTasName nCharSize codec
         | Acn.Acn_Enc_String_CharIndex_External_Field_Determinant (charSet, refPoint)    ->  
             let extField = GetPointAccessPath refPoint  r acn
-            let arrAsciiCodes = charSet |> Array.map(fun x -> BigInteger (System.Convert.ToInt32 x))
-            sai.Acn_String_CharIndex_External_Field_Determinant p encClass.maxAsn1SizeValue arrAsciiCodes (BigInteger charSet.Length) extField codec
-        | Acn.Acn_Enc_String_CharIndex_Internal_Field_Determinant (charSet, asn1Min,_) -> 
-            let arrAsciiCodes = charSet |> Array.map(fun x -> BigInteger (System.Convert.ToInt32 x))
-            sai.Acn_String_CharIndex_Internal_Field_Determinant p encClass.maxAsn1SizeValue arrAsciiCodes (BigInteger charSet.Length) asn1Min codec
+            let nCharSize = GetNumberOfBitsForNonNegativeInteger (BigInteger(charSet.Length) - 1I)
+            sai.Acn_String_CharIndex_External_Field_Determinant p sTasName nCharSize extField codec
+        | Acn.Acn_Enc_String_CharIndex_Internal_Field_Determinant (charSet, asn1Min,internalLengthDeterminantSizeInBits) -> 
+            let nCharSize = GetNumberOfBitsForNonNegativeInteger (BigInteger(charSet.Length) - 1I)
+            sai.Acn_String_CharIndex_Internal_Field_Determinant p sTasName nCharSize asn1Min internalLengthDeterminantSizeInBits codec
     | SequenceOf(_) | OctetString | BitString->
         let intItem, IntItemMin, IntItemMax = EmitInternalItem_min_max ()
         let auto min max   = su.oct_sqf_VarSize sTasName p index intItem min max (GetNumberOfBitsForNonNegativeInteger (max-min)) IntItemMin IntItemMax aligmVal codec 
