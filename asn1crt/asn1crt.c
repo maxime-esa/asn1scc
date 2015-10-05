@@ -192,24 +192,23 @@ flag BitStream_ReadByte(BitStream* pBitStrm, byte* v)
 
 flag BitStream_ReadBits(BitStream* pBitStrm, byte* BuffToWrite, int nbits)
 {
-
     int i=0;
-//  byte lastByte=0;
 
-    while(nbits>=8) {
+    while (nbits >= 8) {
         if (!BitStream_ReadByte(pBitStrm, &BuffToWrite[i]))
             return FALSE;
         nbits-=8;
         i++;
     }
-    if (!BitStream_ReadPartialByte(pBitStrm, &BuffToWrite[i], (byte)nbits))
+
+    if (nbits > 0) {
+      if (!BitStream_ReadPartialByte(pBitStrm, &BuffToWrite[i], (byte)nbits))
         return FALSE;
-    
-    BuffToWrite[i] = (byte)(BuffToWrite[i] << (8-nbits));
-    
+      BuffToWrite[i] = (byte)(BuffToWrite[i] << (8 - nbits));
+    }
+
     return TRUE;
 }
-
 
 /* nbits 1..7*/
 void BitStream_AppendPartialByte(BitStream* pBitStrm, byte v, byte nbits, flag negate) 
