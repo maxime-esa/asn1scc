@@ -751,8 +751,9 @@ let CollectLocalVars (t:Asn1Type) (tas:TypeAssignment) (m:Asn1Module) (r:AstRoot
                     | _                                       -> raise (BugErrorException(""))
                 | _                 -> raise (BugErrorException("Unsupported configuration"))
             match t.Kind with
-            |IA5String | NumericString -> CHAR_VAL::newState
-            |_                         -> newState
+            | IA5String | NumericString -> CHAR_VAL::newState
+            | BitString                 -> state
+            |_                          -> newState
         | Integer   when codec = Decode     ->
             let rootCons = t.Constraints |> Seq.filter(fun x -> match x with RootConstraint(a) |RootConstraint2(a,_) -> true |_ -> false) 
             match (Seq.isEmpty rootCons) with
