@@ -382,6 +382,7 @@ table td:first-child
     padding-left: 3pt;
     color: white;
     font-size: 10pt;
+    width: 20%;
 }
 
 .hrType
