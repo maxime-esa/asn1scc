@@ -313,7 +313,13 @@ type NamedItem with
     member c.CEnumName (r:AstRoot) (lang:ProgrammingLanguage) = 
         match lang with
         |Ada
-        |Spark  -> c.ada_name 
+        |Spark  -> ToC2 (r.TypePrefix + c.ada_name)
+        |C      -> ToC2 (r.TypePrefix + c.c_name)
+        | _     -> raise(BugErrorException "invalid language")
+    member c.EnumName (lang:ProgrammingLanguage) = 
+        match lang with
+        |Ada
+        |Spark  -> c.ada_name
         |C      -> c.c_name
         | _     -> raise(BugErrorException "invalid language")
         

@@ -124,8 +124,8 @@ and MapChildInfo (r:ParameterizedAsn1Ast.AstRoot)  (c:ParameterizedAsn1Ast.Child
 and MapNamedItem (r:ParameterizedAsn1Ast.AstRoot)  (n:ParameterizedAsn1Ast.NamedItem) :Ast.NamedItem =
     {
         Ast.NamedItem.Name = n.Name
-        c_name = ToC2 (r.TypePrefix + n.Name.Value)
-        ada_name = ToC2 (r.TypePrefix + n.Name.Value)
+        c_name = n.Name.Value
+        ada_name = n.Name.Value
         _value = match n._value with
                  | None -> None
                  | Some(x)  -> Some (MapAsn1Value r ParameterizedAsn1Ast.Integer x)

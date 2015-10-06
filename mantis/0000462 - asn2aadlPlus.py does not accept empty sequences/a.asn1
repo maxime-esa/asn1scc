@@ -1,0 +1,12 @@
+MYMOD DEFINITIONS ::=  -- Data types shared by several services
+BEGIN
+
+MyChoice ::= CHOICE {
+   a NULL,
+   b INTEGER
+}
+
+END
+
+--TCFS     a.acn
+

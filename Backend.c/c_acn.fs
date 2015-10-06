@@ -681,7 +681,7 @@ let rec EmitTypeBodyAux (t:Asn1Type) (sTasName:string) (path:list<string>, altPa
                 let enumValue = match determinantType.Kind with
                                 | Enumerated(enms) -> enms |> List.find(fun en -> en.Name = c.Name)
                                 | _ -> raise(BugErrorException(""))
-                c_acn.ChoiceChild_Enum pp enumValue.c_name (c.CName_Present C) sChildContent codec                
+                c_acn.ChoiceChild_Enum pp (enumValue.CEnumName r ProgrammingLanguage.C) (c.CName_Present C) sChildContent codec                
             let extFldPath = GetPointAccessPath enmDet  r acn //GetTypeAccessPath (enmDet.AbsPath.Tail.Tail)  r 
             c_acn.Choice_Enum p (children |> Seq.map printChild) extFldPath errCode codec
         match Acn.GetChoiceEncodingClass path children acn with
@@ -732,7 +732,8 @@ let CollectLocalVars (t:Asn1Type) (tas:TypeAssignment) (m:Asn1Module) (r:AstRoot
         | SequenceOf(_) | OctetString | BitString | IA5String | NumericString-> 
             let encClass = Acn.GetSizeableEncodingClass t path r acn emptyLocation 
             let newState =
-                let s0 = (SEQUENCE_OF_INDEX 1)::state
+                let s0 = state
+                //let s0 = (SEQUENCE_OF_INDEX 1)::state
                 match (GetTypeUperRange t.Kind t.Constraints r) with
                 | Concrete(a,b) when  a=b   -> 
                     match t.Kind, codec, encClass with
@@ -751,9 +752,9 @@ let CollectLocalVars (t:Asn1Type) (tas:TypeAssignment) (m:Asn1Module) (r:AstRoot
                     | _                                       -> raise (BugErrorException(""))
                 | _                 -> raise (BugErrorException("Unsupported configuration"))
             match t.Kind with
-            | IA5String | NumericString -> CHAR_VAL::newState
-            | BitString                 -> state
-            |_                          -> newState
+            | IA5String | NumericString -> CHAR_VAL::(SEQUENCE_OF_INDEX 1)::newState
+            | BitString                 -> newState
+            |_                          -> (SEQUENCE_OF_INDEX 1)::newState
         | Integer   when codec = Decode     ->
             let rootCons = t.Constraints |> Seq.filter(fun x -> match x with RootConstraint(a) |RootConstraint2(a,_) -> true |_ -> false) 
             match (Seq.isEmpty rootCons) with

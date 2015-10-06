@@ -1,0 +1,13 @@
+MYMOD DEFINITIONS ::=  
+BEGIN
+
+EmptySeq [] {
+}
+
+MyChoice[] {    
+ a [],
+ b []
+} 
+
+END
+

@@ -494,3 +494,20 @@ Asn1.userprefs
 /mantis/0000460 - Support for empty sequences/out_c
 /mantis/0000460 - Support for empty sequences/out_ada
 /mantis/0000459 - test case generation fails for variable-length list with large maximum/out_c
+/SPARK_RTL/examiner
+/asn1crt/ipch
+/asn1crt/_UpgradeReport_Files
+/asn1crt/Backup
+/asn1crt/Debug
+/mantis/0000462 - asn2aadlPlus.py does not accept empty sequences/oc_c
+/mantis/0000462 - asn2aadlPlus.py does not accept empty sequences/o_c
+/mantis/0000462 - asn2aadlPlus.py does not accept empty sequences/ob_c
+/mantis/0000469 - Rename policy issue when using -typePrefix/o_c.0
+/mantis/0000469 - Rename policy issue when using -typePrefix/o_ada
+/mantis/0000469 - Rename policy issue when using -typePrefix/o_c
+/Tests/test-cases/acn/03-IA5String/006.acn
+/asn1crt/UpgradeLog.XML
+/asn1crt/asn1crt.opensdf
+/asn1crt/asn1crt.sdf
+/asn1crt/asn1crt.vcxproj.filters
+/asn1crt/asn1crt.vcxproj.user

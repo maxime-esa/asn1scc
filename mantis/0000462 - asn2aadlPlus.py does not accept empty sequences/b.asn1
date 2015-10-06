@@ -1,0 +1,14 @@
+MYMOD DEFINITIONS ::=  -- Data types shared by several services
+BEGIN
+
+EmptySeq ::= SEQUENCE {}
+
+MyChoice ::= CHOICE {
+   a EmptySeq,
+   b INTEGER
+}
+
+END
+
+--TCFS     a.acn
+

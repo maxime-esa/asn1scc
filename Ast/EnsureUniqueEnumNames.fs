@@ -193,7 +193,7 @@ let rec handleEnums (r:AstRoot) (renamePolicy:ParameterizedAsn1Ast.EnumRenamePol
                     for t in GetMySelfAndChildren tas.Type  do
                         match t.Kind with
                         | Enumerated(itesm) -> 
-                            let names = itesm |> List.map(fun x -> x.CEnumName r lang)
+                            let names = itesm |> List.map(fun x -> x.EnumName lang)
                             yield! names
                         | _                 -> () 
                 for vas in m.ValueAssignments do
@@ -215,11 +215,11 @@ let rec handleEnums (r:AstRoot) (renamePolicy:ParameterizedAsn1Ast.EnumRenamePol
             | Enumerated(itesm)    -> 
                 let copyItem (old:NamedItem) =
                     let newUniqueName =
-                        match state |> Seq.exists (lang.cmp (old.CEnumName r lang)) with
-                        | false     -> old.CEnumName r lang
+                        match state |> Seq.exists (lang.cmp (old.EnumName  lang)) with
+                        | false     -> old.EnumName lang
                         | true      ->
-                            let newPrefix = key |> List.rev |> List.map ToC |> Seq.skipWhile(fun x -> (old.CEnumName r lang).Contains x) |> Seq.head
-                            newPrefix + "_" + (old.CEnumName r lang)
+                            let newPrefix = key |> List.rev |> List.map ToC |> Seq.skipWhile(fun x -> (old.EnumName lang).Contains x) |> Seq.head
+                            newPrefix + "_" + (old.EnumName lang)
                     match lang with
                     | ProgrammingLanguage.C     ->      {old with c_name=newUniqueName}
                     | ProgrammingLanguage.Ada | ProgrammingLanguage.Spark   -> {old with ada_name=newUniqueName}
@@ -229,7 +229,7 @@ let rec handleEnums (r:AstRoot) (renamePolicy:ParameterizedAsn1Ast.EnumRenamePol
                     | ParameterizedAsn1Ast.NoRenamePolicy           -> itesm
                     | ParameterizedAsn1Ast.SelectiveEnumerants      -> itesm|> List.map copyItem
                     | ParameterizedAsn1Ast.AllEnumerants            -> 
-                        let newPrefix = itesm|> List.map copyItem |> List.map(fun itm -> (itm.CEnumName r lang).Replace(ToC2 itm.Name.Value,"")) |> List.maxBy(fun prf -> prf.Length)
+                        let newPrefix = itesm|> List.map copyItem |> List.map(fun itm -> (itm.EnumName lang).Replace(ToC2 itm.Name.Value,"")) |> List.maxBy(fun prf -> prf.Length)
                         match lang with
                         | ProgrammingLanguage.C->  itesm|> List.map (fun itm -> {itm with c_name = newPrefix + itm.c_name})
                         | ProgrammingLanguage.Ada | ProgrammingLanguage.Spark   -> 

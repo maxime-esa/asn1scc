@@ -1,0 +1,10 @@
+TC-GENERIC DEFINITIONS ::=  -- Data types shared by several services
+BEGIN
+
+RBGColors ::= ENUMERATED {red, green, blue}
+
+MyFavoriteColors ::= ENUMERATED {red, white}
+
+
+END
+

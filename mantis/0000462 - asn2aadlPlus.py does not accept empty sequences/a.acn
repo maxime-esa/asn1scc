@@ -1,0 +1,11 @@
+MYMOD DEFINITIONS ::=  
+BEGIN
+
+
+MyChoice[] {    
+ a [pattern '001'B],
+ b []
+} 
+
+END
+

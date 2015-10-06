@@ -1,0 +1,14 @@
+MYMOD DEFINITIONS ::=  
+BEGIN
+
+EmptySeq [] {
+ dummy NULL [pattern '010'B]
+}
+
+MyChoice[] {    
+ a [],
+ b []
+} 
+
+END
+
