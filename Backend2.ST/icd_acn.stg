@@ -347,15 +347,16 @@ table td:first-child
 .typeRow
 {
     font-family: Verdana, Sans-Serif;
-    font-size: 14pt;
+    font-size: 12pt;
     color: white;
     background-color: #999999;
-    height: 26pt;
 }
 
 .typeRow td
 {
     padding-left: 3pt;
+	padding-top: 2pt;
+	padding-bottom: 2pt;
 }
 
 .hrNo
