@@ -116,7 +116,7 @@ $arrsItems;separator="\n"$
 
 EmitSequenceOrChoice(bIsAnonymousType, sTasName, sTasNameC, bHasAcnDef, sAsn1Kinf, sMinBytes, sMaxBytes, sMaxBitsExplained, sCommentLine, arrsChildren, arrsParams, arrsComments) ::= <<
 <a name="ICD_$sTasNameC$"></a> 
-<table border="0" width="100%" >
+<table width="100%" >
 <tbody>
 
 <tr class="typeRow">
@@ -211,7 +211,7 @@ EmmitSeqChild_RefType(sRefName, sRefNameC) ::= <<
 
 EmitPrimitiveType(bIsAnonymousType, sTasName, sTasNameC, bHasAcnDef, sAsnKindName, sMinBytes, sMaxBytes, sMaxBitsExplained, sCommentLine, sAsn1Constraints, sMinBits, sMaxBits, arrsParams, arrsComments) ::= <<
 <a name="ICD_$sTasNameC$"></a> 
-<table border="0" width="100%" >
+<table width="100%" >
 <tbody>
 
 <tr class="typeRow">
@@ -264,7 +264,7 @@ $endif$
 
 EmitSizeable(bIsAnonymousType, sTasName, sTasNameC, bHasAcnDef, sKind, sMinBytes, sMaxBytes, sMaxBitsExplained, sCommentLine, arrsRows, arrsParams, arrsComments) ::= <<
 <a name="ICD_$sTasNameC$"></a>
-<table border="0" width="100%" >
+<table width="100%" >
 <tbody>
 
 <tr  class="typeRow">
@@ -323,6 +323,22 @@ PrintParam(nIndex, sName, sType, nColSpan) ::= <<
 >>
 
 RootCss() ::= <<
+table
+{
+    border:none;
+    border-collapse: collapse;
+}
+
+table td
+{
+    border-left: 1px solid white;
+}
+
+table td:first-child
+{
+    border-left: none;
+}
+
 .headerRow
 {
     background-color: #BBBBBB;
