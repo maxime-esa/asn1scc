@@ -478,7 +478,7 @@ let rec EmitTypeBodyAux (t:Asn1Type) (sTasName:string) (path:list<string>, pName
             sai.Acn_String_CharIndex_External_Field_Determinant p sTasName nCharSize extField codec
         | Acn.Acn_Enc_String_CharIndex_Internal_Field_Determinant (charSet, asn1Min,internalLengthDeterminantSizeInBits) -> 
             let nCharSize = GetNumberOfBitsForNonNegativeInteger (BigInteger(charSet.Length) - 1I)
-            sai.Acn_String_CharIndex_Internal_Field_Determinant p sTasName nCharSize asn1Min internalLengthDeterminantSizeInBits codec
+            sai.Acn_String_CharIndex_Internal_Field_Determinant p sTasName nCharSize encClass.maxAsn1SizeValue asn1Min internalLengthDeterminantSizeInBits codec
     | SequenceOf(_) | OctetString | BitString->
         let intItem, IntItemMin, IntItemMax = EmitInternalItem_min_max ()
         let auto min max   = su.oct_sqf_VarSize sTasName p index intItem min max (GetNumberOfBitsForNonNegativeInteger (max-min)) IntItemMin IntItemMax aligmVal codec 

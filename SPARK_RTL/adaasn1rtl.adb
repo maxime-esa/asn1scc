@@ -2419,16 +2419,15 @@ PACKAGE BODY adaasn1rtl IS
 
     END Acn_Enc_String_Ascii_Internal_Field_Determinant;
 
-    PROCEDURE Acn_Dec_String_Ascii_Internal_Field_Determinant(S : in BitArray; K : in out DECODE_PARAMS; asn1Min: Asn1Int; nLengthDeterminantSizeInBits : IN Integer; strVal : out String; Result:OUT ASN1_RESULT)
+    PROCEDURE Acn_Dec_String_Ascii_Internal_Field_Determinant(S : in BitArray; K : in out DECODE_PARAMS; asn1Min: Asn1Int; asn1Max: Asn1Int; nLengthDeterminantSizeInBits : IN Integer; strVal : out String; Result:OUT ASN1_RESULT)
     IS
          I:Integer:=strVal'First;
          nSize:Integer;
-         asn1Max:Integer := strVal'Last - 1;
          charIndex:Integer;
     BEGIN
         Result := ASN1_RESULT'(Success   => TRUE,ErrorCode => ERR_INSUFFICIENT_DATA);
 
-        UPER_Dec_ConstraintWholeNumberInt(S, K, nSize, Integer(asn1Min), asn1Max, nLengthDeterminantSizeInBits, result.Success);
+        UPER_Dec_ConstraintWholeNumberInt(S, K, nSize, Integer(asn1Min), Integer(asn1Max), nLengthDeterminantSizeInBits, result.Success);
         WHILE result.Success AND THEN I<=strVal'Last-1 AND THEN I <=  nSize LOOP
              --# assert I>=1 AND I<=str'Last-1;
              UPER_Dec_ConstraintWholeNumberInt(S, K, charIndex, 0, 255, 8, result.Success);
@@ -2576,19 +2575,18 @@ PACKAGE BODY adaasn1rtl IS
 
     END Acn_Enc_String_CharIndex_Internal_Field_Determinant;
 
-    PROCEDURE Acn_Dec_String_CharIndex_Internal_Field_Determinant(S : in BitArray; K : in out DECODE_PARAMS; charSet : String; nCharSize:Integer; asn1Min: Asn1Int; nLengthDeterminantSizeInBits : IN Integer; strVal : out String; Result:OUT ASN1_RESULT)
+    PROCEDURE Acn_Dec_String_CharIndex_Internal_Field_Determinant(S : in BitArray; K : in out DECODE_PARAMS; charSet : String; nCharSize:Integer; asn1Min: Asn1Int; asn1Max: Asn1Int; nLengthDeterminantSizeInBits : IN Integer; strVal : out String; Result:OUT ASN1_RESULT)
     IS
          I:Integer:=strVal'First;
          nSize:Integer;
-         asn1Max:Integer := charSet'Last - 1;
          charIndex:Integer;
     BEGIN
         Result := ASN1_RESULT'(Success   => TRUE,ErrorCode => ERR_INSUFFICIENT_DATA);
 
-        UPER_Dec_ConstraintWholeNumberInt(S, K, nSize, Integer(asn1Min), asn1Max, nLengthDeterminantSizeInBits, result.Success);
+        UPER_Dec_ConstraintWholeNumberInt(S, K, nSize, Integer(asn1Min), Integer(asn1Max), nLengthDeterminantSizeInBits, result.Success);
         WHILE result.Success AND THEN I<=strVal'Last-1 AND THEN I <=  nSize LOOP
              --# assert I>=1 AND I<=str'Last-1;
-             UPER_Dec_ConstraintWholeNumberInt(S, K, charIndex, 0, asn1Max, nCharSize, Result.Success);
+             UPER_Dec_ConstraintWholeNumberInt(S, K, charIndex, 0, charSet'Last - 1, nCharSize, Result.Success);
              strVal(i) := charSet(charIndex+1);
 
              I:=I+1;
