@@ -240,7 +240,7 @@ let rec printType stgFileName (tas:Ast.TypeAssignment) (t:Ast.Asn1Type) path (m:
                     | false, false->(ChildRow 0I 1I)::[], sFixedLengthComment
                 | Acn.ExternalField(fld), true    -> (ChildRow 0I 1I)::(icd_acn.EmitRowWith3Dots stgFileName ())::(ChildRow 0I nMax)::[], sprintf "Length determined by external field %s" (printPoint fld)
                 | Acn.ExternalField(fld), false   -> (ChildRow 0I 1I)::[], sprintf "Length is determined by the external field: %s" (printPoint fld)
-                | Acn.NullTerminated,_        -> [],""
+                | Acn.NullTerminated _,_        -> [],""
             | NumericString  | IA5String    ->
                 let encClass = Acn.GetStringEncodingClass t path r acn emptyLocation
                 let sType = 

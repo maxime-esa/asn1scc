@@ -198,7 +198,7 @@ module AcnPrint =
         | Encoding IEEE754_64       -> ACN.PP_Encoding_IEEE754_64()
 //        | SizeProperty Auto         -> ACN.PP_Size_Auto()
         | SizeProperty (Fixed vl)   -> ACN.PP_Size_Fixed (AcnTypes.EvaluateConstant acn.Constants vl)
-        | SizeProperty NullTerminated -> ACN.PP_Size_NullTerminated()
+        | SizeProperty (NullTerminated _)-> ACN.PP_Size_NullTerminated()
 //        | Adjust(vl)                -> ACN.PP_Adjust (AcnTypes.EvaluateConstant acn.Constants vl)
         | Aligment NextByte         -> ACN.PP_Aligment_byte()
         | Aligment NextWord         -> ACN.PP_Aligment_word()

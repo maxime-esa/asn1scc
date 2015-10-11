@@ -6,6 +6,7 @@ TEST-CASE DEFINITIONS AUTOMATIC TAGS::= BEGIN
 END
 
 -- ASCII encodings
+--TCLS     MyPDU[encoding ASCII, size null-terminated, termination-pattern '00000001'B]
 --TCLS     MyPDU[encoding ASCII, size 20]
 --TCLS     MyPDU[encoding ASCII, size null-terminated]
 

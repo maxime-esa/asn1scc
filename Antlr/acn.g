@@ -147,6 +147,7 @@ property
 	|	determinantProp
 	|	endiannessProp
 	|   enumSetValue
+    |   terminationPatternProp
 	;	
 
 endiannessProp 	
@@ -203,6 +204,10 @@ patternProp 	: PATTERN^  BitStringLiteral
 presentWhenProp	
 	:	PRESENT_WHEN^ presentWhenCond+
 	;
+
+terminationPatternProp
+    :  TERMINATION_PATTERN^ BitStringLiteral
+    ;
 
 presentWhenCond
 	: longFld EQUAL^ (INT|UID)
@@ -319,6 +324,7 @@ IEEE754_1985_64 	: 'IEEE754-1985-64';
 
 SIZE				: 'size';
 NULL_TERMINATED 	: 'null-terminated';
+TERMINATION_PATTERN	: 'termination-pattern';
 
 //ADJUST				: 'adjust';
 

@@ -353,7 +353,7 @@ let rec EmitTypeBodyAux (t:Asn1Type) (sTasName:string) (path:list<string>, altPa
         | false, Acn.AutoSize                  -> auto min max
         | false, Acn.FixedSize(nItems)         -> fixedSize nItems
         | false, Acn.ExternalField(fldPath)    -> extFld min max fldPath 
-        | false, Acn.NullTerminated            -> nullTerm max
+        | false, Acn.NullTerminated   _        -> nullTerm max
 
     let aligmVal = 
         match Acn.GetAlignment t r with
@@ -442,10 +442,10 @@ let rec EmitTypeBodyAux (t:Asn1Type) (sTasName:string) (path:list<string>, altPa
         | Acn.TwosComplement_VarSize_LengthEmbedded     -> c_acn.TwosComplement_VarSize_LengthEmbedded p codec
         | Acn.ASCII_ConstSize(nBits)                    -> c_acn.ASCII_ConstSize p (nBits/8I) codec
         | Acn.ASCII_VarSize_LengthEmbedded              -> c_acn.ASCII_VarSize_LengthEmbedded p codec
-        | Acn.ASCII_VarSize_NullTerminated              -> c_acn.ASCII_VarSize_NullTerminated p codec
+        | Acn.ASCII_VarSize_NullTerminated _            -> c_acn.ASCII_VarSize_NullTerminated p codec
         | Acn.BCD_ConstSize(nBits)                      -> c_acn.BCD_ConstSize p (nBits/4I) codec
         | Acn.BCD_VarSize_LengthEmbedded                -> c_acn.BCD_VarSize_LengthEmbedded p codec
-        | Acn.BCD_VarSize_NullTerminated                -> c_acn.BCD_VarSize_NullTerminated p codec
+        | Acn.BCD_VarSize_NullTerminated    _           -> c_acn.BCD_VarSize_NullTerminated p codec
     | Real  ->  
         match Acn.GetRealEncodingClass t r with
         | Acn.Real_uPER                                     -> c_uper.EmitTypeBody t sTasName (path, altPath) m  r codec

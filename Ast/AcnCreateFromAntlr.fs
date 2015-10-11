@@ -173,12 +173,29 @@ and CreateAcnAsn1Type (t:ITree) (r:Ast.AstRoot) =
         AcnAsn1Type.RefTypeCon(mdName, tsName)
     | _                         -> raise(BugErrorException("AcnCreateFromAntlr::CreateAcnAsn1Type 2"))
 
+and mergeTerminationPatternWithNullTerminated (props:ITree list) : ITree list =
+    let ret = props |> List.filter(fun x -> x.Type <> acnParser.TERMINATION_PATTERN)
+    match props |> Seq.tryFind(fun p -> p.Type = acnParser.TERMINATION_PATTERN) with
+    | None      -> ret
+    | Some tp   ->
+        match props |> Seq.tryFind(fun p -> p.Type = acnParser.SIZE) with
+        | None  -> raise(SemanticError(tp.Location, sprintf "termination-pattern can appear only if acn size NULL-TERMINATED is present" ))
+        | Some sz -> 
+            match sz.Children |> Seq.tryFind(fun p -> p.Type = acnParser.NULL_TERMINATED) with
+            | None      -> raise(SemanticError(tp.Location, sprintf "termination-pattern can appear only if acn size NULL-TERMINATED is present" ))
+            | Some _    -> 
+                sz.AddChild(tp)
+                ret
+
+            
+        
 
 and CreateAcnType (files:seq<ITree*string*array<IToken>>) (t:ITree) (asn1Type:Asn1Type) absPath implMode location (ast:AcnAst) (r:Ast.AstRoot) (tokens:array<IToken>) (comments: array<string>) =
 
     let props = match t.GetOptChild(acnParser.ENCODING_PROPERTIES) with
                 | None              -> []
                 | Some(propList)    -> propList.Children
+    let props = mergeTerminationPatternWithNullTerminated props
     
     CheckConsistencyOfAsn1TypeWithAcnProperties t asn1Type absPath props ast r
 
@@ -320,7 +337,19 @@ and HandleAcnProperty(t:ITree) (rest:List<ITree>) (asn1Type: Asn1Type) absPath (
     
     | acnParser.SIZE        ->
         match t.GetChild(0).Type with
-        | acnParser.NULL_TERMINATED     -> Prop (SizeProperty sizeProperty.NullTerminated)
+        | acnParser.NULL_TERMINATED     -> 
+            let terminated_pattern =
+                match t.Children |> Seq.tryFind(fun x -> x.Type = acnParser.TERMINATION_PATTERN) with
+                | None  -> byte 0
+                | Some tp   ->
+                    let bitPattern = GetActualString (tp.GetChild(0).Text)
+                    match bitPattern.Length <> 8 with
+                    | true  -> raise(SemanticError(tp.Location, sprintf "ternination-patern value must be a byte"  ))
+                    | false ->
+                        bitPattern.ToCharArray() |> 
+                        Seq.fold(fun (p,cs) c -> if c='0' then (p/2,cs) else (p/2,p+cs) ) (128, 0) 
+                        |> snd |> byte
+            Prop (SizeProperty (sizeProperty.NullTerminated terminated_pattern))
         | acnParser.INT | acnParser.UID -> Prop (SizeProperty (Fixed(CreateAcnIntegerConstant constantNames (t.GetChild(0)))))
         | acnParser.LONG_FIELD          -> LRef ( [CreateLongField(t.GetChild(0)), SizeDeterminant, GetLastChildLocation(t.GetChild(0))])
         | _                             -> raise(BugErrorException(""))

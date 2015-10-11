@@ -56,7 +56,7 @@ and aligment =
 
 and sizeProperty =
     | Fixed             of acnIntegerConstant
-    | NullTerminated
+    | NullTerminated    of byte      //termination character
 
 and endianness =
     | LittleEndianness

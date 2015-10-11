@@ -2390,10 +2390,14 @@ PACKAGE BODY adaasn1rtl IS
         Result := ASN1_RESULT'(Success   => TRUE,ErrorCode => ERR_INSUFFICIENT_DATA);
         WHILE result.Success AND THEN I<=strVal'Last AND THEN charIndex/=null_character LOOP
              --# assert I>=1 AND I<=str'Last;
-             UPER_Dec_ConstraintWholeNumberInt(S, K, charIndex, 0, 255, 8, result.Success);
-             strVal(i) := Character'Val(charIndex);
+            UPER_Dec_ConstraintWholeNumberInt(S, K, charIndex, 0, 255, 8, result.Success);
+            IF charIndex/=null_character THEN
+                strVal(i) := Character'Val(charIndex);
+            ELSE
+                strVal(I) := NUL;
+            END IF;
 
-             I:=I+1;
+            I:=I+1;
         END LOOP;
         WHILE I <= strVal'Last LOOP
             strVal(I) := NUL;

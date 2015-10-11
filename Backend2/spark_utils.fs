@@ -222,9 +222,9 @@ module SparkDeps =
         |Acn.PositiveInteger_VarSize_LengthEmbedded
         |Acn.TwosComplement_VarSize_LengthEmbedded
         |Acn.ASCII_VarSize_LengthEmbedded
-        |Acn.ASCII_VarSize_NullTerminated
+        |Acn.ASCII_VarSize_NullTerminated _
         |Acn.BCD_VarSize_LengthEmbedded
-        |Acn.BCD_VarSize_NullTerminated                         -> true
+        |Acn.BCD_VarSize_NullTerminated    _                     -> true
 
 
     let rec KDependsOnValue_acn (t:Asn1Type) (path:string list) (r:AstRoot) (acn: AcnTypes.AcnAstResolved)=
