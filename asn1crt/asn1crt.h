@@ -1,8 +1,14 @@
-#ifndef _INC_PER_UTIL_H
-#define _INC_PER_UTIL_H
+#ifndef ASN1SCC_ASN1CRT_H_
+#define ASN1SCC_ASN1CRT_H_
 
-#ifndef _MSC_VER
-#include <stdbool.h>
+#if (!defined(_MSC_VER) || _MSC_VER >= 1800)
+#  ifndef SWIG
+#    include <stdbool.h>
+#  endif
+#else
+typedef unsigned char bool;
+#define true 1
+#define false 0
 #endif
 
 #ifdef  __cplusplus
@@ -14,21 +20,12 @@ extern "C" {
 #endif
 
 #ifndef TRUE
-#ifdef _MSC_VER
-#define TRUE	1
-#else
 #define TRUE	true
-#endif
 #endif
 
 #ifndef FALSE
-#ifdef _MSC_VER
-#define FALSE	0
-#else
 #define FALSE	false
 #endif
-#endif
-
 
 #ifndef WORD_SIZE
 #define WORD_SIZE	8
@@ -53,12 +50,11 @@ typedef asn1SccSint32 asn1SccSint;
 #endif
 
 #ifdef _MSC_VER
-typedef unsigned char flag;
 #define INFINITY (DBL_MAX+DBL_MAX)
 #define NAN (INFINITY-INFINITY)
-#else
-typedef bool flag;
 #endif
+
+typedef bool flag;
 
 typedef char NullType;
 
@@ -375,5 +371,3 @@ flag LA_Next_Two_Bytes_00(ByteStream* pByteStrm);
 
 
 #endif
-
-
