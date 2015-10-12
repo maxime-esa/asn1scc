@@ -116,7 +116,7 @@ $arrsItems;separator="\n"$
 
 EmitSequenceOrChoice(bIsAnonymousType, sTasName, sTasNameC, bHasAcnDef, sAsn1Kinf, sMinBytes, sMaxBytes, sMaxBitsExplained, sCommentLine, arrsChildren, arrsParams, arrsComments) ::= <<
 <a name="ICD_$sTasNameC$"></a> 
-<table border="0" width="100%" >
+<table width="100%" >
 <tbody>
 
 <tr class="typeRow">
@@ -126,11 +126,11 @@ $sTasName$ <font size="-1">($if(bIsAnonymousType)$<i>anonymous </i>$endif$$sAsn1
 </td>
 
 <td align="left">
-    <font size="-1">Min: $sMinBytes$ bytes</font>
+    <font size="-1">Min:&nbsp;$sMinBytes$&nbsp;bytes</font>
 </td>
 
 <td align="left">
-    <font size="-1">Max: $sMaxBytes$ bytes$sMaxBitsExplained$</font>
+    <font size="-1">Max:&nbsp;$sMaxBytes$&nbsp;bytes$sMaxBitsExplained$</font>
 </td>
 </tr>
 
@@ -211,7 +211,7 @@ EmmitSeqChild_RefType(sRefName, sRefNameC) ::= <<
 
 EmitPrimitiveType(bIsAnonymousType, sTasName, sTasNameC, bHasAcnDef, sAsnKindName, sMinBytes, sMaxBytes, sMaxBitsExplained, sCommentLine, sAsn1Constraints, sMinBits, sMaxBits, arrsParams, arrsComments) ::= <<
 <a name="ICD_$sTasNameC$"></a> 
-<table border="0" width="100%" >
+<table width="100%" >
 <tbody>
 
 <tr class="typeRow">
@@ -221,11 +221,11 @@ $sTasName$ <font size="-1">($if(bIsAnonymousType)$<i>anonymous </i>$endif$$sAsnK
 </td>
 
 <td align="left">
-    <font size="-1">Min: $sMinBytes$ bytes</font>
+    <font size="-1">Min:&nbsp;$sMinBytes$&nbsp;bytes</font>
 </td>
 
 <td align="left">
-    <font size="-1">Max: $sMaxBytes$ bytes$sMaxBitsExplained$</font>
+    <font size="-1">Max:&nbsp;$sMaxBytes$&nbsp;bytes$sMaxBitsExplained$</font>
 </td>
 </tr>
 
@@ -264,7 +264,7 @@ $endif$
 
 EmitSizeable(bIsAnonymousType, sTasName, sTasNameC, bHasAcnDef, sKind, sMinBytes, sMaxBytes, sMaxBitsExplained, sCommentLine, arrsRows, arrsParams, arrsComments) ::= <<
 <a name="ICD_$sTasNameC$"></a>
-<table border="0" width="100%" >
+<table width="100%" >
 <tbody>
 
 <tr  class="typeRow">
@@ -274,11 +274,11 @@ $sTasName$ <font size="-1">($if(bIsAnonymousType)$<i>anonymous </i>$endif$$sKind
 </td>
 
 <td align="left">
-    <font size="-1">Min: $sMinBytes$ bytes</font>
+    <font size="-1">Min:&nbsp;$sMinBytes$&nbsp;bytes</font>
 </td>
 
 <td align="left">
-    <font size="-1">Max: $sMaxBytes$ bytes$sMaxBitsExplained$</font>
+    <font size="-1">Max:&nbsp;$sMaxBytes$&nbsp;bytes$sMaxBitsExplained$</font>
 </td>
 </tr>
 
@@ -323,6 +323,27 @@ PrintParam(nIndex, sName, sType, nColSpan) ::= <<
 >>
 
 RootCss() ::= <<
+table
+{
+    border: none;
+    border-collapse: collapse;
+    font-family: Arial, Helvetica, sans-serif;
+}
+
+table td
+{
+    border-left: 1px solid white;
+    padding-top: 2pt;
+    padding-bottom: 2pt;
+    padding-left: 3pt;
+    padding-right: 3pt;
+}
+
+table td:first-child
+{
+    border-left: none;
+}
+
 .headerRow
 {
     background-color: #BBBBBB;
@@ -330,51 +351,39 @@ RootCss() ::= <<
 
 .typeRow
 {
-    font-family: Verdana, Sans-Serif;
-    font-size: 14pt;
+    font-size: 12pt;
     color: white;
     background-color: #999999;
-    height: 26pt;
-}
-
-.typeRow td
-{
-    padding-left: 3pt;
+    white-space: nowrap;
 }
 
 .hrNo
 {
     text-align: center;
-    font-family: Verdana, Sans-Serif;
     color: white;
     font-size: 10pt;
-    width: 3%;
+    width: 1%;
 }
 
 .hrField
 {
     text-align: left;
-    padding-left: 3pt;
-    font-family: Verdana, Sans-Serif;
     color: white;
     font-size: 10pt;
-    width:15%;
+    width: 15%;
 }
 
 .hrComment
 {
     text-align: left;
-    padding-left: 3pt;
-    font-family: Verdana, Sans-Serif;
     color: white;
     font-size: 10pt;
+    width: 20%;
 }
 
 .hrType
 {
     text-align: left;
-    padding-left: 3pt;
-    font-family: Verdana, Sans-Serif;
     color: white;
     font-size: 10pt;
     width: 20%;
@@ -383,18 +392,15 @@ RootCss() ::= <<
 .hrConstraint
 {
     text-align: left;
-    padding-left: 3pt;
-    font-family: Verdana, Sans-Serif;
     color: white;
     font-size: 10pt;
-    width: 10%;
+    white-space: nowrap;
+    width: 1%;
 }
 
 .hrConstraint2
 {
     text-align: left;
-    padding-left: 3pt;
-    font-family: Verdana, Sans-Serif;
     color: white;
     font-size: 10pt;
 }
@@ -402,31 +408,28 @@ RootCss() ::= <<
 .hrOptional
 {
     text-align: left;
-    padding-left: 3pt;
-    font-family: Verdana, Sans-Serif;
     color: white;
     font-size: 10pt;
-    width:10%;
+    white-space: nowrap;
+    width: 1%;
 }
 
 .hrMin
 {
     text-align: left;
-    padding-left: 3pt;
-    font-family: Verdana, Sans-Serif;
     color: white;
     font-size: 10pt;
-    width: 7%;
+    white-space: nowrap;
+    width: 1%;
 }
 
 .hrMax
 {
     text-align: left;
-    padding-left: 3pt;
-    font-family: Verdana, Sans-Serif;
     color: white;
     font-size: 10pt;
-    width: 7%;
+    white-space: nowrap;
+    width: 1%;
 }
 
 .CommentRow
@@ -450,7 +453,6 @@ RootCss() ::= <<
 .no
 {
     text-align:  center;
-    font-family: Verdana, Sans-Serif;
     color: black;
     font-size: 9pt;
 }
@@ -458,8 +460,6 @@ RootCss() ::= <<
 .field
 {
     text-align: left;
-    padding-left: 3pt;
-    font-family: Verdana, Sans-Serif;
     color: black;
     font-size: 9pt;
 }
@@ -467,25 +467,20 @@ RootCss() ::= <<
 .comment
 {
     color: black;
-    font-family: Verdana, Sans-Serif;
     font-size: 9pt;
     text-align: left;
-    padding-left: 3pt;
 }
 
 .comment2
 {
     color: black;
-    font-family: Verdana, Sans-Serif;
     font-size: 9pt;
     text-align: left;
-    padding-left: 3pt;
 }
 
 .threeDots
 {
     color: black;
-    font-family: Verdana, Sans-Serif;
     font-size: 9pt;
     text-align:center;
 }
@@ -493,35 +488,29 @@ RootCss() ::= <<
 .type
 {
     text-align: left;
-    font-family: Verdana, Sans-Serif;
     color: black;
     font-size: 9pt;
-    padding-left: 3pt;
 }
 
 .constraint
 {
     text-align: left;
-    padding-left: 3pt;
-    font-family: Verdana, Sans-Serif;
     color: black;
+    white-space: nowrap;
     font-size: 9pt;
 }
 
 .optional
 {
     text-align: left;
-    padding-left: 3pt;
-    font-family: Verdana, Sans-Serif;
     color: black;
     font-size: 9pt;
+    white-space: nowrap;
 }
 
 .min
 {
     text-align: right;
-    padding-right: 3pt;
-    font-family: Verdana, Sans-Serif;
     color: black;
     font-size: 9pt;
 }
@@ -529,8 +518,6 @@ RootCss() ::= <<
 .max
 {
     text-align: right;
-    padding-right: 3pt;
-    font-family: Verdana, Sans-Serif;
     color: black;
     font-size: 9pt;
 }
