@@ -50,8 +50,12 @@ typedef asn1SccSint32 asn1SccSint;
 #endif
 
 #ifdef _MSC_VER
-#define INFINITY (DBL_MAX+DBL_MAX)
-#define NAN (INFINITY-INFINITY)
+#  ifndef INFINITY
+#    define INFINITY (DBL_MAX+DBL_MAX)
+#  endif
+#  ifndef NAN
+#    define NAN (INFINITY-INFINITY)
+#  endif
 #endif
 
 typedef bool flag;
