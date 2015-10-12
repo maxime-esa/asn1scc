@@ -112,6 +112,8 @@ END LOOP;
 
 /* Strings */
 
+
+
 string_InternalItem_encode(p, i) ::=<<
 charIndex := <rtlModuleName()>.CharacterPos(<p>(<i>));
 <rtlModuleName()>.UPER_Enc_ConstraintWholeNumber(S, K, <rtlModuleName()>.Asn1Int(charIndex), 0, 7);

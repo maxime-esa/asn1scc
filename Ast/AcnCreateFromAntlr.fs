@@ -173,12 +173,29 @@ and CreateAcnAsn1Type (t:ITree) (r:Ast.AstRoot) =
         AcnAsn1Type.RefTypeCon(mdName, tsName)
     | _                         -> raise(BugErrorException("AcnCreateFromAntlr::CreateAcnAsn1Type 2"))
 
+and mergeTerminationPatternWithNullTerminated (props:ITree list) : ITree list =
+    let ret = props |> List.filter(fun x -> x.Type <> acnParser.TERMINATION_PATTERN)
+    match props |> Seq.tryFind(fun p -> p.Type = acnParser.TERMINATION_PATTERN) with
+    | None      -> ret
+    | Some tp   ->
+        match props |> Seq.tryFind(fun p -> p.Type = acnParser.SIZE) with
+        | None  -> raise(SemanticError(tp.Location, sprintf "termination-pattern can appear only if acn size NULL-TERMINATED is present" ))
+        | Some sz -> 
+            match sz.Children |> Seq.tryFind(fun p -> p.Type = acnParser.NULL_TERMINATED) with
+            | None      -> raise(SemanticError(tp.Location, sprintf "termination-pattern can appear only if acn size NULL-TERMINATED is present" ))
+            | Some _    -> 
+                sz.AddChild(tp)
+                ret
+
+            
+        
 
 and CreateAcnType (files:seq<ITree*string*array<IToken>>) (t:ITree) (asn1Type:Asn1Type) absPath implMode location (ast:AcnAst) (r:Ast.AstRoot) (tokens:array<IToken>) (comments: array<string>) =
 
     let props = match t.GetOptChild(acnParser.ENCODING_PROPERTIES) with
                 | None              -> []
                 | Some(propList)    -> propList.Children
+    let props = mergeTerminationPatternWithNullTerminated props
     
     CheckConsistencyOfAsn1TypeWithAcnProperties t asn1Type absPath props ast r
 
@@ -320,7 +337,36 @@ and HandleAcnProperty(t:ITree) (rest:List<ITree>) (asn1Type: Asn1Type) absPath (
     
     | acnParser.SIZE        ->
         match t.GetChild(0).Type with
-        | acnParser.NULL_TERMINATED     -> Prop (SizeProperty sizeProperty.NullTerminated)
+        | acnParser.NULL_TERMINATED     -> 
+            let terminated_pattern =
+                match t.Children |> Seq.tryFind(fun x -> x.Type = acnParser.TERMINATION_PATTERN) with
+                | None  -> byte 0
+                | Some tp   ->
+                    let ret = 
+                        let bitPattern = GetActualString (tp.GetChild(0).Text)
+                        match tp.GetChild(0).Type with
+                        | acnParser.BitStringLiteral    ->
+                            match bitPattern.Length <> 8 with
+                            | true  -> raise(SemanticError(tp.Location, sprintf "ternination-patern value must be a byte"  ))
+                            | false ->
+                                bitPattern.ToCharArray() |> 
+                                Seq.fold(fun (p,cs) c -> if c='0' then (p/2,cs) else (p/2,p+cs) ) (128, 0) 
+                                |> snd |> byte
+                        | acnParser.OctectStringLiteral ->
+                            match bitPattern.Length <> 2 with
+                            | true  -> raise(SemanticError(tp.Location, sprintf "ternination-patern value must be a byte"  ))
+                            | false ->
+                                System.Byte.Parse(bitPattern, System.Globalization.NumberStyles.AllowHexSpecifier)
+                        | _     ->  raise(BugErrorException("HandleAcnProperty: Neither BitStringLiteral or OctectStringLiteral"))
+
+                    let alphaSet = uPER.GetTypeUperRangeFrom (asn1Type.Kind, asn1Type.Constraints, r)
+                    let allowedBytes = alphaSet |> Array.map(fun c -> (System.Text.Encoding.ASCII.GetBytes (c.ToString())).[0]) |> Set.ofArray
+                    match allowedBytes.Contains ret && (not (ret=0uy && alphaSet.Length = 128))with
+                    | true  -> raise(SemanticError(tp.Location, "The termination-pattern defines a character which belongs to the allowed values of the ASN.1 type. Use another value in the termination-pattern or apply different constraints in the ASN.1 type."))
+                    | false -> ()
+                    ret
+                        
+            Prop (SizeProperty (sizeProperty.NullTerminated terminated_pattern))
         | acnParser.INT | acnParser.UID -> Prop (SizeProperty (Fixed(CreateAcnIntegerConstant constantNames (t.GetChild(0)))))
         | acnParser.LONG_FIELD          -> LRef ( [CreateLongField(t.GetChild(0)), SizeDeterminant, GetLastChildLocation(t.GetChild(0))])
         | _                             -> raise(BugErrorException(""))
@@ -488,18 +534,51 @@ and CheckConsistencyOfAsn1TypeWithAcnProperties (t:ITree) asn1Type absPath (prop
             | _             -> ()
     | Ast.Choice(_)         ->
         CheckChoice t asn1Type absPath props ast r
-    | Ast.IA5String | Ast.NumericString | Ast.OctetString | Ast.BitString | Ast.SequenceOf(_)  ->
-        let uperRange = uPER.GetTypeUperRange asn1Type.Kind asn1Type.Constraints r
+    | Ast.OctetString | Ast.BitString | Ast.SequenceOf(_)  ->
+        //let uperRange = uPER.GetTypeUperRange asn1Type.Kind asn1Type.Constraints r
         match GetSizeProperty props ast.Constants with
         | None  -> ()
-        | Some(SizeNullTerminated, l)   -> raise(SemanticError(l, "'size null-terminated' is supported only Integer types and when encoding is ASCII"))
+        | Some(SizeNullTerminated, l)   -> raise(SemanticError(l, "Acn proporty 'size null-terminated' is supported only in IA5String and NumericString string types and in Integer types and when encoding is ASCII"))
         | Some(SizeFixed(nItems), l)    ->
             let asn1Min, asn1Max = uPER.GetSizebaleMinMax asn1Type.Kind asn1Type.Constraints r
             match asn1Min = asn1Max, asn1Max = nItems with
             | true, true        -> ()
             | true, false       -> raise(SemanticError(l, sprintf "size property value should be set to %A" asn1Max))
-            | false, _          -> raise(SemanticError(l, sprintf "The size constraints of the ASN.1  allows multiple items (%A .. %A). Therefore, you should either remove the size property (in which case the size determinant will be encoded automatically exactly like uPER), or use a an Integer field as size determinant" asn1Min asn1Max))
+            | false, _          -> raise(SemanticError(l, sprintf "The size constraints of the ASN.1  allows variable items (%A .. %A). Therefore, you should either remove the size property (in which case the size determinant will be encoded automatically exactly like uPER), or use a an Integer field as size determinant" asn1Min asn1Max))
         | Some (SizeField flds, l) -> ()
+    | Ast.IA5String | Ast.NumericString | Ast.OctetString | Ast.BitString | Ast.SequenceOf(_)  ->
+        let asn1Min, asn1Max = uPER.GetSizebaleMinMax asn1Type.Kind asn1Type.Constraints r
+        let bAsn1FixedSize = asn1Min = asn1Max
+        let characterEncoding =  GetEncodingPropery props
+        let bAsciiEncoding, loc =
+            match characterEncoding with
+            | Some (Ascii, loc)     -> true, loc
+            | _                     -> false, t.Location
+        let sizeProp = GetSizeProperty props ast.Constants
+
+        match  bAsciiEncoding, bAsn1FixedSize, sizeProp  with
+        | true, true, None                                                      -> ()   (* Acn_Enc_String_Ascii_No_Length_Determinant() *) 
+        | true, true, Some(SizeNullTerminated, l)                               -> ()   (* Acn_Enc_String_Ascii_Null_Teminated() *) 
+        | true, true, Some(SizeFixed(nItems), l)    when nItems = asn1Max       -> ()   (* Acn_Enc_String_Ascii_No_Length_Determinant() *) 
+        | true, true, Some(SizeFixed(nItems), l)                                -> raise(SemanticError(l, sprintf "size property value should be set to %A" asn1Max))
+        | true, true, Some (SizeField flds, l)                                  -> ()   (* Acn_Enc_String_Ascii_External_Field_Determinant *) 
+
+        | true, false, None                                                     -> ()   (* Acn_Enc_String_Ascii_Internal_Field_Determinant() *) 
+        | true, false, Some(SizeNullTerminated, l)                              -> ()   (* Acn_Enc_String_Ascii_Null_Teminated() *) 
+        | true, false, Some(SizeFixed(nItems), l)                               -> raise(SemanticError(l, sprintf "The size constraints of the ASN.1  allows variable items (%A .. %A). Therefore, you should either remove the size property (in which case the size determinant will be encoded automatically exactly like uPER), or use a an Integer field as size determinant" asn1Min asn1Max))
+        | true, false, Some (SizeField flds, l)                                 -> ()   (* Acn_Enc_String_Ascii_External_Field_Determinant *) 
+
+        | false, true, None                                                      -> ()   (* Acn_Enc_String_CharIndex_No_Length_Determinant() *) 
+        | false, true, Some(SizeNullTerminated, l)                               -> raise(SemanticError(l, sprintf "when a string type has the acn property 'size null-terminated' it must also have the acn property 'encoding ASCII'" ))
+        | false, true, Some(SizeFixed(nItems), l)    when nItems = asn1Max       -> ()   (* Acn_Enc_String_CharIndex_No_Length_Determinant() *) 
+        | false, true, Some(SizeFixed(nItems), l)                                -> raise(SemanticError(l, sprintf "size property value should be set to %A" asn1Max))
+        | false, true, Some (SizeField flds, l)                                  -> ()   (* Acn_Enc_String_CharIndex_External_Field_Determinant *) 
+
+        | false, false, None                                                     -> ()   (* Acn_Enc_String_CharIndex_Internal_Field_Determinant() *) 
+        | false, false, Some(SizeNullTerminated, l)                              -> raise(SemanticError(l, sprintf "when a string type has the acn property 'size null-terminated' it must also have the acn property 'encoding ASCII'" ))
+        | false, false, Some(SizeFixed(nItems), l)                               -> raise(SemanticError(l, sprintf "The size constraints of the ASN.1  allows variable items (%A .. %A). Therefore, you should either remove the size property (in which case the size determinant will be encoded automatically exactly like uPER), or use a an Integer field as size determinant" asn1Min asn1Max))
+        | false, false, Some (SizeField flds, l)                                 -> ()   (* Acn_Enc_String_CharIndex_External_Field_Determinant *) 
+
     | _           -> ()
 
 and BalladerProperties = [acnParser.PRESENT_WHEN; acnParser.ALIGNTONEXT;]
@@ -507,8 +586,8 @@ and BalladerProperties = [acnParser.PRESENT_WHEN; acnParser.ALIGNTONEXT;]
 and AllowedPropertiesPerType = function
     | Ast.Integer           -> [acnParser.ENCODING; acnParser.SIZE; acnParser.ENDIANNES]
     | Ast.Real              -> [acnParser.ENCODING; acnParser.ENDIANNES]
-    | Ast.IA5String         -> [acnParser.SIZE]
-    | Ast.NumericString     -> [acnParser.SIZE]
+    | Ast.IA5String         -> [acnParser.ENCODING; acnParser.SIZE]
+    | Ast.NumericString     -> [acnParser.ENCODING; acnParser.SIZE]
     | Ast.OctetString       -> [acnParser.SIZE]
     | Ast.NullType          -> [acnParser.PATTERN]
     | Ast.BitString         -> [acnParser.SIZE]
@@ -524,8 +603,8 @@ and MandatoryAcnPropertiesPerType asn1Kind : List<int> =
     match asn1Kind with
     | Ast.Integer           -> [acnParser.ENCODING; acnParser.SIZE; ]   //ADJUST = 0, ENDIANNES=big
     | Ast.Real              -> [acnParser.ENCODING; ]   //ENDIANNES=big
-    | Ast.IA5String         -> [acnParser.SIZE]     // pointing to a field
-    | Ast.NumericString     -> [acnParser.SIZE]     // pointing to a field
+    | Ast.IA5String         -> []     // pointing to a field
+    | Ast.NumericString     -> []     // pointing to a field
     | Ast.OctetString       -> [acnParser.SIZE]     // pointing to a field
     | Ast.NullType          -> []                   // pattern = ''
     | Ast.BitString         -> [acnParser.SIZE]     // pointing to a field

@@ -499,6 +499,12 @@ Asn1.userprefs
 /asn1crt/_UpgradeReport_Files
 /asn1crt/Backup
 /asn1crt/Debug
+/asn1crt/asn1crt.sdf
+/asn1crt/asn1crt.opensdf
+/asn1crt/UpgradeLog.XML
+/asn1crt/asn1crt.vcxproj.filters
+/asn1crt/asn1crt.vcxproj.user
+/SPARK_RTL/examiner
 /mantis/0000462 - asn2aadlPlus.py does not accept empty sequences/oc_c
 /mantis/0000462 - asn2aadlPlus.py does not accept empty sequences/o_c
 /mantis/0000462 - asn2aadlPlus.py does not accept empty sequences/ob_c

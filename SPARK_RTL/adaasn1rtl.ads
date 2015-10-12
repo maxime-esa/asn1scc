@@ -899,4 +899,41 @@ IS
 
 
 
+    -- String functions
+     PROCEDURE Acn_Enc_String_Ascii_FixSize(S : in out BitArray; K : in out Natural; strVal : in String);
+    --# derives    S from S, K, strVal &
+    --#		   K from K, strVal;
+    --# pre  K+1>= S'First and K + 8*(strVal'Length-1) <= S'Last;
+    --# post K = K~ + 8*(strVal'Length-1);
+
+
+    PROCEDURE Acn_Dec_String_Ascii_FixSize(S : in BitArray; K : in out DECODE_PARAMS; strVal : in out String; Result:OUT ASN1_RESULT);
+    --# derives    K from K, strVal &
+    --#            strVal from S, K, strVal &
+    --#            Result from S, K, strVal;
+    --# pre  S'First = 1 and K.K+1>= S'First and K.K + 8*(strVal'Length-1) <= S'Last;
+    --# post K.K = K~.K + 8*(strVal'Length-1);
+
+
+
+    PROCEDURE Acn_Enc_String_Ascii_Null_Teminated(S : in out BitArray; K : in out Natural; null_character : in Integer; strVal : in String);
+    PROCEDURE Acn_Dec_String_Ascii_Null_Teminated(S : in BitArray; K : in out DECODE_PARAMS; null_character : in Integer; strVal : out String; Result:OUT ASN1_RESULT);
+
+    PROCEDURE Acn_Enc_String_Ascii_Internal_Field_Determinant(S : in out BitArray; K : in out Natural; asn1Min: Asn1Int; nLengthDeterminantSizeInBits : IN Integer; strVal : in String);
+    PROCEDURE Acn_Dec_String_Ascii_Internal_Field_Determinant(S : in BitArray; K : in out DECODE_PARAMS; asn1Min: Asn1Int; asn1Max: Asn1Int; nLengthDeterminantSizeInBits : IN Integer; strVal : out String; Result:OUT ASN1_RESULT);
+
+    PROCEDURE Acn_Enc_String_Ascii_External_Field_Determinant(S : in out BitArray; K : in out Natural; strVal : in String);
+    PROCEDURE Acn_Dec_String_Ascii_External_Field_Determinant(S : in BitArray; K : in out DECODE_PARAMS; extSizeDeterminatFld : IN Asn1Int; strVal : out String; Result:OUT ASN1_RESULT);
+
+
+     PROCEDURE Acn_Enc_String_CharIndex_FixSize(S : in out BitArray; K : in out Natural; charSet : String; nCharSize:Integer; strVal : in String);
+     PROCEDURE Acn_Dec_String_CharIndex_FixSize(S : in BitArray; K : in out DECODE_PARAMS; charSet : String; nCharSize:Integer; strVal : in out String; Result:OUT ASN1_RESULT);
+
+     PROCEDURE Acn_Enc_String_CharIndex_External_Field_Determinant(S : in out BitArray; K : in out Natural; charSet : String; nCharSize:Integer; strVal : in String);
+     PROCEDURE Acn_Dec_String_CharIndex_External_Field_Determinant(S : in BitArray; K : in out DECODE_PARAMS; charSet : String; nCharSize:Integer; extSizeDeterminatFld : IN Asn1Int; strVal : out String; Result:OUT ASN1_RESULT);
+
+     PROCEDURE Acn_Enc_String_CharIndex_Internal_Field_Determinant(S : in out BitArray; K : in out Natural; charSet : String; nCharSize:Integer; asn1Min: Asn1Int; nLengthDeterminantSizeInBits : IN Integer; strVal : in String);
+     PROCEDURE Acn_Dec_String_CharIndex_Internal_Field_Determinant(S : in BitArray; K : in out DECODE_PARAMS; charSet : String; nCharSize:Integer; asn1Min: Asn1Int; asn1Max: Asn1Int; nLengthDeterminantSizeInBits : IN Integer; strVal : out String; Result:OUT ASN1_RESULT);
+
+
 END adaasn1rtl;

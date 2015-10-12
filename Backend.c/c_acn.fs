@@ -343,7 +343,7 @@ type Statement =
 
 let rec EmitTypeBodyAux (t:Asn1Type) (sTasName:string) (path:list<string>, altPath:(string*string) option )  (tas:TypeAssignment) (m:Asn1Module) (r:AstRoot) (acn:AcnTypes.AcnAstResolved) codec =
     let handleSizeableType auto fixedSize extFld nullTerm =
-        let encClass = Acn.GetSizeableEncodingClass t path r acn emptyLocation 
+        let encClass = Acn.GetSizeableEncodingClass_ t path r acn emptyLocation 
         let (min, max) = match uPER.GetTypeUperRange t.Kind t.Constraints r with
                             | Concrete(a, b)    -> (a,b)
                             | _                 -> raise(BugErrorException "Expecting size constraint")
@@ -353,7 +353,7 @@ let rec EmitTypeBodyAux (t:Asn1Type) (sTasName:string) (path:list<string>, altPa
         | false, Acn.AutoSize                  -> auto min max
         | false, Acn.FixedSize(nItems)         -> fixedSize nItems
         | false, Acn.ExternalField(fldPath)    -> extFld min max fldPath 
-        | false, Acn.NullTerminated            -> nullTerm max
+        | false, Acn.NullTerminated   _        -> nullTerm max
 
     let aligmVal = 
         match Acn.GetAlignment t r with
@@ -380,7 +380,29 @@ let rec EmitTypeBodyAux (t:Asn1Type) (sTasName:string) (path:list<string>, altPa
             intItem, 0I, intItemMax
 //        | BitString                   -> su.InternalItem_bit_str p index codec, 1I, 1I 
         | OctetString                 -> c_src.InternalItem_oct_str pp index codec ,8I,8I  //su.InternalItem_oct_str p index codec, 8I, 8I 
-        | IA5String | NumericString   -> c_acn.string_InternalItem p index codec,  7I, 7I
+        | IA5String | NumericString   -> 
+            let bAsciiEncode = false
+            
+            let encClass = Acn.GetSizeableEncodingClass_ t path r acn emptyLocation 
+            match bAsciiEncode, encClass   with
+            | true, Acn.NullTerminated _   ->  c_acn.string_InternalItem p index  255I codec, 8I, 8I
+            | false, Acn.NullTerminated _  ->  c_acn.string_InternalItem p index  255I codec, 8I, 8I
+            | _                 ->
+                let charSizeInBits = 
+                    match uPER.uperGetSizableTypeInternalItemSizeInBits uPER.uperGetMaxSizeInBits t.Kind t.Constraints r with
+                    | Bounded(charSize) -> charSize
+                    | Infinite          -> raise(BugErrorException "impossible case in EmitTypeBodyAux")
+                match bAsciiEncode with
+                | true  -> c_acn.string_InternalItem p index  ((1I <<< (int)charSizeInBits) - 1I) codec,  charSizeInBits, charSizeInBits
+                | false -> 
+                    let alphaSet = GetTypeUperRangeFrom (t.Kind, t.Constraints, r)
+                    let nLastItemIndex = BigInteger (alphaSet.Length - 1)
+                    let arrAsciiCodes = alphaSet |> Array.map(fun x -> BigInteger (System.Convert.ToInt32 x))
+                    let nCharIndexSize = (GetNumberOfBitsForNonNegativeInteger (BigInteger (alphaSet.Length - 1)))
+                    let nCharIndexMax = BigInteger alphaSet.Length-1I
+                    c_src.InternalItem_string_with_alpha pp index nLastItemIndex arrAsciiCodes (nLastItemIndex+1I) codec,nCharIndexSize,nCharIndexSize
+
+
         | _                           -> raise(BugErrorException "")
 
     let longName = path.Tail |> Seq.map ToC |> Seq.StrJoin "_"
@@ -420,10 +442,10 @@ let rec EmitTypeBodyAux (t:Asn1Type) (sTasName:string) (path:list<string>, altPa
         | Acn.TwosComplement_VarSize_LengthEmbedded     -> c_acn.TwosComplement_VarSize_LengthEmbedded p codec
         | Acn.ASCII_ConstSize(nBits)                    -> c_acn.ASCII_ConstSize p (nBits/8I) codec
         | Acn.ASCII_VarSize_LengthEmbedded              -> c_acn.ASCII_VarSize_LengthEmbedded p codec
-        | Acn.ASCII_VarSize_NullTerminated              -> c_acn.ASCII_VarSize_NullTerminated p codec
+        | Acn.ASCII_VarSize_NullTerminated _            -> c_acn.ASCII_VarSize_NullTerminated p codec
         | Acn.BCD_ConstSize(nBits)                      -> c_acn.BCD_ConstSize p (nBits/4I) codec
         | Acn.BCD_VarSize_LengthEmbedded                -> c_acn.BCD_VarSize_LengthEmbedded p codec
-        | Acn.BCD_VarSize_NullTerminated                -> c_acn.BCD_VarSize_NullTerminated p codec
+        | Acn.BCD_VarSize_NullTerminated    _           -> c_acn.BCD_VarSize_NullTerminated p codec
     | Real  ->  
         match Acn.GetRealEncodingClass t r with
         | Acn.Real_uPER                                     -> c_uper.EmitTypeBody t sTasName (path, altPath) m  r codec
@@ -461,14 +483,28 @@ let rec EmitTypeBodyAux (t:Asn1Type) (sTasName:string) (path:list<string>, altPa
             let arrItems = Acn.GetEnumEncodingValues t r C acn |> Seq.map(fun (sname,vl) -> c_acn.Enumerated_item pp sname vl codec)
             c_acn.EnumeratedEncValues p sTasName arrItems sActualCodecFunc codec
     | IA5String | NumericString -> 
-        let intItem, IntItemMin, IntItemMax = EmitInternalItem_min_max ()
-        let auto min max       = c_acn.str_VarSize p index intItem min max codec
-        let fixSize size       = c_acn.str_FixedSize p index intItem size codec
-        let extFld  min max (fldPath:AcnTypes.Point)= 
-            let extFldPath = GetPointAccessPath fldPath  r acn//GetTypeAccessPath (fldPath.AbsPath.Tail.Tail)  r 
-            c_acn.str_external_field p index intItem min max extFldPath codec
-        let nullTerm max       = raise(BugErrorException "Null terminated is not implemented yet")
-        handleSizeableType auto fixSize extFld nullTerm
+        let encClass = Acn.GetStringEncodingClass t path r acn emptyLocation 
+        match encClass.kind with
+        | Acn.Acn_Enc_String_Ascii_FixSize                                  -> 
+            c_acn.Acn_String_Ascii_FixSize p encClass.maxAsn1SizeValue codec
+        | Acn.Acn_Enc_String_Ascii_Null_Teminated nullChar                  -> 
+            c_acn.Acn_String_Ascii_Null_Teminated p encClass.maxAsn1SizeValue (nullChar.ToString()) codec
+        | Acn.Acn_Enc_String_Ascii_External_Field_Determinant refPoint      -> 
+            let extField = GetPointAccessPath refPoint  r acn
+            c_acn.Acn_String_Ascii_External_Field_Determinant p encClass.maxAsn1SizeValue extField codec
+        | Acn.Acn_Enc_String_Ascii_Internal_Field_Determinant (asn1Min, _)    -> 
+            c_acn.Acn_String_Ascii_Internal_Field_Determinant p encClass.maxAsn1SizeValue asn1Min codec
+        | Acn.Acn_Enc_String_CharIndex_FixSize  charSet                     -> 
+            let arrAsciiCodes = charSet |> Array.map(fun x -> BigInteger (System.Convert.ToInt32 x))
+            c_acn.Acn_String_CharIndex_FixSize p encClass.maxAsn1SizeValue arrAsciiCodes (BigInteger charSet.Length) codec
+        | Acn.Acn_Enc_String_CharIndex_External_Field_Determinant (charSet, refPoint)    ->  
+            let extField = GetPointAccessPath refPoint  r acn
+            let arrAsciiCodes = charSet |> Array.map(fun x -> BigInteger (System.Convert.ToInt32 x))
+            c_acn.Acn_String_CharIndex_External_Field_Determinant p encClass.maxAsn1SizeValue arrAsciiCodes (BigInteger charSet.Length) extField codec
+        | Acn.Acn_Enc_String_CharIndex_Internal_Field_Determinant (charSet, asn1Min, _) -> 
+            let arrAsciiCodes = charSet |> Array.map(fun x -> BigInteger (System.Convert.ToInt32 x))
+            c_acn.Acn_String_CharIndex_Internal_Field_Determinant p encClass.maxAsn1SizeValue arrAsciiCodes (BigInteger charSet.Length) asn1Min codec
+
     | SequenceOf(_) | OctetString ->
         let intItem, IntItemMin, IntItemMax = EmitInternalItem_min_max ()
         let auto min max   = c_src.oct_sqf_VarSize p index intItem min max  (GetCount t pp r) codec  //c_src.oct_sqf_VarSize p index intItem min max (GetNumberOfBitsForNonNegativeInteger (max-min)) IntItemMin IntItemMax aligmVal codec 
@@ -729,30 +765,19 @@ and EmitTypeBody (t:Asn1Type) (sTasName:string) (path:list<string>, altPath:(str
 let CollectLocalVars (t:Asn1Type) (tas:TypeAssignment) (m:Asn1Module) (r:AstRoot) (acn:AcnTypes.AcnAstResolved) codec =
     let OnType_collerLocalVariables (t:Asn1Type) (path:list<string>) (parent:option<Asn1Type>) (ass:Assignment) (m:Asn1Module) (r:AstRoot) (state:list<LOCAL_VARIABLE>) = 
         match t.Kind with
-        | SequenceOf(_) | OctetString | BitString | IA5String | NumericString-> 
-            let encClass = Acn.GetSizeableEncodingClass t path r acn emptyLocation 
+        | SequenceOf(_) | OctetString | BitString  -> 
+            let encClass = Acn.GetSizeableEncodingClass_ t path r acn emptyLocation 
             let newState =
                 let s0 = state
-                //let s0 = (SEQUENCE_OF_INDEX 1)::state
                 match (GetTypeUperRange t.Kind t.Constraints r) with
-                | Concrete(a,b) when  a=b   -> 
-                    match t.Kind, codec, encClass with
-                    | IA5String, Encode, Acn.ExternalField(_)       -> LENGTH::s0
-                    | NumericString, Encode, Acn.ExternalField(_)   -> LENGTH::s0
-                    | _                                         -> s0
+                | Concrete(a,b) when  a=b   ->  s0
                 | Concrete(a,b)   -> 
-                    match t.Kind with 
-                    | SequenceOf(_) | OctetString | BitString -> match codec, encClass with
-                                                                 | Decode, Acn.FixedSize(_)     -> LENGTH::s0
-                                                                 | Decode, Acn.AutoSize(_)      -> LENGTH::s0
-                                                                 | _                            -> s0
-                    | IA5String | NumericString               -> match codec, encClass with
-                                                                 | Decode, Acn.ExternalField(_)     -> s0
-                                                                 | _                                -> LENGTH::s0
-                    | _                                       -> raise (BugErrorException(""))
+                    match codec, encClass with
+                    | Decode, Acn.FixedSize(_)     -> LENGTH::s0
+                    | Decode, Acn.AutoSize(_)      -> LENGTH::s0
+                    | _                            -> s0
                 | _                 -> raise (BugErrorException("Unsupported configuration"))
             match t.Kind with
-            | IA5String | NumericString -> CHAR_VAL::(SEQUENCE_OF_INDEX 1)::newState
             | BitString                 -> newState
             |_                          -> (SEQUENCE_OF_INDEX 1)::newState
         | Integer   when codec = Decode     ->
