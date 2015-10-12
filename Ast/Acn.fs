@@ -211,6 +211,7 @@ let GetStringEncodingClass (a:Asn1Type) (absPath:AcnTypes.AbsPath) (asn1:Ast.Ast
 
             let alphaCons = a.Constraints |> List.filter(fun x -> match x with AlphabetContraint(_) -> true |_ -> false)
             let alphaSet = uPER.GetTypeUperRangeFrom (a.Kind, a.Constraints, asn1)
+            let allowedBytes = alphaSet |> Array.map(fun c -> (System.Text.Encoding.ASCII.GetBytes (c.ToString())).[0]) |> Set.ofArray
             let lengthDeterminantSize = GetNumberOfBitsForNonNegativeInteger (asn1Max-asn1Min)
             let charSizeInBits =
                 match  bAsciiEncoding with
@@ -219,13 +220,19 @@ let GetStringEncodingClass (a:Asn1Type) (absPath:AcnTypes.AbsPath) (asn1:Ast.Ast
             let kind, minSizeInBits, maxSizeInBits = 
                 match  bAsciiEncoding, bAsn1FixedSize, sizeClass  with
                 | true, true, AutoSize                                          -> Acn_Enc_String_Ascii_FixSize, asn1Max*charSizeInBits,  asn1Max*charSizeInBits
-                | true, true, NullTerminated  b                                 -> Acn_Enc_String_Ascii_Null_Teminated b, (asn1Max+1I)*charSizeInBits, (asn1Max+1I)*charSizeInBits
+                | true, true, NullTerminated  b                                 -> 
+                    match allowedBytes.Contains b && (not (b=0uy && alphaSet.Length = 128))with
+                    | true  -> raise(SemanticError(errLoc, "The termination-pattern defines a character which belongs to the allowed values of the ASN.1 type. Use another value in the termination-pattern or apply different constraints in the ASN.1 type."))
+                    | false -> Acn_Enc_String_Ascii_Null_Teminated b, (asn1Max+1I)*charSizeInBits, (asn1Max+1I)*charSizeInBits
                 | true, true, FixedSize(nItems)    when nItems = asn1Max        -> Acn_Enc_String_Ascii_FixSize, asn1Max*charSizeInBits,  asn1Max*charSizeInBits
                 | true, true, FixedSize(nItems)                                 -> raise(BugErrorException(sprintf "size property value should be set to %A" asn1Max))
                 | true, true, ExternalField fld                                 -> Acn_Enc_String_Ascii_External_Field_Determinant fld, asn1Max*charSizeInBits,  asn1Max*charSizeInBits
 
                 | true, false, AutoSize                                         -> Acn_Enc_String_Ascii_Internal_Field_Determinant (asn1Min, lengthDeterminantSize), lengthDeterminantSize + asn1Min*charSizeInBits, lengthDeterminantSize + asn1Max*charSizeInBits
-                | true, false, NullTerminated b                                 -> Acn_Enc_String_Ascii_Null_Teminated b, (asn1Max+1I)*charSizeInBits, (asn1Max+1I)*charSizeInBits
+                | true, false, NullTerminated b                                 -> 
+                    match allowedBytes.Contains b && (not (b=0uy && alphaSet.Length = 128))with
+                    | true  -> raise(SemanticError(errLoc, "The termination-pattern defines a character which belongs to the allowed values of the ASN.1 type. Use another value in the termination-pattern or apply different constraints in the ASN.1 type."))
+                    | false -> Acn_Enc_String_Ascii_Null_Teminated b, (asn1Max+1I)*charSizeInBits, (asn1Max+1I)*charSizeInBits
                 | true, false, FixedSize(nItems)                                -> raise(BugErrorException(sprintf "The size constraints of the ASN.1  allows variable items (%A .. %A). Therefore, you should either remove the size property (in which case the size determinant will be encoded automatically exactly like uPER), or use a an Integer field as size determinant" asn1Min asn1Max))
                 | true, false, ExternalField fld                                -> Acn_Enc_String_Ascii_External_Field_Determinant fld, asn1Max*charSizeInBits,  asn1Max*charSizeInBits
 

@@ -342,13 +342,30 @@ and HandleAcnProperty(t:ITree) (rest:List<ITree>) (asn1Type: Asn1Type) absPath (
                 match t.Children |> Seq.tryFind(fun x -> x.Type = acnParser.TERMINATION_PATTERN) with
                 | None  -> byte 0
                 | Some tp   ->
-                    let bitPattern = GetActualString (tp.GetChild(0).Text)
-                    match bitPattern.Length <> 8 with
-                    | true  -> raise(SemanticError(tp.Location, sprintf "ternination-patern value must be a byte"  ))
-                    | false ->
-                        bitPattern.ToCharArray() |> 
-                        Seq.fold(fun (p,cs) c -> if c='0' then (p/2,cs) else (p/2,p+cs) ) (128, 0) 
-                        |> snd |> byte
+                    let ret = 
+                        let bitPattern = GetActualString (tp.GetChild(0).Text)
+                        match tp.GetChild(0).Type with
+                        | acnParser.BitStringLiteral    ->
+                            match bitPattern.Length <> 8 with
+                            | true  -> raise(SemanticError(tp.Location, sprintf "ternination-patern value must be a byte"  ))
+                            | false ->
+                                bitPattern.ToCharArray() |> 
+                                Seq.fold(fun (p,cs) c -> if c='0' then (p/2,cs) else (p/2,p+cs) ) (128, 0) 
+                                |> snd |> byte
+                        | acnParser.OctectStringLiteral ->
+                            match bitPattern.Length <> 2 with
+                            | true  -> raise(SemanticError(tp.Location, sprintf "ternination-patern value must be a byte"  ))
+                            | false ->
+                                System.Byte.Parse(bitPattern, System.Globalization.NumberStyles.AllowHexSpecifier)
+                        | _     ->  raise(BugErrorException("HandleAcnProperty: Neither BitStringLiteral or OctectStringLiteral"))
+
+                    let alphaSet = uPER.GetTypeUperRangeFrom (asn1Type.Kind, asn1Type.Constraints, r)
+                    let allowedBytes = alphaSet |> Array.map(fun c -> (System.Text.Encoding.ASCII.GetBytes (c.ToString())).[0]) |> Set.ofArray
+                    match allowedBytes.Contains ret && (not (ret=0uy && alphaSet.Length = 128))with
+                    | true  -> raise(SemanticError(tp.Location, "The termination-pattern defines a character which belongs to the allowed values of the ASN.1 type. Use another value in the termination-pattern or apply different constraints in the ASN.1 type."))
+                    | false -> ()
+                    ret
+                        
             Prop (SizeProperty (sizeProperty.NullTerminated terminated_pattern))
         | acnParser.INT | acnParser.UID -> Prop (SizeProperty (Fixed(CreateAcnIntegerConstant constantNames (t.GetChild(0)))))
         | acnParser.LONG_FIELD          -> LRef ( [CreateLongField(t.GetChild(0)), SizeDeterminant, GetLastChildLocation(t.GetChild(0))])

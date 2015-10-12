@@ -206,7 +206,7 @@ presentWhenProp
 	;
 
 terminationPatternProp
-    :  TERMINATION_PATTERN^ BitStringLiteral
+    :  TERMINATION_PATTERN^ (BitStringLiteral | OctectStringLiteral)
     ;
 
 presentWhenCond
@@ -381,6 +381,10 @@ DOT  : '.';
 
 BitStringLiteral	:
 	'\'' ('0'|'1')* '\'B'
+	;
+
+OctectStringLiteral	:
+	'\'' ('0'..'9'|'a'..'f'|'A'..'F'|' ' | '\t' | '\r' | '\n')* '\'H'
 	;
 
 HexByteOrNible	:
