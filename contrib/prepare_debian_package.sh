@@ -1,19 +1,29 @@
 #!/bin/bash -e
+
+#Change this to desired install path: /opt/asn1scc or /usr/local
+INSTALL_ROOT=/usr
+if [ $# -eq 1 ] ; then
+  INSTALL_ROOT=$1
+fi
+echo "Preparing deb with path $INSTALL_ROOT"
+
 INITIAL_FOLDER=$(pwd)
+SHARE_FOLDER=$INSTALL_ROOT/share/asn1scc
+BIN_FOLDER=$INSTALL_ROOT/bin
 cd ..
 VERSION=3.2.$(cat Asn1f2/SvnVersion.cs | cut -d \" -f 2)
 echo Creating a Debian package for ASN1Scc version $VERSION
 test -f Asn1f2/bin/Debug/Asn1f2.exe || (echo 'Run ./build.sh first to build ASN1SCC' && false)
 rm -rf asn1scc
 mkdir -p asn1scc/DEBIAN
-mkdir -p asn1scc/usr/bin
-mkdir -p asn1scc/usr/share/asn1scc
-cp -r Asn1f2/bin/Debug/* asn1scc/usr/share/asn1scc
-rm -f asn1scc/usr/share/asn1scc/*.mdb
-mv asn1scc/usr/share/asn1scc/Asn1f2.exe asn1scc/usr/share/asn1scc/asn1.exe
-cd asn1scc/usr/bin
+mkdir -p asn1scc/$BIN_FOLDER
+mkdir -p asn1scc/$SHARE_FOLDER
+cp -r Asn1f2/bin/Debug/* asn1scc/$SHARE_FOLDER/
+rm -f asn1scc/$SHARE_FOLDER/*.mdb
+mv asn1scc/$SHARE_FOLDER/Asn1f2.exe asn1scc/$SHARE_FOLDER/asn1.exe
+cd asn1scc/$BIN_FOLDER
 ln -s ../share/asn1scc/* .
-cd ../../../
+cd $INITIAL_FOLDER/..
 echo "Package: asn1scc
 Version: ${VERSION}
 Section: base
