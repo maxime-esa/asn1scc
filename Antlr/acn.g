@@ -1,15 +1,15 @@
-/**=============================================================================
-Antlr grammar of the ACN
-================================================================================
-Copyright(c) Semantix Information Technologies S.A www.semantix.gr
-All rights reserved.
+/*
+* Copyright (c) 2008-2012 Semantix and (c) 2012-2015 Neuropublic
+*
+* This file is part of the ASN1SCC tool.
+*
+* Licensed under the terms of GNU General Public Licence as published by
+* the Free Software Foundation.
+*
+*  For more informations see License.txt file
+*/
 
-This source code is only intended as a supplement to the
-Semantix Technical Reference and related electronic documentation 
-provided with the autoICD and asn1scc applications.
-See these sources for detailed information regarding the
-asn1scc and autoICD applications.
-==============================================================================*/
+
 
 grammar acn;
 options {
