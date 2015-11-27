@@ -12,6 +12,7 @@
 module genericBackend
 
 open System.Numerics
+open System.Globalization
 open FsUtils
 open Ast
 open System.IO
@@ -31,6 +32,18 @@ let GetMinMax uperRange =
 let handTypeWithMinMax name uperRange func stgFileName =
     let sMin, sMax = GetMinMax uperRange
     func name sMin sMax (sMin=sMax) stgFileName
+
+let handTypeWithMinMax_real name (uperRange:uperRange<double>) func stgFileName =
+    let GetMinMax (uperRange:uperRange<double>) =
+        match uperRange with
+        | Concrete(min, max)      -> min.ToString("E20", NumberFormatInfo.InvariantInfo), max.ToString("E20", NumberFormatInfo.InvariantInfo)
+        | PosInf(a)               -> a.ToString("E20", NumberFormatInfo.InvariantInfo), "MAX"
+        | NegInf(max)             -> "MIN", max.ToString("E20", NumberFormatInfo.InvariantInfo)
+        | Full                    -> "MIN", "MAX"
+        | Empty                   -> raise(BugErrorException "[genericBackend] GetMinMax error")
+    let sMin, sMax = GetMinMax uperRange
+    func name sMin sMax (sMin=sMax) stgFileName
+
 
 let PrintCustomAsn1Value (vas: Ast.ValueAssignment) stgFileName =
     let rec PrintValue (v: Asn1Value) =
@@ -63,7 +76,7 @@ let PrintContract (tas:Ast.TypeAssignment) (r:AstRoot) (stgFileName:string) =
     let rec PrintExpression (t:Asn1Type) (pattern:string) =
         match t.Kind with
         | Integer               -> handTypeWithMinMax pattern (GetTypeUperRange t.Kind t.Constraints r) gen.ContractExprMinMax stgFileName
-        | Real                  -> handTypeWithMinMax pattern (GetTypeRange_real t.Kind t.Constraints r) gen.ContractExprMinMax stgFileName
+        | Real                  -> handTypeWithMinMax_real pattern (GetTypeRange_real t.Kind t.Constraints r) gen.ContractExprMinMax stgFileName
         | OctetString | IA5String | NumericString | BitString -> handTypeWithMinMax pattern (GetTypeUperRange t.Kind t.Constraints r) gen.ContractExprSize stgFileName
         | Boolean
         | NullType
@@ -90,7 +103,7 @@ let rec PrintType (t:Asn1Type) modName (r:AstRoot) (stgFileName:string) =
         | Integer               -> handTypeWithMinMax (gen.IntegerType () stgFileName)         (GetTypeUperRange t.Kind t.Constraints r) gen.MinMaxType stgFileName
         | BitString             -> handTypeWithMinMax (gen.BitStringType () stgFileName)       (GetTypeUperRange t.Kind t.Constraints r) gen.MinMaxType2 stgFileName
         | OctetString           -> handTypeWithMinMax (gen.OctetStringType () stgFileName)     (GetTypeUperRange t.Kind t.Constraints r) gen.MinMaxType2 stgFileName
-        | Real                  -> handTypeWithMinMax (gen.RealType () stgFileName)            (GetTypeRange_real t.Kind t.Constraints r) gen.MinMaxType stgFileName
+        | Real                  -> handTypeWithMinMax_real (gen.RealType () stgFileName)            (GetTypeRange_real t.Kind t.Constraints r) gen.MinMaxType stgFileName
         | IA5String             -> handTypeWithMinMax (gen.IA5StringType () stgFileName)       (GetTypeUperRange t.Kind t.Constraints r) gen.MinMaxType2 stgFileName
         | NumericString         -> handTypeWithMinMax (gen.NumericStringType () stgFileName)   (GetTypeUperRange t.Kind t.Constraints r) gen.MinMaxType2 stgFileName
         | Boolean               -> gen.BooleanType () stgFileName
