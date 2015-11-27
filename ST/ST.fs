@@ -66,7 +66,7 @@ type RealFormatRenderer() =
             let result = 
                 match lang with
                 | Ast.Html  -> v.ToString()
-                | _         -> v.ToString("E", NumberFormatInfo.InvariantInfo)
+                | _         -> v.ToString("E20", NumberFormatInfo.InvariantInfo)
 //            String.Format(NumberFormatInfo.InvariantInfo, "{0}", o)
 //            if ((v%1.0) = 0.0) && not(result.Contains("E")) then
 //                result + ".0"
