@@ -101,11 +101,11 @@ $sCommentLine$
 \begin{longtable}{|c|c|c|}
 \caption{Type content for $sTasName$}\label{tab:param$sTasNameC$} \\\\
 \hline
-\rowcolor{light-gray}
+\rowcolor{gray!50}
 \textbf{Constraints} & \textbf{Min Length (bits)} & \textbf{Max Length (bits)} \\\\
 \hline\\hline
 \endfirsthead
-\rowcolor{light-gray}
+\rowcolor{gray!50}
 \textbf{Constraints} & \textbf{Min Length (bits)} & \textbf{Max Length (bits)} \\\\
 \hline\\hline
 \endhead
@@ -129,19 +129,19 @@ EmitSequence(sColor, sTasName, sTasNameC, sMinBytes, sMaxBytes, sMaxBitsExplaine
 \begin{longtable}{|c|p{3cm}|p{5cm}|c|p{3cm}|c|c|c|}
 \caption{Source Data Parameters for $sTasName$}\label{tab:param$sTasNameC$} \\\\
 \hline
-\rowcolor{light-gray}
+\rowcolor{gray!50}
 \textbf{No} & \textbf{Field} & \textbf{Description} & \textbf{Optional} & \textbf{Type} & \textbf{Constraint} & \textbf{Min} & \textbf{Max} \\\\
-\rowcolor{light-gray}
+\rowcolor{gray!50}
  & & & & & & \textbf{Length} & \textbf{Length} \\\\
-\rowcolor{light-gray}
+\rowcolor{gray!50}
  & & & & & & \textbf{(bits)} & \textbf{(bits)} \\\\
 \hline\\hline
 \endfirsthead
-\rowcolor{light-gray}
+\rowcolor{gray!50}
 \textbf{No} & \textbf{Field} & \textbf{Description} & \textbf{Optional} & \textbf{Type} & \textbf{Constraint} & \textbf{Min} & \textbf{Max} \\\\
-\rowcolor{light-gray}
+\rowcolor{gray!50}
  & & & & & & \textbf{Length} & \textbf{Length} \\\\
-\rowcolor{light-gray}
+\rowcolor{gray!50}
  & & & & & & \textbf{(bits)} & \textbf{(bits)} \\\\
 \hline\\hline
 \endhead
@@ -192,19 +192,19 @@ $endif$
 \begin{longtable}{|c|p{3cm}|p{5cm}|p{3cm}|c|c|c|}
 \caption{Array content for $sTasName$}\label{tab:param$sTasNameC$} \\\\
 \hline
-\rowcolor{light-gray}
+\rowcolor{gray!50}
 \textbf{No} & \textbf{Field} & \textbf{Description} & \textbf{Type} & \textbf{Constraint} & \textbf{Min} & \textbf{Max} \\\\
-\rowcolor{light-gray}
+\rowcolor{gray!50}
  & & & & & \textbf{Length} & \textbf{Length} \\\\
-\rowcolor{light-gray}
+\rowcolor{gray!50}
  & & & & & \textbf{(bits)} & \textbf{(bits)} \\\\
 \hline\\hline
 \endfirsthead
-\rowcolor{light-gray}
+\rowcolor{gray!50}
 \textbf{No} & \textbf{Field} & \textbf{Description} & \textbf{Type} & \textbf{Constraint} & \textbf{Min} & \textbf{Max} \\\\
-\rowcolor{light-gray}
+\rowcolor{gray!50}
  & & & & & \textbf{Length} & \textbf{Length} \\\\
-\rowcolor{light-gray}
+\rowcolor{gray!50}
  & & & & & \textbf{(bits)} & \textbf{(bits)} \\\\
 \hline\\hline
 \endhead
@@ -247,19 +247,19 @@ EmitSizeable(sColor, sTasName, sTasNameC, sKind, sMinBytes, sMaxBytes, sMaxBitsE
 \begin{longtable}{|c|p{3cm}|p{5cm}|p{3cm}|c|c|c|}
 \caption{Array content for $sTasName$}\label{tab:param$sTasNameC$} \\\\
 \hline
-\rowcolor{light-gray}
+\rowcolor{gray!50}
 \textbf{No} & \textbf{Field} & \textbf{Description} & \textbf{Type} & \textbf{Constraint} & \textbf{Min} & \textbf{Max} \\\\
-\rowcolor{light-gray}
+\rowcolor{gray!50}
  & & & & & \textbf{Length} & \textbf{Length} \\\\
-\rowcolor{light-gray}
+\rowcolor{gray!50}
  & & & & & \textbf{(bits)} & \textbf{(bits)} \\\\
 \hline\\hline
 \endfirsthead
-\rowcolor{light-gray}
+\rowcolor{gray!50}
 \textbf{No} & \textbf{Field} & \textbf{Description} & \textbf{Type} & \textbf{Constraint} & \textbf{Min} & \textbf{Max} \\\\
-\rowcolor{light-gray}
+\rowcolor{gray!50}
  & & & & & \textbf{Length} & \textbf{Length} \\\\
-\rowcolor{light-gray}
+\rowcolor{gray!50}
  & & & & & \textbf{(bits)} & \textbf{(bits)} \\\\
 \hline\\hline
 \endhead
@@ -304,6 +304,10 @@ EmmitFilePart2(sFileName, sAsn1Content) ::= <<
 >>
 
 RootHtml(arrsFiles1, arrsFiles2, bIntegerSizeMustBeExplained, bRealSizeMustBeExplained, bLengthSizeMustBeExplained, bWithComponentMustBeExplained, bZeroBitsMustBeExplained) ::= <<
+\documentclass{report}
+\usepackage{longtable}
+\usepackage{multirow}
+\usepackage[table]{xcolor}
 The following tables describe the binary encodings of the data model using the ASN.1 Unaligned Packed Encoding Rules
 $arrsFiles1;separator="\n"$
 
