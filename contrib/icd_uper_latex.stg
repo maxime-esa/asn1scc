@@ -81,20 +81,20 @@ EmitEnumItemWithComment(sName, nValue, sComment) ::= <<
 
 EmitEnumInternalContents(arrsItems) ::= <<
 Enumeration's values:
-\begin{fw_itemize}
+\begin{itemize}
 $arrsItems;separator="\n"$
-\end{fw_itemize}
+\end{itemize}
 >>
 
 // applicable to Integers, booleans, reals, enumerated
 EmitPrimitiveType(sColor, sTasName, sTasNameC, sAsnKindName, sMinBytes, sMaxBytes, sMaxBitsExplained, sCommentLine, sAsn1Constraints, sMinBits, sMaxBits, arrsComments) ::= <<
 \subsection{$if(sCommentLine)$$first(arrsComments)$$else$$sTasName$$endif$}\label{sec:ICD_$sTasNameC$}
 
-\begin{fw_itemize}
+\begin{itemize}
 \item ASN.1 Type: $sTasName$ ($sAsnKindName$)
 \item Min size: $sMinBytes$ bytes
 \item Max size: $sMaxBytes$ bytes $sMaxBitsExplained$
-\end{fw_itemize}
+\end{itemize}
 
 $sCommentLine$
 
@@ -120,11 +120,11 @@ $sAsn1Constraints$ & $sMinBits$ & $sMaxBits$$sMaxBitsExplained$ \\\\
 EmitSequence(sColor, sTasName, sTasNameC, sMinBytes, sMaxBytes, sMaxBitsExplained, sCommentLine, arrsChildren, arrsComments) ::= <<
 \subsection{$if(sCommentLine)$$first(arrsComments)$$else$$sTasName$$endif$}\label{sec:ICD_$sTasNameC$}
 
-\begin{fw_itemize}
+\begin{itemize}
 \item ASN.1 Type: $sTasName$ (SEQUENCE)
 \item Min size: $sMinBytes$ bytes
 \item Max size: $sMaxBytes$ bytes $sMaxBitsExplained$
-\end{fw_itemize}
+\end{itemize}
 
 \begin{longtable}{|c|p{3cm}|p{5cm}|c|p{3cm}|c|c|c|}
 \caption{Source Data Parameters for $sTasName$}\label{tab:param$sTasNameC$} \\\\
@@ -164,14 +164,14 @@ $nIndex$ & $sName$ & $sComment$ & $sOptionality$ & $sType$ & $sConstraint$ & $sM
 
 
 EmmitSequencePreambleSingleComment(nIndex, sOptChildName) ::= <<
-\item bit $nIndex$ == 1 \Rightarrow $sOptChildName$ is present
+\item bit $nIndex$ == 1 \$\Rightarrow\$ $sOptChildName$ is present
 >>
 
 EmmitSequencePreambleComment(arrsOptChildren) ::= <<
 Special field used by PER to indicate the presence/absence of optional and default fields.
-\begin{fw_itemize}
+\begin{itemize}
 $arrsOptChildren;separator="\n"$
-\end{fw_itemize}
+\end{itemize}
 >>
 
 
@@ -179,11 +179,11 @@ $arrsOptChildren;separator="\n"$
 EmitChoice(sColor, sTasName, sTasNameC, sMinBytes, sMaxBytes, sMaxBitsExplained, sCommentLine, arrsChildren, arrsComments) ::= <<
 \subsection{$if(sCommentLine)$$first(arrsComments)$$else$$sTasName$$endif$}\label{sec:ICD_$sTasNameC$}
 
-\begin{fw_itemize}
+\begin{itemize}
 \item ASN.1 Type: $sTasName$ (CHOICE)
 \item Min size: $sMinBytes$ bytes
 \item Max size: $sMaxBytes$ bytes $sMaxBitsExplained$
-\end{fw_itemize}
+\end{itemize}
 
 $if(sCommentLine)$
 $sCommentLine$
@@ -222,14 +222,14 @@ $nIndex$ & $sName$ & $sComment$ & $sType$ & $sConstraint$ & $sMin$ & $sMax$ \\\\
 >>
 
 EmmitChoiceIndexSingleComment(nIndex, sChildName) ::= <<
-\item $nIndex$ \Rightarrow $sChildName$
+\item $nIndex$ \$\Rightarrow\$ $sChildName$
 >>
 
 EmmitChoiceIndexComment(arrsOptChildren) ::= <<
 Special field used by PER to indicate which choice alternative is present.
-\begin{fw_itemize}
+\begin{itemize}
 $arrsOptChildren;separator="\n"$
-\end{fw_itemize}
+\end{itemize}
 >>
 
 
@@ -238,11 +238,11 @@ $arrsOptChildren;separator="\n"$
 EmitSizeable(sColor, sTasName, sTasNameC, sKind, sMinBytes, sMaxBytes, sMaxBitsExplained, sCommentLine, arrsRows, arrsComments) ::= <<
 \subsection{$if(sCommentLine)$$first(arrsComments)$$else$$sTasName$$endif$}\label{sec:ICD_$sTasNameC$}
 
-\begin{fw_itemize}
+\begin{itemize}
 \item ASN.1 Type: $sTasName$ ($sKind$)
 \item Min size: $sMinBytes$ bytes
 \item Max size: $sMaxBytes$ bytes $sMaxBitsExplained$
-\end{fw_itemize}
+\end{itemize}
 
 \begin{longtable}{|c|p{3cm}|p{5cm}|p{3cm}|c|c|c|}
 \caption{Array content for $sTasName$}\label{tab:param$sTasNameC$} \\\\
@@ -308,6 +308,7 @@ RootHtml(arrsFiles1, arrsFiles2, bIntegerSizeMustBeExplained, bRealSizeMustBeExp
 \usepackage{longtable}
 \usepackage{multirow}
 \usepackage[table]{xcolor}
+\begin{document}
 The following tables describe the binary encodings of the data model using the ASN.1 Unaligned Packed Encoding Rules
 $arrsFiles1;separator="\n"$
 
@@ -338,6 +339,7 @@ An integer type that is contraint to a single value (i.e. INTEGER (5) or INTEGER
 $endif$
 
 $arrsFiles2;separator="\n"$
+\end{document}
 >>
 
 
