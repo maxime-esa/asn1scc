@@ -86,6 +86,10 @@ George Mamais (gmamais@gmail.com), Thanassis Tsiodras (ttsiodras@gmail.com)
 Changelog
 =========
 
+3.2.75
+------
+Removed the pragma Export in the Ada backend when using ASN.1 constants
+
 3.2.61
 ------
 Minor bugfixes and improvements of the custom Stg backends
