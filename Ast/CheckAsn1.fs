@@ -105,6 +105,8 @@ let rec CompareAsn1Value (v1:Asn1Value) (v2:Asn1Value) ast =
     | RealValue(a1), IntegerValue(a2)               -> comparePrimitiveValues (BigInteger a1.Value)  a2.Value
     | RealValue(a1), RealValue(a2)                  -> comparePrimitiveValues a1.Value  a2.Value
     | StringValue(a1), StringValue(a2)              -> comparePrimitiveValues a1.Value  a2.Value
+    | RefValue(modName,vasName), _                  -> CompareAsn1Value (GetBaseValue modName vasName ast) v2 ast
+    | _, RefValue(modName,vasName)                  -> CompareAsn1Value v1 (GetBaseValue modName vasName ast)  ast
     | _                                             -> raise (BugErrorException(""))
 
 let rec IsValueAllowed (c:Asn1Constraint) (v:Asn1Value) (isOfEnumType:bool) (ast:AstRoot) =

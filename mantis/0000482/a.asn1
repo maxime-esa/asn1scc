@@ -1,0 +1,10 @@
+TC-GENERIC DEFINITIONS ::=  -- Data types shared by several services
+BEGIN
+
+MyInteger ::= INTEGER(1 .. 1024)
+
+myVar  MyInteger ::= 3
+myVar2 MyInteger ::= myVar
+
+END
+
