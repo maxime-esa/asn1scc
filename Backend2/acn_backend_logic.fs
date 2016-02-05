@@ -226,7 +226,8 @@ let rec GenerateValues (a:Asn1Type) modName (r:AstRoot) (acn:AcnTypes.AcnAstReso
             | ReferenceType(mdName, tasName, _) ->
                 let tp = GetActualTypeByNameAllConsIncluded mdName tasName r
                 let vals = GenerateValues (RemoveWithComponents tp r) mdName r acn
-                yield  (Seq.head vals)
+                if (not (Seq.isEmpty vals)) then
+                    yield  (Seq.head vals)
             | NullType                      -> yield NullValue
             | Choice(children)          ->
                 for ch in children do
@@ -244,12 +245,15 @@ let rec GenerateValues (a:Asn1Type) modName (r:AstRoot) (acn:AcnTypes.AcnAstReso
             | Sequence(childrn)    ->
                 let children = childrn |> List.filter(fun x -> not x.AcnInsertedField)
                 let HandleChild (ch:ChildInfo) =
-                            (ch.Name, {Asn1Value.Kind=Seq.head(GenerateValues (RemoveWithComponents ch.Type r) modName r acn); Location=emptyLocation})
+                    let childValues = GenerateValues (RemoveWithComponents ch.Type r) modName r acn
+                    match Seq.isEmpty childValues with
+                    | true  -> None
+                    | false -> Some (ch.Name, {Asn1Value.Kind=Seq.head(childValues); Location=emptyLocation})
 
-                yield SeqValue (children |> List.map HandleChild)
+                yield SeqValue (children |> List.choose HandleChild)
                 yield SeqValue (children |> List.filter(fun c -> match c.Optionality with
                                                                  | None  | Some(AlwaysPresent) -> true
-                                                                 | _                           -> false ) |> List.map HandleChild)
+                                                                 | _                           -> false ) |> List.choose HandleChild)
         }
 
     GV a.Kind a.Constraints
