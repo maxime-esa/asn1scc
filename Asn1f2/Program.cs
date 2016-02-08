@@ -383,13 +383,24 @@ namespace Asn1f2
                 }
                 if (cmdArgs.HasArgument("icdAcn"))
                 {
+
+                    var renamePolicy = getRenamePolicy(cmdArgs, ParameterizedAsn1Ast.EnumRenamePolicy.NoRenamePolicy);
+                    var astForBackend = EnsureUniqueEnumNames.DoWork(refTypesWithNoConstraints, renamePolicy);
+
+                    var htmlFileName = Path.Combine(outDir, astForBackend.IcdAcnHtmlFileName);
+                    icdAcn.DoWork("icd_acn.stg", astForBackend, acnAst3, htmlFileName);
+                    var cssFileName = Path.ChangeExtension(htmlFileName, ".css");
+                    icdAcn.emitCss("icd_acn.stg", astForBackend, acnAst3, cssFileName);
+
+                    /*
                     var noInnerasn1Ast2 = ReplaceInnerTypes.DoWork(asn1Ast, acnAstResolved, true);
                     var htmlFileName = Path.Combine(outDir, noInnerasn1Ast2.Item1.IcdAcnHtmlFileName);
                     icdAcn.DoWork("icd_acn.stg", noInnerasn1Ast2.Item1, acnAstResolved, htmlFileName);
                     var cssFileName = Path.ChangeExtension(htmlFileName, ".css");
                     icdAcn.emitCss("icd_acn.stg", noInnerasn1Ast2.Item1, acnAstResolved, cssFileName);
+                    */
                 }
-                
+
             }
 
             return 0;

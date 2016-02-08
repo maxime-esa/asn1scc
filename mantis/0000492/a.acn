@@ -1,0 +1,14 @@
+TASTE-Dataview DEFINITIONS ::= BEGIN
+    LENG-DET [encoding pos-int, size 5]
+    WORD[]
+    Word32 < LENG-DET: pat> [] {
+        words [] {
+          w32 [present-when pat==0]
+        }
+    }
+
+    Milbus[] {
+     length LENG-DET [],
+     words32 < length > []
+    }
+END

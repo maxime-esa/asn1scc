@@ -1,0 +1,15 @@
+TASTE-Dataview DEFINITIONS ::=
+BEGIN
+ LENG-DET ::= INTEGER (0..31)
+ WORD ::= INTEGER (0..65535)
+
+ Word32 ::= SEQUENCE {
+    words CHOICE {
+        w32 SEQUENCE (SIZE(32)) OF WORD
+    }
+ }
+
+ Milbus ::= SEQUENCE {
+     words32 Word32
+}
+END

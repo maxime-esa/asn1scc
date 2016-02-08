@@ -1,0 +1,376 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd"> 
+<html xmlns="http://www.w3.org/1999/xhtml" >
+<head>
+    <title>ICD</title>
+    <meta http-equiv="Content-Type" content="text/html;charset=utf-8" />
+    <link rel="stylesheet" href="toto.css" /> 
+</head>
+<body>
+<em>The following tables describe the binary encodings of the data model using the ACN Encoding Rules.
+</em><br/><br/>
+  <div style="width: 100%">
+  <h1>Module TASTE-Dataview</h1>
+  <i>Defined in: a.asn1, a.acn.</i><p>
+  </p>
+  <a name="ICD_Milbus"></a> 
+  <table width="100%" >
+  <tbody>
+  
+  <tr class="typeRow">
+  <td colspan="6">
+  Milbus <font size="-1">(SEQUENCE)</font>
+  <font size="-2"><a href="#ASN1_Milbus" class="fileLink">ASN.1</a>  <a href="#ACN_Milbus" class="fileLink">ACN</a></font>
+  </td>
+  
+  <td align="left">
+      <font size="-1">Min:&nbsp;65&nbsp;bytes</font>
+  </td>
+  
+  <td align="left">
+      <font size="-1">Max:&nbsp;65&nbsp;bytes</font>
+  </td>
+  </tr>
+  
+  <tr class="CommentRow">
+  <td class="comment2" colspan="8"></td>
+  </tr>
+  
+  
+  <tr class="headerRow">
+  <td class="hrNo">No</td>
+  <td class="hrField">Field</td>
+  <td class="hrComment">Comment</td>
+  <td class="hrOptional">Present</td>
+  <td class="hrType">Type</td>
+  <td class="hrConstraint">Constraint</td>
+  <td class="hrMin">Min Bits</td>
+  <td class="hrMax">Max Bits</td>
+  </tr>
+  
+  <tr class="OddRow">
+  <td class="no">1</td>
+  <td class="field">length</td>
+  <td class="comment"></td>
+  <td class="optional">always</td>
+  <td class="type"><a href="#ICD_LENG_DET">LENG-DET</a></td>
+  <td class="constraint">N.A.</td>
+  <td class="min">5</td>
+  <td class="max">5</td>
+  </tr>
+  <tr class="EvenRow">
+  <td class="no">2</td>
+  <td class="field">words32</td>
+  <td class="comment"></td>
+  <td class="optional">always</td>
+  <td class="type"><a href="#ICD_Word32">Word32</a></td>
+  <td class="constraint">N.A.</td>
+  <td class="min">513</td>
+  <td class="max">513</td>
+  </tr>
+  
+  </tbody>
+  </table>
+  &nbsp;<br/>
+  <a name="ICD_Word32"></a> 
+  <table width="100%" >
+  <tbody>
+  
+  <tr class="typeRow">
+  <td colspan="6">
+  Word32 <font size="-1">(SEQUENCE)</font>
+  <font size="-2"><a href="#ASN1_Word32" class="fileLink">ASN.1</a>  <a href="#ACN_Word32" class="fileLink">ACN</a></font>
+  </td>
+  
+  <td align="left">
+      <font size="-1">Min:&nbsp;65&nbsp;bytes</font>
+  </td>
+  
+  <td align="left">
+      <font size="-1">Max:&nbsp;65&nbsp;bytes</font>
+  </td>
+  </tr>
+  
+  <tr class="CommentRow">
+  <td class="comment2" colspan="8"></td>
+  </tr>
+  
+  
+  <tr class="headerRow">
+  <td class="hrNo">No</td>
+  <td class="hrField" colspan="3">ACN Parameters <a href="#ACN_PARAMS_EXPLAINED123" class="acnParamsLink">[?]</a></td>
+  <td class="hrType" colspan="4">Type</td>
+  </tr>
+  <tr class="OddRow">
+      <td class="no" >1</td>
+      <td class="field" colspan="3">pat</td>
+      <td class="type" colspan="4"><a href="#ICD_LENG_DET">LENG-DET</a></td>
+  </tr>
+  <tr class="headerRow">
+  <td class="hrNo">No</td>
+  <td class="hrField">Field</td>
+  <td class="hrComment">Comment</td>
+  <td class="hrOptional">Present</td>
+  <td class="hrType">Type</td>
+  <td class="hrConstraint">Constraint</td>
+  <td class="hrMin">Min Bits</td>
+  <td class="hrMax">Max Bits</td>
+  </tr>
+  
+  <tr class="OddRow">
+  <td class="no">1</td>
+  <td class="field">words</td>
+  <td class="comment"></td>
+  <td class="optional">always</td>
+  <td class="type"><a href="#ICD_Word32_words">Word32-words</a></td>
+  <td class="constraint">N.A.</td>
+  <td class="min">513</td>
+  <td class="max">513</td>
+  </tr>
+  
+  </tbody>
+  </table>
+  &nbsp;<br/>
+  <a name="ICD_Word32_words"></a> 
+  <table width="100%" >
+  <tbody>
+  
+  <tr class="typeRow">
+  <td colspan="6">
+  Word32-words <font size="-1">(<i>anonymous </i>CHOICE)</font>
+  <font size="-2"><a href="#ASN1_Word32_words" class="fileLink">ASN.1</a></font>
+  </td>
+  
+  <td align="left">
+      <font size="-1">Min:&nbsp;65&nbsp;bytes</font>
+  </td>
+  
+  <td align="left">
+      <font size="-1">Max:&nbsp;65&nbsp;bytes</font>
+  </td>
+  </tr>
+  
+  <tr class="CommentRow">
+  <td class="comment2" colspan="8"></td>
+  </tr>
+  
+  
+  <tr class="headerRow">
+  <td class="hrNo">No</td>
+  <td class="hrField">Field</td>
+  <td class="hrComment">Comment</td>
+  <td class="hrOptional">Present</td>
+  <td class="hrType">Type</td>
+  <td class="hrConstraint">Constraint</td>
+  <td class="hrMin">Min Bits</td>
+  <td class="hrMax">Max Bits</td>
+  </tr>
+  
+  <tr class="OddRow">
+  <td class="no">1</td>
+  <td class="field">ChoiceIndex</td>
+  <td class="comment">Special field used by ACN to indicate which choice alternative is present.</td>
+  <td class="optional">always</td>
+  <td class="type">unsigned int</td>
+  <td class="constraint">N.A.</td>
+  <td class="min">1</td>
+  <td class="max">1</td>
+  </tr>
+  <tr class="EvenRow">
+  <td class="no">2</td>
+  <td class="field">w32</td>
+  <td class="comment"></td>
+  <td class="optional">ChoiceIndex = 0</td>
+  <td class="type"><a href="#ICD_Word32_words_w32">Word32-words-w32</a></td>
+  <td class="constraint">N.A.</td>
+  <td class="min">512</td>
+  <td class="max">512</td>
+  </tr>
+  
+  </tbody>
+  </table>
+  &nbsp;<br/>
+  <a name="ICD_Word32_words_w32"></a>
+  <table width="100%" >
+  <tbody>
+  
+  <tr  class="typeRow">
+  <td colspan="5">
+  Word32-words-w32 <font size="-1">(<i>anonymous </i>SEQUENCE-OF)</font>
+  <font size="-2"><a href="#ASN1_Word32_words_w32" class="fileLink">ASN.1</a></font>
+  </td>
+  
+  <td align="left">
+      <font size="-1">Min:&nbsp;64&nbsp;bytes</font>
+  </td>
+  
+  <td align="left">
+      <font size="-1">Max:&nbsp;64&nbsp;bytes</font>
+  </td>
+  </tr>
+  
+  <tr class="CommentRow">
+  <td class="comment2" colspan="8">Length is Fixed equal to 32, so no length determinant is encoded.</td>
+  </tr>
+  
+  <tr class="headerRow">
+  <td class="hrNo">No</td>
+  <td class="hrField">Field</td>
+  <td class="hrComment">Comment</td>
+  <td class="hrType">Type</td>
+  <td class="hrConstraint">Constraint</td>
+  <td class="hrMin">Min Length (bits)</td>
+  <td class="hrMax">Max Length (bits)</td>
+  </tr>
+  
+  <tr class="OddRow">
+  <td class="no">1</td>
+  <td class="field">Item #1</td>
+  <td class="comment"></td>
+  <td class="type"><a href="#ICD_WORD">WORD</a></td>
+  <td class="constraint">N.A.</td>
+  <td class="min">16</td>
+  <td class="max">16</td>
+  </tr>
+  <tr class="CommentRow">
+  <td class="threeDots" colspan="7"> <p>. . .</p> </td>
+  </tr>
+  <tr class="EvenRow">
+  <td class="no">32</td>
+  <td class="field">Item #32</td>
+  <td class="comment"></td>
+  <td class="type"><a href="#ICD_WORD">WORD</a></td>
+  <td class="constraint">N.A.</td>
+  <td class="min">16</td>
+  <td class="max">16</td>
+  </tr>
+  
+  </tbody>
+  </table>
+  &nbsp;<br/>
+  <a name="ICD_WORD"></a> 
+  <table width="100%" >
+  <tbody>
+  
+  <tr class="typeRow">
+  <td colspan="2"  >
+  WORD <font size="-1">(INTEGER)</font>
+  <font size="-2"><a href="#ASN1_WORD" class="fileLink">ASN.1</a>  <a href="#ACN_WORD" class="fileLink">ACN</a> </font>
+  </td>
+  
+  <td align="left">
+      <font size="-1">Min:&nbsp;2&nbsp;bytes</font>
+  </td>
+  
+  <td align="left">
+      <font size="-1">Max:&nbsp;2&nbsp;bytes</font>
+  </td>
+  </tr>
+  
+  <tr class="CommentRow">
+  <td class="comment2" colspan="4"></td>
+  </tr>
+  
+  <tr class="headerRow">
+  <td class="hrConstraint2" colspan="2">Constraints</td>
+  <td class="hrMin">Min Length (bits)</td>
+  <td class="hrMax">Max Length (bits)</td>
+  </tr>
+  
+  <tr class="OddRow">
+      <td class="constraint" colspan="2">(0 .. 65535)</td>
+      <td class="min" >16</td>
+      <td class="max" >16</td>
+  </tr>
+  
+  </tbody>
+  </table>
+  &nbsp;<br/>
+  <a name="ICD_LENG_DET"></a> 
+  <table width="100%" >
+  <tbody>
+  
+  <tr class="typeRow">
+  <td colspan="2"  >
+  LENG-DET <font size="-1">(INTEGER)</font>
+  <font size="-2"><a href="#ASN1_LENG_DET" class="fileLink">ASN.1</a>  <a href="#ACN_LENG_DET" class="fileLink">ACN</a> </font>
+  </td>
+  
+  <td align="left">
+      <font size="-1">Min:&nbsp;1&nbsp;bytes</font>
+  </td>
+  
+  <td align="left">
+      <font size="-1">Max:&nbsp;1&nbsp;bytes</font>
+  </td>
+  </tr>
+  
+  <tr class="CommentRow">
+  <td class="comment2" colspan="4"></td>
+  </tr>
+  
+  <tr class="headerRow">
+  <td class="hrConstraint2" colspan="2">Constraints</td>
+  <td class="hrMin">Min Length (bits)</td>
+  <td class="hrMax">Max Length (bits)</td>
+  </tr>
+  
+  <tr class="OddRow">
+      <td class="constraint" colspan="2">(0 .. 31)</td>
+      <td class="min" >5</td>
+      <td class="max" >5</td>
+  </tr>
+  
+  </tbody>
+  </table>
+  &nbsp;<br/>
+  </div>
+
+  <hr />
+    <a name="ACN_PARAMS_EXPLAINED123"></a>
+    <em>ACN Parameters</em><br/>
+    In the standard ASN.1 encodings such as uPER, BER etc, the encoding and decoding of any type has no external dependencies. For example, the encoded data for a SEQUENCE OF depends on the number of items in the SEQUENCE OF (the length determinant) and the type of item contained in the SEQUENCE. On the other hand, ACN allows types to be parameterized. For instance, the length of a SEQUENCE OF may be determined by the value of an external field. In this case, the SEQUENCE OF is parameterized and the input parameter is the field providing the length.
+  <hr />
+    <br/>
+  <div style="width: 100%">
+  <h1 >File : a.asn1</h1>
+  <div style="width: 100%; white-space:pre; font-family:Courier New; font-size:small">
+  TASTE-Dataview <b><font color="#5F9EA0">DEFINITIONS</font></b> ::=
+  <b><font color="#5F9EA0">BEGIN</font></b>
+   <a name="ACN_LENG_DET"></a><a href="#ICD_LENG_DET"><font color="#B8860B"><b>LENG-DET</b></font></a> ::= <b><font color="#5F9EA0">INTEGER</font></b> (0..31)
+   <a name="ACN_WORD"></a><a href="#ICD_WORD"><font color="#B8860B"><b>WORD</b></font></a> ::= <b><font color="#5F9EA0">INTEGER</font></b> (0..65535)
+  
+   <a name="ACN_Word32"></a><a href="#ICD_Word32"><font color="#B8860B"><b>Word32</b></font></a> ::= <b><font color="#5F9EA0">SEQUENCE</font></b> {
+      words <a name="ASN1_Word32_words">CHOICE</a> {
+          w32 <a name="ASN1_Word32_words_w32">SEQUENCE</a> (<b><font color="#5F9EA0">SIZE</font></b>(32)) <b><font color="#5F9EA0">OF</font></b> <a href="#ASN1_WORD"><font color="#000000">WORD</font></a>
+      }
+   }
+  
+   <a name="ACN_Milbus"></a><a href="#ICD_Milbus"><font color="#B8860B"><b>Milbus</b></font></a> ::= <b><font color="#5F9EA0">SEQUENCE</font></b> {
+       words32 <a href="#ASN1_Word32"><font color="#000000">Word32</font></a>
+  }
+  <b><font color="#5F9EA0">END</font></b>
+  </div>
+  </div>
+
+  <div style="width: 100%">
+  <h1 >File : a.acn</h1>
+  <div style="width: 100%; white-space:pre; font-family:Courier New; font-size:small">
+  TASTE-Dataview <b><font color="#5F9EA0">DEFINITIONS</font></b> ::= <b><font color="#5F9EA0">BEGIN</font></b>
+      <a name="ACN_LENG_DET"></a><a href="#ICD_LENG_DET"><font color="#B8860B"><b>LENG-DET</b></font></a> [<b><font color="#5F9EA0">encoding</font></b> <b><font color="#5F9EA0">pos-int</font></b>, <b><font color="#5F9EA0">size</font></b> 5]
+      <a name="ACN_WORD"></a><a href="#ICD_WORD"><font color="#B8860B"><b>WORD</b></font></a>[]
+      <a name="ACN_Word32"></a><a href="#ICD_Word32"><font color="#B8860B"><b>Word32</b></font></a> &lt; <a name="ACN_LENG_DET"></a><a href="#ICD_LENG_DET"><font color="#B8860B"><b>LENG-DET</b></font></a>: pat&gt; [] {
+          words [] {
+            w32 [<b><font color="#5F9EA0">present-when</font></b> pat==0]
+          }
+      }
+  
+      <a name="ACN_Milbus"></a><a href="#ICD_Milbus"><font color="#B8860B"><b>Milbus</b></font></a>[] {
+       length <a name="ACN_LENG_DET"></a><a href="#ICD_LENG_DET"><font color="#B8860B"><b>LENG-DET</b></font></a> [],
+       words32 &lt; length &gt; []
+      }
+  <b><font color="#5F9EA0">END</font></b>
+  </div>
+  </div>
+
+</body>
+</html>
