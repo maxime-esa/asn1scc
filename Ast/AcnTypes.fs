@@ -59,6 +59,7 @@ type AcnProperty =
     | NullValue         of StringLoc                    // null
     | Endianness        of endianness                   // used by int, real, enum
     | EnumeratorResetValue of string*BigInteger        // used by enum children to redefine values
+    | MappingFunction   of StringLoc                    // used by int
 
 and aligment = 
     | NextByte

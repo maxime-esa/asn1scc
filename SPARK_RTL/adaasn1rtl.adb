@@ -2603,6 +2603,30 @@ PACKAGE BODY adaasn1rtl IS
     END Acn_Dec_String_CharIndex_Internal_Field_Determinant;
 
 
+   FUNCTION milbus_encode(IntVal:IN Asn1Int) RETURN Asn1Int
+   is
+      ret : Asn1Int;
+   begin
+      if IntVal = 32 then
+         ret := 0;
+      else
+         ret := IntVal;
+      end if;
+      return ret;
+   end milbus_encode;
+
+   FUNCTION milbus_decode(IntVal:IN Asn1Int) RETURN Asn1Int
+   is
+      ret : Asn1Int;
+   begin
+      if IntVal = 0 then
+         ret := 32;
+      else
+         ret := IntVal;
+      end if;
+      return ret;
+   end milbus_decode;
+
 
 END adaasn1rtl;
 

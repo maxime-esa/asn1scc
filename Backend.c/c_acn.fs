@@ -431,32 +431,33 @@ let rec EmitTypeBodyAux (t:Asn1Type) (sTasName:string) (path:list<string>, altPa
                               | Empty           -> 0I,0I
         let encClass= Acn.GetIntEncodingClass t r acn emptyLocation
         let adjVal = 0I//Acn.GetIntAdjustValue t r acn emptyLocation
+        let mappingFunction = Acn.getMappingFunction t r
         match encClass with
         | Acn.Integer_uPER                              -> c_uper.EmitTypeBody t sTasName (path, altPath) m  r codec
-        | Acn.PositiveInteger_ConstSize(nSize)          -> c_acn.PositiveInteger_ConstSize p nSize codec
-        | Acn.PositiveInteger_ConstSize_8               -> c_acn.PositiveInteger_ConstSize_8 p codec
-        | Acn.PositiveInteger_ConstSize_big_endian_16   -> c_acn.PositiveInteger_ConstSize_big_endian_16 p codec
-        | Acn.PositiveInteger_ConstSize_big_endian_32   -> c_acn.PositiveInteger_ConstSize_big_endian_32 p codec
-        | Acn.PositiveInteger_ConstSize_big_endian_64   -> c_acn.PositiveInteger_ConstSize_big_endian_64 p codec
-        | Acn.PositiveInteger_ConstSize_little_endian_16-> c_acn.PositiveInteger_ConstSize_little_endian_16  p codec
-        | Acn.PositiveInteger_ConstSize_little_endian_32-> c_acn.PositiveInteger_ConstSize_little_endian_32  p codec
-        | Acn.PositiveInteger_ConstSize_little_endian_64-> c_acn.PositiveInteger_ConstSize_little_endian_64  p codec
-        | Acn.PositiveInteger_VarSize_LengthEmbedded    -> c_acn.PositiveInteger_VarSize_LengthEmbedded p codec
-        | Acn.TwosComplement_ConstSize(nSize)           -> c_acn.TwosComplement_ConstSize p nSize codec
-        | Acn.TwosComplement_ConstSize_8                -> c_acn.TwosComplement_ConstSize_8 p codec
-        | Acn.TwosComplement_ConstSize_big_endian_16    -> c_acn.TwosComplement_ConstSize_big_endian_16 p  codec
-        | Acn.TwosComplement_ConstSize_big_endian_32    -> c_acn.TwosComplement_ConstSize_big_endian_32 p  codec
-        | Acn.TwosComplement_ConstSize_big_endian_64    -> c_acn.TwosComplement_ConstSize_big_endian_64 p  codec
-        | Acn.TwosComplement_ConstSize_little_endian_16 -> c_acn.TwosComplement_ConstSize_little_endian_16 p codec
-        | Acn.TwosComplement_ConstSize_little_endian_32 -> c_acn.TwosComplement_ConstSize_little_endian_32 p codec
-        | Acn.TwosComplement_ConstSize_little_endian_64 -> c_acn.TwosComplement_ConstSize_little_endian_64 p codec
-        | Acn.TwosComplement_VarSize_LengthEmbedded     -> c_acn.TwosComplement_VarSize_LengthEmbedded p codec
-        | Acn.ASCII_ConstSize(nBits)                    -> c_acn.ASCII_ConstSize p (nBits/8I) codec
-        | Acn.ASCII_VarSize_LengthEmbedded              -> c_acn.ASCII_VarSize_LengthEmbedded p codec
-        | Acn.ASCII_VarSize_NullTerminated _            -> c_acn.ASCII_VarSize_NullTerminated p codec
-        | Acn.BCD_ConstSize(nBits)                      -> c_acn.BCD_ConstSize p (nBits/4I) codec
-        | Acn.BCD_VarSize_LengthEmbedded                -> c_acn.BCD_VarSize_LengthEmbedded p codec
-        | Acn.BCD_VarSize_NullTerminated    _           -> c_acn.BCD_VarSize_NullTerminated p codec
+        | Acn.PositiveInteger_ConstSize(nSize)          -> c_acn.PositiveInteger_ConstSize p nSize mappingFunction codec
+        | Acn.PositiveInteger_ConstSize_8               -> c_acn.PositiveInteger_ConstSize_8 p mappingFunction codec
+        | Acn.PositiveInteger_ConstSize_big_endian_16   -> c_acn.PositiveInteger_ConstSize_big_endian_16 p mappingFunction codec
+        | Acn.PositiveInteger_ConstSize_big_endian_32   -> c_acn.PositiveInteger_ConstSize_big_endian_32 p mappingFunction codec
+        | Acn.PositiveInteger_ConstSize_big_endian_64   -> c_acn.PositiveInteger_ConstSize_big_endian_64 p mappingFunction codec
+        | Acn.PositiveInteger_ConstSize_little_endian_16-> c_acn.PositiveInteger_ConstSize_little_endian_16  p mappingFunction codec
+        | Acn.PositiveInteger_ConstSize_little_endian_32-> c_acn.PositiveInteger_ConstSize_little_endian_32  p mappingFunction codec
+        | Acn.PositiveInteger_ConstSize_little_endian_64-> c_acn.PositiveInteger_ConstSize_little_endian_64  p mappingFunction codec
+        | Acn.PositiveInteger_VarSize_LengthEmbedded    -> c_acn.PositiveInteger_VarSize_LengthEmbedded p mappingFunction codec
+        | Acn.TwosComplement_ConstSize(nSize)           -> c_acn.TwosComplement_ConstSize p nSize mappingFunction codec
+        | Acn.TwosComplement_ConstSize_8                -> c_acn.TwosComplement_ConstSize_8 p mappingFunction codec
+        | Acn.TwosComplement_ConstSize_big_endian_16    -> c_acn.TwosComplement_ConstSize_big_endian_16 p  mappingFunction codec
+        | Acn.TwosComplement_ConstSize_big_endian_32    -> c_acn.TwosComplement_ConstSize_big_endian_32 p  mappingFunction codec
+        | Acn.TwosComplement_ConstSize_big_endian_64    -> c_acn.TwosComplement_ConstSize_big_endian_64 p  mappingFunction codec
+        | Acn.TwosComplement_ConstSize_little_endian_16 -> c_acn.TwosComplement_ConstSize_little_endian_16 p mappingFunction codec
+        | Acn.TwosComplement_ConstSize_little_endian_32 -> c_acn.TwosComplement_ConstSize_little_endian_32 p mappingFunction  codec
+        | Acn.TwosComplement_ConstSize_little_endian_64 -> c_acn.TwosComplement_ConstSize_little_endian_64 p mappingFunction codec
+        | Acn.TwosComplement_VarSize_LengthEmbedded     -> c_acn.TwosComplement_VarSize_LengthEmbedded p mappingFunction codec
+        | Acn.ASCII_ConstSize(nBits)                    -> c_acn.ASCII_ConstSize p (nBits/8I) mappingFunction codec
+        | Acn.ASCII_VarSize_LengthEmbedded              -> c_acn.ASCII_VarSize_LengthEmbedded p mappingFunction codec
+        | Acn.ASCII_VarSize_NullTerminated _            -> c_acn.ASCII_VarSize_NullTerminated p mappingFunction codec
+        | Acn.BCD_ConstSize(nBits)                      -> c_acn.BCD_ConstSize p (nBits/4I) mappingFunction codec
+        | Acn.BCD_VarSize_LengthEmbedded                -> c_acn.BCD_VarSize_LengthEmbedded p mappingFunction codec
+        | Acn.BCD_VarSize_NullTerminated    _           -> c_acn.BCD_VarSize_NullTerminated p mappingFunction  codec
     | Real  ->  
         match Acn.GetRealEncodingClass t r with
         | Acn.Real_uPER                                     -> c_uper.EmitTypeBody t sTasName (path, altPath) m  r codec

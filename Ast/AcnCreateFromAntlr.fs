@@ -417,6 +417,7 @@ and HandleAcnProperty(t:ITree) (rest:List<ITree>) (asn1Type: Asn1Type) absPath (
         | acnParser.BIG                 -> Prop (Endianness BigEndianness)
         | acnParser.LITTLE              -> Prop (Endianness LittleEndianness)
         | _                             -> raise(BugErrorException(""))
+    | acnParser.MAPPING_FUNCTION        -> Prop (MappingFunction (t.GetChild(0).TextL))
     | _                                 -> raise(BugErrorException(""))
 
 
@@ -459,8 +460,12 @@ and CheckConsistencyOfAsn1TypeWithAcnProperties (t:ITree) asn1Type absPath (prop
 
         let sz = GetSizeProperty props ast.Constants
         let enc = GetEncodingPropery props
+        let hasMappingFunction = props |> Seq.exists(fun p -> p.Type = acnParser.MAPPING_FUNCTION)
         match sz,enc with
-        | None, None    -> ()
+        | None, None    -> 
+            match hasMappingFunction with
+            | false         -> ()
+            | true          -> raise(SemanticError(t.Location,"ACN property 'mapping-function' can be applied only when 'encoding' property is present"))
         | Some(_,l), None                               -> raise(SemanticError(l,"'encoding' propery missing"))
         | None, Some(_,l)                               -> raise(SemanticError(l,"'size' propery missing"))
         | Some(SizeField(_),l), Some(_)                 -> raise(SemanticError(l,"Expecting an Integer value or an ACN constant as value for the size property"))
@@ -477,16 +482,16 @@ and CheckConsistencyOfAsn1TypeWithAcnProperties (t:ITree) asn1Type absPath (prop
             if (asn1Min<0I) then
                 raise(SemanticError(l, "The applied ACN encoding does not allow negative values which are supported by the corresponding ASN.1 type"))
             let maxAcn = BigInteger.Pow(2I, int(nBits))-1I 
-            if (asn1Max>maxAcn) then
+            if (asn1Max>maxAcn) && not hasMappingFunction then
                 raise(SemanticError(l, sprintf "The applied ACN encoding does not allow values larger than %A to be encoded, while the corresponding ASN.1 type allows values up to %A" maxAcn asn1Max))
             if nBits>WordSize() then    
                 raise(SemanticError(l, sprintf "encoding size cannot be greater than %A" (WordSize())))
         | Some(SizeFixed(nBits),l), Some (TwosComplement,_)     -> 
             let minAcn = -BigInteger.Pow(2I, int(nBits-1I)) 
             let maxAcn = BigInteger.Pow(2I, int(nBits-1I))-1I 
-            if (asn1Max>maxAcn) then
+            if (asn1Max>maxAcn) && not hasMappingFunction then
                 raise(SemanticError(l, sprintf "The applied ACN encoding does not allow values larger than %A to be encoded, while the corresponding ASN.1 type allows values up to %A" maxAcn asn1Max))
-            if (asn1Min<minAcn) then
+            if (asn1Min<minAcn) && not hasMappingFunction then
                 raise(SemanticError(l, sprintf "The applied ACN encoding does not allow values smaller than %A to be encoded, while the corresponding ASN.1 type allows values up to %A" maxAcn asn1Max))
             if nBits>WordSize() then    
                 raise(SemanticError(l, sprintf "encoding size cannot be greater than %A" (WordSize())))
@@ -495,15 +500,15 @@ and CheckConsistencyOfAsn1TypeWithAcnProperties (t:ITree) asn1Type absPath (prop
             let digits = (nBits-8I)/8I
             let minAcn = -BigInteger.Pow(10I, int(digits))-1I 
             let maxAcn = BigInteger.Pow(10I, int(digits))-1I 
-            if (asn1Max>maxAcn) then
+            if (asn1Max>maxAcn) && not hasMappingFunction then
                 raise(SemanticError(l, sprintf "The applied ACN encoding does not allow values larger than %A to be encoded, while the corresponding ASN.1 type allows values up to %A" maxAcn asn1Max))
-            if (asn1Min<minAcn) then
+            if (asn1Min<minAcn) && not hasMappingFunction then
                 raise(SemanticError(l, sprintf "The applied ACN encoding does not allow values smaller than %A to be encoded, while the corresponding ASN.1 type allows values up to %A" maxAcn asn1Max))
         | Some(SizeFixed(nBits),l), Some (BCD,_)  when nBits%4I<>0I  -> raise(SemanticError(l,"size value should be multiple of 4"))
         | Some(SizeFixed(nBits),l), Some (BCD,_)  -> 
             let digits = (nBits)/4I
             let maxAcn = BigInteger.Pow(10I, int(digits))-1I 
-            if (asn1Max>maxAcn) then
+            if (asn1Max>maxAcn) && not hasMappingFunction then
                 raise(SemanticError(l, sprintf "The applied ACN encoding does not allow values larger than %A to be encoded, while the corresponding ASN.1 type allows values up to %A" maxAcn asn1Max))
             if (asn1Min<0I) then
                 raise(SemanticError(l, "The applied ACN encoding does not allow negative values which are supported by the corresponding ASN.1 type"))
@@ -595,7 +600,7 @@ and CheckConsistencyOfAsn1TypeWithAcnProperties (t:ITree) asn1Type absPath (prop
 and BalladerProperties = [acnParser.PRESENT_WHEN; acnParser.ALIGNTONEXT;]
 
 and AllowedPropertiesPerType = function
-    | Ast.Integer           -> [acnParser.ENCODING; acnParser.SIZE; acnParser.ENDIANNES]
+    | Ast.Integer           -> [acnParser.ENCODING; acnParser.SIZE; acnParser.ENDIANNES; acnParser.MAPPING_FUNCTION]
     | Ast.Real              -> [acnParser.ENCODING; acnParser.ENDIANNES]
     | Ast.IA5String         -> [acnParser.ENCODING; acnParser.SIZE]
     | Ast.NumericString     -> [acnParser.ENCODING; acnParser.SIZE]
@@ -637,6 +642,7 @@ and PropID_to_Text = function
     | acnParser.FALSE_VALUE     -> "false-value"
     | acnParser.ENCODE_VALUES   -> "encode-values"
     | acnParser.DETERMINANT     -> "determinant"
+    | acnParser.MAPPING_FUNCTION   -> "mapping-function"  
     | _                         -> raise(BugErrorException "")
 
 

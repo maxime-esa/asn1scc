@@ -63,6 +63,10 @@ let CollectNegativeReals (m:Asn1Module) (r:AstRoot)  =
 
 let PrintModule (fileIndex:int) (mdIndex:int) (m:Asn1Module) (f:Asn1File) (r:AstRoot) (acn:AcnTypes.AcnAstResolved) outDir fileExt (state:State) =
     let includedPackages = ss.rtlModuleName()::(m.Imports |> List.map (fun im -> ToC im.Name.Value))
+    let includedPackages =
+        match r.mappingFunctionsModule with
+        | None  -> includedPackages
+        | Some mfm -> includedPackages@[mfm]
     let acnBoolPatterns = spark_acn.CollectBoolPatterns m r
     let negRealConstants = CollectNegativeReals m r |> Seq.map(fun (nm, dv) -> ss.PrintNegativeRealConstant nm (spark_variables.printRealValue dv))
     let tases, s1 = (spark_spec.SortTypeAssigments m r acn) |> foldMap(fun s tas -> PrintTypeAss tas m r acn s) state

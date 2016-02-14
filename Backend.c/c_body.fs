@@ -88,7 +88,8 @@ let PrintFile (fileIdx:int) (f:Asn1File) outDir newFileExt (r:AstRoot) (acn:AcnT
                         | OctetStringValue(_)   | BitStringValue(_)     -> yield (newT,v, newPath, tas.Name.Value, m, r )
                         | _                                             -> ()
         } |> Seq.toList |> Seq.distinctBy(fun (_,v,_,_,_,_) -> Ast.GetValueID v) |> Seq.map PrintUnnamedVariable |> Seq.toArray
-    let content = c_src.main fileNameNoExtUpper unnamedVariables tases vases
+    let soMappingFunctionsModule = r.mappingFunctionsModule |> Option.map(fun s -> if s.EndsWith(".h") then s.Substring(0, s.Length-2 ) else s)
+    let content = c_src.main fileNameNoExtUpper unnamedVariables tases vases soMappingFunctionsModule
     let fileName = Path.Combine(outDir, (f.FileNameWithoutExtension+newFileExt))
     let content = FsUtils.replaceErrorCodes content "ERR_INSUFFICIENT_DATA" 1 fileIdx 1
     let content = FsUtils.replaceErrorCodes content "ERR_INCORRECT_PER_STREAM" 2 fileIdx 1

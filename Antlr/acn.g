@@ -148,6 +148,7 @@ property
 	|	endiannessProp
 	|   enumSetValue
     |   terminationPatternProp
+    |   mappingFunctionProp
 	;	
 
 endiannessProp 	
@@ -163,6 +164,7 @@ encodingProp
 	| ENCODING^	IEEE754_1985_32 
 	| ENCODING^	IEEE754_1985_64 
 	;
+
 
 sizeProp
 	: 
@@ -181,6 +183,7 @@ adjustProp
 
 longFld 	:	asn1LID ('.' asn1LID)*		-> ^(LONG_FIELD asn1LID+);
 
+mappingFunctionProp : MAPPING_FUNCTION^ (asn1LID|asn1UID);
 
 alignToNextProp	
 	:	ALIGNTONEXT^ BYTE
@@ -338,7 +341,7 @@ ENCODE_VALUES		: 'encode-values';
 TRUE_VALUE			: 'true-value';
 FALSE_VALUE			: 'false-value';
 PATTERN				: 'pattern';
-
+MAPPING_FUNCTION    : 'mapping-function';
 PRESENT_WHEN		: 'present-when';
 DETERMINANT			: 'determinant';
 

@@ -1,0 +1,33 @@
+TASTE-Dataview DEFINITIONS ::= BEGIN
+    LENG-DET [encoding pos-int, size 5, mapping-function milbus2]
+    WORD[]
+
+    Milbus[] {
+     length LENG-DET [],
+     words32 [size length]
+    }
+	
+ INT-POS-CS  		[encoding pos-int, size 5, mapping-function milbus2]
+ INT-POS-CS8 		[encoding pos-int, size 8, mapping-function milbus2]
+ INT-POS-CS-BE-16 	[encoding pos-int, size 16, mapping-function milbus2]
+ INT-POS-CS-BE-32 	[encoding pos-int, size 32, mapping-function milbus2]
+ INT-POS-CS-BE-64 	[encoding pos-int, size 64, mapping-function milbus2]
+ INT-POS-CS-LE-16 	[encoding pos-int, size 16, mapping-function milbus2]
+ INT-POS-CS-LE-32 	[encoding pos-int, size 32, mapping-function milbus2]
+ INT-POS-CS-LE-64 	[encoding pos-int, size 64, mapping-function milbus2]
+                    
+ INT-TWC-CS  		[]
+ INT-TWC-CS8 		[]
+ INT-TWC-CS-BE-16 	[encoding pos-int, endianness little, size 16, mapping-function milbus2]
+ INT-TWC-CS-BE-32 	[encoding pos-int, endianness little, size 32, mapping-function milbus2]
+ INT-TWC-CS-BE-64 	[encoding pos-int, endianness little, size 64, mapping-function milbus2]
+ INT-TWC-CS-LE-16 	[encoding pos-int, endianness little, size 16, mapping-function milbus2]
+ INT-TWC-CS-LE-32 	[encoding pos-int, endianness little, size 32, mapping-function milbus2]
+ INT-TWC-CS-LE-64 	[encoding pos-int, endianness little, size 64, mapping-function milbus2]
+	
+
+ INT-ASC-CS         [encoding ASCII, size 16, mapping-function milbus2]
+ INT-BCD-CS         [encoding BCD, size 8, mapping-function milbus2]
+ INT-BCD-VS         [encoding BCD, size null-terminated, mapping-function milbus2]
+
+END

@@ -32,6 +32,7 @@ type LOCAL_VARIABLE =
     | CUR_BLOCK_SIZE
     | CUR_ITEM
     | LEN2
+    | UNCONSTRAINT_ASN1_INT_FOR_MAPPING_FUNCTION
 
 
 
@@ -151,6 +152,19 @@ let GetCount (t:Asn1Type) (path:string) (r:AstRoot) =
     | BitString(_) | OctetString | SequenceOf(_) when min=max       -> min.ToString() 
     | BitString(_) | OctetString | SequenceOf(_)                    -> su.bit_oct_sqof_length path
     | _                                                             -> raise(BugErrorException "")
+
+
+let getMappingFunctionModule (t:Asn1Type) (r:Ast.AstRoot)   =
+    let knownMappingFunctions = ["milbus"] |> Set.ofList
+    match t.AcnProperties |> List.choose(fun p -> match p with AcnTypes.MappingFunction funcL -> Some funcL.Value | _ -> None) with
+    | []    -> ss.rtlModuleName()
+    | x::_     -> 
+        match knownMappingFunctions.Contains x with
+        | true  -> ss.rtlModuleName()
+        | false ->
+            match r.mappingFunctionsModule with
+            | None  -> ss.rtlModuleName()
+            | Some x -> x
 
 
 module SparkDeps =

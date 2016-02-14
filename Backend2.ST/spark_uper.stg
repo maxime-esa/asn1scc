@@ -158,6 +158,8 @@ Real_decode(p, sErrCode) ::= <<
 
 Declare_EnumIndex()::="intVal:<rtlModuleName()>.Asn1Int;"
 
+Declare_AsnIntForMappingFuncion()::="mapFuncIntVal:<rtlModuleName()>.Asn1Int;"
+
 Enumerated_item_encode(p, sName, nIndex) ::= "when <sName>    => intVal := <nIndex>;"
 
 Enumerated_item_decode(p, sName, nIndex) ::= "when <nIndex> => <p> := <sName>;"

@@ -220,6 +220,7 @@ module AcnPrint =
         | Endianness LittleEndianness -> ACN.PP_Endianness_little()
         | Endianness BigEndianness  -> ACN.PP_Endianness_big()
         | EnumeratorResetValue(newVal,ff)   -> newVal.ToString()+"="+ff.ToString() //raise(BugErrorException "")
+        | MappingFunction funcName          -> ACN.PP_MappingFunction funcName.Value
 
     let printReferenceAsProperty (acn:AcnTypes.AcnAstResolved) (r:AcnTypes.LongReferenceResolved) =
         let printDeterminant (p:AcnTypes.Point) =

@@ -534,7 +534,7 @@ let rootCheckCyclicDeps (astRoot:list<ITree>) =
     let comparer (m1:StringLoc, t1:StringLoc) (m2:StringLoc, t2:StringLoc) = m1.Value = m2.Value && t1.Value=t2.Value
     DoTopologicalSort2 independentNodes dependentNodes comparer excToThrow |> ignore
 
-let CreateAstRoot (list:(ITree*string*array<IToken>) seq) (encodings:array<Asn1Encoding>) generateEqualFunctions typePrefix checkWithOss astXmlFileName icdUperHtmlFileName icdAcnHtmlFileName=  
+let CreateAstRoot (list:(ITree*string*array<IToken>) seq) (encodings:array<Asn1Encoding>) generateEqualFunctions typePrefix checkWithOss astXmlFileName icdUperHtmlFileName icdAcnHtmlFileName (mappingFunctionsModule:string)=  
     let astRoot = list |> Seq.toList |> List.map (fun (a,_,_) -> a)
     ITree.RegisterFiles(list |> Seq.map (fun (a,b,_) -> (a,b)))
     //rootCheckCyclicDeps astRoot 
@@ -547,6 +547,7 @@ let CreateAstRoot (list:(ITree*string*array<IToken>) seq) (encodings:array<Asn1E
         AstXmlAbsFileName = astXmlFileName
         IcdUperHtmlFileName = icdUperHtmlFileName
         IcdAcnHtmlFileName = icdAcnHtmlFileName
+        mappingFunctionsModule = if String.IsNullOrWhiteSpace mappingFunctionsModule then None else Some mappingFunctionsModule
     }
 
 

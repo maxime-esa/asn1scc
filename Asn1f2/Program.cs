@@ -142,6 +142,7 @@ namespace Asn1f2
                 new CmdLineArgs.CmdArg { HasValue = false, Name = "oss", Madatory=false}, 
                 new CmdLineArgs.CmdArg { HasValue = false, Name = "AdaUses", Madatory=false}, 
                 new CmdLineArgs.CmdArg { HasValue = true, Name = "renamePolicy", Madatory=false}, 
+                new CmdLineArgs.CmdArg { HasValue = true, Name = "mfm", Madatory=false}
             });
             cmdArgs.CheckArguments();
             if (cmdArgs.HasArgument("h"))
@@ -204,10 +205,12 @@ namespace Asn1f2
                 return 4;
             }
 
+            var mappingFunctionsModule = cmdArgs.GetOptionalArgument("mfm", null);
+
 
             var asn1Ast0 = MapParamAstToNonParamAst.DoWork(CreateAsn1AstFromAntlrTree.CreateAstRoot(asn1Files, encodings.ToArray(),
-                    generateEqualFunctions, cmdArgs.GetOptionalArgument("typePrefix", ""), cmdArgs.HasArgument("oss"), 
-                    astXmlFile, icdUperHtmlFileName, icdAcnHtmlFileName));
+                    generateEqualFunctions, cmdArgs.GetOptionalArgument("typePrefix", ""), cmdArgs.HasArgument("oss"),
+                    astXmlFile, icdUperHtmlFileName, icdAcnHtmlFileName, mappingFunctionsModule));
 
             //PrintAsn1.DoWork(asn1Ast0, outDir, ".0.asn1");
             CheckAsn1.CheckFiles(asn1Ast0);
@@ -555,6 +558,11 @@ namespace Asn1f2
             Console.Error.WriteLine("\t\t\t\t0 no rename (Ada default)");
             Console.Error.WriteLine("\t\t\t\t1 rename only conflicting enumerants (C default)");
             Console.Error.WriteLine("\t\t\t\t2 rename all enumerants of an enum with at lest one conflicting enumerant");
+
+            Console.Error.WriteLine("\t -mfm moduleName");
+            Console.Error.WriteLine("\t\t\t\tSpecifies the C header file name or Ada module name");
+            Console.Error.WriteLine("\t\t\t\twthat contains the ACN mapping functions'");
+
 
             Console.Error.WriteLine();
             Console.Error.WriteLine();

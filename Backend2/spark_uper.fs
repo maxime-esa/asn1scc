@@ -237,6 +237,7 @@ let CollectLocalVars (t:Asn1Type) (tas:TypeAssignment) (m:Asn1Module) (r:AstRoot
         | CUR_ITEM          -> su.Declare_curItem()
         | LEN2              -> su.Declare_len2()
         | REF_TYPE_PARAM(_) -> raise(BugErrorException(""))
+        | UNCONSTRAINT_ASN1_INT_FOR_MAPPING_FUNCTION    -> raise(BugErrorException("MAPPING FUNCTIONS CANNOT BE DEFINED IN ACN"))
 
     lvs |> Seq.map emitLocalVariable
 

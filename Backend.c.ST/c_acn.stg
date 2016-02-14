@@ -14,6 +14,14 @@ group spark_acn;
 
 A() ::= "*pErrCode = ret ? 0 : ERR_INSUFFICIENT_DATA;"
 
+MF(soMF) ::= <<
+<if(soMF)>
+if (ret) {
+    *<p> = <soMF>_decode(*<p>);
+}
+
+<endif>
+>>
 
 Tas_encode(sName, sStar, arrsLocalVariables, sContent,  arrsExtraParams) ::= <<
 flag <sName>_ACN_Encode(const <sName><sStar> pVal, BitStream* pBitStrm, int* pErrCode, flag bCheckConstraints<if(arrsExtraParams)>, <arrsExtraParams; separator=", "><endif>)
@@ -80,149 +88,172 @@ while (ret && (<i>\< <fixedSize>))  {
 
 
 
-PositiveInteger_ConstSize_encode(p, nFixedSize) ::= "Acn_Enc_Int_PositiveInteger_ConstSize(pBitStrm, <p>, <nFixedSize>);"
-PositiveInteger_ConstSize_decode(p, nFixedSize) ::= <<
+PositiveInteger_ConstSize_encode(p, nFixedSize, soMF) ::= "Acn_Enc_Int_PositiveInteger_ConstSize(pBitStrm, <if(soMF)><soMF>_encode(<p>)<else><p><endif>, <nFixedSize>);"
+PositiveInteger_ConstSize_decode(p, nFixedSize, soMF) ::= <<
 ret = Acn_Dec_Int_PositiveInteger_ConstSize(pBitStrm, <p>, <nFixedSize>);
+<MF(soMF)>
 <A()>
 >>
 
-PositiveInteger_ConstSize_8_encode(p) ::= "Acn_Enc_Int_PositiveInteger_ConstSize_8(pBitStrm, <p>);"
-PositiveInteger_ConstSize_8_decode(p) ::= <<
+PositiveInteger_ConstSize_8_encode(p, soMF) ::= "Acn_Enc_Int_PositiveInteger_ConstSize_8(pBitStrm, <if(soMF)><soMF>_encode(<p>)<else><p><endif>);"
+PositiveInteger_ConstSize_8_decode(p, soMF) ::= <<
 ret = Acn_Dec_Int_PositiveInteger_ConstSize_8(pBitStrm, <p>);
+<MF(soMF)>
 <A()>
 >>
 
-PositiveInteger_ConstSize_big_endian_16_encode(p) ::= "Acn_Enc_Int_PositiveInteger_ConstSize_big_endian_16(pBitStrm, <p>);"
-PositiveInteger_ConstSize_big_endian_16_decode(p) ::= <<
+PositiveInteger_ConstSize_big_endian_16_encode(p, soMF) ::= "Acn_Enc_Int_PositiveInteger_ConstSize_big_endian_16(pBitStrm, <if(soMF)><soMF>_encode(<p>)<else><p><endif>);"
+PositiveInteger_ConstSize_big_endian_16_decode(p, soMF) ::= <<
 ret = Acn_Dec_Int_PositiveInteger_ConstSize_big_endian_16(pBitStrm, <p>);
+<MF(soMF)>
 <A()>
 >>
 
-PositiveInteger_ConstSize_big_endian_32_encode(p) ::= "Acn_Enc_Int_PositiveInteger_ConstSize_big_endian_32(pBitStrm, <p>);"
-PositiveInteger_ConstSize_big_endian_32_decode(p) ::= <<
+PositiveInteger_ConstSize_big_endian_32_encode(p, soMF) ::= "Acn_Enc_Int_PositiveInteger_ConstSize_big_endian_32(pBitStrm, <if(soMF)><soMF>_encode(<p>)<else><p><endif>);"
+PositiveInteger_ConstSize_big_endian_32_decode(p, soMF) ::= <<
 ret = Acn_Dec_Int_PositiveInteger_ConstSize_big_endian_32(pBitStrm, <p>);
+<MF(soMF)>
 <A()>
 >>
 
-PositiveInteger_ConstSize_big_endian_64_encode(p) ::= "Acn_Enc_Int_PositiveInteger_ConstSize_big_endian_64(pBitStrm, <p>);"
-PositiveInteger_ConstSize_big_endian_64_decode(p) ::= <<
+PositiveInteger_ConstSize_big_endian_64_encode(p, soMF) ::= "Acn_Enc_Int_PositiveInteger_ConstSize_big_endian_64(pBitStrm, <if(soMF)><soMF>_encode(<p>)<else><p><endif>);"
+PositiveInteger_ConstSize_big_endian_64_decode(p, soMF) ::= <<
 ret = Acn_Dec_Int_PositiveInteger_ConstSize_big_endian_64(pBitStrm, <p>);
+<MF(soMF)>
 <A()>
 >>
 
-PositiveInteger_ConstSize_little_endian_16_encode(p) ::= "Acn_Enc_Int_PositiveInteger_ConstSize_little_endian_16(pBitStrm, <p>);"
-PositiveInteger_ConstSize_little_endian_16_decode(p) ::= <<
+PositiveInteger_ConstSize_little_endian_16_encode(p, soMF) ::= "Acn_Enc_Int_PositiveInteger_ConstSize_little_endian_16(pBitStrm, <if(soMF)><soMF>_encode(<p>)<else><p><endif>);"
+PositiveInteger_ConstSize_little_endian_16_decode(p, soMF) ::= <<
 ret = Acn_Dec_Int_PositiveInteger_ConstSize_little_endian_16(pBitStrm, <p>);
+<MF(soMF)>
 <A()>
 >>
 
-PositiveInteger_ConstSize_little_endian_32_encode(p) ::= "Acn_Enc_Int_PositiveInteger_ConstSize_little_endian_32(pBitStrm, <p>);"
-PositiveInteger_ConstSize_little_endian_32_decode(p) ::= <<
+PositiveInteger_ConstSize_little_endian_32_encode(p, soMF) ::= "Acn_Enc_Int_PositiveInteger_ConstSize_little_endian_32(pBitStrm, <if(soMF)><soMF>_encode(<p>)<else><p><endif>);"
+PositiveInteger_ConstSize_little_endian_32_decode(p, soMF) ::= <<
 ret = Acn_Dec_Int_PositiveInteger_ConstSize_little_endian_32(pBitStrm, <p>);
+<MF(soMF)>
 <A()>
 >>
 
-PositiveInteger_ConstSize_little_endian_64_encode(p) ::= "Acn_Enc_Int_PositiveInteger_ConstSize_little_endian_64(pBitStrm, <p>);"
-PositiveInteger_ConstSize_little_endian_64_decode(p) ::= <<
+PositiveInteger_ConstSize_little_endian_64_encode(p, soMF) ::= "Acn_Enc_Int_PositiveInteger_ConstSize_little_endian_64(pBitStrm, <if(soMF)><soMF>_encode(<p>)<else><p><endif>);"
+PositiveInteger_ConstSize_little_endian_64_decode(p, soMF) ::= <<
 ret = Acn_Dec_Int_PositiveInteger_ConstSize_little_endian_64(pBitStrm, <p>);
+<MF(soMF)>
 <A()>
 >>
 
-PositiveInteger_VarSize_LengthEmbedded_encode(p) ::= "Acn_Enc_Int_PositiveInteger_VarSize_LengthEmbedded(pBitStrm, <p>);"
-PositiveInteger_VarSize_LengthEmbedded_decode(p) ::= <<
+PositiveInteger_VarSize_LengthEmbedded_encode(p, soMF) ::= "Acn_Enc_Int_PositiveInteger_VarSize_LengthEmbedded(pBitStrm, <if(soMF)><soMF>_encode(<p>)<else><p><endif>);"
+PositiveInteger_VarSize_LengthEmbedded_decode(p, soMF) ::= <<
 ret = Acn_Dec_Int_PositiveInteger_VarSize_LengthEmbedded(pBitStrm, <p>);
+<MF(soMF)>
 <A()>
 >>
 
 
-TwosComplement_ConstSize_encode(p, nFixedSize) ::= "Acn_Enc_Int_TwosComplement_ConstSize(pBitStrm, <p>, <nFixedSize>);"
-TwosComplement_ConstSize_decode(p, nFixedSize) ::= <<
+TwosComplement_ConstSize_encode(p, nFixedSize, soMF) ::= "Acn_Enc_Int_TwosComplement_ConstSize(pBitStrm, <if(soMF)><soMF>_encode(<p>)<else><p><endif>, <nFixedSize>);"
+TwosComplement_ConstSize_decode(p, nFixedSize, soMF) ::= <<
 ret = Acn_Dec_Int_TwosComplement_ConstSize(pBitStrm, <p>, <nFixedSize>);
+<MF(soMF)>
 <A()>
 >>
 
-TwosComplement_ConstSize_8_encode(p) ::= "Acn_Enc_Int_TwosComplement_ConstSize_8(pBitStrm, <p>);"
-TwosComplement_ConstSize_8_decode(p) ::= <<
+TwosComplement_ConstSize_8_encode(p, soMF) ::= "Acn_Enc_Int_TwosComplement_ConstSize_8(pBitStrm, <if(soMF)><soMF>_encode(<p>)<else><p><endif>);"
+TwosComplement_ConstSize_8_decode(p, soMF) ::= <<
 ret = Acn_Dec_Int_TwosComplement_ConstSize_8(pBitStrm, <p>);
+<MF(soMF)>
 <A()>
 >>
 
-TwosComplement_ConstSize_big_endian_16_encode(p) ::= "Acn_Enc_Int_TwosComplement_ConstSize_big_endian_16(pBitStrm, <p>);"
-TwosComplement_ConstSize_big_endian_16_decode(p) ::= <<
+TwosComplement_ConstSize_big_endian_16_encode(p, soMF) ::= "Acn_Enc_Int_TwosComplement_ConstSize_big_endian_16(pBitStrm, <if(soMF)><soMF>_encode(<p>)<else><p><endif>);"
+TwosComplement_ConstSize_big_endian_16_decode(p, soMF) ::= <<
 ret = Acn_Dec_Int_TwosComplement_ConstSize_big_endian_16(pBitStrm, <p>);
 <A()>
 >>
 
-TwosComplement_ConstSize_big_endian_32_encode(p) ::= "Acn_Enc_Int_TwosComplement_ConstSize_big_endian_32(pBitStrm, <p>);"
-TwosComplement_ConstSize_big_endian_32_decode(p) ::= <<
+TwosComplement_ConstSize_big_endian_32_encode(p, soMF) ::= "Acn_Enc_Int_TwosComplement_ConstSize_big_endian_32(pBitStrm, <if(soMF)><soMF>_encode(<p>)<else><p><endif>);"
+TwosComplement_ConstSize_big_endian_32_decode(p, soMF) ::= <<
 ret = Acn_Dec_Int_TwosComplement_ConstSize_big_endian_32(pBitStrm, <p>);
+<MF(soMF)>
 <A()>
 >>
 
-TwosComplement_ConstSize_big_endian_64_encode(p) ::= "Acn_Enc_Int_TwosComplement_ConstSize_big_endian_64(pBitStrm, <p>);"
-TwosComplement_ConstSize_big_endian_64_decode(p) ::= <<
+TwosComplement_ConstSize_big_endian_64_encode(p, soMF) ::= "Acn_Enc_Int_TwosComplement_ConstSize_big_endian_64(pBitStrm, <if(soMF)><soMF>_encode(<p>)<else><p><endif>);"
+TwosComplement_ConstSize_big_endian_64_decode(p, soMF) ::= <<
 ret = Acn_Dec_Int_TwosComplement_ConstSize_big_endian_64(pBitStrm, <p>);
+<MF(soMF)>
 <A()>
 >>
 
-TwosComplement_ConstSize_little_endian_16_encode(p) ::= "Acn_Enc_Int_TwosComplement_ConstSize_little_endian_16(pBitStrm, <p>);"
-TwosComplement_ConstSize_little_endian_16_decode(p) ::= <<
+TwosComplement_ConstSize_little_endian_16_encode(p, soMF) ::= "Acn_Enc_Int_TwosComplement_ConstSize_little_endian_16(pBitStrm, <if(soMF)><soMF>_encode(<p>)<else><p><endif>);"
+TwosComplement_ConstSize_little_endian_16_decode(p, soMF) ::= <<
 ret = Acn_Dec_Int_TwosComplement_ConstSize_little_endian_16(pBitStrm, <p>);
+<MF(soMF)>
 <A()>
 >>
 
-TwosComplement_ConstSize_little_endian_32_encode(p) ::= "Acn_Enc_Int_TwosComplement_ConstSize_little_endian_32(pBitStrm, <p>);"
-TwosComplement_ConstSize_little_endian_32_decode(p) ::= <<
+TwosComplement_ConstSize_little_endian_32_encode(p, soMF) ::= "Acn_Enc_Int_TwosComplement_ConstSize_little_endian_32(pBitStrm, <if(soMF)><soMF>_encode(<p>)<else><p><endif>);"
+TwosComplement_ConstSize_little_endian_32_decode(p, soMF) ::= <<
 ret = Acn_Dec_Int_TwosComplement_ConstSize_little_endian_32(pBitStrm, <p>);
+<MF(soMF)>
 <A()>
 >>
 
-TwosComplement_ConstSize_little_endian_64_encode(p) ::= "Acn_Enc_Int_TwosComplement_ConstSize_little_endian_64(pBitStrm, <p>);"
-TwosComplement_ConstSize_little_endian_64_decode(p) ::= <<
+TwosComplement_ConstSize_little_endian_64_encode(p, soMF) ::= "Acn_Enc_Int_TwosComplement_ConstSize_little_endian_64(pBitStrm, <if(soMF)><soMF>_encode(<p>)<else><p><endif>);"
+TwosComplement_ConstSize_little_endian_64_decode(p, soMF) ::= <<
 ret = Acn_Dec_Int_TwosComplement_ConstSize_little_endian_64(pBitStrm, <p>);
+<MF(soMF)>
 <A()>
 >>
 
-TwosComplement_VarSize_LengthEmbedded_encode(p) ::= "Acn_Enc_Int_TwosComplement_VarSize_LengthEmbedded(pBitStrm, <p>);"
-TwosComplement_VarSize_LengthEmbedded_decode(p) ::= <<
+TwosComplement_VarSize_LengthEmbedded_encode(p, soMF) ::= "Acn_Enc_Int_TwosComplement_VarSize_LengthEmbedded(pBitStrm, <if(soMF)><soMF>_encode(<p>)<else><p><endif>);"
+TwosComplement_VarSize_LengthEmbedded_decode(p, soMF) ::= <<
 ret = Acn_Dec_Int_TwosComplement_VarSize_LengthEmbedded(pBitStrm, <p>);
+<MF(soMF)>
 <A()>
 >>
 
 
-BCD_ConstSize_encode(p, nNibbles) ::= "Acn_Enc_Int_BCD_ConstSize(pBitStrm, <p>, <nNibbles>);"
-BCD_ConstSize_decode(p, nNibbles) ::= <<
+BCD_ConstSize_encode(p, nNibbles, soMF) ::= "Acn_Enc_Int_BCD_ConstSize(pBitStrm, <if(soMF)><soMF>_encode(<p>)<else><p><endif>, <nNibbles>);"
+BCD_ConstSize_decode(p, nNibbles, soMF) ::= <<
 ret = Acn_Dec_Int_BCD_ConstSize(pBitStrm, <p>, <nNibbles>);
+<MF(soMF)>
 <A()>
 >>
 
-BCD_VarSize_LengthEmbedded_encode(p) ::= "Acn_Enc_Int_BCD_VarSize_LengthEmbedded(pBitStrm, <p>);"
-BCD_VarSize_LengthEmbedded_decode(p) ::= <<
+BCD_VarSize_LengthEmbedded_encode(p, soMF) ::= "Acn_Enc_Int_BCD_VarSize_LengthEmbedded(pBitStrm, <if(soMF)><soMF>_encode(<p>)<else><p><endif>);"
+BCD_VarSize_LengthEmbedded_decode(p, soMF) ::= <<
 ret = Acn_Dec_Int_BCD_VarSize_LengthEmbedded(pBitStrm, <p>);
+<MF(soMF)>
 <A()>
 >>
 
-BCD_VarSize_NullTerminated_encode(p) ::= "Acn_Enc_Int_BCD_VarSize_NullTerminated(pBitStrm, <p>);"
-BCD_VarSize_NullTerminated_decode(p) ::= <<
+BCD_VarSize_NullTerminated_encode(p, soMF) ::= "Acn_Enc_Int_BCD_VarSize_NullTerminated(pBitStrm, <if(soMF)><soMF>_encode(<p>)<else><p><endif>);"
+BCD_VarSize_NullTerminated_decode(p, soMF) ::= <<
 ret = Acn_Dec_Int_BCD_VarSize_NullTerminated(pBitStrm, <p>);
+<MF(soMF)>
 <A()>
 >>
 
-ASCII_ConstSize_encode(p, nSizeInBytes) ::= "Acn_Enc_Int_ASCII_ConstSize(pBitStrm, <p>, <nSizeInBytes>);"
-ASCII_ConstSize_decode(p, nSizeInBytes) ::= <<
+ASCII_ConstSize_encode(p, nSizeInBytes, soMF) ::= "Acn_Enc_Int_ASCII_ConstSize(pBitStrm, <if(soMF)><soMF>_encode(<p>)<else><p><endif>, <nSizeInBytes>);"
+ASCII_ConstSize_decode(p, nSizeInBytes, soMF) ::= <<
 ret = Acn_Dec_Int_ASCII_ConstSize(pBitStrm, <p>, <nSizeInBytes>);
+<MF(soMF)>
 <A()>
 >>
 
-ASCII_VarSize_LengthEmbedded_encode(p) ::= "Acn_Enc_Int_ASCII_VarSize_LengthEmbedded(pBitStrm, <p>);"
-ASCII_VarSize_LengthEmbedded_decode(p) ::= <<
+ASCII_VarSize_LengthEmbedded_encode(p, soMF) ::= "Acn_Enc_Int_ASCII_VarSize_LengthEmbedded(pBitStrm, <if(soMF)><soMF>_encode(<p>)<else><p><endif>);"
+ASCII_VarSize_LengthEmbedded_decode(p, soMF) ::= <<
 ret = Acn_Dec_Int_ASCII_VarSize_LengthEmbedded(pBitStrm, <p>);
+<MF(soMF)>
 <A()>
 >>
 
-ASCII_VarSize_NullTerminated_encode(p) ::= "Acn_Enc_Int_ASCII_VarSize_NullTerminated(pBitStrm, <p>);"
-ASCII_VarSize_NullTerminated_decode(p) ::= <<
+ASCII_VarSize_NullTerminated_encode(p, soMF) ::= "Acn_Enc_Int_ASCII_VarSize_NullTerminated(pBitStrm, <if(soMF)><soMF>_encode(<p>)<else><p><endif>);"
+ASCII_VarSize_NullTerminated_decode(p, soMF) ::= <<
 ret = Acn_Dec_Int_ASCII_VarSize_NullTerminated(pBitStrm, <p>);
+<MF(soMF)>
 <A()>
 >>
 

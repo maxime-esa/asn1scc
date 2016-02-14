@@ -49,6 +49,12 @@ let GetEncodingProperty (a:Asn1Type) (asn1:Ast.AstRoot)   =
     | []    -> None
 
 
+let getMappingFunction (t:Asn1Type) (asn1:Ast.AstRoot)   =
+    match t.AcnProperties |> List.choose(fun p -> match p with AcnTypes.MappingFunction funcL -> Some funcL.Value | _ -> None) with
+    | []    -> None
+    | x::_     -> Some x
+
+
 
 type IntEncodingClass =
     |Integer_uPER

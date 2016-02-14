@@ -265,6 +265,8 @@ PrintMakeFile(arrsFilesNoExt) ::= <<
 # The directories containing the source files, separated by ':'
 VPATH=.
 
+CC=gcc
+
 # To make "debug" the default configuration if invoked with just "make":
 #
 # The source files: regardless of where they reside in the source tree,

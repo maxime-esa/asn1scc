@@ -88,3 +88,5 @@ PP_PresentWhenConditionStr(sLongField, sVal) ::= "present-when  <sLongField> == 
 PP_PresentWhen(arrsConditios) ::= "present-when <arrsConditios; separator=\" \">"
 
 PP_ChoiceDeterminant(sLongFdlToEnum) ::= "determinant <sLongFdlToEnum>"
+
+PP_MappingFunction(sFuncName)   ::= "mapping-function <sFuncName>"

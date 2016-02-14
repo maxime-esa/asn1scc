@@ -1127,3 +1127,14 @@ flag Acn_Dec_Length(BitStream* pBitStrm, asn1SccSint* pLengthValue, int lengthSi
 {
     return Acn_Dec_Int_PositiveInteger_ConstSize(pBitStrm, pLengthValue, lengthSizeInBits);
 }
+
+
+
+asn1SccSint milbus_encode(asn1SccSint val) {
+	return val == 32 ? 0 : val;
+}
+
+asn1SccSint milbus_decode(asn1SccSint val) {
+	return val == 0 ? 32 : val;
+}
+

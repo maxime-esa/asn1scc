@@ -385,32 +385,34 @@ let rec EmitTypeBodyAux (t:Asn1Type) (sTasName:string) (path:list<string>, pName
                                 | Empty           -> 0I,0I
         let encClass= Acn.GetIntEncodingClass t r acn emptyLocation
         let adjVal = 0I//Acn.GetIntAdjustValue t r acn emptyLocation
+        let mappingFunction = Acn.getMappingFunction t r
+        let mappingFunctionModule = spark_utils.getMappingFunctionModule t r
         match encClass with
         | Acn.Integer_uPER                              -> spark_uper.EmitTypeBody t sTasName (path,pName) m  r codec
-        | Acn.PositiveInteger_ConstSize(nSize)          -> sai.PositiveInteger_ConstSize p nSize (adjVal<>0I) adjVal uperMin uperMax codec
-        | Acn.PositiveInteger_ConstSize_8               -> sai.PositiveInteger_ConstSize_8 p (adjVal<>0I) adjVal uperMin uperMax codec
-        | Acn.PositiveInteger_ConstSize_big_endian_16   -> sai.PositiveInteger_ConstSize_big_endian_16 p (adjVal<>0I) adjVal uperMin uperMax codec
-        | Acn.PositiveInteger_ConstSize_big_endian_32   -> sai.PositiveInteger_ConstSize_big_endian_32 p (adjVal<>0I) adjVal uperMin uperMax codec
-        | Acn.PositiveInteger_ConstSize_big_endian_64   -> sai.PositiveInteger_ConstSize_big_endian_64 p (adjVal<>0I) adjVal uperMin uperMax codec
-        | Acn.PositiveInteger_ConstSize_little_endian_16-> sai.PositiveInteger_ConstSize_little_endian_16  p (adjVal<>0I) adjVal uperMin uperMax codec
-        | Acn.PositiveInteger_ConstSize_little_endian_32-> sai.PositiveInteger_ConstSize_little_endian_32  p (adjVal<>0I) adjVal uperMin uperMax codec
-        | Acn.PositiveInteger_ConstSize_little_endian_64-> sai.PositiveInteger_ConstSize_little_endian_64  p (adjVal<>0I) adjVal uperMin uperMax codec
-        | Acn.PositiveInteger_VarSize_LengthEmbedded    -> sai.PositiveInteger_VarSize_LengthEmbedded p (adjVal<>0I) adjVal uperMin codec
-        | Acn.TwosComplement_ConstSize(nSize)           -> sai.TwosComplement_ConstSize p nSize uperMin uperMax codec
-        | Acn.TwosComplement_ConstSize_8                -> sai.TwosComplement_ConstSize_8 p uperMin uperMax codec
-        | Acn.TwosComplement_ConstSize_big_endian_16    -> sai.TwosComplement_ConstSize_big_endian_16 p uperMin uperMax codec
-        | Acn.TwosComplement_ConstSize_big_endian_32    -> sai.TwosComplement_ConstSize_big_endian_32 p uperMin uperMax codec
-        | Acn.TwosComplement_ConstSize_big_endian_64    -> sai.TwosComplement_ConstSize_big_endian_64 p uperMin uperMax codec
-        | Acn.TwosComplement_ConstSize_little_endian_16 -> sai.TwosComplement_ConstSize_little_endian_16 p uperMin uperMax codec
-        | Acn.TwosComplement_ConstSize_little_endian_32 -> sai.TwosComplement_ConstSize_little_endian_32 p uperMin uperMax codec
-        | Acn.TwosComplement_ConstSize_little_endian_64 -> sai.TwosComplement_ConstSize_little_endian_64 p uperMin uperMax codec
-        | Acn.TwosComplement_VarSize_LengthEmbedded     -> sai.TwosComplement_VarSize_LengthEmbedded p codec
-        | Acn.ASCII_ConstSize(nBits)                    -> sai.ASCII_ConstSize p uperMin uperMax (nBits/8I) codec
-        | Acn.ASCII_VarSize_LengthEmbedded              -> sai.ASCII_VarSize_LengthEmbedded p codec
-        | Acn.ASCII_VarSize_NullTerminated   _          -> sai.ASCII_VarSize_NullTerminated p uperMin uperMax  codec
-        | Acn.BCD_ConstSize(nBits)                      -> sai.BCD_ConstSize p uperMin uperMax (nBits/4I) codec
-        | Acn.BCD_VarSize_LengthEmbedded                -> sai.BCD_VarSize_LengthEmbedded p codec
-        | Acn.BCD_VarSize_NullTerminated     _          -> sai.BCD_VarSize_NullTerminated p uperMin uperMax codec
+        | Acn.PositiveInteger_ConstSize(nSize)          -> sai.PositiveInteger_ConstSize p nSize mappingFunction mappingFunctionModule uperMin uperMax codec
+        | Acn.PositiveInteger_ConstSize_8               -> sai.PositiveInteger_ConstSize_8 p mappingFunction mappingFunctionModule uperMin uperMax codec
+        | Acn.PositiveInteger_ConstSize_big_endian_16   -> sai.PositiveInteger_ConstSize_big_endian_16 p mappingFunction mappingFunctionModule uperMin uperMax codec
+        | Acn.PositiveInteger_ConstSize_big_endian_32   -> sai.PositiveInteger_ConstSize_big_endian_32 p mappingFunction mappingFunctionModule uperMin uperMax codec
+        | Acn.PositiveInteger_ConstSize_big_endian_64   -> sai.PositiveInteger_ConstSize_big_endian_64 p mappingFunction mappingFunctionModule uperMin uperMax codec
+        | Acn.PositiveInteger_ConstSize_little_endian_16-> sai.PositiveInteger_ConstSize_little_endian_16  p mappingFunction mappingFunctionModule uperMin uperMax codec
+        | Acn.PositiveInteger_ConstSize_little_endian_32-> sai.PositiveInteger_ConstSize_little_endian_32  p mappingFunction mappingFunctionModule uperMin uperMax codec
+        | Acn.PositiveInteger_ConstSize_little_endian_64-> sai.PositiveInteger_ConstSize_little_endian_64  p mappingFunction mappingFunctionModule uperMin uperMax codec
+        | Acn.PositiveInteger_VarSize_LengthEmbedded    -> sai.PositiveInteger_VarSize_LengthEmbedded p mappingFunction mappingFunctionModule uperMin codec
+        | Acn.TwosComplement_ConstSize(nSize)           -> sai.TwosComplement_ConstSize p mappingFunction mappingFunctionModule nSize uperMin uperMax codec
+        | Acn.TwosComplement_ConstSize_8                -> sai.TwosComplement_ConstSize_8 p mappingFunction mappingFunctionModule uperMin uperMax codec
+        | Acn.TwosComplement_ConstSize_big_endian_16    -> sai.TwosComplement_ConstSize_big_endian_16 p mappingFunction mappingFunctionModule uperMin uperMax codec
+        | Acn.TwosComplement_ConstSize_big_endian_32    -> sai.TwosComplement_ConstSize_big_endian_32 p mappingFunction mappingFunctionModule uperMin uperMax codec
+        | Acn.TwosComplement_ConstSize_big_endian_64    -> sai.TwosComplement_ConstSize_big_endian_64 p mappingFunction mappingFunctionModule uperMin uperMax codec
+        | Acn.TwosComplement_ConstSize_little_endian_16 -> sai.TwosComplement_ConstSize_little_endian_16 p mappingFunction mappingFunctionModule uperMin uperMax codec
+        | Acn.TwosComplement_ConstSize_little_endian_32 -> sai.TwosComplement_ConstSize_little_endian_32 p mappingFunction mappingFunctionModule uperMin uperMax codec
+        | Acn.TwosComplement_ConstSize_little_endian_64 -> sai.TwosComplement_ConstSize_little_endian_64 p mappingFunction mappingFunctionModule uperMin uperMax codec
+        | Acn.TwosComplement_VarSize_LengthEmbedded     -> sai.TwosComplement_VarSize_LengthEmbedded p mappingFunction mappingFunctionModule codec
+        | Acn.ASCII_ConstSize(nBits)                    -> sai.ASCII_ConstSize p mappingFunction mappingFunctionModule uperMin uperMax (nBits/8I) codec
+        | Acn.ASCII_VarSize_LengthEmbedded              -> sai.ASCII_VarSize_LengthEmbedded p mappingFunction mappingFunctionModule codec
+        | Acn.ASCII_VarSize_NullTerminated   _          -> sai.ASCII_VarSize_NullTerminated p mappingFunction mappingFunctionModule uperMin uperMax  codec
+        | Acn.BCD_ConstSize(nBits)                      -> sai.BCD_ConstSize p mappingFunction mappingFunctionModule uperMin uperMax (nBits/4I) codec
+        | Acn.BCD_VarSize_LengthEmbedded                -> sai.BCD_VarSize_LengthEmbedded p mappingFunction mappingFunctionModule codec
+        | Acn.BCD_VarSize_NullTerminated     _          -> sai.BCD_VarSize_NullTerminated p mappingFunction mappingFunctionModule uperMin uperMax codec
     | Real  ->  
         match Acn.GetRealEncodingClass t r with
         | Acn.Real_uPER                                     -> spark_uper.EmitTypeBody t sTasName (path, pName) m  r codec
@@ -827,9 +829,14 @@ let CollectLocalVars (t:Asn1Type) (tas:TypeAssignment) (m:Asn1Module) (r:AstRoot
 *)
         | Integer   when codec = Decode     ->
             let rootCons = t.Constraints |> Seq.filter(fun x -> match x with RootConstraint(a) |RootConstraint2(a,_) -> true |_ -> false) 
+            let newState =
+                match Acn.getMappingFunction t r with
+                | None      -> state
+                | Some _    -> UNCONSTRAINT_ASN1_INT_FOR_MAPPING_FUNCTION::state
+
             match (Seq.isEmpty rootCons) with
-            | true  -> state
-            | false -> EXTENSION_BIT::state
+            | true  -> newState
+            | false -> EXTENSION_BIT::newState
         | Enumerated(_)     -> ENUM_IDX::state
         | ReferenceType(mdName, tsName, _) ->
             let prms = acn.Parameters |> 
@@ -899,6 +906,7 @@ let CollectLocalVars (t:Asn1Type) (tas:TypeAssignment) (m:Asn1Module) (r:AstRoot
         | CUR_ITEM          -> su.Declare_curItem()
         | LEN2              -> su.Declare_len2()
         | REF_TYPE_PARAM(fldName, fldType)  ->    sa.RefTypeParam_tmpVar fldName fldType
+        | UNCONSTRAINT_ASN1_INT_FOR_MAPPING_FUNCTION    -> su.Declare_AsnIntForMappingFuncion()
 
     lvs |> Seq.distinct |> Seq.map emitLocalVariable
 

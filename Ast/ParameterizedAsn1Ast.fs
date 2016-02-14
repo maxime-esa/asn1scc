@@ -26,6 +26,7 @@ type AstRoot = {
     IcdUperHtmlFileName:string
     IcdAcnHtmlFileName:string
     CheckWithOss:bool
+    mappingFunctionsModule : string option
 }
 and EnumRenamePolicy =
     | NoRenamePolicy
