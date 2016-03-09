@@ -166,7 +166,7 @@ flag <sTasName>_<sEnc>enc_dec(const <sTasName><sStar> pVal, int* pErrCode)
 
 PrintMain_testCases(arrsIncludedModules, arrsTestFunctions) ::= <<
 #include \<stdio.h>
-#include \<memory.h>
+#include \<string.h>
 #include \<math.h>
 #include \<float.h>
 #include \<limits.h>
