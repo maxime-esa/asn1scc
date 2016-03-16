@@ -296,7 +296,7 @@ $sTasName$ <font size="-1">($if(bIsAnonymousType)$<i>anonymous </i>$endif$$sKind
 
 $if(sCommentLine)$
 <tr class="CommentRow">
-<td class="comment2" colspan="8">$sCommentLine$</td>
+<td class="comment2" colspan="7">$sCommentLine$</td>
 </tr>
 $endif$
 
