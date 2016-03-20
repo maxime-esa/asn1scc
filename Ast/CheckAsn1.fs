@@ -212,6 +212,22 @@ let rec CheckIfVariableViolatesTypeConstraints (t:Asn1Type) (v:Asn1Value) ast =
     | _                         -> 
         t.Constraints |> Seq.forall(fun c -> IsValueAllowed c v false ast )
 
+let rec getEnumeratedAllowedEnumerations ast (m:Asn1Module) (t:Asn1Type) =
+    match t.Kind with
+    |ReferenceType(modName,tsName, _)           ->
+        let baseType = Ast.GetBaseTypeConsIncluded t ast
+        getEnumeratedAllowedEnumerations ast m baseType  
+    |Enumerated(items)   -> 
+            items |>
+            List.choose(fun itm -> 
+                let v = {Asn1Value.Location = itm.Name.Location; Kind = RefValue(m.Name, itm.Name)} 
+                match t.Constraints |> Seq.forall(fun c -> IsValueAllowed c v true ast ) with
+                | true -> Some itm
+                | false-> None)
+    | _                         -> raise (BugErrorException("getEnumItemTypeAllowedEnums can be called only for Enumerated types"))
+    
+
+
 ///checks if the input type t matches with input value v (by calling TypeValueMatch) and raises a user exception if not
 let rec CheckValueType (t:Asn1Type) (v:Asn1Value) ast=
     if not (TypeValueMatch t v ast) then

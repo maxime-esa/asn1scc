@@ -50,7 +50,7 @@ let GetWhyExplanation (stgFileName:string) (t:Ast.Asn1Type) (r:AstRoot) =
         | _                             -> ""
     | _         -> ""
 
-let rec printType (stgFileName:string) (tas:Ast.TypeAssignment) (t:Ast.Asn1Type) (r:AstRoot) (acn:AcnTypes.AcnAstResolved)  color =
+let rec printType (stgFileName:string) (m:Ast.Asn1Module) (tas:Ast.TypeAssignment) (t:Ast.Asn1Type) (r:AstRoot) (acn:AcnTypes.AcnAstResolved)  color =
     let uperSizeInBitsAsInt func (kind:Asn1TypeKind) (cons:list<Asn1Constraint>)  (ast:AstRoot) =
         match (func kind cons ast) with
         | Bounded(maxBits)        ->  
@@ -69,7 +69,9 @@ let rec printType (stgFileName:string) (tas:Ast.TypeAssignment) (t:Ast.Asn1Type)
                     match comment.Trim() with
                     | ""        ->    icd_uper.EmitEnumItem stgFileName n.Name.Value (GetItemValue items n r)
                     | _         ->    icd_uper.EmitEnumItemWithComment stgFileName n.Name.Value (GetItemValue items n r) comment
-                let itemsHtml = items |> Seq.map EmitItem
+                let itemsHtml = 
+                    CheckAsn1.getEnumeratedAllowedEnumerations r m t |>
+                    Seq.map EmitItem
                 let extraComment = icd_uper.EmitEnumInternalContents stgFileName itemsHtml
                 match singleComment.Trim() with
                 | ""    -> extraComment
@@ -95,7 +97,7 @@ let rec printType (stgFileName:string) (tas:Ast.TypeAssignment) (t:Ast.Asn1Type)
 
     |ReferenceType(_) ->
         let baseTypeWithCons = Ast.GetActualTypeAllConsIncluded t r
-        printType stgFileName tas baseTypeWithCons r acn color
+        printType stgFileName m tas baseTypeWithCons r acn color
     |Sequence(children) -> 
         let EmitChild (i:int) (ch:ChildInfo) =
             let sClass = if i % 2 = 0 then (icd_uper.EvenRow stgFileName ())  else (icd_uper.OddRow stgFileName ())
@@ -247,12 +249,12 @@ let rec printType (stgFileName:string) (tas:Ast.TypeAssignment) (t:Ast.Asn1Type)
         icd_uper.EmitSizeable stgFileName color sTasName  (ToC sTasName) (Kind2Name stgFileName t) sMinBytes sMaxBytes sMaxBitsExplained sCommentLine arRows (sCommentLine.Split [|'\n'|])
 
 
-let PrintTas (stgFileName:string) (tas:Ast.TypeAssignment) (r:AstRoot) (acn:AcnTypes.AcnAstResolved) blueTasses =
+let PrintTas (stgFileName:string) (m:Ast.Asn1Module) (tas:Ast.TypeAssignment) (r:AstRoot) (acn:AcnTypes.AcnAstResolved) blueTasses =
     let tasColor =
         match blueTasses |> Seq.exists (fun x -> x = tas.Name.Value) with
         |true   -> icd_uper.Blue stgFileName ()
         |false  -> icd_uper.Orange stgFileName ()
-    icd_uper.EmmitTass stgFileName (printType stgFileName tas tas.Type r acn tasColor) 
+    icd_uper.EmmitTass stgFileName (printType stgFileName m tas tas.Type r acn tasColor) 
 
 
 let getModuleBlueTasses (m:Asn1Module) =
@@ -264,7 +266,7 @@ let getModuleBlueTasses (m:Asn1Module) =
 let PrintModule (stgFileName:string) (m:Asn1Module) (f:Asn1File) (r:AstRoot) (acn:AcnTypes.AcnAstResolved)  =
     let blueTasses = getModuleBlueTasses m |> Seq.map snd
     let sortedTas = spark_spec.SortTypeAssigments m r acn |> List.rev
-    let tases = sortedTas  |> Seq.map (fun x -> PrintTas stgFileName x r acn blueTasses) 
+    let tases = sortedTas  |> Seq.map (fun x -> PrintTas stgFileName m x r acn blueTasses) 
     let comments = []
     icd_uper.EmmitModule stgFileName m.Name.Value comments tases
 
@@ -349,9 +351,14 @@ let DoWork (stgFileName:string) (r:AstRoot) (acn:AcnTypes.AcnAstResolved) outFil
     let bRealSizeMustBeExplained = allTypes |> Seq.exists(fun x -> match x.Kind with Real ->true | _ -> false)
     let bLengthSizeMustBeExplained = false
     let bWithComponentMustBeExplained = false
-    let bZeroBitsMustBeExplained = allTypes |> Seq.exists(fun x -> match x.Kind with 
-                                                                   | Integer -> match uperGetMaxSizeInBits x.Kind x.Constraints r with Bounded(a) when a = 0I -> true |_->false 
-                                                                   | _ -> false)
+    let bZeroBitsMustBeExplained = 
+        allTypes |> 
+        Seq.exists(fun x -> 
+            match x.Kind with 
+            | Integer 
+            | ReferenceType(_) -> 
+                match uperGetMaxSizeInBits x.Kind x.Constraints r with Bounded(a) when a = 0I -> true |_->false 
+            | _ -> false)
     let content = icd_uper.RootHtml stgFileName files1 files2 bIntegerSizeMustBeExplained bRealSizeMustBeExplained bLengthSizeMustBeExplained bWithComponentMustBeExplained bZeroBitsMustBeExplained
     File.WriteAllText(outFileName, content.Replace("\r",""))
 

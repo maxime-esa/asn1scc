@@ -38,7 +38,8 @@ let rec PrintConstraint (c:Asn1Constraint) =
     | RangeContraint_val_MAX(v, b1)     -> ASN.Print_RangeContraint_val_MAX (PrintAsn1Value v) b1
     | RangeContraint_MIN_val(v, b2)     -> ASN.Print_RangeContraint_MIN_val (PrintAsn1Value v) b2  
     | RangeContraint_MIN_MAX        -> ASN.Print_RangeContraint_MIN_MAX()
-    | TypeInclusionConstraint(mn,nm)-> ASN.Print_TypeInclusionConstraint mn.Value       
+    | TypeInclusionConstraint(mn,nm)-> 
+        ASN.Print_TypeInclusionConstraint nm.Value       
     | SizeContraint(c)              -> ASN.Print_SizeContraint (PrintConstraint c)   
     | AlphabetContraint(c)          -> ASN.Print_AlphabetContraint (PrintConstraint c)   
     | UnionConstraint(c1,c2,virtualCon)        -> 

@@ -364,7 +364,7 @@ enumeratedTypeItems
 
 
 enumeratedLstItem	:	
-	identifier ( L_PAREN (INT|valuereference) R_PAREN)? -> ^(NUMBER_LST_ITEM identifier INT? valuereference?)
+	identifier ( L_PAREN (INT|val=valuereference) R_PAREN)? -> ^(NUMBER_LST_ITEM identifier INT? ^(VALUE_REFERENCE[(IToken)val.Start] $val)?)
 ;
 
 
@@ -373,7 +373,7 @@ integerType
 	;
 	
 integerTypeListItem 
-	:	identifier a=L_PAREN (INT|valuereference) R_PAREN	-> ^(NUMBER_LST_ITEM[$a] identifier INT? valuereference?)
+	:	identifier a=L_PAREN (INT|val=valuereference) R_PAREN	-> ^(NUMBER_LST_ITEM[$a] identifier INT? ^(VALUE_REFERENCE[(IToken)val.Start] $val)?)
 	;	
 	
 realType 

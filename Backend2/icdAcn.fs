@@ -71,7 +71,9 @@ let rec printType stgFileName (tas:Ast.TypeAssignment) (t:Ast.Asn1Type) path (m:
                     match comment.Trim() with
                     | ""        ->    icd_acn.EmitEnumItem stgFileName n.Name.Value (GetItemValue items n r)
                     | _         ->    icd_acn.EmitEnumItemWithComment stgFileName n.Name.Value (GetItemValue items n r) comment
-                let itemsHtml = items |> Seq.map EmitItem
+                let itemsHtml =  
+                    CheckAsn1.getEnumeratedAllowedEnumerations r m t |>
+                    Seq.map EmitItem
                 let extraComment = icd_acn.EmitEnumInternalContents stgFileName itemsHtml
                 match singleComment.Trim() with
                 | ""    -> extraComment
