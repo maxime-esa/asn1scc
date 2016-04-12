@@ -11,23 +11,25 @@
   #endif
 #endif
 
-byte masks[] = {0x80, 0x40, 0x20, 0x10, 0x08, 0x04, 0x02, 0x01};
-byte masksb[] = {0x0, 0x1, 0x3, 0x7, 0xF, 0x1F, 0x3F, 0x7F, 0xFF};
+static byte masks[] = { 0x80, 0x40, 0x20, 0x10, 0x08, 0x04, 0x02, 0x01 };
+static byte masksb[] = { 0x0, 0x1, 0x3, 0x7, 0xF, 0x1F, 0x3F, 0x7F, 0xFF };
 
-asn1SccUint32 masks2[] = {0x0, 0xFF, 
-                        0xFF00, 
-                        0xFF0000, 
-                        0xFF000000
-                    };
+static asn1SccUint32 masks2[] = { 0x0,
+                                  0xFF,
+                                  0xFF00,
+                                  0xFF0000,
+                                  0xFF000000 };
+
 #if WORD_SIZE==8
-asn1SccUint64 masks2b[] = {0x0, 0xFF, 
-                        0xFF00, 
-                        0xFF0000, 
-                        0xFF000000, 
-                        0xFF00000000ULL, 
-                        0xFF0000000000ULL, 
-                        0xFF000000000000ULL, 
-                        0xFF00000000000000ULL};
+static asn1SccUint64 masks2b[] = {0x0,
+                                  0xFF,
+                                  0xFF00,
+                                  0xFF0000,
+                                  0xFF000000,
+                                  0xFF00000000ULL,
+                                  0xFF0000000000ULL,
+                                  0xFF000000000000ULL,
+                                  0xFF00000000000000ULL };
 #endif
 
 /***********************************************************************************************/
