@@ -3,23 +3,6 @@
 #include <math.h>
 #include "asn1crt.h"
 
-#if WORD_SIZE==8
-#define MAX_MANTISSA 4503599627370496
-#else
-#define MAX_MANTISSA 2147483648
-#endif
-
-#if WORD_SIZE==8
-#define MANTISSA_FACTOR 4503599627370496.0
-#define EXPONENET_FACTOR 52
-#else
-#define MANTISSA_FACTOR 4294967296.0
-#define EXPONENET_FACTOR 32
-
-#endif
-
-
-
 #ifndef FREXP_UNSUPPORTED
 
 #define ExpoBitMask  0x7FF0000000000000ULL
@@ -83,6 +66,11 @@ double GetDoubleByMantissaAndExp(asn1SccUint mantissa, int exponent)
 
 #else
 
+#if WORD_SIZE==8
+#define MAX_MANTISSA 4503599627370496
+#else
+#define MAX_MANTISSA 2147483648
+#endif
 
 double pospow2[] = {
 1, 2, 4, 8, 16, 32, 64, 128, 
@@ -428,11 +416,6 @@ void CalculateMantissaAndExponent(double d, int* exp, asn1SccUint* mantissa)
         (*exp)--;
         error = fabs((double)(d-myReal(mantissa,*exp)))/d;
     }
-
-
-
 }
 
 #endif
-
-
