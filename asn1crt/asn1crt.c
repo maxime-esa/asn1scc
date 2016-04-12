@@ -445,7 +445,8 @@ int GetNumberOfBitsForNonNegativeInteger(asn1SccUint v)
 #endif
 }
 
-static int GetLengthInBytesOfUInt(asn1SccUint v)
+int GetLengthInBytesOfUInt(asn1SccUint v);
+int GetLengthInBytesOfUInt(asn1SccUint v)
 {
     int ret=0;
     asn1SccUint32 v32 = (asn1SccUint32)v;

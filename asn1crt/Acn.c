@@ -6,10 +6,7 @@
 
 #include "asn1crt.h"
 
-extern byte masksb[];
-extern byte masks[];
-
-
+static byte masks[] = { 0x80, 0x40, 0x20, 0x10, 0x08, 0x04, 0x02, 0x01 };
 
 static flag RequiresReverse() 
 {
