@@ -11,30 +11,26 @@
 
 
 #if WORD_SIZE==8
-asn1SccUint64 ber_aux[] = {
-                        0xFF, 
-                        0xFF00, 
-                        0xFF0000, 
-                        0xFF000000, 
-                        0xFF00000000ULL, 
-                        0xFF0000000000ULL, 
-                        0xFF000000000000ULL, 
-                        0xFF00000000000000ULL};
+static asn1SccUint64 ber_aux[] = { 0xFF,
+                                   0xFF00,
+                                   0xFF0000,
+                                   0xFF000000,
+                                   0xFF00000000ULL,
+                                   0xFF0000000000ULL,
+                                   0xFF000000000000ULL,
+                                   0xFF00000000000000ULL };
 #else
-asn1SccUint32 ber_aux[] = {
-                        0xFF, 
-                        0xFF00, 
-                        0xFF0000, 
-                        0xFF000000};
-
+static asn1SccUint32 ber_aux[] = { 0xFF,
+                                   0xFF00,
+                                   0xFF0000,
+                                   0xFF000000 };
 #endif
 
 
 //defined in asn1crt.c
 int GetLengthInBytesOfSInt(asn1SccSint v);
 
-
-flag ByteStream_PutByte(ByteStream* pStrm, byte v) 
+static flag ByteStream_PutByte(ByteStream* pStrm, byte v)
 {
     if (pStrm->currentByte+1>pStrm->count+1)
         return FALSE;
@@ -44,16 +40,7 @@ flag ByteStream_PutByte(ByteStream* pStrm, byte v)
     return TRUE;
 }
 
-byte GetUIntLength(asn1SccUint value) {
-    byte ret = 0;
-    while(value>0) {
-        ret++;
-        value>>=8;
-    }
-    return ret;
-}
-
-flag ByteStream_GetByte(ByteStream* pStrm, byte* v)  {
+static flag ByteStream_GetByte(ByteStream* pStrm, byte* v)  {
     if (pStrm->currentByte+1>pStrm->count+1)
         return FALSE;
     *v = pStrm->buf[pStrm->currentByte];
@@ -62,7 +49,7 @@ flag ByteStream_GetByte(ByteStream* pStrm, byte* v)  {
 }
 
 
-flag BerEncodeUInt(ByteStream* pByteStrm, asn1SccUint value, int *pErrCode) {
+static flag BerEncodeUInt(ByteStream* pByteStrm, asn1SccUint value, int *pErrCode) {
     int i;
     byte curByte=0;
     flag wFlag = FALSE;
@@ -90,7 +77,7 @@ flag BerEncodeUInt(ByteStream* pByteStrm, asn1SccUint value, int *pErrCode) {
     return TRUE;
 }
 
-flag BerEncodeUInt2(ByteStream* pByteStrm, asn1SccUint value, int intSize, int *pErrCode) {
+static flag BerEncodeUInt2(ByteStream* pByteStrm, asn1SccUint value, int intSize, int *pErrCode) {
     int i;
     byte curByte=0;
 
@@ -143,14 +130,13 @@ flag BerDecodeTag(ByteStream* pByteStrm, BerTag tag, int *pErrCode) {
 }
 
 flag BerEncodeLengthStart(ByteStream* pByteStrm, int *pErrCode) {
-    
     if (!ByteStream_PutByte(pByteStrm, 0x80)) {
         *pErrCode = ERR_INSUFFICIENT_DATA;
         return FALSE;
     }
-    
     return TRUE;
 }
+
 flag BerEncodeLengthEnd(ByteStream* pByteStrm, int *pErrCode) {
     if (!ByteStream_PutByte(pByteStrm, 0x0)) {
         *pErrCode = ERR_INSUFFICIENT_DATA;
@@ -160,7 +146,6 @@ flag BerEncodeLengthEnd(ByteStream* pByteStrm, int *pErrCode) {
         *pErrCode = ERR_INSUFFICIENT_DATA;
         return FALSE;
     }
-    
     return TRUE;
 }
 
@@ -200,7 +185,7 @@ flag BerDecodeLength(ByteStream* pByteStrm, int* value, int *pErrCode)
     return TRUE;
 }
 
-flag BerEncodeLength(ByteStream* pByteStrm, int value, int *pErrCode)
+static flag BerEncodeLength(ByteStream* pByteStrm, int value, int *pErrCode)
 {
     asn1SccUint uv = (asn1SccUint)value;
     unsigned int uv1 = (unsigned int)value;
@@ -249,6 +234,7 @@ flag BerDecodeTwoZeroes(ByteStream* pByteStrm, int *pErrCode) {
     return TRUE;
 }
 
+asn1SccUint int2uint(asn1SccSint v);
 asn1SccUint int2uint(asn1SccSint v) {
     asn1SccUint ret = 0;
     if  (v < 0 ) {
@@ -260,7 +246,8 @@ asn1SccUint int2uint(asn1SccSint v) {
     return ret;
 }
 
- asn1SccSint uint2int(asn1SccUint v, int uintSizeInBytes) {
+asn1SccSint uint2int(asn1SccUint v, int uintSizeInBytes);
+asn1SccSint uint2int(asn1SccUint v, int uintSizeInBytes) {
      int i;
      asn1SccUint tmp = 0x80;
      flag bIsNegative = (v & (tmp<<((uintSizeInBytes-1)*8)))>0;

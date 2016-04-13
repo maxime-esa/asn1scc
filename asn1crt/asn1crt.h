@@ -358,8 +358,8 @@ flag NextTagMatches(ByteStream* pByteStrm, BerTag tag);
 int GetStrmPos(ByteStream* pByteStrm);
 flag LA_Next_Two_Bytes_00(ByteStream* pByteStrm);
 
-
-
+asn1SccSint milbus_encode(asn1SccSint val);
+asn1SccSint milbus_decode(asn1SccSint val);
 
 #define CHECK_BIT_STREAM(pBitStrm)	assert((pBitStrm)->currentByte*8+(pBitStrm)->currentBit<=(pBitStrm)->count*8)
 
