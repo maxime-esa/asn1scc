@@ -104,7 +104,9 @@ flag BerDecodeTag(ByteStream* pByteStrm, BerTag tag, int *pErrCode) {
     BerTag PrimitiveBit=0;
     byte curByte=0;
 
-
+    if(tgCopy==0) {
+      tagSize = 1;
+    }
     while(tgCopy>0) {
         tgCopy>>=8;
         tagSize++;
