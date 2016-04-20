@@ -131,7 +131,7 @@ flag <sTasName>_<sEnc>enc_dec(const <sTasName><sStar> pVal, int* pErrCode)
     static <sTasName> decodedPDU;
     static byte encBuff[<sTasName>_REQUIRED_BYTES_FOR_<sEnc>ENCODING + 1]; /* +1 for zerosized types */
     BitStream bitStrm;
-    flag ret;
+    flag ret = TRUE;
     <arrsEncInDecOutParamsLocalVars; separator="\n">
     <arrsDecInParamLocalVars; separator="\n">
 
@@ -147,7 +147,7 @@ flag <sTasName>_<sEnc>enc_dec(const <sTasName><sStar> pVal, int* pErrCode)
     static <sTasName> decodedPDU;
     static byte encBuff[<sTasName>_REQUIRED_BYTES_FOR_<sEnc>ENCODING + 1]; /* +1 for zerosized types */
     ByteStream bitStrm;
-    flag ret;
+    flag ret = TRUE;
     <arrsEncInDecOutParamsLocalVars; separator="\n">
     <arrsDecInParamLocalVars; separator="\n">
 

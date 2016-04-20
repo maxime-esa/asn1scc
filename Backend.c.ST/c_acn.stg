@@ -479,7 +479,7 @@ str_FixedSize_encode(p, i, sInternalItem, nFixedSize) ::= <<
 str_FixedSize_decode(p, i, sInternalItem, nFixedSize) ::= <<
 {
     asn1SccSint charIndex;
-    *pErrCode = 0; ret = TRUE;
+    *pErrCode = 0;
     memset(<p>, 0x0, <nFixedSize>+1);
     <loopFixedItem(i=i, sInternalItem=sInternalItem, fixedSize=nFixedSize)>
 }
@@ -654,7 +654,7 @@ Sequence_encode(sChildren, bHasUperOptionalChildren, nUperOptionalChildrenLength
 
 
 Sequence_decode(sChildren, bHasUperOptionalChildren, nUperOptionalChildrenLength, sBitMaskName) ::= <<
-*pErrCode = 0; ret = TRUE;
+*pErrCode = 0;
 <if(bHasUperOptionalChildren)>
 /* Decode Bit Mask for optional and default fields*/
 ret = BitStream_ReadBits(pBitStrm, <sBitMaskName>, <nUperOptionalChildrenLength>);
@@ -757,7 +757,7 @@ default:
 >>
 
 Choice_preWhen_decode(p, arrsChildren, sErrCode) ::= <<
-*pErrCode = 0; ret = TRUE;
+*pErrCode = 0;
 <arrsChildren; separator="\n">
 else {
     *pErrCode = ERR_INVALID_CHOICE_ALTERNATIVE;         //COVERAGE_IGNORE
