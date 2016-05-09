@@ -164,35 +164,17 @@ flag <sTasName>_<sEnc>enc_dec(const <sTasName><sStar> pVal, int* pErrCode)
 /* Encode Decode End*/
 
 
-PrintMain_testCases(arrsIncludedModules, arrsTestFunctions) ::= <<
+PrintMain(sTestSuiteFilename) ::= <<
 #include \<stdio.h>
-#include \<string.h>
-#include \<math.h>
-#include \<float.h>
-#include \<limits.h>
-#include "asn1crt.h"
 
-<arrsIncludedModules:{inc| #include "<inc>.h"}; separator="\n">
+#include "<sTestSuiteFilename>.h"
 
 int main(int argc, char* argv[])
 {
-	(void)argc;
-	(void)argv;
+    (void)argc;
+    (void)argv;
 
-	int totalErrors = 0;
-	flag result;
-	int errCode;
-
-	<arrsTestFunctions;separator="\n\n">
-
-    if (totalErrors > 0 ) {
-        printf("%d out of <arrsTestFunctions.Length> failed.", totalErrors); 
-        return 1;
-    } else {
-        printf("All test cases (<arrsTestFunctions.Length>) run successfully."); 
-        return 0;
-    };
-
+    return asn1scc_run_generated_testsuite();
 }
 
 >>
@@ -200,7 +182,7 @@ int main(int argc, char* argv[])
 /*
 Code calling a test case
 */
-PrintMain_call_codec(sTasName, sAmber, sEnc, sValue, sValueAsAsn1, sVasName, bStatic, sGenerateDatFile) ::= <<
+PrintSuite_call_codec(sTasName, sAmber, sEnc, sValue, sValueAsAsn1, sVasName, bStatic, sGenerateDatFile) ::= <<
 {
     {
         // dummy statement used for calling init functions
@@ -238,7 +220,7 @@ PrintMain_call_codec(sTasName, sAmber, sEnc, sValue, sValueAsAsn1, sVasName, bSt
 >>
 
 
-PrintMain_call_codec_generate_dat_file(sTasName, sAmber, sEnc, sStreamName) ::= <<
+PrintSuite_call_codec_generate_dat_file(sTasName, sAmber, sEnc, sStreamName) ::= <<
 	if (result) {
 		static byte encBuff[<sTasName>_REQUIRED_BYTES_FOR_<sEnc>ENCODING + 1]; /* +1 for zerosized types */
 		<sStreamName>Stream bitStrm;
@@ -308,3 +290,44 @@ clean:
 	@rm -rf *.o $(TARGET) *.gcda *.gcno *.gcov
 >>
 
+PrintTestSuiteHeader() ::= <<
+#ifndef GENERATED_ASN1SCC_TESTSUITE_H
+#define GENERATED_ASN1SCC_TESTSUITE_H
+
+int asn1scc_run_generated_testsuite(void);
+
+#endif // GENERATED_ASN1SCC_TESTSUITE_H
+>>
+
+PrintTestSuiteSource(sTestSuiteFilename, arrsIncludedModules, arrsTestFunctions) ::= <<
+#include "<sTestSuiteFilename>.h"
+
+#include \<stdio.h>
+#include \<string.h>
+#include \<math.h>
+#include \<float.h>
+#include \<limits.h>
+
+#include "asn1crt.h"
+
+
+<arrsIncludedModules:{inc| #include "<inc>.h"}; separator="\n">
+
+int asn1scc_run_generated_testsuite()
+{
+    int totalErrors = 0;
+    flag result;
+    int errCode;
+
+    <arrsTestFunctions;separator="\n\n">
+
+    if (totalErrors > 0 ) {
+        printf("%d out of <arrsTestFunctions.Length> failed.", totalErrors);
+        return 1;
+    } else {
+        printf("All test cases (<arrsTestFunctions.Length>) run successfully.");
+        return 0;
+    }
+}
+
+>>

@@ -163,8 +163,23 @@ let CreateTestCases (r:AstRoot) (acn:AcnTypes.AcnAstResolved) outDir  =
                                 )  
 
 
+let TestSuiteFileName = "testsuite"
 
-let CreateMainFile (r:AstRoot) (acn:AcnTypes.AcnAstResolved) outDir vasName =
+
+let CreateMainFile outDir =
+    let content = c_aux.PrintMain TestSuiteFileName
+    let outFileName = Path.Combine(outDir, "mainprogram.c")
+    File.WriteAllText(outFileName, content.Replace("\r",""))
+
+
+let CreateMakeFile (r:AstRoot) (acn:AcnTypes.AcnAstResolved) outDir  =
+    let files = r.Files |> Seq.map(fun x -> x.FileNameWithoutExtension.ToLower() )
+    let content = c_aux.PrintMakeFile files
+    let outFileName = Path.Combine(outDir, "Makefile")
+    File.WriteAllText(outFileName, content.Replace("\r",""))
+
+
+let CreateTestSuiteFile (r:AstRoot) (acn:AcnTypes.AcnAstResolved) outDir vasName =
     let includedPackages =  r.Files |> Seq.map(fun x -> x.FileNameWithoutExtension.ToLower() + "_auto_tcs")
     let PrintTestCase (v:ValueAssignment) (m:Asn1Module) =
         let tasName = match v.Type.Kind with
@@ -188,17 +203,17 @@ let CreateMainFile (r:AstRoot) (acn:AcnTypes.AcnAstResolved) outDir vasName =
             match bGenerateDatFile, enc with
             | false,_     -> ""
             | true, ACN   -> ""
-            | true, XER   -> c_aux.PrintMain_call_codec_generate_dat_file sTasName sAmber (GetEncodingString enc) "Byte"
-            | true, BER   -> c_aux.PrintMain_call_codec_generate_dat_file sTasName sAmber (GetEncodingString enc) "Byte"
-            | true, uPER  -> c_aux.PrintMain_call_codec_generate_dat_file sTasName sAmber (GetEncodingString enc) "Bit"
+            | true, XER   -> c_aux.PrintSuite_call_codec_generate_dat_file sTasName sAmber (GetEncodingString enc) "Byte"
+            | true, BER   -> c_aux.PrintSuite_call_codec_generate_dat_file sTasName sAmber (GetEncodingString enc) "Byte"
+            | true, uPER  -> c_aux.PrintSuite_call_codec_generate_dat_file sTasName sAmber (GetEncodingString enc) "Bit"
 
         let bStatic = match (Ast.GetActualType v.Type r).Kind with Integer | Enumerated(_) -> false | _ -> true
         
         r.Encodings |> Seq.map(fun e -> match e with
-                                        | UPER  -> c_aux.PrintMain_call_codec sTasName sAmber (GetEncodingString e) sValue sAsn1Val (ToC v.Name.Value) bStatic (GetDatFile e)
-                                        | ACN   -> c_aux.PrintMain_call_codec sTasName sAmber (GetEncodingString e) sValue sAsn1Val (ToC v.Name.Value) bStatic (GetDatFile e)
-                                        | XER   -> c_aux.PrintMain_call_codec sTasName sAmber (GetEncodingString e) sValue sAsn1Val (ToC v.Name.Value) bStatic (GetDatFile e)
-                                        | BER   -> c_aux.PrintMain_call_codec sTasName sAmber (GetEncodingString e) sValue sAsn1Val (ToC v.Name.Value) bStatic (GetDatFile e)
+                                        | UPER  -> c_aux.PrintSuite_call_codec sTasName sAmber (GetEncodingString e) sValue sAsn1Val (ToC v.Name.Value) bStatic (GetDatFile e)
+                                        | ACN   -> c_aux.PrintSuite_call_codec sTasName sAmber (GetEncodingString e) sValue sAsn1Val (ToC v.Name.Value) bStatic (GetDatFile e)
+                                        | XER   -> c_aux.PrintSuite_call_codec sTasName sAmber (GetEncodingString e) sValue sAsn1Val (ToC v.Name.Value) bStatic (GetDatFile e)
+                                        | BER   -> c_aux.PrintSuite_call_codec sTasName sAmber (GetEncodingString e) sValue sAsn1Val (ToC v.Name.Value) bStatic (GetDatFile e)
                                  ) |> Seq.StrJoin "\n\n"
         
     
@@ -214,15 +229,10 @@ let CreateMainFile (r:AstRoot) (acn:AcnTypes.AcnAstResolved) outDir vasName =
                     | _                 -> ()
         }
 
-    let content = c_aux.PrintMain_testCases includedPackages funcs 
-    let outFileName = Path.Combine(outDir, "mainprogram.c")
-    File.WriteAllText(outFileName, content.Replace("\r",""))
+    let contentC = c_aux.PrintTestSuiteSource TestSuiteFileName includedPackages funcs
+    let outCFileName = Path.Combine(outDir, TestSuiteFileName + ".c")
+    File.WriteAllText(outCFileName, contentC.Replace("\r",""))
 
-
-
-let CreateMakeFile (r:AstRoot) (acn:AcnTypes.AcnAstResolved) outDir  =
-    let files = r.Files |> Seq.map(fun x -> x.FileNameWithoutExtension.ToLower() )
-    let content = c_aux.PrintMakeFile files
-    let outFileName = Path.Combine(outDir, "Makefile")
-    File.WriteAllText(outFileName, content.Replace("\r",""))
-
+    let contentH = c_aux.PrintTestSuiteHeader()
+    let outHFileName = Path.Combine(outDir, TestSuiteFileName + ".h")
+    File.WriteAllText(outHFileName, contentH.Replace("\r",""))
