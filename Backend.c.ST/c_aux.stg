@@ -169,12 +169,48 @@ PrintMain(sTestSuiteFilename) ::= <<
 
 #include "<sTestSuiteFilename>.h"
 
+static void printf_tests_failed(int testCount, int failedCount)
+{
+    printf("%d out of %d failed.\n", failedCount, testCount);
+}
+
+static void printf_tests_passed(int testCount)
+{
+    printf("All test cases (%d) run successfully.\n", testCount);
+}
+
+static void printf_null()
+{
+}
+
+static void printf_null_char(const char* s)
+{
+    (void)s;
+}
+
+static void printf_message(const char* message)
+{
+    printf("%s\n", message);
+}
+
 int main(int argc, char* argv[])
 {
     (void)argc;
     (void)argv;
 
-    return asn1scc_run_generated_testsuite();
+    TestOutput output = {
+               .report_tests_failed = printf_tests_failed,
+               .report_all_tests_passed = printf_tests_passed,
+               .report_suite_begin = printf_null,
+               .report_suite_end = printf_null,
+               .report_case_begin = printf_null_char,
+               .report_case_end = printf_null,
+               .report_failure_begin = printf_null,
+               .report_failure_end = printf_null,
+               .report_failure_message = printf_message
+    };
+
+    return asn1scc_run_generated_testsuite(&output);
 }
 
 >>
@@ -184,38 +220,45 @@ Code calling a test case
 */
 PrintSuite_call_codec(sTasName, sAmber, sEnc, sValue, sValueAsAsn1, sVasName, bStatic, sGenerateDatFile) ::= <<
 {
+    output->report_case_begin("<sTasName>_<sEnc>enc_dec");
+
     {
         // dummy statement used for calling init functions
         <if(bStatic)>static <endif><sTasName> tmp0;
         <sTasName>_Initialize(<sAmber>tmp0);
     }
-    <if(bStatic)>static <endif><sTasName> tmp = 
+    <if(bStatic)>static <endif><sTasName> tmp =
         <sValue>;
-		
-	result = <sTasName>_<sEnc>enc_dec(<sAmber>tmp, &errCode);
-	if (!result) {
-		switch(errCode)
-		{
-		case 1:
-			printf("Test case <sVasName> failed in encoding\n");
-			break;
-		case 2:
-			printf("Test case '<sVasName>' failed in decoding\n");
-			break;
-		case 3:
-			printf("Test case '<sVasName>' failed in the validation of the decoded message\n");
-			break;
-		case 4:
-			printf("Test case '<sVasName>' failed. Encoded and decoded messages are different\n");
-			break;
-		default:
-			printf("Unexpected error code in test case '<sVasName>'\n");
-		}
-		printf("Test Value was <sValueAsAsn1>\n");
-		printf("========================================\n");
-		totalErrors = totalErrors + 1;
-	};
+        result = <sTasName>_<sEnc>enc_dec(<sAmber>tmp, &errCode);
+        if (!result) {
+           output->report_failure_begin();
+
+           switch(errCode)
+           {
+           case 1:
+                output->report_failure_message("Test case <sVasName> failed in encoding.");
+                break;
+           case 2:
+                output->report_failure_message("Test case '<sVasName>' failed in decoding.");
+                break;
+           case 3:
+                output->report_failure_message("Test case '<sVasName>' failed in the validation of the decoded message.");
+                break;
+           case 4:
+                output->report_failure_message("Test case '<sVasName>' failed. Encoded and decoded messages are different.");
+                break;
+           default:
+                output->report_failure_message("Unexpected error code in test case '<sVasName>'.");
+           }
+           output->report_failure_message("Test Value was <sValueAsAsn1>");
+           output->report_failure_message("========================================");
+           totalErrors = totalErrors + 1;
+
+           output->report_failure_end();
+        }
     <sGenerateDatFile>
+
+    output->report_case_end();
 }
 >>
 
@@ -294,7 +337,22 @@ PrintTestSuiteHeader() ::= <<
 #ifndef GENERATED_ASN1SCC_TESTSUITE_H
 #define GENERATED_ASN1SCC_TESTSUITE_H
 
-int asn1scc_run_generated_testsuite(void);
+typedef struct {
+    void (*report_tests_failed)(int testsCount, int failedCount);
+    void (*report_all_tests_passed)(int testsCount);
+
+    void (*report_suite_begin)();
+    void (*report_suite_end)();
+
+    void (*report_case_begin)(const char* caseName);
+    void (*report_case_end)();
+
+    void (*report_failure_begin)();
+    void (*report_failure_end)();
+    void (*report_failure_message)(const char* message);
+} TestOutput;
+
+int asn1scc_run_generated_testsuite(TestOutput* output);
 
 #endif // GENERATED_ASN1SCC_TESTSUITE_H
 >>
@@ -310,22 +368,25 @@ PrintTestSuiteSource(sTestSuiteFilename, arrsIncludedModules, arrsTestFunctions)
 
 #include "asn1crt.h"
 
-
 <arrsIncludedModules:{inc| #include "<inc>.h"}; separator="\n">
 
-int asn1scc_run_generated_testsuite()
+int asn1scc_run_generated_testsuite(TestOutput* output)
 {
     int totalErrors = 0;
     flag result;
     int errCode;
 
+    output->report_suite_begin();
+
     <arrsTestFunctions;separator="\n\n">
 
+    output->report_suite_end();
+
     if (totalErrors > 0 ) {
-        printf("%d out of <arrsTestFunctions.Length> failed.", totalErrors);
+        output->report_tests_failed(<arrsTestFunctions.Length>, totalErrors);
         return 1;
     } else {
-        printf("All test cases (<arrsTestFunctions.Length>) run successfully.");
+        output->report_all_tests_passed(<arrsTestFunctions.Length>);
         return 0;
     }
 }
