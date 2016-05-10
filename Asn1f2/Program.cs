@@ -363,7 +363,8 @@ namespace Asn1f2
                     var vas = "ALL";
 
                     automatic_test_cases.CreateTestCases(astForBackend, acnAst3, outDir);
-                    automatic_test_cases.CreateMainFile(astForBackend, acnAst3, outDir, vas);
+                    automatic_test_cases.CreateTestSuiteFile(astForBackend, acnAst3, outDir, vas);
+                    automatic_test_cases.CreateMainFile(outDir);
                     automatic_test_cases.CreateMakeFile(astForBackend, acnAst3, outDir);
                 }
 
