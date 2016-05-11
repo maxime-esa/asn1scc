@@ -355,6 +355,7 @@ typedef struct {
 int asn1scc_run_generated_testsuite(TestOutput* output);
 
 #endif // GENERATED_ASN1SCC_TESTSUITE_H
+
 >>
 
 PrintTestSuiteSource(sTestSuiteFilename, arrsIncludedModules, arrsTestFunctions) ::= <<
