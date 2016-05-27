@@ -66,11 +66,11 @@ PrintInitialize(sTasName, sStar, sContent, bIsString) ::= <<
 #if !defined(_MSC_VER) || _MSC_VER >= 1800
 void <sTasName>_Initialize(<sTasName><sStar> pVal)
 {
+<if(!bIsString)>
+    *pVal = (<sTasName>) <sContent>;
+<else>
     static <sTasName> ret = 
         <sContent>;
-<if(!bIsString)>
-    *pVal = ret;
-<else>
     strcpy(pVal, ret);
 <endif>
 
