@@ -11,15 +11,18 @@
 
 void CalculateMantissaAndExponent(double d, int* exponent, asn1SccUint* mantissa)
 {
-    asn1SccUint* pl = NULL;
-    asn1SccUint ll = 0;
+    union {
+       double in;
+       asn1SccUint64 out;
+    } double2uint;
+
+    asn1SccUint64 ll = 0;
+
+    double2uint.in = d;
+    ll = double2uint.out;
 
     *exponent = 0;
     *mantissa = 0;
-
-    pl = (asn1SccUint*)&d;
-
-    ll = *pl;
 
     *exponent = (int)(((ll & ExpoBitMask)>>52) - 1023 - 52);
 
@@ -31,10 +34,10 @@ double GetDoubleByMantissaAndExp(asn1SccUint mantissa, int exponent)
 {
     union {
         double ret;
-        asn1SccUint u64;
+        asn1SccUint64 u64;
     } u;
    
-    asn1SccUint ll = 0;
+    asn1SccUint64 ll = 0;
     asn1SccUint exponent2 = 0; 
 
     if (mantissa == 0)
