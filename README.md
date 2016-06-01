@@ -6,7 +6,7 @@ targets C and Ada, while placing specific emphasis on embedded systems.
 You can read a comprehensive paper about it
 [here (PDF)](http://web1.see.asso.fr/erts2012/Site/0P2RUC89/7C-4.pdf),
 or a blog post with hands-on examples
-[here](http://users.softlab.ece.ntua.gr/~ttsiod/asn1.html).
+[here](https://www.thanassis.space/asn1.html).
 Suffice to say, if you are developing for embedded systems, it will probably
 interest you.
 
@@ -71,7 +71,7 @@ Usage
 The compiler has many features - it is documented in
 [Chapter 10 of the TASTE manual](http://download.tuxfamily.org/taste/snapshots/doc/taste-documentation-current.pdf),
 and you can see some simple usage examples in a related
-[blog post](http://users.softlab.ece.ntua.gr/~ttsiod/asn1.html).
+[blog post](https://www.thanassis.space/asn1.html).
 
 You can also read about
 [how the compiler has been used in the TASTE project](http://www.semantix.gr/assert/)
