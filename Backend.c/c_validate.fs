@@ -155,7 +155,7 @@ let rec EmitTypeBody (t:ConstraintType) (path:list<string>)  (m:Asn1Module) (r:A
             c_src.Emit_choice_child (c.CName_Present C) sChildBody
 
         let arrChildren = children |> List.map printChild 
-        let sTasName = GetTasCName (path |> Seq.nth 1) r.TypePrefix
+        let sTasName = GetTasCName (path |> Seq.item 1) r.TypePrefix
         c_src.Emit_choice p arrChildren (GetChoiceErrorCode path r)
     |SequenceOf(child) -> 
         let min, max = SizeableTypeUperRange t.Type.Kind t.Type.Constraints

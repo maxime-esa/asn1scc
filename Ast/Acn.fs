@@ -762,7 +762,7 @@ module Resolve =
                             let prms = acn.Parameters |> List.filter(fun x -> x.ModName = md.Value && x.TasName=ts.Value) 
                             match argIndex < (Seq.length prms)  with
                                           | false   -> raise(FsUtils.SemanticError(r.Location, "Too many arguments"))
-                                          | true    -> (Seq.nth argIndex prms).Name
+                                          | true    -> (Seq.item argIndex prms).Name
                         | _                     -> raise(BugErrorException("Expecting Reference Type"))
                     RefTypeArgument prm
                 | _                     -> r.Kind
