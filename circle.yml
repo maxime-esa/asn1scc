@@ -5,7 +5,7 @@ machine:
 dependencies:
   pre:
     - sudo apt-get update
-    - sudo apt-get install mono-devel mono-complete fsharp mono-xbuild
+    - sudo apt-get install mono-devel mono-complete fsharp mono-xbuild python3
 
 test:
   override:
