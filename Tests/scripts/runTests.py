@@ -6,6 +6,7 @@ import itertools
 import shutil
 import getopt
 import subprocess
+import distutils.spawn as spawn
 
 # Globals
 
@@ -67,8 +68,11 @@ def RunTestCase(asn1, acn, behavior, expErrMsg):
 
     asn1File = targetDir + os.sep + "sample1.asn1"
     acnFile = targetDir + os.sep + "sample1.acn"
+    launcher = '' if sys.platform == 'cygwin' else 'mono '
+    path_to_asn1scc = spawn.find_executable('Asn1f2.exe')
     res = mysystem(
-        "Asn1f2.exe  -" + language + "  -ACN -typePrefix gmamais_ " +
+        launcher + path_to_asn1scc +
+        " -" + language + "  -ACN -typePrefix gmamais_ " +
         "-renamePolicy 2 " + "-equal -atc -o '" + resolvedir(targetDir) +
         "' '" + resolvedir(asn1File) + "' '" + resolvedir(acnFile) +
         "' >tmp.err 2>&1", True)
@@ -105,6 +109,7 @@ def RunTestCase(asn1, acn, behavior, expErrMsg):
             PrintFailed("coverage failed. (less than 100%)")
             sys.exit(1)
     else:
+        prevDir = os.getcwd()
         os.chdir(targetDir)
         # mysystem("chmod +x ./runSpark.sh", False)
         # mysystem("./runSpark.sh > tmp.err  2>&1", False)
@@ -157,7 +162,7 @@ def RunTestCase(asn1, acn, behavior, expErrMsg):
             PrintWarning(
                 "BUG in python script, Unexpected combination "
                 "of res, behavior")
-        os.chdir("..")
+        os.chdir(prevDir)
     nTests += 1
 
 
