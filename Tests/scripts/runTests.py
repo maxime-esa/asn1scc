@@ -1,4 +1,4 @@
-#!/usr/bin/env python2
+#!/usr/bin/env python3
 
 import os
 import sys
@@ -46,24 +46,24 @@ def resolvedir(path):
 
 
 def PrintFailed(mssg):
-    print "\033[31m%-65s\033[0m" % (mssg)
+    print("\033[31m%-65s\033[0m" % (mssg))
 
 
 def PrintSucceededAsExpected(mssg):
-    print "\033[32m%-65s\033[0m" % (mssg)
+    print("\033[32m%-65s\033[0m" % (mssg))
 
 
 def PrintWarning(mssg):
-    print "\033[93m%-65s\033[0m" % (mssg)
+    print("\033[93m%-65s\033[0m" % (mssg))
 
 
-#behavior 0 :test case must pass
-#behavior 1 :test case must fail in the asn1f.exe, with specific error message
-#behavior 2 :test case must fail during execution of the generated executable
+# behavior 0 :test case must pass
+# behavior 1 :test case must fail in the asn1f.exe, with specific error message
+# behavior 2 :test case must fail during execution of the generated executable
 def RunTestCase(asn1, acn, behavior, expErrMsg):
     global nTests
 
-    print asn1, acn
+    print(asn1, acn)
 
     asn1File = targetDir + os.sep + "sample1.asn1"
     acnFile = targetDir + os.sep + "sample1.acn"
@@ -78,16 +78,16 @@ def RunTestCase(asn1, acn, behavior, expErrMsg):
     if behavior == 0 or behavior == 2:
         if res != 0 or err_msg != "":
             PrintFailed("Asn.1 compiler failed")
-            print "Asn.1 compiler error is: " + err_msg
+            print("Asn.1 compiler error is: " + err_msg)
             sys.exit(1)
     else:
         if res == 0 or err_msg != expErrMsg:
             PrintFailed(
                 "Asn.1 compiler didn't fail or failed with "
                 "different error message")
-            print "Expected/current messages: "
-            print "'" + expErrMsg + "'"
-            print "'" + err_msg + "'"
+            print("Expected/current messages: ")
+            print("'" + expErrMsg + "'")
+            print("'" + err_msg + "'")
             sys.exit(1)
         else:
             nTests += 1
@@ -131,7 +131,7 @@ def RunTestCase(asn1, acn, behavior, expErrMsg):
                 "ERROR: Executable didn't fail as it was expected to do...")
             sys.exit(1)
         elif behavior == 0 and res == 0:
-            #-- NOCOVERAGE
+            # -- NOCOVERAGE
             doCoverage = "-- NOCOVERAGE" not in \
                 open("sample1.asn1", 'r').readlines()[0]
             if doCoverage:
@@ -153,7 +153,7 @@ def RunTestCase(asn1, acn, behavior, expErrMsg):
                 else:
                     PrintSucceededAsExpected(excLine)
         else:
-            print res, behavior
+            print(res, behavior)
             PrintWarning(
                 "BUG in python script, Unexpected combination "
                 "of res, behavior")
@@ -162,11 +162,11 @@ def RunTestCase(asn1, acn, behavior, expErrMsg):
 
 
 def DoWork_ACN(asn1file):
-    print language, "ACN", asn1file
+    print(language, "ACN", asn1file)
 
     fnameASN = asn1file.strip()
     if not os.path.exists(fnameASN):
-        print "File '" + fnameASN + "' does not exist! "
+        print("File '" + fnameASN + "' does not exist! ")
         sys.exit(1)
 
     f = open(fnameASN, 'r')
@@ -317,13 +317,13 @@ def submain(lang, encoding, testCaseSet):
 
 
 def usage():
-    print "Usage: ", sys.argv[0], " <options>"
-    print "where <options> are:"
-    print "Mandatory:"
-    print "     -l, --lang  <language_name>"
-    print "           where <language_name> is c or Ada"
-    print "Optional:"
-    print "     -t, --testCaseSet  <asn1File> or <testcaseDir>"
+    print("Usage: ", sys.argv[0], " <options>")
+    print("where <options> are:")
+    print("Mandatory:")
+    print("     -l, --lang  <language_name>")
+    print("           where <language_name> is c or Ada")
+    print("Optional:")
+    print("     -t, --testCaseSet  <asn1File> or <testcaseDir>")
     sys.exit(1)
 
 
@@ -344,7 +344,7 @@ def main():
     except:
         usage()
     if args != []:
-        print "Invalid arguments: ", args
+        print("Invalid arguments: ", args)
         usage()
 
     lang = ""
@@ -365,11 +365,11 @@ def main():
         submain("Ada", "ACN", "")
     else:
         if lang not in ["c", "Ada"]:
-            print "Invalid language argument"
+            print("Invalid language argument")
             usage()
 
         if testCaseSet != "" and not os.path.exists(testCaseSet):
-            print "File '" + testCaseSet + "' not found."
+            print("File '" + testCaseSet + "' not found.")
             usage()
         if lang.lower() == "c":
             os.putenv("PATH", "/usr/bin:" + os.getenv("PATH"))
@@ -378,7 +378,7 @@ def main():
         f.write("==========================================\n")
         f.close()
         submain(lang, "ACN", testCaseSet)
-    print "Test run ended succesfully. Number of test cases run :", nTests
+    print("Test run ended succesfully. Number of test cases run :", nTests)
 
 
 if __name__ == "__main__":
