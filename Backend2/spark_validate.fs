@@ -176,7 +176,7 @@ let rec EmitTypeBody (t:ConstraintType) (path:list<string>)  (tasList:list<(List
             sc.Emit_choice_child (c.CName ProgrammingLanguage.Spark) sChildBody (c.CName_Present Spark)
 
         let arrChildren = children |> List.map printChild 
-        let sTasName = GetTasCName (path |> Seq.item 1) r.TypePrefix
+        let sTasName = GetTasCName (path |> Seq.nth 1) r.TypePrefix
         sc.Emit_choice sTasName arrChildren
     |SequenceOf(child) -> 
         let min, max = SizeableTypeUperRange t.Type.Kind t.Type.Constraints
