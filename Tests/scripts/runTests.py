@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python2
 
 import os
 import sys
@@ -18,17 +18,17 @@ nTests = None
 def CreateACNFile(content):
     str_start = "TEST-CASE DEFINITIONS ::= BEGIN\n"
     str_end = "END\n"
-    f = open(targetDir+os.sep+"sample1.acn", 'w')
+    f = open(targetDir + os.sep + "sample1.acn", 'w')
     f.write("-- Auto generated file\n\n")
     f.write(str_start)
-    f.write("\t"+content+"\n")
+    f.write("\t" + content + "\n")
     f.write(str_end)
     f.close()
 
 
 def mysystem(cmd, bCanFail):
     f = open("log.txt", 'a')
-    f.write(cmd+"\n")
+    f.write(cmd + "\n")
     f.close()
     ret = subprocess.call(cmd, shell=True)
     if ret != 0 and not bCanFail:
@@ -40,7 +40,7 @@ def mysystem(cmd, bCanFail):
 
 def resolvedir(path):
     if sys.platform == 'cygwin':
-        return "c:\\"+"\\".join(path.split("/")[3:])
+        return "c:\\" + "\\".join(path.split("/")[3:])
     else:
         return path
 
@@ -65,19 +65,20 @@ def RunTestCase(asn1, acn, behavior, expErrMsg):
 
     print asn1, acn
 
-    asn1File = targetDir+os.sep+"sample1.asn1"
-    acnFile = targetDir+os.sep+"sample1.acn"
+    asn1File = targetDir + os.sep + "sample1.asn1"
+    acnFile = targetDir + os.sep + "sample1.acn"
     res = mysystem(
-        "Asn1f2.exe  -" + language + "  -ACN -typePrefix gmamais_ -renamePolicy 2 " +
-        "-equal -atc -o '" + resolvedir(targetDir) + "' '" + resolvedir(asn1File) +
-        "' '" + resolvedir(acnFile)+"' >tmp.err 2>&1", True)
+        "Asn1f2.exe  -" + language + "  -ACN -typePrefix gmamais_ " +
+        "-renamePolicy 2 " + "-equal -atc -o '" + resolvedir(targetDir) +
+        "' '" + resolvedir(asn1File) + "' '" + resolvedir(acnFile) +
+        "' >tmp.err 2>&1", True)
     ferr = open("tmp.err", 'r')
     err_msg = ferr.read().replace("\r\n", "").replace("\n", "")
     ferr.close()
     if behavior == 0 or behavior == 2:
         if res != 0 or err_msg != "":
             PrintFailed("Asn.1 compiler failed")
-            print "Asn.1 compiler error is: "+err_msg
+            print "Asn.1 compiler error is: " + err_msg
             sys.exit(1)
     else:
         if res == 0 or err_msg != expErrMsg:
@@ -85,16 +86,17 @@ def RunTestCase(asn1, acn, behavior, expErrMsg):
                 "Asn.1 compiler didn't fail or failed with "
                 "different error message")
             print "Expected/current messages: "
-            print "'"+expErrMsg+"'"
-            print "'"+err_msg+"'"
+            print "'" + expErrMsg + "'"
+            print "'" + err_msg + "'"
             sys.exit(1)
         else:
             nTests += 1
             return
 
     if language == "c":
-        res = mysystem("cd "+targetDir+os.sep+"; CC=gcc make coverage", False)
-        f = open(targetDir+os.sep+"sample1.c.gcov", 'r')
+        res = mysystem(
+            "cd " + targetDir + os.sep + "; CC=gcc make coverage", False)
+        f = open(targetDir + os.sep + "sample1.c.gcov", 'r')
         lines = [
             l
             for l in f.readlines()
@@ -133,11 +135,13 @@ def RunTestCase(asn1, acn, behavior, expErrMsg):
             doCoverage = "-- NOCOVERAGE" not in \
                 open("sample1.asn1", 'r').readlines()[0]
             if doCoverage:
-                lmbd = lambda l: "test_case.adb" not in l and "mymod.adb" not in l
+
+                def hunt_signature(l):
+                    return "test_case.adb" not in l and "mymod.adb" not in l
                 lines = list(
                     itertools.dropwhile(
-                        lmbd, open("covlog.txt", 'r').readlines()))
-                lines = list(itertools.dropwhile(lmbd, lines[1:]))
+                        hunt_signature, open("covlog.txt", 'r').readlines()))
+                lines = list(itertools.dropwhile(hunt_signature, lines[1:]))
                 excLine = [
                     l
                     for l in list(lines)
@@ -162,7 +166,7 @@ def DoWork_ACN(asn1file):
 
     fnameASN = asn1file.strip()
     if not os.path.exists(fnameASN):
-        print "File '"+fnameASN+"' does not exist! "
+        print "File '" + fnameASN + "' does not exist! "
         sys.exit(1)
 
     f = open(fnameASN, 'r')
@@ -172,7 +176,7 @@ def DoWork_ACN(asn1file):
             shutil.rmtree(targetDir, ignore_errors=True)
             os.mkdir(targetDir)
             testCaseDir = os.path.dirname(os.path.abspath(fnameASN))
-            shutil.copyfile(fnameASN, targetDir+os.sep+"sample1.asn1")
+            shutil.copyfile(fnameASN, targetDir + os.sep + "sample1.asn1")
             tmp_line = line.split("--TCLS")[1].strip()
             CreateACNFile(tmp_line)
             RunTestCase(
@@ -181,7 +185,7 @@ def DoWork_ACN(asn1file):
             shutil.rmtree(targetDir, ignore_errors=True)
             os.mkdir(targetDir)
             testCaseDir = os.path.dirname(os.path.abspath(fnameASN))
-            shutil.copyfile(fnameASN, targetDir+os.sep+"sample1.asn1")
+            shutil.copyfile(fnameASN, targetDir + os.sep + "sample1.asn1")
             tmp_line = line.split("--TCLFC")[1].strip()
             tmp_err = tmp_line.split("$$$")[1].strip()
             tmp_line = tmp_line.split("$$$")[0].strip()
@@ -192,7 +196,7 @@ def DoWork_ACN(asn1file):
             shutil.rmtree(targetDir, ignore_errors=True)
             os.mkdir(targetDir)
             testCaseDir = os.path.dirname(os.path.abspath(fnameASN))
-            shutil.copyfile(fnameASN, targetDir+os.sep+"sample1.asn1")
+            shutil.copyfile(fnameASN, targetDir + os.sep + "sample1.asn1")
             tmp_line = line.split("--TCLFE")[1].strip()
             tmp_err = tmp_line.split("$$$")[1].strip()
             tmp_line = tmp_line.split("$$$")[0].strip()
@@ -204,34 +208,37 @@ def DoWork_ACN(asn1file):
             shutil.rmtree(targetDir, ignore_errors=True)
             os.mkdir(targetDir)
             testCaseDir = os.path.dirname(os.path.abspath(fnameASN))
-            shutil.copyfile(fnameASN, targetDir+os.sep+"sample1.asn1")
+            shutil.copyfile(fnameASN, targetDir + os.sep + "sample1.asn1")
             tmp_line = line.split("--TCFS")[1].strip()
             shutil.copyfile(
-                testCaseDir+os.sep+tmp_line, targetDir+os.sep+"sample1.acn")
+                testCaseDir + os.sep + tmp_line,
+                targetDir + os.sep + "sample1.acn")
             RunTestCase(
                 os.sep.join(asn1file.split(os.sep)[-2:]), tmp_line, 0, "")
         elif line.find("--TCFFC") == 0:
             shutil.rmtree(targetDir, ignore_errors=True)
             os.mkdir(targetDir)
             testCaseDir = os.path.dirname(os.path.abspath(fnameASN))
-            shutil.copyfile(fnameASN, targetDir+os.sep+"sample1.asn1")
+            shutil.copyfile(fnameASN, targetDir + os.sep + "sample1.asn1")
             tmp_line = line.split("--TCFFC")[1].strip()
             tmp_err = tmp_line.split("$$$")[1].strip()
             tmp_line = tmp_line.split("$$$")[0].strip()
             shutil.copyfile(
-                testCaseDir+os.sep+tmp_line, targetDir+os.sep+"sample1.acn")
+                testCaseDir + os.sep + tmp_line,
+                targetDir + os.sep + "sample1.acn")
             RunTestCase(
                 os.sep.join(asn1file.split(os.sep)[-2:]), tmp_line, 1, tmp_err)
         elif line.find("--TCFFE") == 0:
             shutil.rmtree(targetDir, ignore_errors=True)
             os.mkdir(targetDir)
             testCaseDir = os.path.dirname(os.path.abspath(fnameASN))
-            shutil.copyfile(fnameASN, targetDir+os.sep+"sample1.asn1")
+            shutil.copyfile(fnameASN, targetDir + os.sep + "sample1.asn1")
             tmp_line = line.split("--TCFFE")[1].strip()
             tmp_err = tmp_line.split("$$$")[1].strip()
             tmp_line = tmp_line.split("$$$")[0].strip()
             shutil.copyfile(
-                testCaseDir+os.sep+tmp_line, targetDir+os.sep+"sample1.acn")
+                testCaseDir + os.sep + tmp_line,
+                targetDir + os.sep + "sample1.acn")
             RunTestCase(
                 os.sep.join(asn1file.split(os.sep)[-2:]), tmp_line, 2, tmp_err)
         elif line.find("--TCBREAK") == 0:
@@ -292,12 +299,12 @@ def submain(lang, encoding, testCaseSet):
     if testCaseSet == "":
         testCaseSet = rootDir + os.sep + "test-cases" + os.sep + "acn"
 
-    funcName = "DoWork_"+encoding
+    funcName = "DoWork_" + encoding
     if os.path.isfile(testCaseSet):
         globals()[funcName](os.path.abspath(testCaseSet))
     else:
         for curDir in sorted(os.listdir(testCaseSet)):
-            if -1 != curDir.find('.svn'):
+            if curDir.find('.svn') != -1:
                 continue
             asn1files = [
                 x
@@ -324,7 +331,7 @@ def main():
     global rootDir, nTests
 
     rootDir = os.path.abspath(
-        os.path.dirname(os.path.abspath(sys.argv[0]))+os.sep+"..")
+        os.path.dirname(os.path.abspath(sys.argv[0])) + os.sep + "..")
     nTests = 0
 
     if len(sys.argv) == 1:
