@@ -9,4 +9,4 @@ dependencies:
 
 test:
   override:
-    "./circleci-build.sh"
+      - ./circleci-build.sh
