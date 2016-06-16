@@ -1,3 +1,6 @@
+Regression-checking testsuite: 
+[![Build and Test Status of ASN1SCC on Circle CI](https://circleci.com/gh/ttsiodras/asn1scc.png?circle-token=fcc32f415742887faa6ad69826b1cf25426df086)](https://circleci.com/gh/ttsiodras/asn1scc/tree/master)
+
 Executive summary
 =================
 
@@ -63,7 +66,18 @@ Install:
         make && sudo make install 
     ```
 
-3. Execute 'xbuild' in ASN1SCC directory
+3. Execute 'xbuild'.
+
+4. Run tests (if you want to):
+
+    ```
+    cd Tests
+    make
+    ```
+
+Note that in order to run the tests you need both GCC and GNAT.
+The tests will process hundreds of ASN.1 grammars, generate C and
+Ada source code, compile it, run it, and check the coverage results.
 
 Usage
 =====
