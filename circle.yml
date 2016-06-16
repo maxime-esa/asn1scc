@@ -1,11 +1,7 @@
-machine:
-  environment:
-    USE_SYSTEM_NUNIT_CONSOLE: 1
-
 dependencies:
   pre:
     - sudo apt-get update
-    - sudo apt-get install mono-devel mono-complete fsharp mono-xbuild python3 gnat
+    - sudo apt-get install mono-devel mono-complete fsharp mono-xbuild python3 gnat-4.8
 
 test:
   override:
