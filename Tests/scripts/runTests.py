@@ -165,9 +165,8 @@ def RunTestCase(targetDir, asn1, acn, behavior, expErrMsg):
     nTests += 1
 
 
-def DoWork_ACN(targetDir, asn1file):
+def DoWork_ACN(tmpDir, asn1file):
     print(language, "ACN", asn1file)
-
     fnameASN = asn1file.strip()
     if not os.path.exists(fnameASN):
         print("File '" + fnameASN + "' does not exist! ")
@@ -183,7 +182,7 @@ def DoWork_ACN(targetDir, asn1file):
     }
 
     f = open(fnameASN, 'r')
-    for line in f.readlines():
+    for lineno,line in enumerate(f.readlines()):
         def used(c):
             return line.find("--" + c) == 0
 
@@ -196,8 +195,9 @@ def DoWork_ACN(targetDir, asn1file):
         if case == "TCBREAK":
             sys.exit(0)
 
+        targetDir = tmpDir + "_" + str(lineno)
         shutil.rmtree(targetDir, ignore_errors=True)
-        os.mkdir(targetDir)
+        os.makedirs(targetDir)
         testCaseDir = os.path.dirname(os.path.abspath(fnameASN))
         shutil.copyfile(fnameASN, targetDir + os.sep + "sample1.asn1")
 
@@ -261,31 +261,33 @@ def submain(lang, encoding, testCaseSet):
     global language
 
     language = lang
-    targetDir = rootDir + os.sep + "tmp"
+    tmpDir = rootDir + os.sep + "tmp"
 
     if os.path.exists("tmp"):
         shutil.rmtree("tmp")
     os.mkdir("tmp")
 
-    def doWork(asn1file):
-        globals()["DoWork_" + encoding](targetDir, asn1file)
+    def doWork(testCase, asn1file):
+        testDir = tmpDir + os.sep + language + os.sep + testCase
+        globals()["DoWork_" + encoding](os.path.abspath(testDir), asn1file)
 
     if testCaseSet == "":
         testCaseSet = rootDir + os.sep + "test-cases" + os.sep + "acn"
 
     if os.path.isfile(testCaseSet):
-        doWork(os.path.abspath(testCaseSet))
+        doWork(testCaseSet, testCaseSet)
     else:
         for curDir in sorted(os.listdir(testCaseSet)):
             if curDir.find('.svn') != -1:
                 continue
+
             asn1files = [
                 x
                 for x in sorted(os.listdir(testCaseSet + os.sep + curDir))
                 if x.endswith(".asn1")]
             for asn1file in asn1files:
-                doWork(os.path.abspath(
-                        testCaseSet + os.sep + curDir + os.sep + asn1file))
+                test = curDir + os.sep + asn1file
+                doWork(test, testCaseSet + os.sep + test)
 
 
 def usage():
