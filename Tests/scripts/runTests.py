@@ -12,11 +12,10 @@ import distutils.spawn as spawn
 
 rootDir = None
 language = None
-targetDir = None
 nTests = None
 
 
-def CreateACNFile(content):
+def CreateACNFile(targetDir, content):
     str_start = "TEST-CASE DEFINITIONS ::= BEGIN\n"
     str_end = "END\n"
     f = open(targetDir + os.sep + "sample1.acn", 'w')
@@ -61,7 +60,7 @@ def PrintWarning(mssg):
 # behavior 0 :test case must pass
 # behavior 1 :test case must fail in the asn1f.exe, with specific error message
 # behavior 2 :test case must fail during execution of the generated executable
-def RunTestCase(asn1, acn, behavior, expErrMsg):
+def RunTestCase(targetDir, asn1, acn, behavior, expErrMsg):
     global nTests
 
     print(asn1, acn)
@@ -166,7 +165,7 @@ def RunTestCase(asn1, acn, behavior, expErrMsg):
     nTests += 1
 
 
-def DoWork_ACN(asn1file):
+def DoWork_ACN(targetDir, asn1file):
     print(language, "ACN", asn1file)
 
     fnameASN = asn1file.strip()
@@ -208,7 +207,7 @@ def DoWork_ACN(asn1file):
 
         (create, behavior) = case_args[case]
         if create:
-            CreateACNFile(filename)
+            CreateACNFile(targetDir, filename)
         else:
             shutil.copyfile(
                 testCaseDir + os.sep + filename,
@@ -216,7 +215,7 @@ def DoWork_ACN(asn1file):
 
         asn1 = os.sep.join(asn1file.split(os.sep)[-2:])
         expErrMsg = "" if behavior == 0 else err
-        RunTestCase(asn1, filename, behavior, expErrMsg)
+        RunTestCase(targetDir, asn1, filename, behavior, expErrMsg)
 
 
 def GetBehavior(asn1File):
@@ -259,7 +258,7 @@ knownIssues = {
 
 
 def submain(lang, encoding, testCaseSet):
-    global language, targetDir
+    global language
 
     language = lang
     targetDir = rootDir + os.sep + "tmp"
@@ -268,12 +267,14 @@ def submain(lang, encoding, testCaseSet):
         shutil.rmtree("tmp")
     os.mkdir("tmp")
 
+    def doWork(asn1file):
+        globals()["DoWork_" + encoding](targetDir, asn1file)
+
     if testCaseSet == "":
         testCaseSet = rootDir + os.sep + "test-cases" + os.sep + "acn"
 
-    funcName = "DoWork_" + encoding
     if os.path.isfile(testCaseSet):
-        globals()[funcName](os.path.abspath(testCaseSet))
+        doWork(os.path.abspath(testCaseSet))
     else:
         for curDir in sorted(os.listdir(testCaseSet)):
             if curDir.find('.svn') != -1:
@@ -283,8 +284,7 @@ def submain(lang, encoding, testCaseSet):
                 for x in sorted(os.listdir(testCaseSet + os.sep + curDir))
                 if x.endswith(".asn1")]
             for asn1file in asn1files:
-                globals()[funcName](
-                    os.path.abspath(
+                doWork(os.path.abspath(
                         testCaseSet + os.sep + curDir + os.sep + asn1file))
 
 
