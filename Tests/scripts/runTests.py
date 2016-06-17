@@ -174,82 +174,49 @@ def DoWork_ACN(asn1file):
         print("File '" + fnameASN + "' does not exist! ")
         sys.exit(1)
 
+    case_args = {
+        "TCLS" : (True,  0),
+        "TCLFC": (True,  1),
+        "TCLFE": (True,  2),
+        "TCFS" : (False, 0),
+        "TCFFC": (False, 1),
+        "TCFFE": (False, 2),
+    }
+
     f = open(fnameASN, 'r')
-    lines = f.readlines()
-    for line in lines:
-        if line.find("--TCLS") == 0:
-            shutil.rmtree(targetDir, ignore_errors=True)
-            os.mkdir(targetDir)
-            testCaseDir = os.path.dirname(os.path.abspath(fnameASN))
-            shutil.copyfile(fnameASN, targetDir + os.sep + "sample1.asn1")
-            tmp_line = line.split("--TCLS")[1].strip()
-            CreateACNFile(tmp_line)
-            RunTestCase(
-                os.sep.join(asn1file.split(os.sep)[-2:]), tmp_line, 0, "")
-        elif line.find("--TCLFC") == 0:
-            shutil.rmtree(targetDir, ignore_errors=True)
-            os.mkdir(targetDir)
-            testCaseDir = os.path.dirname(os.path.abspath(fnameASN))
-            shutil.copyfile(fnameASN, targetDir + os.sep + "sample1.asn1")
-            tmp_line = line.split("--TCLFC")[1].strip()
-            tmp_err = tmp_line.split("$$$")[1].strip()
-            tmp_line = tmp_line.split("$$$")[0].strip()
-            CreateACNFile(tmp_line)
-            RunTestCase(
-                os.sep.join(asn1file.split(os.sep)[-2:]), tmp_line, 1, tmp_err)
-        elif line.find("--TCLFE") == 0:
-            shutil.rmtree(targetDir, ignore_errors=True)
-            os.mkdir(targetDir)
-            testCaseDir = os.path.dirname(os.path.abspath(fnameASN))
-            shutil.copyfile(fnameASN, targetDir + os.sep + "sample1.asn1")
-            tmp_line = line.split("--TCLFE")[1].strip()
-            tmp_err = tmp_line.split("$$$")[1].strip()
-            tmp_line = tmp_line.split("$$$")[0].strip()
-            CreateACNFile(tmp_line)
-            RunTestCase(
-                os.sep.join(asn1file.split(os.sep)[-2:]), tmp_line, 2, tmp_err)
-        # # for file (TCF)
-        elif line.find("--TCFS") == 0:
-            shutil.rmtree(targetDir, ignore_errors=True)
-            os.mkdir(targetDir)
-            testCaseDir = os.path.dirname(os.path.abspath(fnameASN))
-            shutil.copyfile(fnameASN, targetDir + os.sep + "sample1.asn1")
-            tmp_line = line.split("--TCFS")[1].strip()
-            shutil.copyfile(
-                testCaseDir + os.sep + tmp_line,
-                targetDir + os.sep + "sample1.acn")
-            RunTestCase(
-                os.sep.join(asn1file.split(os.sep)[-2:]), tmp_line, 0, "")
-        elif line.find("--TCFFC") == 0:
-            shutil.rmtree(targetDir, ignore_errors=True)
-            os.mkdir(targetDir)
-            testCaseDir = os.path.dirname(os.path.abspath(fnameASN))
-            shutil.copyfile(fnameASN, targetDir + os.sep + "sample1.asn1")
-            tmp_line = line.split("--TCFFC")[1].strip()
-            tmp_err = tmp_line.split("$$$")[1].strip()
-            tmp_line = tmp_line.split("$$$")[0].strip()
-            shutil.copyfile(
-                testCaseDir + os.sep + tmp_line,
-                targetDir + os.sep + "sample1.acn")
-            RunTestCase(
-                os.sep.join(asn1file.split(os.sep)[-2:]), tmp_line, 1, tmp_err)
-        elif line.find("--TCFFE") == 0:
-            shutil.rmtree(targetDir, ignore_errors=True)
-            os.mkdir(targetDir)
-            testCaseDir = os.path.dirname(os.path.abspath(fnameASN))
-            shutil.copyfile(fnameASN, targetDir + os.sep + "sample1.asn1")
-            tmp_line = line.split("--TCFFE")[1].strip()
-            tmp_err = tmp_line.split("$$$")[1].strip()
-            tmp_line = tmp_line.split("$$$")[0].strip()
-            shutil.copyfile(
-                testCaseDir + os.sep + tmp_line,
-                targetDir + os.sep + "sample1.acn")
-            RunTestCase(
-                os.sep.join(asn1file.split(os.sep)[-2:]), tmp_line, 2, tmp_err)
-        elif line.find("--TCBREAK") == 0:
-            sys.exit(0)
-        else:
+    for line in f.readlines():
+        def used(c):
+            return line.find("--" + c) == 0
+
+        cases = list(case_args.keys()) + ["TCBREAK"]
+        case = next(filter(used, cases), None)
+
+        if case == None:
             continue
+
+        if case == "TCBREAK":
+            sys.exit(0)
+
+        shutil.rmtree(targetDir, ignore_errors=True)
+        os.mkdir(targetDir)
+        testCaseDir = os.path.dirname(os.path.abspath(fnameASN))
+        shutil.copyfile(fnameASN, targetDir + os.sep + "sample1.asn1")
+
+        (filename, _, err) = line.split(case)[1].strip().partition("$$$")
+        filename = filename.strip()
+        err      = err.strip()
+
+        (create, behavior) = case_args[case]
+        if create:
+            CreateACNFile(filename)
+        else:
+            shutil.copyfile(
+                testCaseDir + os.sep + filename,
+                targetDir + os.sep + "sample1.acn")
+
+        asn1 = os.sep.join(asn1file.split(os.sep)[-2:])
+        expErrMsg = "" if behavior == 0 else err
+        RunTestCase(asn1, filename, behavior, expErrMsg)
 
 
 def GetBehavior(asn1File):
