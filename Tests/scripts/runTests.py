@@ -7,6 +7,7 @@ import shutil
 import getopt
 import subprocess
 import distutils.spawn as spawn
+import multiprocessing as mp
 
 # Globals
 
@@ -300,8 +301,9 @@ def submain(lang, encoding, testCaseSet):
         
         for case in testCases:
             resetDir(testCaseToDir(case))
-            
-        list(map(doWork, tasks))
+
+        with mp.Pool(2) as p:
+            p.map(doWork, tasks)
             
 
 def usage():
