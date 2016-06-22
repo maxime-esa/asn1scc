@@ -180,13 +180,13 @@ def DoWork_ACN(tmpDir, asn1file):
         "TCFFC": (False, 1),
         "TCFFE": (False, 2),
     }
+    cases = list(case_args.keys()) + ["TCBREAK"]
 
     f = open(fnameASN, 'r')
     for lineno,line in enumerate(f.readlines()):
         def used(c):
             return line.find("--" + c) == 0
 
-        cases = list(case_args.keys()) + ["TCBREAK"]
         case = next(filter(used, cases), None)
 
         if case == None:
@@ -194,10 +194,9 @@ def DoWork_ACN(tmpDir, asn1file):
 
         if case == "TCBREAK":
             sys.exit(0)
-
-        targetDir = tmpDir + "_" + str(lineno)
-        shutil.rmtree(targetDir, ignore_errors=True)
-        os.makedirs(targetDir)
+            
+        targetDir = tmpDir + os.sep + str(lineno)
+        resetDir(targetDir)
         testCaseDir = os.path.dirname(os.path.abspath(fnameASN))
         shutil.copyfile(fnameASN, targetDir + os.sep + "sample1.asn1")
 
@@ -257,38 +256,53 @@ knownIssues = {
 }
 
 
+def testCaseToDir(testCase):
+    dir = rootDir + os.sep + "tmp" + os.sep + language + os.sep + testCase
+    return os.path.abspath(dir)
+
+def doWork(args):
+    (encoding, testCase, asn1file) = args
+    globals()["DoWork_" + encoding](testCaseToDir(testCase), asn1file)
+
+def resetDir(dir):
+    shutil.rmtree(dir, ignore_errors=True)
+    os.makedirs(dir)
+        
 def submain(lang, encoding, testCaseSet):
     global language
 
     language = lang
-    tmpDir = rootDir + os.sep + "tmp"
 
     if os.path.exists("tmp"):
         shutil.rmtree("tmp")
     os.mkdir("tmp")
 
-    def doWork(testCase, asn1file):
-        testDir = tmpDir + os.sep + language + os.sep + testCase
-        globals()["DoWork_" + encoding](os.path.abspath(testDir), asn1file)
-
     if testCaseSet == "":
         testCaseSet = rootDir + os.sep + "test-cases" + os.sep + "acn"
 
     if os.path.isfile(testCaseSet):
-        doWork(testCaseSet, testCaseSet)
+        doWork((testCaseSet, testCaseSet))
     else:
-        for curDir in sorted(os.listdir(testCaseSet)):
-            if curDir.find('.svn') != -1:
-                continue
+        dirs = [d for d in sorted(os.listdir(testCaseSet)) if d.find('.svn') == -1]
+        
+        testCases = [
+            curDir + os.sep + x
+            for curDir
+            in dirs
+            for x in sorted(os.listdir(testCaseSet + os.sep + curDir))
+            if x.endswith(".asn1")
+        ]
 
-            asn1files = [
-                x
-                for x in sorted(os.listdir(testCaseSet + os.sep + curDir))
-                if x.endswith(".asn1")]
-            for asn1file in asn1files:
-                test = curDir + os.sep + asn1file
-                doWork(test, testCaseSet + os.sep + test)
-
+        tasks = [
+            (encoding, case, testCaseSet + os.sep + case)
+            for case in testCases
+        ]
+        
+        for case in testCases:
+            resetDir(testCaseToDir(case))
+            
+        list(map(doWork, tasks))
+            
 
 def usage():
     print("Usage: ", sys.argv[0], " <options>")
