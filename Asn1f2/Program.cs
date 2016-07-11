@@ -411,62 +411,24 @@ namespace Asn1f2
         }
 
 
+        public static Tuple<ITree, string, IToken[]> Parse<L, P>(string filename, Func<ANTLRFileStream, L> lexer, Func<ITokenStream, P> parser, Func<P, ITree> root)
+            where L : Lexer where P : Parser
+        {
+            var stream = new CommonTokenStream(lexer(new ANTLRFileStream(filename)));
+            var tokens = stream.GetTokens().Cast<IToken>().ToArray();
+            var tree = root(parser(stream));
+            return Tuple.Create(tree, filename, tokens);
+        }
+
         public static List<Tuple<ITree, string, IToken[]>> ParseAsn1InputFiles(IEnumerable<string> inputFiles)
         {
-            var parsedInputFiles = new List<Tuple<ITree, string, IToken[]>>();
-
-            foreach (var inFileName in inputFiles)
-            {
-                ICharStream input = new ANTLRFileStream(inFileName);
-                asn1Lexer lexer = new asn1Lexer(input);
-                CommonTokenStream tokens = new CommonTokenStream(lexer);
-
-                List<IToken> tokenslst = new List<IToken>();
-                foreach (IToken token in tokens.GetTokens())
-                {
-                    tokenslst.Add(token);
-                }
-
-                asn1Parser parser = new asn1Parser(tokens);
-                asn1Parser.moduleDefinitions_return result = parser.moduleDefinitions();
-
-                ITree tree = (CommonTree)result.Tree;
-                CommonTreeNodeStream nodes = new CommonTreeNodeStream(tree);
-                nodes.TokenStream = tokens;
-                parsedInputFiles.Add(Tuple.Create(tree, inFileName, tokenslst.ToArray() ));
-            }
-
-            return parsedInputFiles;
+            return inputFiles.Select(f => Parse(f, fs => new asn1Lexer(fs), ts => new asn1Parser(ts), p => (CommonTree)p.moduleDefinitions().Tree)).ToList();
         }
 
         public static List<Tuple<ITree, string, IToken[]>> ParseAcnInputFiles(IEnumerable<string> inputFiles)
         {
-            var parsedInputFiles = new List<Tuple<ITree, string, IToken[]>>();
-
-            foreach (var inFileName in inputFiles)
-            {
-                ICharStream input = new ANTLRFileStream(inFileName);
-                acnLexer lexer = new acnLexer(input);
-                CommonTokenStream tokens = new CommonTokenStream(lexer);
-
-                List<IToken> tokenslst = new List<IToken>();
-                foreach (IToken token in tokens.GetTokens())
-                {
-                    tokenslst.Add(token);
-                }
-
-                acnParser parser = new acnParser(tokens);
-                acnParser.moduleDefinitions_return result = parser.moduleDefinitions();
-
-                ITree tree = (CommonTree)result.Tree;
-                CommonTreeNodeStream nodes = new CommonTreeNodeStream(tree);
-                nodes.TokenStream = tokens;
-                parsedInputFiles.Add(Tuple.Create(tree, inFileName, tokenslst.ToArray()));
-            }
-
-            return parsedInputFiles;
+            return inputFiles.Select(f => Parse(f, fs => new acnLexer(fs), ts => new acnParser(ts), p => (CommonTree)p.moduleDefinitions().Tree)).ToList();
         }
-
 
 
         static void exportCustomStg(CmdLineArgs.CmdLineArguments cmdArgs, String customStg, String cmdLingName, Action<string, string> backendInvocation)
