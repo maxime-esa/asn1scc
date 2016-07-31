@@ -423,18 +423,18 @@ and HandleAcnProperty(t:ITree) (rest:List<ITree>) (asn1Type: Asn1Type) absPath (
 
 
 
-and CheckConsistencyOfAsn1TypeWithAcnProperty asn1Kind (t:ITree) =
+and CheckConsistencyOfAsn1TypeWithAcnProperty (r:Ast.AstRoot) asn1Kind (t:ITree) =
     match BalladerProperties |> Seq.exists(fun x -> x = t.Type) with
     | true  -> ()   //ballader propery, so it can be applied to any type
     | false ->
         //1. Is it allowed
-        match (AllowedPropertiesPerType asn1Kind) |> Seq.exists(fun x -> x = t.Type) with
+        match (AllowedPropertiesPerType r asn1Kind) |> Seq.exists(fun x -> x = t.Type) with
         | false     -> raise(SemanticError(t.Location, sprintf "Acn property '%s' cannot be applied here" t.Text))
         | true      -> ()
             
 and CheckConsistencyOfAsn1TypeWithAcnProperties (t:ITree) asn1Type absPath (props:List<ITree>) (ast:AcnAst) (r:Ast.AstRoot) =
     //check each property against the asn1 type
-    props |> Seq.iter(fun x -> CheckConsistencyOfAsn1TypeWithAcnProperty asn1Type.Kind x)
+    props |> Seq.iter(fun x -> CheckConsistencyOfAsn1TypeWithAcnProperty r asn1Type.Kind x)
     //check for duplicate ACN properties
     props |> Seq.map(fun x -> x.TextL) |> CheckForDuplicates 
 
@@ -599,7 +599,7 @@ and CheckConsistencyOfAsn1TypeWithAcnProperties (t:ITree) asn1Type absPath (prop
 
 and BalladerProperties = [acnParser.PRESENT_WHEN; acnParser.ALIGNTONEXT;]
 
-and AllowedPropertiesPerType = function
+and AllowedPropertiesPerType (r:Ast.AstRoot) = function
     | Ast.Integer           -> [acnParser.ENCODING; acnParser.SIZE; acnParser.ENDIANNES; acnParser.MAPPING_FUNCTION]
     | Ast.Real              -> [acnParser.ENCODING; acnParser.ENDIANNES]
     | Ast.IA5String         -> [acnParser.ENCODING; acnParser.SIZE]
@@ -612,7 +612,9 @@ and AllowedPropertiesPerType = function
     | Ast.SequenceOf(_)     -> [acnParser.SIZE]
     | Ast.Sequence(_)       -> []
     | Ast.Choice(_)         -> [acnParser.DETERMINANT]
-    | Ast.ReferenceType(_)  -> []
+    | Ast.ReferenceType(md,ts,_)  -> 
+        let baseType = Ast.GetBaseTypeByName md ts r
+        AllowedPropertiesPerType r baseType.Kind
 
 
 and MandatoryAcnPropertiesPerType asn1Kind : List<int> =

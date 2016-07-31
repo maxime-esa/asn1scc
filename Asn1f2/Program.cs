@@ -207,12 +207,38 @@ namespace Asn1f2
 
             var mappingFunctionsModule = cmdArgs.GetOptionalArgument("mfm", null);
 
-
-            var asn1Ast0 = MapParamAstToNonParamAst.DoWork(CreateAsn1AstFromAntlrTree.CreateAstRoot(asn1Files, encodings.ToArray(),
+            /*
+             * constructs a parameterized (templatized) ASN.1 AST by antlr trees.
+             * A parameterized ASN.1 AST is the one that contains generic types. E.g.
+             * 	
+             * FrequenciesTemplate{INTEGER:someLength, SomeType } ::= SEQUENCE (SIZE(someLength)) OF SomeType
+             * 
+		     * MyTestInt ::= FrequenciesTemplate{5, INTEGER(1..20)}
+		     * MyTestReal ::= FrequenciesTemplate{5, REAL}
+             * 
+             * 
+            */
+            var parameterized_ast = CreateAsn1AstFromAntlrTree.CreateAstRoot(asn1Files, encodings.ToArray(),
                     generateEqualFunctions, cmdArgs.GetOptionalArgument("typePrefix", ""), cmdArgs.HasArgument("oss"),
-                    astXmlFile, icdUperHtmlFileName, icdAcnHtmlFileName, mappingFunctionsModule));
+                    astXmlFile, icdUperHtmlFileName, icdAcnHtmlFileName, mappingFunctionsModule);
+
+            /*
+             *  Removes parameterized types by resolving them. In the example above
+             *  FrequenciesTemplate will no longer exist
+             *  and MyTestInt and MyTestReal will defined as follows
+             *  MyTestInt ::= SEQUENCE (SIZE(5)) OF INTEGER(1..20)
+             *  MyTestReal ::= SEQUENCE (SIZE(5)) OF REAL
+             */
+            var asn1Ast0 = MapParamAstToNonParamAst.DoWork(parameterized_ast);
 
             //PrintAsn1.DoWork(asn1Ast0, outDir, ".0.asn1");
+
+            /*
+             * Performs semantic validations which cannot be handled during ANTLR parsing.
+             * For example the following definition
+             * MySeq ::= {a INTEGER, a REAL}
+             * is OK for ANTLR but of course not OK for ASN.1
+             */
             CheckAsn1.CheckFiles(asn1Ast0);
 
             if (astXmlFile != "")
@@ -226,27 +252,73 @@ namespace Asn1f2
                 return 0;
             }
 
-
+            /*
+             * Creates an ACN ast taking as INPUT ANTLR parse trees and the ASN1 AST.
+             * 
+             */
             var acnAstUnresolved = AcnCreateFromAntlr.CreateAcnAst(ParseAcnInputFiles(acnInputFiles), asn1Ast0);
-           
-
             //PrintAsn1.DoWork(asn1Ast0, outDir, ".0.asn1");
             //PrintAsn1.AcnPrint.print_AcnAst(acnAstUnresolved, "a_acn.raw.txt");
-            var asn1Ast = UpdateAcnProperties.DoWork(asn1Ast0, acnAstUnresolved).Item1;
-            var acnAstResolved = Acn.Resolve.ResolveRelativePaths(acnAstUnresolved, asn1Ast);
 
+            /*
+             * The ASN.1 AST is enriched from ACN ast
+             */
+            var asn1Ast = UpdateAcnProperties.DoWork(asn1Ast0, acnAstUnresolved).Item1;
+
+            
+            /*
+             * 
+             */ 
+            var acnAstResolved = Acn.Resolve.ResolveRelativePaths(acnAstUnresolved, asn1Ast);
             //PrintAsn1.DebugPrintAsn1Acn(asn1Ast, acnAstResolved, ".", ".1.asn1");
-            var noInnerasn1Ast = ReplaceInnerTypes.DoWork(RemoveNumericStringsAndFixEnums.DoWork(asn1Ast), acnAstResolved, false);
+
+
+            /*
+             * Performs two main transformations
+             * - NumericStrings are replaced with IA5Strings with the equivalent FROM ("0-9") constraint
+             * - calculate values in enums that ware not provided with values in ASN.1
+             */ 
+            var asn1Ast_1 = RemoveNumericStringsAndFixEnums.DoWork(asn1Ast);
+
+            /*
+             * Some complex inner types in SEQUENCES, CHOICES etc are replace with new referenced types
+             * E.g the followin ASN.1
+             * MySeq :: = SEQUENCE { a INTEGER, innerSeq SEQUENCE {b REAL, c WHATEVER}} is transformed as follows
+             * 
+             * MySeq_innerSeq ::= SEQUENCE {b REAL, c WHATEVER}
+             * MySeq :: = SEQUENCE { a INTEGER, innerSeq MySeq_innerSeq}
+             */
+            var noInnerasn1Ast = ReplaceInnerTypes.DoWork(asn1Ast_1, acnAstResolved, false);
             //PrintAsn1.DebugPrintAsn1Acn(noInnerasn1Ast.Item1, noInnerasn1Ast.Item2, ".", ".1b.asn1");
 
+            /*
+             * replace reference types that have constraints or ACN properties with a new reference type that has no constraints
+             * e.g. The following 
+             * MyInt ::= INTEGER (1..10)
+             * MySeq ::= {a MyInt(2..5)}
+             * 
+             * is transformed as 
+             * MyInt ::= INTEGER(1..10)
+             * MyInt-1 ::= INTEGER(1..10)(2..5)
+             * MySeq ::= {a MyInt-1}
+            */
             var refTypesWithNoConstraints_asn1_acn = RemoveConstraintsFromRefTypes.DoWork(noInnerasn1Ast.Item1, noInnerasn1Ast.Item2);
+
+            /*
+             * Semantic validation
+             */ 
             CheckAsn1.CheckFiles(refTypesWithNoConstraints_asn1_acn.Item1);
 
             var refTypesWithNoConstraints = refTypesWithNoConstraints_asn1_acn.Item1;
             var acnAst2 = refTypesWithNoConstraints_asn1_acn.Item2;
 
             //PrintAsn1.DebugPrintAsn1Acn(refTypesWithNoConstraints, acnAst2, ".", ".2.asn1");
+
+            /*
+             *  Semantic validation
+             */ 
             RemoveConstraintsFromRefTypes.CheckReferences(refTypesWithNoConstraints, acnAst2);
+
 
             var acnAst3 = Acn.RemoveVirtualPaths(refTypesWithNoConstraints, acnAst2);
             
