@@ -1,4 +1,3 @@
-#include <stdio.h>
 #include <string.h>
 #include <assert.h>
 #include <math.h>
@@ -15,10 +14,6 @@ static flag RequiresReverse()
     return b[0] == 1;
 }
 
-
-
-asn1SccUint int2uint(asn1SccSint v);
-asn1SccSint uint2int(asn1SccUint v, int uintSizeInBytes);
 
 
 void Acn_AlignToNextByte(BitStream* pBitStrm) 
@@ -527,6 +522,13 @@ static int Acn_Get_Int_Size_BCD(asn1SccSint intVal)
 }
 
 
+static void mystrcpy(char dest[], const char source[]) {
+    int i = 0;
+    while ((dest[i] = source[i]) != '\0') {
+        i++;
+    }
+}
+
 static void Acn_Enc_Int_BCD_OR_ASCII_ConstSize(BitStream* pBitStrm,
                                                asn1SccSint intVal,
                                                int encodedSizeInNibbles,
@@ -543,7 +545,7 @@ static void Acn_Enc_Int_BCD_OR_ASCII_ConstSize(BitStream* pBitStrm,
         encodedSizeInNibbles--;
 
         memset(tmp, '0', sizeof(tmp)-1);
-        strcpy(tmp,"8085774586302733229");
+        mystrcpy(tmp,"8085774586302733229");
         tmp[19]='0';
         for(i=encodedSizeInNibbles-1;i>=0;i--) 
             BitStream_AppendByte0(pBitStrm,(byte)tmp[i]);

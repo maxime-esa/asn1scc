@@ -361,6 +361,17 @@ flag LA_Next_Two_Bytes_00(ByteStream* pByteStrm);
 asn1SccSint milbus_encode(asn1SccSint val);
 asn1SccSint milbus_decode(asn1SccSint val);
 
+#if WORD_SIZE==8
+extern const asn1SccUint64 ber_aux[];
+#else
+asn1SccUint32 const ber_aux[];
+#endif
+
+
+asn1SccUint int2uint(asn1SccSint v);
+asn1SccSint uint2int(asn1SccUint v, int uintSizeInBytes);
+
+
 #define CHECK_BIT_STREAM(pBitStrm)	assert((pBitStrm)->currentByte*8+(pBitStrm)->currentBit<=(pBitStrm)->count*8)
 
 #ifdef _MSC_VER
