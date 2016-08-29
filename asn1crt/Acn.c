@@ -246,7 +246,7 @@ static void Encode_UnsignedInteger(BitStream* pBitStrm, asn1SccUint val, byte nB
 }
 
 
-int GetLengthInBytesOfUInt(asn1SccUint v);
+int GetLengthInBytesOfUInt(asn1SccUint64 v);
 
 
 void Acn_Enc_Int_PositiveInteger_VarSize_LengthEmbedded(BitStream* pBitStrm, asn1SccSint intVal)
@@ -521,13 +521,14 @@ static int Acn_Get_Int_Size_BCD(asn1SccSint intVal)
     return ret;
 }
 
-
+#if WORD_SIZE==8
 static void mystrcpy(char dest[], const char source[]) {
     int i = 0;
     while ((dest[i] = source[i]) != '\0') {
         i++;
     }
 }
+#endif
 
 static void Acn_Enc_Int_BCD_OR_ASCII_ConstSize(BitStream* pBitStrm,
                                                asn1SccSint intVal,
@@ -540,6 +541,7 @@ static void Acn_Enc_Int_BCD_OR_ASCII_ConstSize(BitStream* pBitStrm,
     
     memset(tmp, 0x0, sizeof(tmp));
 
+#if WORD_SIZE==8
     if (intVal == (-9223372036854775807 - 1)) {
         BitStream_AppendByte0(pBitStrm,'-');
         encodedSizeInNibbles--;
@@ -553,6 +555,7 @@ static void Acn_Enc_Int_BCD_OR_ASCII_ConstSize(BitStream* pBitStrm,
         CHECK_BIT_STREAM(pBitStrm);
         return;
     }
+#endif
 
     if (!bBCD) { // ASCII encoding enables negative integers
         if (intVal<0) {
@@ -748,9 +751,11 @@ flag Acn_Dec_Int_ASCII_ConstSize(BitStream* pBitStrm, asn1SccSint* pIntVal, int 
 //return values is in bytes
 static int Acn_Get_Int_Size_ASCII(asn1SccSint intVal)
 {
+#if WORD_SIZE==8
     //the number of digits plus one character for the sign '+' or '-'
     if (intVal == (-9223372036854775807 - 1))
         return 20;
+#endif
     if (intVal<0)
         return Acn_Get_Int_Size_BCD(-intVal) +1;
     return Acn_Get_Int_Size_BCD(intVal) +1;

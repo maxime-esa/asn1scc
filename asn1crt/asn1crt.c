@@ -445,8 +445,8 @@ int GetNumberOfBitsForNonNegativeInteger(asn1SccUint v)
 #endif
 }
 
-int GetLengthInBytesOfUInt(asn1SccUint v);
-int GetLengthInBytesOfUInt(asn1SccUint v)
+int GetLengthInBytesOfUInt(asn1SccUint64 v);
+int GetLengthInBytesOfUInt(asn1SccUint64 v)
 {
     int ret=0;
     asn1SccUint32 v32 = (asn1SccUint32)v;
@@ -654,7 +654,7 @@ void BitStream_EncodeReal(BitStream* pBitStrm, double v)
     int nExpLen;
     int nManLen;
     int exponent;
-    asn1SccUint mantissa;
+    asn1SccUint64 mantissa;
 
 
     if (v==0.0) 
