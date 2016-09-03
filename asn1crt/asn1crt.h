@@ -37,16 +37,15 @@ typedef unsigned int asn1SccUint32;
 
 typedef unsigned char byte;
 
-
-#if WORD_SIZE==8
 typedef long long asn1SccSint64;
 typedef unsigned long long asn1SccUint64;
+
+#if WORD_SIZE==8
 typedef asn1SccUint64 asn1SccUint;
 typedef asn1SccSint64 asn1SccSint;
 #else
 typedef asn1SccUint32 asn1SccUint;
 typedef asn1SccSint32 asn1SccSint;
-
 #endif
 
 #ifdef _MSC_VER
@@ -143,7 +142,7 @@ flag BitStream_DecodeReal(BitStream* pBitStrm, double* v);
 
 
 
-void CalculateMantissaAndExponent(double d, int* exp, asn1SccUint* mantissa);
+void CalculateMantissaAndExponent(double d, int* exp, asn1SccUint64* mantissa);
 double GetDoubleByMantissaAndExp(asn1SccUint mantissa, int exp);
 
 int GetNumberOfBitsForNonNegativeInteger(asn1SccUint v);
@@ -360,6 +359,17 @@ flag LA_Next_Two_Bytes_00(ByteStream* pByteStrm);
 
 asn1SccSint milbus_encode(asn1SccSint val);
 asn1SccSint milbus_decode(asn1SccSint val);
+
+#if WORD_SIZE==8
+extern const asn1SccUint64 ber_aux[];
+#else
+extern const asn1SccUint32 ber_aux[];
+#endif
+
+
+asn1SccUint int2uint(asn1SccSint v);
+asn1SccSint uint2int(asn1SccUint v, int uintSizeInBytes);
+
 
 #define CHECK_BIT_STREAM(pBitStrm)	assert((pBitStrm)->currentByte*8+(pBitStrm)->currentBit<=(pBitStrm)->count*8)
 

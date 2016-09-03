@@ -423,8 +423,12 @@ namespace Asn1f2
                 WriteTextFile(Path.Combine(outDir, "asn1crt.h"), Resource1.asn1crt1);
                 WriteTextFile(Path.Combine(outDir, "acn.c"), Resource1.Acn);
                 WriteTextFile(Path.Combine(outDir, "real.c"), Resource1.real);
-                WriteTextFile(Path.Combine(outDir, "ber.c"), Resource1.ber);
-                WriteTextFile(Path.Combine(outDir, "xer.c"), Resource1.xer);
+                if (encodings.Contains(ParameterizedAsn1Ast.Asn1Encoding.BER)) {
+                    WriteTextFile(Path.Combine(outDir, "ber.c"), Resource1.ber);
+                }
+                if (encodings.Contains(ParameterizedAsn1Ast.Asn1Encoding.XER)) {
+                    WriteTextFile(Path.Combine(outDir, "xer.c"), Resource1.xer);
+                }
 
                 var renamePolicy = getRenamePolicy(cmdArgs, ParameterizedAsn1Ast.EnumRenamePolicy.SelectiveEnumerants);
                 var astForBackend = EnsureUniqueEnumNames.DoWork(refTypesWithNoConstraints, renamePolicy);

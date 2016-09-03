@@ -142,7 +142,7 @@ $arrsChildren;separator=" | "$
 
 /* Sequence (record) field. May be optional and may have a default value */
 SequenceChild(sName, sCName, bOptional, sDefVal, nLine, nPos, sChildContent ) ::= <<
-$sName$ : $sChildContent$
+$sCName$ : $sChildContent$
 >>
 
 /* Full sequence (record) type */
