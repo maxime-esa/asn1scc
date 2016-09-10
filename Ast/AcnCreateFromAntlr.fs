@@ -226,13 +226,27 @@ and CreateAcnType (files:seq<ITree*string*array<IToken>>) (t:ITree) (asn1Type:As
     let childrenEncSpec = match asn1Type.Kind with
                           | Enumerated(_)   -> None
                           | _               -> t.GetOptChild(acnParser.CHILDREN_ENC_SPEC)
+    let asn1ChildInfo, childType = match asn1Type.Kind with
+                        | Sequence(chInfo)  -> chInfo, "component"
+                        | Choice(chInfo)    -> chInfo, "alternative"
+                        | _                 -> [], ""
 
     match childrenEncSpec with
     | None                  -> ast0
     | Some(childrenList)    -> 
         //check that ACN inserted fields are unique
-        let newChildren = childrenList.Children |> Seq.filter(fun x -> x.Type = acnParser.CHILD_NEW) |> Seq.map(fun x -> x.GetChild(0).TextL)
+        let newChildren = childrenList.Children |> Seq.filter(fun x -> x.Type = acnParser.CHILD_NEW) |> Seq.map(fun x -> x.GetChild(0).TextL) |> Seq.toList
         newChildren |> CheckForDuplicates
+
+        //check for asn1 children that are not present in the ACN spec list
+        let existingChildren = childrenList.Children |> Seq.filter(fun x -> x.Type = acnParser.CHILD) |> Seq.map(fun x -> x.GetChild(0).TextL) |> Seq.toList
+
+        asn1ChildInfo |> 
+        List.map(fun x -> x.Name) |> 
+        List.filter(fun asn1Ch ->  not (existingChildren |> Seq.exists (fun acnCh -> acnCh.Value = asn1Ch.Value))  ) |>
+        Seq.iter(fun x -> 
+            raise(SemanticError(x.Location, sprintf "No ACN specification provided for '%s' %s" x.Value childType))
+            )
 
         childrenList.Children |>List.fold(fun a x -> CreateAcnChild files x  asn1Type absPath a r tokens ) ast0
 

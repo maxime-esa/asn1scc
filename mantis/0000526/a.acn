@@ -1,0 +1,8 @@
+TASTE-Dataview DEFINITIONS ::= BEGIN
+
+    Word32 [] {
+	  a[],
+	  b[]
+    }
+
+END

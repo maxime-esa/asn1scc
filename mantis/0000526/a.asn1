@@ -1,0 +1,11 @@
+TASTE-Dataview DEFINITIONS ::=
+BEGIN
+
+ Word32 ::= SEQUENCE {
+	a INTEGER,
+	b REAL,
+	c INTEGER(1..10)
+ }
+
+
+END
