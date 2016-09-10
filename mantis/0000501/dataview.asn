@@ -1,0 +1,12 @@
+TASTE-Dataview DEFINITIONS ::=
+BEGIN
+
+Seq ::= SEQUENCE {
+	a BOOLEAN OPTIONAL
+}
+
+SeqPresent ::= Seq (WITH COMPONENTS {a PRESENT})
+
+SeqAbsent ::= Seq (WITH COMPONENTS {a ABSENT})
+
+END

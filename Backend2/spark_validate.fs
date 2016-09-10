@@ -108,9 +108,12 @@ let CollectLocalVars (t:Asn1Type) (tas:TypeAssignment) (m:Asn1Module) (r:AstRoot
 
 let EmitTypeBodyBase (t:ConstraintType) (path:list<string>)  (tasList:list<(List<string>*(string*string))>) (m:Asn1Module) (r:AstRoot)  =
     let alphaFuncName = ToC ((path |> Seq.skip 1).StrJoin("_").Replace("#","elem"))
-    let arrCons = t.Type.Constraints |> Seq.map(fun c -> PrintTypeContraint t path c alphaFuncName tasList m r)
+    let arrCons = t.Type.Constraints |> Seq.map(fun c -> PrintTypeContraint t path c alphaFuncName tasList m r) |> Seq.toList
     match (GetTypeConstraintsErrorCode t.Type.Constraints path r) with
-    | None  -> raise(BugErrorException "This type does not have constraints, so no ErrorCode exists")
+    | None  -> 
+        match arrCons with
+        | []    -> sc.Emit_type  arrCons "0"
+        | _     -> raise(BugErrorException "This type does not have constraints, so no ErrorCode exists")
     | Some(errCodeName) ->    sc.Emit_type  arrCons errCodeName        
 
 

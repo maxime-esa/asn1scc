@@ -243,7 +243,7 @@ let rec GenerateValues (a:Asn1Type) modName (r:AstRoot) (acn:AcnTypes.AcnAstReso
                         yield SeqOfValue ([1I..newMax] |> List.map(fun i -> {Asn1Value.Kind=chVal; Location=emptyLocation}))
             
             | Sequence(childrn)    ->
-                let children = childrn |> List.filter(fun x -> not x.AcnInsertedField)
+                let children = childrn |> List.filter(fun x -> not x.AcnInsertedField) |> List.filter(fun x -> not x.AlwaysAbsent)
                 let HandleChild (ch:ChildInfo) =
                     let childValues = GenerateValues (RemoveWithComponents ch.Type r) modName r acn
                     match Seq.isEmpty childValues with
