@@ -227,9 +227,9 @@ and CreateAcnType (files:seq<ITree*string*array<IToken>>) (t:ITree) (asn1Type:As
                           | Enumerated(_)   -> None
                           | _               -> t.GetOptChild(acnParser.CHILDREN_ENC_SPEC)
     let asn1ChildInfo, childType = match asn1Type.Kind with
-                        | Sequence(chInfo)  -> chInfo, "component"
-                        | Choice(chInfo)    -> chInfo, "alternative"
-                        | _                 -> [], ""
+                                   | Sequence(chInfo)  -> chInfo, "component"
+                                   | Choice(chInfo)    -> chInfo, "alternative"
+                                   | _                 -> [], ""
 
     match childrenEncSpec with
     | None                  -> ast0

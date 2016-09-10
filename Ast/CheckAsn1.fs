@@ -26,49 +26,71 @@ let rec IsValueInt (v:Asn1Value) ast =
     | _                                        -> false
 
 ///it checks if the input type t matches with input value v. It returns true/false
-let rec TypeValueMatch (t:Asn1Type) (v:Asn1Value) ast =
+
+let rec TypeValueMatch (t:Asn1Type) (typeNames:(StringLoc*StringLoc)list) (v:Asn1Value) (valueTypeNames:(StringLoc*StringLoc)list) (ast:AstRoot) =
+    let getRefValueBaseTypes modName vasName =
+        let mdl = ast.GetModuleByName(modName)
+        let vas = mdl.GetValueAsigByName vasName ast
+        match vas.Type.Kind with
+        | ReferenceType(md,ts,_)    -> [(md,ts)]
+        | _                         -> []
     let isNumeric s = true
-    match t.Kind, v.Kind with
-    | ReferenceType(modName,vasName,_), _               -> TypeValueMatch (GetActualType t ast) v ast
-    | Integer, IntegerValue(_)                          -> true
-    | Real, RealValue(_)                                -> true
-    | Real, IntegerValue(_)                             -> true
-    | IA5String, StringValue(_)                         -> true
-    | NumericString, StringValue(s) when isNumeric s    -> true
-    | NullType, NullValue                               -> true
-    | Boolean, BooleanValue(_)                          -> true
-    | BitString(_), BitStringValue(_)                   -> true
-    | BitString(_), OctetStringValue(_)                 -> true
-    | OctetString, OctetStringValue(_)                  -> true
-    | OctetString, BitStringValue(bitVal)               -> true
-    | Enumerated(enItems), RefValue(modName,vasName)      -> 
-        if  enItems |> Seq.exists(fun en -> en.Name = vasName) then 
-            true
-        else
-            TypeValueMatch t (GetBaseValue modName vasName ast) ast
-    | SequenceOf(child), SeqOfValue(chValues)           -> chValues |> Seq.forall(fun chv -> TypeValueMatch child chv ast)
-    | Sequence(children), SeqValue(chValues)            -> 
-        let checkChild (ch:ChildInfo) = 
-            let chValue = chValues |> Seq.tryFind(fun v -> ch.Name = (fst v))
-            match chValue with
-            | Some(_,actVal)    ->  TypeValueMatch ch.Type actVal ast
-            | None              ->  match ch.Optionality with
-                                    | Some(Optional(_))    -> true
-                                    | Some(Default(_))     -> true
-                                    | Some(AlwaysAbsent)   -> true
-                                    | _                    -> false
-        let childrenStatus = children |> Seq.forall checkChild
-        let invalidValues = chValues |> Seq.exists(fun v -> not (children |> Seq.exists(fun c -> c.Name = (fst v))) )
-        childrenStatus &&  not(invalidValues)
-    | Choice(children), ChValue(altName, chVal)         ->
-        let ch = children |> Seq.tryFind(fun x-> x.Name = altName)
-        match ch with
-        | None  -> false
-        | Some(child)                                   -> TypeValueMatch child.Type chVal ast
-    | _, RefValue(modName,vasName)                               -> 
-        let vas = GetBaseValue modName vasName ast
-        TypeValueMatch t vas ast
-    | _,_                                               -> false
+    let typesMatch = 
+        match typeNames, valueTypeNames with
+        | [], []    -> true
+        | _::_, [] -> true
+        | [], _::_ -> true
+        | (t_mdName,tasName)::_, (v_mdName,v_tasName)::_   -> 
+            match t_mdName = v_mdName && tasName = v_tasName with
+            | true -> true
+            | false -> raise(SemanticError(v.Location, sprintf "Expecting value of type '%s.%s' but a value of type '%s.%s' was provided" t_mdName.Value tasName.Value v_mdName.Value v_tasName.Value))
+    match typesMatch with
+    | false -> false
+    | true  ->
+        match t.Kind, v.Kind with
+        | ReferenceType(modName,vasName,_), _               -> TypeValueMatch (GetActualType t ast) ((modName,vasName)::typeNames) v valueTypeNames ast
+        | Integer, IntegerValue(_)                          -> true
+        | Real, RealValue(_)                                -> true
+        | Real, IntegerValue(_)                             -> true
+        | IA5String, StringValue(_)                         -> true
+        | NumericString, StringValue(s) when isNumeric s    -> true
+        | NullType, NullValue                               -> true
+        | Boolean, BooleanValue(_)                          -> true
+        | BitString(_), BitStringValue(_)                   -> true
+        | BitString(_), OctetStringValue(_)                 -> true
+        | OctetString, OctetStringValue(_)                  -> true
+        | OctetString, BitStringValue(bitVal)               -> true
+        | Enumerated(enItems), RefValue(modName,vasName)      -> 
+            if  enItems |> Seq.exists(fun en -> en.Name = vasName) then 
+                true
+            else
+                let basType = getRefValueBaseTypes modName vasName
+                TypeValueMatch t typeNames (GetBaseValue modName vasName ast) (basType@valueTypeNames) ast
+        | SequenceOf(child), SeqOfValue(chValues)           -> 
+            chValues |> Seq.forall(fun chv -> TypeValueMatch child [] chv [] ast)
+        | Sequence(children), SeqValue(chValues)            -> 
+            let checkChild (ch:ChildInfo) = 
+                let chValue = chValues |> Seq.tryFind(fun v -> ch.Name = (fst v))
+                match chValue with
+                | Some(_,actVal)    ->  TypeValueMatch ch.Type [] actVal [] ast
+                | None              ->  match ch.Optionality with
+                                        | Some(Optional(_))    -> true
+                                        | Some(Default(_))     -> true
+                                        | Some(AlwaysAbsent)   -> true
+                                        | _                    -> false
+            let childrenStatus = children |> Seq.forall checkChild
+            let invalidValues = chValues |> Seq.exists(fun v -> not (children |> Seq.exists(fun c -> c.Name = (fst v))) )
+            childrenStatus &&  not(invalidValues)
+        | Choice(children), ChValue(altName, chVal)         ->
+            let ch = children |> Seq.tryFind(fun x-> x.Name = altName)
+            match ch with
+            | None  -> false
+            | Some(child)                                   -> TypeValueMatch child.Type [] chVal [] ast
+        | _, RefValue(modName,vasName)                               -> 
+            let vas = GetBaseValue modName vasName ast
+            let basType = getRefValueBaseTypes modName vasName
+            TypeValueMatch t typeNames vas (basType@valueTypeNames) ast
+        | _,_                                               -> false
 
 
 
@@ -229,36 +251,42 @@ let rec getEnumeratedAllowedEnumerations ast (m:Asn1Module) (t:Asn1Type) =
 
 
 ///checks if the input type t matches with input value v (by calling TypeValueMatch) and raises a user exception if not
-let rec CheckValueType (t:Asn1Type) (v:Asn1Value) ast=
-    if not (TypeValueMatch t v ast) then
-        match t.Kind, v.Kind with
-        | SequenceOf(child), SeqOfValue(chValues)  -> chValues |> Seq.iter(fun chv -> CheckValueType child chv ast)
-        | Choice(children), ChValue(altName, chVal)         ->
-            let ch = children |> Seq.tryFind(fun x-> x.Name = altName)
-            match ch with
-            | None  -> raise(SemanticError(v.Location, (sprintf "Invalid id:%s" altName.Value) ))
-            | Some(child)           -> CheckValueType child.Type chVal ast
+let CheckValueType (ot:Asn1Type) (v:Asn1Value) ast=
+    let rec CheckValueType (t:Asn1Type) (v:Asn1Value) ast=
+        if not (TypeValueMatch t [] v [] ast) then
+            match t.Kind, v.Kind with
+            | SequenceOf(child), SeqOfValue(chValues)  -> chValues |> Seq.iter(fun chv -> CheckValueType child chv ast)
+            | Choice(children), ChValue(altName, chVal)         ->
+                let ch = children |> Seq.tryFind(fun x-> x.Name = altName)
+                match ch with
+                | None  -> raise(SemanticError(v.Location, (sprintf "Invalid id:%s" altName.Value) ))
+                | Some(child)           -> CheckValueType child.Type chVal ast
 
-        | Sequence(children), SeqValue(chValues)            -> 
-            let checkChild (ch:ChildInfo) = 
-                let chValue = chValues |> Seq.tryFind(fun v -> ch.Name = (fst v))
-                match chValue with
-                | Some(_,actVal)    ->  CheckValueType ch.Type actVal ast
-                | None              ->  match ch.Optionality with
-                                        | Some(Optional(_))    -> ()
-                                        | Some(Default(_))     -> ()
-                                        | Some(AlwaysAbsent)   -> ()
-                                        | _                    -> raise(SemanticError(v.Location, sprintf "missing value for component: %s" ch.Name.Value ))
+            | Sequence(children), SeqValue(chValues)            -> 
+                let checkChild (ch:ChildInfo) = 
+                    let chValue = chValues |> Seq.tryFind(fun v -> ch.Name = (fst v))
+                    match chValue with
+                    | Some(_,actVal)    ->  CheckValueType ch.Type actVal ast
+                    | None              ->  match ch.Optionality with
+                                            | Some(Optional(_))    -> ()
+                                            | Some(Default(_))     -> ()
+                                            | Some(AlwaysAbsent)   -> ()
+                                            | _                    -> raise(SemanticError(v.Location, sprintf "missing value for component: %s" ch.Name.Value ))
                                             
-            let childrenStatus = children |>  Seq.filter(fun x -> not x.AcnInsertedField) |> Seq.iter checkChild
-            chValues |> Seq.iter(fun v -> if not (children |> Seq.exists(fun c -> c.Name = (fst v))) then
-                                            let unknownName = (fst v)
-                                            let (nm, loc) = unknownName.AsTupple
-                                            raise (SemanticError(loc, (sprintf "Invalid id: %s" nm)) )
-                                    )
-        | ReferenceType(_),_                        -> CheckValueType (GetActualType t ast) v ast
-        | _                                        -> raise(SemanticError(v.Location, sprintf "Expecting %A value" t.Kind))
-    
+                let childrenStatus = children |>  Seq.filter(fun x -> not x.AcnInsertedField) |> Seq.iter checkChild
+                chValues |> Seq.iter(fun v -> if not (children |> Seq.exists(fun c -> c.Name = (fst v))) then
+                                                let unknownName = (fst v)
+                                                let (nm, loc) = unknownName.AsTupple
+                                                raise (SemanticError(loc, (sprintf "Invalid id: %s" nm)) )
+                                        )
+            | ReferenceType(_),_                        -> CheckValueType (GetActualType t ast) v ast
+            | _                                        -> 
+                let typeName =
+                    match ot.Kind with
+                    | ReferenceType(m,n,_)  -> sprintf "%s.%s" m.Value n.Value
+                    | _                     -> sprintf "%A" t.Kind
+                raise(SemanticError(v.Location, sprintf "Expecting a '%s' value" typeName))
+    CheckValueType ot v ast
 ///checks if two types are ASN.1 compatible
 let rec AreTypesCompatible (t1:Asn1Type) (t2:Asn1Type) ast =
     match t1.Kind, t2.Kind with
