@@ -114,7 +114,7 @@ let rec PrintAsn1Value (v:Asn1Value) bChoicesInline bPrintRealNegsAsStrings (t:A
         let min,max = uPER.GetSizebaleMinMax t.Kind t.Constraints r
         let childTasName = GetTasNameByKind childType.Kind m r
         let arrChVals = childValues |> Seq.map(fun x-> PrintAsn1Value x bChoicesInline bPrintRealNegsAsStrings childType (childTasName,0) m r )    
-        let defValue = GetDefaultValueByType childType m r
+        let defValue = GetDefaultValueByType None childType m r
         let sDefValue = PrintAsn1Value defValue bChoicesInline bPrintRealNegsAsStrings childType (childTasName,0) m r
         sv.PrintSequenceOfValue (ToC sTasName) (min=max) (BigInteger (Seq.length childValues)) arrChVals sDefValue
     | SeqValue(childVals), Sequence(children)   ->
@@ -132,7 +132,7 @@ let rec PrintAsn1Value (v:Asn1Value) bChoicesInline bPrintRealNegsAsStrings (t:A
                     match ch.Optionality with
                     |Some(Default(defVal))  ->  yield sv.PrintSequenceValueChild (ch.CName ProgrammingLanguage.Spark) (PrintAsn1Value defVal bChoicesInline bPrintRealNegsAsStrings ch.Type (GetTasNameByKind ch.Type.Kind m r, 0) m r)
                     |Some(Optional)         ->  
-                        let initVal = GetDefaultValueByType ch.Type m r 
+                        let initVal = GetDefaultValueByType None ch.Type m r 
                         yield sv.PrintSequenceValueChild (ch.CName ProgrammingLanguage.Spark) (PrintAsn1Value initVal bChoicesInline bPrintRealNegsAsStrings ch.Type (GetTasNameByKind ch.Type.Kind m r, 0) m r)
                     |_                      -> () } |> Seq.toList
         let allChildren = match Seq.isEmpty optChildren with

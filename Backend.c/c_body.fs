@@ -28,7 +28,7 @@ let PrintTypeAss (t:TypeAssignment) (m:Asn1Module) (f:Asn1File) (r:AstRoot) (acn
         let sName = t.GetCName r.TypePrefix
         let sStar = (TypeStar t.Type r)
         let newt = RemoveWithComponents t.Type r
-        let initVal = Asn1Values.GetDefaultValueByType newt m r
+        let initVal = Asn1Values.GetDefaultValueByType (Some 1I) newt m r
         let bIsString = match (Ast.GetActualType t.Type r).Kind with
                         | IA5String | NumericString -> true
                         | _                         -> false

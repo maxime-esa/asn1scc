@@ -107,8 +107,6 @@ let rec PrintAsn1Value (v:Asn1Value) (t:Asn1Type) (bInGlobalsScope:bool) (tasNam
         let min,max = uPER.GetSizebaleMinMax t.Kind t.Constraints r
         let childTasName = GetTasNameByKind childType.Kind m r
         let arrChVals = childValues |> Seq.map(fun x-> PrintAsn1Value x  childType bInGlobalsScope (childTasName,0) m r )    
-//        let defValue = GetDefaultValueByType childType m r
-//        let sDefValue = PrintAsn1Value defValue  childType (childTasName,0) m r
         c_var.PrintSequenceOfValue (min=max)  arrChVals 
     | SeqValue(childVals), Sequence(children)   ->
         let PrintChild (ch:ChildInfo) (chv:Asn1Value) = 
@@ -130,7 +128,7 @@ let rec PrintAsn1Value (v:Asn1Value) (t:Asn1Type) (bInGlobalsScope:bool) (tasNam
                         match ch.Optionality with
                         |Some(Default(defVal))  ->  yield c_var.PrintSequenceValueChild (ch.CName ProgrammingLanguage.C) (PrintAsn1Value defVal ch.Type bInGlobalsScope (GetTasNameByKind ch.Type.Kind m r, 0) m r)
                         |Some(Optional)         ->  
-                            let initVal = GetDefaultValueByType ch.Type m r 
+                            let initVal = GetDefaultValueByType None ch.Type m r 
                             yield c_var.PrintSequenceValueChild (ch.CName ProgrammingLanguage.C) (PrintAsn1Value initVal  ch.Type bInGlobalsScope (GetTasNameByKind ch.Type.Kind m r, 0) m r)
                         |_                      -> () 
             } |> Seq.toList

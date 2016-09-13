@@ -1,0 +1,9 @@
+TASTE-Dataview DEFINITIONS ::=
+BEGIN
+ 
+ MySeqOf ::= SEQUENCE  (SIZE (10)) OF  INTEGER
+ 
+ MyOctet ::= OCTET STRING (SIZE (10))
+ 
+
+END

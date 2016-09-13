@@ -21,8 +21,13 @@ open uPER
 
 
 
-let rec GetDefaultValueByType (t:Asn1Type) (m:Asn1Module) (r:AstRoot) = 
+let rec GetDefaultValueByType (maxSize:BigInteger option) (t:Asn1Type) (m:Asn1Module) (r:AstRoot) = 
     let getVal vKind = { Asn1Value.Kind = vKind; Location = emptyLocation}
+    let upperBound (min:BigInteger) =
+        match maxSize with
+        | None          -> min
+        | Some maxSize  -> if maxSize < min then maxSize else min
+
     match t.Kind with
     | Integer   ->
         match (GetTypeUperRange t.Kind t.Constraints r) with
@@ -38,7 +43,9 @@ let rec GetDefaultValueByType (t:Asn1Type) (m:Asn1Module) (r:AstRoot) =
         getVal (StringValue (loc (System.String(chr,int min)) ))
     | OctetString               ->
         let min,max = uPER.GetSizebaleMinMax t.Kind t.Constraints r
-        let chVals = [1I..min] |> List.map(fun i -> ByteLoc.ByValue 0uy)
+
+        let chVals = 
+            [1I .. (upperBound min)] |> List.map(fun i -> ByteLoc.ByValue 0uy)
         getVal (OctetStringValue chVals)
     | BitString                 ->
         let min,max = uPER.GetSizebaleMinMax t.Kind t.Constraints r
@@ -54,20 +61,20 @@ let rec GetDefaultValueByType (t:Asn1Type) (m:Asn1Module) (r:AstRoot) =
             getVal (RefValue (m.Name, items.Head.Name))
     | SequenceOf(child)         ->
         let min,max = uPER.GetSizebaleMinMax t.Kind t.Constraints r
-        let chVals = [1I..min] |> List.map(fun i -> GetDefaultValueByType child m r )
+        let chVals = [1I .. (upperBound min)] |> List.map(fun i -> GetDefaultValueByType maxSize child m r )
         getVal (SeqOfValue chVals)
     | Choice(children)          ->
         let fc = children.Head
-        getVal (ChValue (fc.Name, GetDefaultValueByType fc.Type m r))
+        getVal (ChValue (fc.Name, GetDefaultValueByType maxSize fc.Type m r))
     | Sequence(children)        ->
         let getChildValue (c:ChildInfo) =
             match c.Optionality with
             |Some(Default(v))   -> c.Name, v
-            | _                 -> c.Name, (GetDefaultValueByType c.Type m r)
+            | _                 -> c.Name, (GetDefaultValueByType maxSize c.Type m r)
         let chVals = children |> List.filter(fun x-> not x.AcnInsertedField) |> List.map getChildValue
         getVal (SeqValue chVals)
     | NullType                  -> getVal NullValue
     |ReferenceType(modName,tasName, _) ->
         let newModule = r.GetModuleByName modName
         let baseType = Ast.GetActualTypeAllConsIncluded t r
-        GetDefaultValueByType baseType newModule r
+        GetDefaultValueByType maxSize baseType newModule r
