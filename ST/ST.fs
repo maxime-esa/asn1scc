@@ -105,7 +105,10 @@ type BigIntegerFormatRenderer() =
                 if obj = (BigInteger System.Int64.MinValue) then
                     "LLONG_MIN"
                 else
-                    obj.ToString() + "LL"
+                    if (obj > BigInteger Int64.MaxValue) then
+                        obj.ToString() + "ULL"
+                    else
+                        obj.ToString() + "LL"
             | _                         -> obj.ToString()
     static member TS2(o:Object, format) =
         let frmStr = "{0:" + format + "}";

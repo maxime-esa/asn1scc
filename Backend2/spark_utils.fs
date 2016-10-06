@@ -242,12 +242,15 @@ module SparkDeps =
         |Acn.TwosComplement_ConstSize_big_endian_64
         |Acn.TwosComplement_ConstSize_little_endian_64
         |Acn.ASCII_ConstSize(_)
+        |Acn.ASCII_UINT_ConstSize _
         |Acn.BCD_ConstSize(_)
         |Acn.TwosComplement_ConstSize(_)                        -> false
         |Acn.PositiveInteger_VarSize_LengthEmbedded
         |Acn.TwosComplement_VarSize_LengthEmbedded
         |Acn.ASCII_VarSize_LengthEmbedded
         |Acn.ASCII_VarSize_NullTerminated _
+        |Acn.ASCII_UINT_VarSize_LengthEmbedded
+        |Acn.ASCII_UINT_VarSize_NullTerminated _
         |Acn.BCD_VarSize_LengthEmbedded
         |Acn.BCD_VarSize_NullTerminated    _                     -> true
 

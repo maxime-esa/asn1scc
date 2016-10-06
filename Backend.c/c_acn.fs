@@ -455,6 +455,12 @@ let rec EmitTypeBodyAux (t:Asn1Type) (sTasName:string) (path:list<string>, altPa
         | Acn.ASCII_ConstSize(nBits)                    -> c_acn.ASCII_ConstSize p (nBits/8I) mappingFunction codec
         | Acn.ASCII_VarSize_LengthEmbedded              -> c_acn.ASCII_VarSize_LengthEmbedded p mappingFunction codec
         | Acn.ASCII_VarSize_NullTerminated _            -> c_acn.ASCII_VarSize_NullTerminated p mappingFunction codec
+
+        | Acn.ASCII_UINT_ConstSize(nBits)               -> c_acn.ASCII_UINT_ConstSize p (nBits/8I) mappingFunction codec
+        | Acn.ASCII_UINT_VarSize_LengthEmbedded         -> c_acn.ASCII_UINT_VarSize_LengthEmbedded p mappingFunction codec
+        | Acn.ASCII_UINT_VarSize_NullTerminated _       -> c_acn.ASCII_UINT_VarSize_NullTerminated p mappingFunction codec
+
+
         | Acn.BCD_ConstSize(nBits)                      -> c_acn.BCD_ConstSize p (nBits/4I) mappingFunction codec
         | Acn.BCD_VarSize_LengthEmbedded                -> c_acn.BCD_VarSize_LengthEmbedded p mappingFunction codec
         | Acn.BCD_VarSize_NullTerminated    _           -> c_acn.BCD_VarSize_NullTerminated p mappingFunction  codec
@@ -797,7 +803,11 @@ let CollectLocalVars (t:Asn1Type) (tas:TypeAssignment) (m:Asn1Module) (r:AstRoot
             match (Seq.isEmpty rootCons) with
             | true  -> state
             | false -> EXTENSION_BIT::state
-        | Enumerated(_)     -> ENUM_IDX::state
+        | Enumerated(_)     -> 
+            let eqIntType = Acn.GetIntTypeFromEnum t r acn
+            let intType = Ast.getIntType (uPER.GetTypeUperRange eqIntType.Kind eqIntType.Constraints r)
+
+            (ENUM_IDX intType)::state
         | ReferenceType(mdName, tsName, _) ->
             let prms = acn.Parameters |> 
                        Seq.filter(fun p -> p.ModName = mdName.Value && p.TasName = tsName.Value) |>
@@ -862,7 +872,10 @@ let CollectLocalVars (t:Asn1Type) (tas:TypeAssignment) (m:Asn1Module) (r:AstRoot
         | SEQUENCE_OF_INDEX(i) -> c_src.Emit_local_variable_SQF_Index (BigInteger i) 
         | EXTENSION_BIT     -> ""
         | LENGTH            -> c_src.Declare_Length()
-        | ENUM_IDX          -> c_acn.Declare_EnumValue()
+        | ENUM_IDX intType  -> 
+            match intType with
+            | Ast.UINT  -> c_acn.Declare_EnumValueUInt()
+            | Ast.SINT  -> c_acn.Declare_EnumValueSInt()
         | CHOICE_IDX        -> c_src.Declare_ChoiceIndex()
 //        | CHOICE_TMP_FLD(fldName, fldType)  -> su.ChoiceChild_tmpVar fldName fldType
         | CHAR_VAL          -> "" //su.Declare_CharValue()

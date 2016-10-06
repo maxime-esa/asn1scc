@@ -236,23 +236,44 @@ ret = Acn_Dec_Int_BCD_VarSize_NullTerminated(pBitStrm, <p>);
 <A()>
 >>
 
-ASCII_ConstSize_encode(p, nSizeInBytes, soMF) ::= "Acn_Enc_Int_ASCII_ConstSize(pBitStrm, <if(soMF)><soMF>_encode(<p>)<else><p><endif>, <nSizeInBytes>);"
+ASCII_ConstSize_encode(p, nSizeInBytes, soMF) ::= "Acn_Enc_SInt_ASCII_ConstSize(pBitStrm, <if(soMF)><soMF>_encode(<p>)<else><p><endif>, <nSizeInBytes>);"
 ASCII_ConstSize_decode(p, nSizeInBytes, soMF) ::= <<
-ret = Acn_Dec_Int_ASCII_ConstSize(pBitStrm, <p>, <nSizeInBytes>);
+ret = Acn_Dec_SInt_ASCII_ConstSize(pBitStrm, <p>, <nSizeInBytes>);
 <MF(soMF)>
 <A()>
 >>
 
-ASCII_VarSize_LengthEmbedded_encode(p, soMF) ::= "Acn_Enc_Int_ASCII_VarSize_LengthEmbedded(pBitStrm, <if(soMF)><soMF>_encode(<p>)<else><p><endif>);"
+ASCII_VarSize_LengthEmbedded_encode(p, soMF) ::= "Acn_Enc_SInt_ASCII_VarSize_LengthEmbedded(pBitStrm, <if(soMF)><soMF>_encode(<p>)<else><p><endif>);"
 ASCII_VarSize_LengthEmbedded_decode(p, soMF) ::= <<
-ret = Acn_Dec_Int_ASCII_VarSize_LengthEmbedded(pBitStrm, <p>);
+ret = Acn_Dec_SInt_ASCII_VarSize_LengthEmbedded(pBitStrm, <p>);
 <MF(soMF)>
 <A()>
 >>
 
-ASCII_VarSize_NullTerminated_encode(p, soMF) ::= "Acn_Enc_Int_ASCII_VarSize_NullTerminated(pBitStrm, <if(soMF)><soMF>_encode(<p>)<else><p><endif>);"
+ASCII_VarSize_NullTerminated_encode(p, soMF) ::= "Acn_Enc_SInt_ASCII_VarSize_NullTerminated(pBitStrm, <if(soMF)><soMF>_encode(<p>)<else><p><endif>);"
 ASCII_VarSize_NullTerminated_decode(p, soMF) ::= <<
-ret = Acn_Dec_Int_ASCII_VarSize_NullTerminated(pBitStrm, <p>);
+ret = Acn_Dec_SInt_ASCII_VarSize_NullTerminated(pBitStrm, <p>);
+<MF(soMF)>
+<A()>
+>>
+
+ASCII_UINT_ConstSize_encode(p, nSizeInBytes, soMF) ::= "Acn_Enc_UInt_ASCII_ConstSize(pBitStrm, <if(soMF)><soMF>_encode(<p>)<else><p><endif>, <nSizeInBytes>);"
+ASCII_UINT_ConstSize_decode(p, nSizeInBytes, soMF) ::= <<
+ret = Acn_Dec_UInt_ASCII_ConstSize(pBitStrm, <p>, <nSizeInBytes>);
+<MF(soMF)>
+<A()>
+>>
+
+ASCII_UINT_VarSize_LengthEmbedded_encode(p, soMF) ::= "Acn_Enc_UInt_ASCII_VarSize_LengthEmbedded(pBitStrm, <if(soMF)><soMF>_encode(<p>)<else><p><endif>);"
+ASCII_UINT_VarSize_LengthEmbedded_decode(p, soMF) ::= <<
+ret = Acn_Dec_UInt_ASCII_VarSize_LengthEmbedded(pBitStrm, <p>);
+<MF(soMF)>
+<A()>
+>>
+
+ASCII_UINT_VarSize_NullTerminated_encode(p, soMF) ::= "Acn_Enc_UInt_ASCII_VarSize_NullTerminated(pBitStrm, <if(soMF)><soMF>_encode(<p>)<else><p><endif>);"
+ASCII_UINT_VarSize_NullTerminated_decode(p, soMF) ::= <<
+ret = Acn_Dec_UInt_ASCII_VarSize_NullTerminated(pBitStrm, <p>);
 <MF(soMF)>
 <A()>
 >>
@@ -339,7 +360,8 @@ Null_empty_pattern() ::= "/*null, nothing to do */"
 
 
 
-Declare_EnumValue() ::= "asn1SccSint intVal = -1;"
+Declare_EnumValueUInt() ::= "asn1SccUint intVal = 0;"
+Declare_EnumValueSInt() ::= "asn1SccSint intVal = -1;"
 
 
 Enumerated_item_encode(p, sName, nItemIdxOrVal) ::= <<
@@ -357,6 +379,9 @@ case <nItemIdxOrVal>:
 EnumeratedEncIdx_encode(p, sTasName, arrsItem, sActualCodecFunc) ::= <<
 switch(<p>) { 
     <arrsItem; separator="\n">
+    default:
+        ret = FALSE;                            //COVERAGE_IGNORE
+        *pErrCode = ERR_INVALID_ENUM_VALUE;      //COVERAGE_IGNORE
 }
 <sActualCodecFunc>
 >>

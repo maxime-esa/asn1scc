@@ -35,8 +35,10 @@ let rec PrintTypeDeclaration (t:Asn1Type)  (p:list<string>) (r:AstRoot) =
     match t.Kind with
     | Integer       -> 
         match (GetTypeUperRange t.Kind t.Constraints r) with
+        | Concrete(a,b) when a >= 0I    ->  ch.Declare_PosInteger_min_max a b 
         | Concrete(a,b)     ->  ch.Declare_Integer_min_max a b 
         | NegInf(b)         ->  ch.Declare_Integer_negInf b 
+        | PosInf(a)  when a >= 0I       ->  ch.Declare_PosInteger_posInf a 
         | PosInf(a)         ->  ch.Declare_Integer_posInf a 
         | Empty | Full      ->  ch.Declare_Integer ()
     | Boolean       -> ch.Declare_Boolean ()

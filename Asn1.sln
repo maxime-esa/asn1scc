@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio 2013
-VisualStudioVersion = 12.0.31101.0
+# Visual Studio 14
+VisualStudioVersion = 14.0.25420.1
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{2633C5D7-E468-42D9-B25B-3C5EEBB4D536}"
 	ProjectSection(SolutionItems) = preProject
@@ -41,6 +41,8 @@ EndProject
 Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "ST", "ST\ST.fsproj", "{94495D92-B615-4745-B26B-A5EC73A6A462}"
 EndProject
 Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "AntlrUtils", "AntlrUtils\AntlrUtils.fsproj", "{DB416047-7207-4816-8DB6-2182BE2E1104}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "asn1crt", "asn1crt\asn1crt.vcxproj", "{6094FC85-8CE9-4716-9255-41C428F3B9EA}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -174,6 +176,20 @@ Global
 		{DB416047-7207-4816-8DB6-2182BE2E1104}.Release|Mixed Platforms.Build.0 = Release|Any CPU
 		{DB416047-7207-4816-8DB6-2182BE2E1104}.Release|Win32.ActiveCfg = Release|Any CPU
 		{DB416047-7207-4816-8DB6-2182BE2E1104}.Release|x86.ActiveCfg = Release|Any CPU
+		{6094FC85-8CE9-4716-9255-41C428F3B9EA}.Debug|Any CPU.ActiveCfg = Debug|Win32
+		{6094FC85-8CE9-4716-9255-41C428F3B9EA}.Debug|Mixed Platforms.ActiveCfg = Debug|Win32
+		{6094FC85-8CE9-4716-9255-41C428F3B9EA}.Debug|Mixed Platforms.Build.0 = Debug|Win32
+		{6094FC85-8CE9-4716-9255-41C428F3B9EA}.Debug|Win32.ActiveCfg = Debug|Win32
+		{6094FC85-8CE9-4716-9255-41C428F3B9EA}.Debug|Win32.Build.0 = Debug|Win32
+		{6094FC85-8CE9-4716-9255-41C428F3B9EA}.Debug|x86.ActiveCfg = Debug|Win32
+		{6094FC85-8CE9-4716-9255-41C428F3B9EA}.Debug|x86.Build.0 = Debug|Win32
+		{6094FC85-8CE9-4716-9255-41C428F3B9EA}.Release|Any CPU.ActiveCfg = Release|Win32
+		{6094FC85-8CE9-4716-9255-41C428F3B9EA}.Release|Mixed Platforms.ActiveCfg = Release|Win32
+		{6094FC85-8CE9-4716-9255-41C428F3B9EA}.Release|Mixed Platforms.Build.0 = Release|Win32
+		{6094FC85-8CE9-4716-9255-41C428F3B9EA}.Release|Win32.ActiveCfg = Release|Win32
+		{6094FC85-8CE9-4716-9255-41C428F3B9EA}.Release|Win32.Build.0 = Release|Win32
+		{6094FC85-8CE9-4716-9255-41C428F3B9EA}.Release|x86.ActiveCfg = Release|Win32
+		{6094FC85-8CE9-4716-9255-41C428F3B9EA}.Release|x86.Build.0 = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

@@ -410,6 +410,15 @@ let rec EmitTypeBodyAux (t:Asn1Type) (sTasName:string) (path:list<string>, pName
         | Acn.ASCII_ConstSize(nBits)                    -> sai.ASCII_ConstSize p mappingFunction mappingFunctionModule uperMin uperMax (nBits/8I) codec
         | Acn.ASCII_VarSize_LengthEmbedded              -> sai.ASCII_VarSize_LengthEmbedded p mappingFunction mappingFunctionModule codec
         | Acn.ASCII_VarSize_NullTerminated   _          -> sai.ASCII_VarSize_NullTerminated p mappingFunction mappingFunctionModule uperMin uperMax  codec
+        | Acn.ASCII_UINT_ConstSize(nBits)               -> 
+            // WARNING: The following line must change to a new macro e.g. sai.ASCII_UINT_ConstSize
+            sai.ASCII_ConstSize p mappingFunction mappingFunctionModule uperMin uperMax (nBits/8I) codec
+        | Acn.ASCII_UINT_VarSize_LengthEmbedded         -> 
+            // WARNING: The following line must change to a new macro e.g. sai.ASCII_UINT_VarSize_LengthEmbedded
+            sai.ASCII_VarSize_LengthEmbedded p mappingFunction mappingFunctionModule codec
+        | Acn.ASCII_UINT_VarSize_NullTerminated   _     -> 
+            // WARNING: The following line must change to a new macro e.g. sai.ASCII_UINT_VarSize_NullTerminated
+            sai.ASCII_VarSize_NullTerminated p mappingFunction mappingFunctionModule uperMin uperMax  codec
         | Acn.BCD_ConstSize(nBits)                      -> sai.BCD_ConstSize p mappingFunction mappingFunctionModule uperMin uperMax (nBits/4I) codec
         | Acn.BCD_VarSize_LengthEmbedded                -> sai.BCD_VarSize_LengthEmbedded p mappingFunction mappingFunctionModule codec
         | Acn.BCD_VarSize_NullTerminated     _          -> sai.BCD_VarSize_NullTerminated p mappingFunction mappingFunctionModule uperMin uperMax codec

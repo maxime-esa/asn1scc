@@ -140,7 +140,10 @@ let CollectLocalVars (t:Asn1Type) (tas:TypeAssignment) (m:Asn1Module) (r:AstRoot
         | SEQUENCE_OF_INDEX(i) -> c_src.Emit_local_variable_SQF_Index (BigInteger i) 
         | EXTENSION_BIT     -> "" //su.Declare_ExtensionBit()
         | LENGTH            -> c_src.Declare_Length()
-        | ENUM_IDX          -> c_src.Declare_EnumIndex()
+        | ENUM_IDX intType  -> 
+            match intType with
+            | Ast.UINT  -> c_acn.Declare_EnumValueUInt()
+            | Ast.SINT  -> c_acn.Declare_EnumValueSInt()
         | CHOICE_IDX        -> c_src.Declare_ChoiceIndex()
         | SEQUENCE_BitMask(b,i) -> c_src.Declare_SequenceBitMask b i
         | CHAR_VAL          -> "" //su.Declare_CharValue()

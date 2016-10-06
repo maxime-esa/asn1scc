@@ -87,10 +87,12 @@ and  EmitTypeBody (t:Asn1Type) (sTasName:string) (path:list<string>, altPath:(st
         | Some(errCodeName) ->    errCodeName
     match t.Kind with
     | Integer   -> 
-        let IntBod cons =
+        let IntBod cons extCon =
             match (GetTypeUperRange t.Kind cons r) with
             | Concrete(min, max) when min=max     -> c_src.IntNoneRequired pp min   errCode codec
+            | Concrete(min, max) when min>=0I && (not extCon)   -> c_src.IntFullyConstraintPos p min max (GetNumberOfBitsForNonNegativeInteger (max-min))  errCode codec
             | Concrete(min, max)      -> c_src.IntFullyConstraint p min max (GetNumberOfBitsForNonNegativeInteger (max-min))  errCode codec
+            | PosInf(a)  when a>=0I && (not extCon)  -> c_src.IntSemiConstraintPos p a  errCode codec
             | PosInf(a)               -> c_src.IntSemiConstraint p a  errCode codec
             | NegInf(max)             -> c_src.IntUnconstraint p errCode codec
             | Full                    -> c_src.IntUnconstraint p errCode codec
@@ -103,13 +105,13 @@ and  EmitTypeBody (t:Asn1Type) (sTasName:string) (path:list<string>, altPath:(st
             | Empty                   -> raise(BugErrorException "")
 
         match rootCons with
-        | []                            -> IntBod t.Constraints
+        | []                            -> IntBod t.Constraints false
         | (RootConstraint a)::rest      -> 
             let cc =  c_validate.PrintTypeContraint (Same t) path a "" m r 
-            c_src.IntRootExt p (getValueByConstraint a) cc (IntBod [a]) errCode codec 
+            c_src.IntRootExt p (getValueByConstraint a) cc (IntBod [a] true) errCode codec 
         | (RootConstraint2(a,_))::rest  -> 
             let cc =  c_validate.PrintTypeContraint (Same t) path a "" m r 
-            c_src.IntRootExt2 p (getValueByConstraint a) cc (IntBod [a]) errCode codec 
+            c_src.IntRootExt2 p (getValueByConstraint a) cc (IntBod [a] true) errCode codec 
         | _                             -> raise(BugErrorException "")
     | Boolean -> c_src.Boolean p errCode codec
     | Real    -> c_src.Real p errCode codec
@@ -246,7 +248,7 @@ let CollectLocalVars (t:Asn1Type) (tas:TypeAssignment) (m:Asn1Module) (r:AstRoot
         | Enumerated(_)     -> 
             match codec with
             | Encode    -> state
-            | Decode    -> AddIfNotPresent ENUM_IDX state
+            | Decode    -> AddIfNotPresent (ENUM_IDX UINT) state
         | Choice(children) when codec = Decode -> AddIfNotPresent CHOICE_IDX state            
         | Sequence(children)    when codec = Decode -> 
             let sBitMaskName = (TypeLongName path) + "bitMask"
@@ -263,7 +265,10 @@ let CollectLocalVars (t:Asn1Type) (tas:TypeAssignment) (m:Asn1Module) (r:AstRoot
         | SEQUENCE_OF_INDEX(i) -> c_src.Emit_local_variable_SQF_Index (BigInteger i) 
         | EXTENSION_BIT     -> "" //su.Declare_ExtensionBit()
         | LENGTH            -> c_src.Declare_Length()
-        | ENUM_IDX          -> c_src.Declare_EnumIndex()
+        | ENUM_IDX intType  -> 
+            match intType with
+            | Ast.UINT  -> c_acn.Declare_EnumValueUInt()
+            | Ast.SINT  -> c_acn.Declare_EnumValueSInt()
         | CHOICE_IDX        -> c_src.Declare_ChoiceIndex()
         | SEQUENCE_BitMask(b,i) -> c_src.Declare_SequenceBitMask b i
         | CHAR_VAL          -> "" //su.Declare_CharValue()

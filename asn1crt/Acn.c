@@ -7,7 +7,7 @@
 
 static byte masks[] = { 0x80, 0x40, 0x20, 0x10, 0x08, 0x04, 0x02, 0x01 };
 
-static flag RequiresReverse() 
+static flag RequiresReverse(void) 
 {
     short int word = 0x0001; 
     char *b = (char *) &word; 
@@ -46,33 +46,32 @@ void Acn_AlignToNextDWord(BitStream* pBitStrm)
 }
 
 /*ACN Integer functions*/
-void Acn_Enc_Int_PositiveInteger_ConstSize(BitStream* pBitStrm, asn1SccSint intVal, int encodedSizeInBits)
+void Acn_Enc_Int_PositiveInteger_ConstSize(BitStream* pBitStrm, asn1SccUint intVal, int encodedSizeInBits)
 {
     int nBits = 0;
-    assert(intVal>=0);
     if (encodedSizeInBits==0)
         return;
     /* Get number of bits*/
-    nBits = GetNumberOfBitsForNonNegativeInteger((asn1SccUint)intVal);
+    nBits = GetNumberOfBitsForNonNegativeInteger(intVal);
     /* put required zeros*/
     BitStream_AppendNBitZero(pBitStrm, encodedSizeInBits-nBits);
     /*Encode number */
-    BitStream_EncodeNonNegativeInteger(pBitStrm, (asn1SccUint)intVal);
+    BitStream_EncodeNonNegativeInteger(pBitStrm, intVal);
 
     CHECK_BIT_STREAM(pBitStrm);
 }
-void Acn_Enc_Int_PositiveInteger_ConstSize_8(BitStream* pBitStrm, asn1SccSint intVal) 
+void Acn_Enc_Int_PositiveInteger_ConstSize_8(BitStream* pBitStrm, asn1SccUint intVal)
 { 
     BitStream_AppendByte0(pBitStrm, (byte)intVal);
     CHECK_BIT_STREAM(pBitStrm);
 }
 
 static void Acn_Enc_Int_PositiveInteger_ConstSize_big_endian_B(BitStream* pBitStrm,
-                                                               asn1SccSint intVal,
+                                                               asn1SccUint intVal,
                                                                int size) 
 {
     int i=0;
-    asn1SccUint tmp = int2uint(intVal);
+    asn1SccUint tmp = intVal;
     asn1SccUint mask = 0xFF;
     mask <<= (size-1)*8;
 
@@ -84,27 +83,27 @@ static void Acn_Enc_Int_PositiveInteger_ConstSize_big_endian_B(BitStream* pBitSt
     CHECK_BIT_STREAM(pBitStrm);
 }
 
-void Acn_Enc_Int_PositiveInteger_ConstSize_big_endian_16(BitStream* pBitStrm, asn1SccSint intVal)
+void Acn_Enc_Int_PositiveInteger_ConstSize_big_endian_16(BitStream* pBitStrm, asn1SccUint intVal)
 { 
     Acn_Enc_Int_PositiveInteger_ConstSize_big_endian_B(pBitStrm, intVal, 2);
 }
 
-void Acn_Enc_Int_PositiveInteger_ConstSize_big_endian_32(BitStream* pBitStrm, asn1SccSint intVal) 
+void Acn_Enc_Int_PositiveInteger_ConstSize_big_endian_32(BitStream* pBitStrm, asn1SccUint intVal)
 {
     Acn_Enc_Int_PositiveInteger_ConstSize_big_endian_B(pBitStrm, intVal, 4);
 }
 
-void Acn_Enc_Int_PositiveInteger_ConstSize_big_endian_64(BitStream* pBitStrm, asn1SccSint intVal)
+void Acn_Enc_Int_PositiveInteger_ConstSize_big_endian_64(BitStream* pBitStrm, asn1SccUint intVal)
 {
     Acn_Enc_Int_PositiveInteger_ConstSize_big_endian_B(pBitStrm, intVal, 8);
 }
 
 static void Acn_Enc_Int_PositiveInteger_ConstSize_little_endian_N(BitStream* pBitStrm,
-                                                                  asn1SccSint intVal,
+                                                                  asn1SccUint intVal,
                                                                   int size)
 {
     int i=0;
-    asn1SccUint tmp = int2uint(intVal);
+    asn1SccUint tmp = intVal;
 
     for (i=0; i<size; i++) {
         byte ByteToEncode = (byte)tmp;
@@ -114,28 +113,28 @@ static void Acn_Enc_Int_PositiveInteger_ConstSize_little_endian_N(BitStream* pBi
     CHECK_BIT_STREAM(pBitStrm);
 }
 
-void Acn_Enc_Int_PositiveInteger_ConstSize_little_endian_16(BitStream* pBitStrm, asn1SccSint intVal)
+void Acn_Enc_Int_PositiveInteger_ConstSize_little_endian_16(BitStream* pBitStrm, asn1SccUint intVal)
 {
     Acn_Enc_Int_PositiveInteger_ConstSize_little_endian_N(pBitStrm, intVal, 2);
 }
 
-void Acn_Enc_Int_PositiveInteger_ConstSize_little_endian_32(BitStream* pBitStrm, asn1SccSint intVal)
+void Acn_Enc_Int_PositiveInteger_ConstSize_little_endian_32(BitStream* pBitStrm, asn1SccUint intVal)
 {
     Acn_Enc_Int_PositiveInteger_ConstSize_little_endian_N(pBitStrm, intVal, 4);
 }
 
-void Acn_Enc_Int_PositiveInteger_ConstSize_little_endian_64(BitStream* pBitStrm, asn1SccSint intVal)
+void Acn_Enc_Int_PositiveInteger_ConstSize_little_endian_64(BitStream* pBitStrm, asn1SccUint intVal)
 {
     Acn_Enc_Int_PositiveInteger_ConstSize_little_endian_N(pBitStrm, intVal, 8);
 }
 
 
-flag Acn_Dec_Int_PositiveInteger_ConstSize(BitStream* pBitStrm, asn1SccSint* pIntVal, int encodedSizeInBits)
+flag Acn_Dec_Int_PositiveInteger_ConstSize(BitStream* pBitStrm, asn1SccUint* pIntVal, int encodedSizeInBits)
 {
     asn1SccUint tmp=0;
     if (BitStream_DecodeNonNegativeInteger(pBitStrm, &tmp, encodedSizeInBits))
     {
-        *pIntVal = (asn1SccSint) tmp;
+        *pIntVal = tmp;
         return TRUE;
     }
     return FALSE;
@@ -143,7 +142,7 @@ flag Acn_Dec_Int_PositiveInteger_ConstSize(BitStream* pBitStrm, asn1SccSint* pIn
 }
 
 
-flag Acn_Dec_Int_PositiveInteger_ConstSize_8(BitStream* pBitStrm, asn1SccSint* pIntVal)
+flag Acn_Dec_Int_PositiveInteger_ConstSize_8(BitStream* pBitStrm, asn1SccUint* pIntVal)
 {
     byte v=0;
     if (!BitStream_ReadByte(pBitStrm, &v))
@@ -153,7 +152,7 @@ flag Acn_Dec_Int_PositiveInteger_ConstSize_8(BitStream* pBitStrm, asn1SccSint* p
 }
 
 static flag Acn_Dec_Int_PositiveInteger_ConstSize_big_endian_N(BitStream* pBitStrm,
-                                                               asn1SccSint* pIntVal,
+                                                               asn1SccUint* pIntVal,
                                                                int SizeInBytes)
 {
     int i;
@@ -168,27 +167,27 @@ static flag Acn_Dec_Int_PositiveInteger_ConstSize_big_endian_N(BitStream* pBitSt
         ret <<= 8;
         ret |= b;
     }
-    *pIntVal = (asn1SccSint) ret;
+    *pIntVal = ret;
     return TRUE;
 }
 
-flag Acn_Dec_Int_PositiveInteger_ConstSize_big_endian_16(BitStream* pBitStrm, asn1SccSint* pIntVal)
+flag Acn_Dec_Int_PositiveInteger_ConstSize_big_endian_16(BitStream* pBitStrm, asn1SccUint* pIntVal)
 {
     return Acn_Dec_Int_PositiveInteger_ConstSize_big_endian_N(pBitStrm, pIntVal, 2);
 }
 
-flag Acn_Dec_Int_PositiveInteger_ConstSize_big_endian_32(BitStream* pBitStrm, asn1SccSint* pIntVal)
+flag Acn_Dec_Int_PositiveInteger_ConstSize_big_endian_32(BitStream* pBitStrm, asn1SccUint* pIntVal)
 {
     return Acn_Dec_Int_PositiveInteger_ConstSize_big_endian_N(pBitStrm, pIntVal, 4);
 }
 
-flag Acn_Dec_Int_PositiveInteger_ConstSize_big_endian_64(BitStream* pBitStrm, asn1SccSint* pIntVal)
+flag Acn_Dec_Int_PositiveInteger_ConstSize_big_endian_64(BitStream* pBitStrm, asn1SccUint* pIntVal)
 {
     return Acn_Dec_Int_PositiveInteger_ConstSize_big_endian_N(pBitStrm, pIntVal, 8);
 }
 
 static flag Acn_Dec_Int_PositiveInteger_ConstSize_little_endian_N(BitStream* pBitStrm,
-                                                                  asn1SccSint* pIntVal,
+                                                                  asn1SccUint* pIntVal,
                                                                   int SizeInBytes)
 {
     int i;
@@ -205,22 +204,22 @@ static flag Acn_Dec_Int_PositiveInteger_ConstSize_little_endian_N(BitStream* pBi
         tmp <<= i*8;
         ret |= tmp;
     }
-    *pIntVal = (asn1SccSint) ret;
+    *pIntVal = ret;
     return TRUE;
     
 }
 
-flag Acn_Dec_Int_PositiveInteger_ConstSize_little_endian_16(BitStream* pBitStrm, asn1SccSint* pIntVal)
+flag Acn_Dec_Int_PositiveInteger_ConstSize_little_endian_16(BitStream* pBitStrm, asn1SccUint* pIntVal)
 {
     return Acn_Dec_Int_PositiveInteger_ConstSize_little_endian_N(pBitStrm, pIntVal, 2);
 }
 
-flag Acn_Dec_Int_PositiveInteger_ConstSize_little_endian_32(BitStream* pBitStrm, asn1SccSint* pIntVal)
+flag Acn_Dec_Int_PositiveInteger_ConstSize_little_endian_32(BitStream* pBitStrm, asn1SccUint* pIntVal)
 {
     return Acn_Dec_Int_PositiveInteger_ConstSize_little_endian_N(pBitStrm, pIntVal, 4);
 }
 
-flag Acn_Dec_Int_PositiveInteger_ConstSize_little_endian_64(BitStream* pBitStrm, asn1SccSint* pIntVal)
+flag Acn_Dec_Int_PositiveInteger_ConstSize_little_endian_64(BitStream* pBitStrm, asn1SccUint* pIntVal)
 {
     return Acn_Dec_Int_PositiveInteger_ConstSize_little_endian_N(pBitStrm, pIntVal, 8);
 }
@@ -249,12 +248,11 @@ static void Encode_UnsignedInteger(BitStream* pBitStrm, asn1SccUint val, byte nB
 int GetLengthInBytesOfUInt(asn1SccUint64 v);
 
 
-void Acn_Enc_Int_PositiveInteger_VarSize_LengthEmbedded(BitStream* pBitStrm, asn1SccSint intVal)
+void Acn_Enc_Int_PositiveInteger_VarSize_LengthEmbedded(BitStream* pBitStrm, asn1SccUint intVal)
 {
-    asn1SccUint val = (asn1SccUint)intVal;
+    asn1SccUint val = intVal;
     byte nBytes = (byte)GetLengthInBytesOfUInt(val);
 
-    assert(intVal>=0);
 
     /* encode length */
     BitStream_AppendByte0(pBitStrm, nBytes);
@@ -265,7 +263,7 @@ void Acn_Enc_Int_PositiveInteger_VarSize_LengthEmbedded(BitStream* pBitStrm, asn
     CHECK_BIT_STREAM(pBitStrm);
 }
 
-flag Acn_Dec_Int_PositiveInteger_VarSize_LengthEmbedded(BitStream* pBitStrm, asn1SccSint* pIntVal)
+flag Acn_Dec_Int_PositiveInteger_VarSize_LengthEmbedded(BitStream* pBitStrm, asn1SccUint* pIntVal)
 {
     byte nBytes;
     int i;
@@ -278,7 +276,7 @@ flag Acn_Dec_Int_PositiveInteger_VarSize_LengthEmbedded(BitStream* pBitStrm, asn
             return FALSE;
         v = (v<<8) | b;
     }
-    *pIntVal = (asn1SccSint)v;
+    *pIntVal = v;
     return TRUE;
 }
 
@@ -302,37 +300,37 @@ void Acn_Enc_Int_TwosComplement_ConstSize(BitStream* pBitStrm, asn1SccSint intVa
 
 void Acn_Enc_Int_TwosComplement_ConstSize_8(BitStream* pBitStrm, asn1SccSint intVal)
 {
-    Acn_Enc_Int_PositiveInteger_ConstSize_8(pBitStrm, intVal);
+    Acn_Enc_Int_PositiveInteger_ConstSize_8(pBitStrm, int2uint(intVal));
 }
 
 void Acn_Enc_Int_TwosComplement_ConstSize_big_endian_16(BitStream* pBitStrm, asn1SccSint intVal)
 {
-    Acn_Enc_Int_PositiveInteger_ConstSize_big_endian_16(pBitStrm, intVal);
+    Acn_Enc_Int_PositiveInteger_ConstSize_big_endian_16(pBitStrm, int2uint(intVal));
 }
 
 void Acn_Enc_Int_TwosComplement_ConstSize_big_endian_32(BitStream* pBitStrm, asn1SccSint intVal)
 {
-    Acn_Enc_Int_PositiveInteger_ConstSize_big_endian_32(pBitStrm, intVal);
+    Acn_Enc_Int_PositiveInteger_ConstSize_big_endian_32(pBitStrm, int2uint(intVal));
 }
 
 void Acn_Enc_Int_TwosComplement_ConstSize_big_endian_64(BitStream* pBitStrm, asn1SccSint intVal)
 {
-    Acn_Enc_Int_PositiveInteger_ConstSize_big_endian_64(pBitStrm, intVal);
+    Acn_Enc_Int_PositiveInteger_ConstSize_big_endian_64(pBitStrm, int2uint(intVal));
 }
 
 void Acn_Enc_Int_TwosComplement_ConstSize_little_endian_16(BitStream* pBitStrm, asn1SccSint intVal)
 {
-    Acn_Enc_Int_PositiveInteger_ConstSize_little_endian_16(pBitStrm, intVal);
+    Acn_Enc_Int_PositiveInteger_ConstSize_little_endian_16(pBitStrm, int2uint(intVal));
 }
 
 void Acn_Enc_Int_TwosComplement_ConstSize_little_endian_32(BitStream* pBitStrm, asn1SccSint intVal)
 {
-    Acn_Enc_Int_PositiveInteger_ConstSize_little_endian_32(pBitStrm, intVal);
+    Acn_Enc_Int_PositiveInteger_ConstSize_little_endian_32(pBitStrm, int2uint(intVal));
 }
 
 void Acn_Enc_Int_TwosComplement_ConstSize_little_endian_64(BitStream* pBitStrm, asn1SccSint intVal)
 {
-    Acn_Enc_Int_PositiveInteger_ConstSize_little_endian_64(pBitStrm, intVal);
+    Acn_Enc_Int_PositiveInteger_ConstSize_little_endian_64(pBitStrm, int2uint(intVal));
 }
 
 
@@ -378,64 +376,64 @@ flag Acn_Dec_Int_TwosComplement_ConstSize(BitStream* pBitStrm, asn1SccSint* pInt
 
 flag Acn_Dec_Int_TwosComplement_ConstSize_8(BitStream* pBitStrm, asn1SccSint* pIntVal)
 {
-    asn1SccSint tmp = 0;
+    asn1SccUint tmp = 0;
     if (!Acn_Dec_Int_PositiveInteger_ConstSize_8(pBitStrm, &tmp))
         return FALSE;
-    *pIntVal = uint2int((asn1SccUint)tmp, 1);
+    *pIntVal = uint2int(tmp, 1);
     return TRUE;
 }
 
 flag Acn_Dec_Int_TwosComplement_ConstSize_big_endian_16(BitStream* pBitStrm, asn1SccSint* pIntVal)
 {
-    asn1SccSint tmp = 0;
+    asn1SccUint tmp = 0;
     if (!Acn_Dec_Int_PositiveInteger_ConstSize_big_endian_16(pBitStrm, &tmp))
         return FALSE;
-    *pIntVal = uint2int((asn1SccUint)tmp, 2);
+    *pIntVal = uint2int(tmp, 2);
     return TRUE;
 }
 
 flag Acn_Dec_Int_TwosComplement_ConstSize_big_endian_32(BitStream* pBitStrm, asn1SccSint* pIntVal)
 {
-    asn1SccSint tmp = 0;
+    asn1SccUint tmp = 0;
     if (!Acn_Dec_Int_PositiveInteger_ConstSize_big_endian_32(pBitStrm, &tmp))
         return FALSE;
-    *pIntVal = uint2int((asn1SccUint)tmp, 4);
+    *pIntVal = uint2int(tmp, 4);
     return TRUE;
 }
 
 flag Acn_Dec_Int_TwosComplement_ConstSize_big_endian_64(BitStream* pBitStrm, asn1SccSint* pIntVal)
 {
-    asn1SccSint tmp = 0;
+    asn1SccUint tmp = 0;
     if (!Acn_Dec_Int_PositiveInteger_ConstSize_big_endian_64(pBitStrm, &tmp))
         return FALSE;
-    *pIntVal = uint2int((asn1SccUint)tmp, 8);
+    *pIntVal = uint2int(tmp, 8);
     return TRUE;
 }
 
 flag Acn_Dec_Int_TwosComplement_ConstSize_little_endian_16(BitStream* pBitStrm, asn1SccSint* pIntVal)
 {
-    asn1SccSint tmp = 0;
+    asn1SccUint tmp = 0;
     if (!Acn_Dec_Int_PositiveInteger_ConstSize_little_endian_16(pBitStrm, &tmp))
         return FALSE;
-    *pIntVal = uint2int((asn1SccUint)tmp, 2);
+    *pIntVal = uint2int(tmp, 2);
     return TRUE;
 }
 
 flag Acn_Dec_Int_TwosComplement_ConstSize_little_endian_32(BitStream* pBitStrm, asn1SccSint* pIntVal)
 {
-    asn1SccSint tmp = 0;
+    asn1SccUint tmp = 0;
     if (!Acn_Dec_Int_PositiveInteger_ConstSize_little_endian_32(pBitStrm, &tmp))
         return FALSE;
-    *pIntVal = uint2int((asn1SccUint)tmp, 4);
+    *pIntVal = uint2int(tmp, 4);
     return TRUE;
 }
 
 flag Acn_Dec_Int_TwosComplement_ConstSize_little_endian_64(BitStream* pBitStrm, asn1SccSint* pIntVal)
 {
-    asn1SccSint tmp = 0;
+    asn1SccUint tmp = 0;
     if (!Acn_Dec_Int_PositiveInteger_ConstSize_little_endian_64(pBitStrm, &tmp))
         return FALSE;
-    *pIntVal = uint2int((asn1SccUint)tmp, 8);
+    *pIntVal = uint2int(tmp, 8);
     return TRUE;
 }
 
@@ -510,7 +508,7 @@ flag Acn_Dec_Int_TwosComplement_VarSize_LengthEmbedded(BitStream* pBitStrm, asn1
 
 
 //return values is in nibbles
-static int Acn_Get_Int_Size_BCD(asn1SccSint intVal)
+static int Acn_Get_Int_Size_BCD(asn1SccUint intVal)
 {
     int ret=0;
     while(intVal>0) 
@@ -530,69 +528,29 @@ static void mystrcpy(char dest[], const char source[]) {
 }
 #endif
 
-static void Acn_Enc_Int_BCD_OR_ASCII_ConstSize(BitStream* pBitStrm,
-                                               asn1SccSint intVal,
-                                               int encodedSizeInNibbles,
-                                               flag bBCD)
+
+
+void Acn_Enc_Int_BCD_ConstSize(BitStream* pBitStrm, asn1SccUint intVal, int encodedSizeInNibbles)
 {
-    int i=0;
-    int totalNibbles=0;
+    int i = 0;
+    int totalNibbles = 0;
     char tmp[100];
-    
+
     memset(tmp, 0x0, sizeof(tmp));
 
-#if WORD_SIZE==8
-    if (intVal == (-9223372036854775807 - 1)) {
-        BitStream_AppendByte0(pBitStrm,'-');
-        encodedSizeInNibbles--;
+    assert(100 >= encodedSizeInNibbles);
 
-        memset(tmp, '0', sizeof(tmp)-1);
-        mystrcpy(tmp,"8085774586302733229");
-        tmp[19]='0';
-        for(i=encodedSizeInNibbles-1;i>=0;i--) 
-            BitStream_AppendByte0(pBitStrm,(byte)tmp[i]);
-
-        CHECK_BIT_STREAM(pBitStrm);
-        return;
-    }
-#endif
-
-    if (!bBCD) { // ASCII encoding enables negative integers
-        if (intVal<0) {
-            intVal = -intVal;
-            BitStream_AppendByte0(pBitStrm,'-');
-        }else {
-            BitStream_AppendByte0(pBitStrm,'+');
-        }
-        encodedSizeInNibbles--;
-    }
-
-
-    assert(intVal>=0);
-    assert(100>=encodedSizeInNibbles);
-
-    while(intVal>0) {
+    while (intVal>0) {
         tmp[totalNibbles++] = (char)(intVal % 10);
         intVal /= 10;
     }
-    assert(encodedSizeInNibbles>=totalNibbles);
+    assert(encodedSizeInNibbles >= totalNibbles);
 
-    for(i=encodedSizeInNibbles-1;i>=0;i--) {
-        if (bBCD)
-            BitStream_AppendPartialByte(pBitStrm,(byte)tmp[i],4,0);
-        else
-            BitStream_AppendByte0(pBitStrm,(byte)(tmp[i]+'0'));
+    for (i = encodedSizeInNibbles - 1; i >= 0; i--) {
+        BitStream_AppendPartialByte(pBitStrm, (byte)tmp[i], 4, 0);
     }
 
-    
-
     CHECK_BIT_STREAM(pBitStrm);
-}
-
-
-void Acn_Enc_Int_BCD_ConstSize(BitStream* pBitStrm, asn1SccSint intVal, int encodedSizeInNibbles)
-{
-    Acn_Enc_Int_BCD_OR_ASCII_ConstSize(pBitStrm, intVal, encodedSizeInNibbles, TRUE);
 }
 
 static flag Acn_Dec_Int_BCD_OR_ASCII_ConstSize(BitStream* pBitStrm,
@@ -642,13 +600,29 @@ static flag Acn_Dec_Int_BCD_OR_ASCII_ConstSize(BitStream* pBitStrm,
 }
 
 
-flag Acn_Dec_Int_BCD_ConstSize(BitStream* pBitStrm, asn1SccSint* pIntVal, int encodedSizeInNibbles)
+flag Acn_Dec_Int_BCD_ConstSize(BitStream* pBitStrm, asn1SccUint* pIntVal, int encodedSizeInNibbles)
 {
-    return Acn_Dec_Int_BCD_OR_ASCII_ConstSize(pBitStrm, pIntVal, encodedSizeInNibbles, TRUE);
+    byte digit;
+    asn1SccUint ret = 0;
+
+
+    while (encodedSizeInNibbles>0)
+    {
+        if (!BitStream_ReadPartialByte(pBitStrm, &digit, 4))
+            return FALSE;
+
+        ret *= 10;
+        ret += digit;
+
+        encodedSizeInNibbles--;
+    }
+    *pIntVal = ret;
+
+    return TRUE;
 }
 
 
-void Acn_Enc_Int_BCD_VarSize_LengthEmbedded(BitStream* pBitStrm, asn1SccSint intVal)
+void Acn_Enc_Int_BCD_VarSize_LengthEmbedded(BitStream* pBitStrm, asn1SccUint intVal)
 {
     int nNibbles = Acn_Get_Int_Size_BCD(intVal);
     /* encode length */
@@ -661,7 +635,7 @@ void Acn_Enc_Int_BCD_VarSize_LengthEmbedded(BitStream* pBitStrm, asn1SccSint int
     CHECK_BIT_STREAM(pBitStrm);
 }
 
-flag Acn_Dec_Int_BCD_VarSize_LengthEmbedded(BitStream* pBitStrm, asn1SccSint* pIntVal)
+flag Acn_Dec_Int_BCD_VarSize_LengthEmbedded(BitStream* pBitStrm, asn1SccUint* pIntVal)
 {
     byte nNibbles=0;
     if (BitStream_ReadByte(pBitStrm, &nNibbles)) 
@@ -674,7 +648,7 @@ flag Acn_Dec_Int_BCD_VarSize_LengthEmbedded(BitStream* pBitStrm, asn1SccSint* pI
 
 
 //encoding puts an 'F' at the end
-void Acn_Enc_Int_BCD_VarSize_NullTerminated(BitStream* pBitStrm, asn1SccSint intVal)
+void Acn_Enc_Int_BCD_VarSize_NullTerminated(BitStream* pBitStrm, asn1SccUint intVal)
 {
 
     int nNibbles = Acn_Get_Int_Size_BCD(intVal);
@@ -731,20 +705,118 @@ static flag Acn_Dec_Int_BCD_OR_ASCII_VarSize_NullTerminated(BitStream* pBitStrm,
     return TRUE;
 }
 
-flag Acn_Dec_Int_BCD_VarSize_NullTerminated(BitStream* pBitStrm, asn1SccSint* pIntVal)
+flag Acn_Dec_Int_BCD_VarSize_NullTerminated(BitStream* pBitStrm, asn1SccUint* pIntVal)
 {
-    return Acn_Dec_Int_BCD_OR_ASCII_VarSize_NullTerminated(pBitStrm, pIntVal, TRUE);
+    byte digit;
+    asn1SccUint ret = 0;
+
+    for (;;)
+    {
+        if (!BitStream_ReadPartialByte(pBitStrm, &digit, 4))
+            return FALSE;
+        if (digit>9)
+            break;
+
+        ret *= 10;
+        ret += digit;
+
+    }
+    *pIntVal = ret;
+
+    return TRUE;
+}
+
+void Acn_Enc_UInt_ASCII_ConstSize(BitStream* pBitStrm, asn1SccUint intVal, int encodedSizeInBytes)
+{
+    int i = 0;
+    int totalNibbles = 0;
+    char tmp[100];
+
+    memset(tmp, 0x0, sizeof(tmp));
+
+    assert(100 >= encodedSizeInBytes);
+
+    while (intVal>0) {
+        tmp[totalNibbles++] = (char)(intVal % 10);
+        intVal /= 10;
+    }
+    assert(encodedSizeInBytes >= totalNibbles);
+
+    for (i = encodedSizeInBytes - 1; i >= 0; i--) {
+        BitStream_AppendByte0(pBitStrm, (byte)(tmp[i] + '0'));
+    }
+
+    CHECK_BIT_STREAM(pBitStrm);
 }
 
 
-void Acn_Enc_Int_ASCII_ConstSize(BitStream* pBitStrm, asn1SccSint intVal, int encodedSizeInBytes)
+void Acn_Enc_SInt_ASCII_ConstSize(BitStream* pBitStrm, asn1SccSint intVal, int encodedSizeInBytes)
 {
-    Acn_Enc_Int_BCD_OR_ASCII_ConstSize(pBitStrm, intVal, encodedSizeInBytes, FALSE);
+    if (intVal<0) {
+        intVal = -intVal;
+        BitStream_AppendByte0(pBitStrm, '-');
+    }
+    else {
+        BitStream_AppendByte0(pBitStrm, '+');
+    }
+    encodedSizeInBytes--;
+
+
+    assert(intVal >= 0);
+
+    Acn_Enc_UInt_ASCII_ConstSize(pBitStrm, intVal, encodedSizeInBytes);
+
 }
 
-flag Acn_Dec_Int_ASCII_ConstSize(BitStream* pBitStrm, asn1SccSint* pIntVal, int encodedSizeInBytes)
+flag Acn_Dec_UInt_ASCII_ConstSize(BitStream* pBitStrm, asn1SccUint* pIntVal, int encodedSizeInBytes)
 {
-    return Acn_Dec_Int_BCD_OR_ASCII_ConstSize(pBitStrm, pIntVal, encodedSizeInBytes, FALSE);
+    byte digit;
+    asn1SccUint ret = 0;
+
+    while (encodedSizeInBytes>0)
+    {
+        if (!BitStream_ReadByte(pBitStrm, &digit))
+            return FALSE;
+        ASSERT_OR_RETURN_FALSE(digit >= '0' && digit <= '9');
+        digit = (byte)((int)digit - '0');
+
+        ret *= 10;
+        ret += digit;
+
+        encodedSizeInBytes--;
+    }
+    *pIntVal = ret;
+
+    return TRUE;
+}
+
+flag Acn_Dec_SInt_ASCII_ConstSize(BitStream* pBitStrm, asn1SccSint* pIntVal, int encodedSizeInBytes)
+{
+    byte digit;
+    asn1SccUint ret = 0;
+    int sign = 1;
+
+    if (!BitStream_ReadByte(pBitStrm, &digit))
+        return FALSE;
+    if (digit == '+')
+        sign = 1;
+    else if (digit == '-')
+        sign = -1;
+    else {
+        ASSERT_OR_RETURN_FALSE(0);
+    }
+    encodedSizeInBytes--;
+
+
+    if (!Acn_Dec_UInt_ASCII_ConstSize(pBitStrm, &ret, encodedSizeInBytes)) {
+        return false;
+    }
+
+    *pIntVal = (asn1SccSint)ret;
+
+    *pIntVal = sign*(*pIntVal);
+    return TRUE;
+
 }
 
 
@@ -762,50 +834,122 @@ static int Acn_Get_Int_Size_ASCII(asn1SccSint intVal)
 }
 
 
-void Acn_Enc_Int_ASCII_VarSize_LengthEmbedded(BitStream* pBitStrm, asn1SccSint intVal)
+void Acn_Enc_UInt_ASCII_VarSize_LengthEmbedded(BitStream* pBitStrm, asn1SccUint intVal)
 {
-    byte nChars = (byte)Acn_Get_Int_Size_ASCII(intVal);
+    byte nChars = (byte)Acn_Get_Int_Size_BCD(intVal);
     
     /* encode length */
     BitStream_AppendByte0(pBitStrm, nChars);
 
     /* Encode Number */
-    Acn_Enc_Int_ASCII_ConstSize(pBitStrm, intVal, nChars);
+    Acn_Enc_UInt_ASCII_ConstSize(pBitStrm, intVal, nChars);
 
     CHECK_BIT_STREAM(pBitStrm);
 
 }
 
-flag Acn_Dec_Int_ASCII_VarSize_LengthEmbedded(BitStream* pBitStrm, asn1SccSint* pIntVal)
+void Acn_Enc_SInt_ASCII_VarSize_LengthEmbedded(BitStream* pBitStrm, asn1SccSint intVal)
+{
+    byte nChars = (byte)Acn_Get_Int_Size_ASCII(intVal);
+
+    /* encode length */
+    BitStream_AppendByte0(pBitStrm, nChars);
+
+    /* Encode Number */
+    Acn_Enc_SInt_ASCII_ConstSize(pBitStrm, intVal, nChars);
+
+    CHECK_BIT_STREAM(pBitStrm);
+
+}
+
+flag Acn_Dec_UInt_ASCII_VarSize_LengthEmbedded(BitStream* pBitStrm, asn1SccUint* pIntVal)
+{
+    byte nChars = 0;
+    if (BitStream_ReadByte(pBitStrm, &nChars))
+        return Acn_Dec_UInt_ASCII_ConstSize(pBitStrm, pIntVal, nChars);
+
+    return FALSE;
+}
+
+flag Acn_Dec_SInt_ASCII_VarSize_LengthEmbedded(BitStream* pBitStrm, asn1SccSint* pIntVal)
 {
     byte nChars=0;
     if (BitStream_ReadByte(pBitStrm, &nChars)) 
-        return Acn_Dec_Int_ASCII_ConstSize(pBitStrm, pIntVal, nChars);
+        return Acn_Dec_SInt_ASCII_ConstSize(pBitStrm, pIntVal, nChars);
 
     return FALSE;
 }
 
 
 
+void Acn_Enc_UInt_ASCII_VarSize_NullTerminated(BitStream* pBitStrm, asn1SccUint intVal)
+{
+    int nChars = Acn_Get_Int_Size_BCD(intVal);
 
-void Acn_Enc_Int_ASCII_VarSize_NullTerminated(BitStream* pBitStrm, asn1SccSint intVal)
+    /* Encode Number */
+    Acn_Enc_UInt_ASCII_ConstSize(pBitStrm, intVal, nChars);
+
+    BitStream_AppendByte0(pBitStrm, 0x0);
+
+    CHECK_BIT_STREAM(pBitStrm);
+}
+
+void Acn_Enc_SInt_ASCII_VarSize_NullTerminated(BitStream* pBitStrm, asn1SccSint intVal)
 {
     int nChars = Acn_Get_Int_Size_ASCII(intVal);
 
     /* Encode Number */
-    Acn_Enc_Int_ASCII_ConstSize(pBitStrm, intVal, nChars);
+    Acn_Enc_SInt_ASCII_ConstSize(pBitStrm, intVal, nChars);
 
     BitStream_AppendByte0(pBitStrm,0x0);
 
     CHECK_BIT_STREAM(pBitStrm);
 }
 
-flag Acn_Dec_Int_ASCII_VarSize_NullTerminated(BitStream* pBitStrm, asn1SccSint* pIntVal)
+
+flag Acn_Dec_UInt_ASCII_VarSize_NullTerminated(BitStream* pBitStrm, asn1SccUint* pIntVal)
 {
-    return Acn_Dec_Int_BCD_OR_ASCII_VarSize_NullTerminated(pBitStrm, pIntVal, FALSE);
+    byte digit;
+    asn1SccUint ret = 0;
+
+    for (;;)
+    {
+        if (!BitStream_ReadByte(pBitStrm, &digit))
+            return FALSE;
+        if (digit == 0x0)
+            break;
+        digit = (byte)((int)digit - '0');
+
+        ret *= 10;
+        ret += digit;
+
+    }
+    *pIntVal = ret;
+
+    return TRUE;
 }
 
 
+flag Acn_Dec_Int_ASCII_VarSize_NullTerminated(BitStream* pBitStrm, asn1SccSint* pIntVal)
+{
+    byte digit;
+    asn1SccUint ret = 0;
+    flag isNegative = FALSE;
+
+    if (!BitStream_ReadByte(pBitStrm, &digit))
+        return FALSE;
+    ASSERT_OR_RETURN_FALSE(digit == '-' || digit == '+');
+    if (digit == '-')
+        isNegative = TRUE;
+
+    if (!Acn_Dec_UInt_ASCII_VarSize_NullTerminated(pBitStrm, &ret))
+        return false;
+
+    *pIntVal = (asn1SccSint)ret;
+    if (isNegative)
+        *pIntVal = -(*pIntVal);
+    return TRUE;
+}
 
 
 
@@ -1150,13 +1294,13 @@ flag Acn_Dec_String_CharIndex_Internal_Field_Determinant(BitStream* pBitStrm, as
 
 
 /* Length Determinant functions*/
-void Acn_Enc_Length(BitStream* pBitStrm, asn1SccSint lengthValue, int lengthSizeInBits)
+void Acn_Enc_Length(BitStream* pBitStrm, asn1SccUint lengthValue, int lengthSizeInBits)
 {
     /* encode length */
     Acn_Enc_Int_PositiveInteger_ConstSize(pBitStrm, lengthValue, lengthSizeInBits);
 }
 
-flag Acn_Dec_Length(BitStream* pBitStrm, asn1SccSint* pLengthValue, int lengthSizeInBits)
+flag Acn_Dec_Length(BitStream* pBitStrm, asn1SccUint* pLengthValue, int lengthSizeInBits)
 {
     return Acn_Dec_Int_PositiveInteger_ConstSize(pBitStrm, pLengthValue, lengthSizeInBits);
 }

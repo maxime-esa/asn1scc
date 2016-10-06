@@ -116,7 +116,9 @@ flag <sName>_ACN_Decode(<sName><sStar> pVal, BitStream* pBitStrm, int* pErrCode<
 
 Declare_Integer() ::="asn1SccSint"
 Declare_Integer_min_max(nMin, nMax) ::="asn1SccSint"
+Declare_PosInteger_min_max(nMin, nMax) ::="asn1SccUint"
 Declare_Integer_posInf(nMin) ::="asn1SccSint"
+Declare_PosInteger_posInf(nMin) ::="asn1SccUint"
 Declare_Integer_negInf(nMax) ::="asn1SccSint"
 
 Declare_Boolean() ::= "flag"

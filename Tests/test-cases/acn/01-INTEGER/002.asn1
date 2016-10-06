@@ -15,7 +15,7 @@ END
 
 -- TCLS     MyPDU[encoding BCD, size null-terminated]
 -- TCLS     MyPDU[encoding ASCII, size null-terminated]
---TCLS     CONSTANT WSIZE ::=63 CONSTANT WSIZE2 ::=64 MyPDU[encoding twos-complement, size WSIZE2]
+--TCLFC     CONSTANT WSIZE ::=63 CONSTANT WSIZE2 ::=64 MyPDU[encoding twos-complement, size WSIZE2]  $$$ Acn property twos-complement cannot be applied to non negative INTEGER types
 --TCLS     CONSTANT WSIZE ::=64 MyPDU[encoding pos-int, size WSIZE]
 --TCLS     CONSTANT WSIZE ::=128/2 MyPDU[encoding pos-int, size WSIZE]
 -- TCLS    MyPDU[encoding pos-int, size 64, adjust 1]          

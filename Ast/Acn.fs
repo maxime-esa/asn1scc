@@ -79,6 +79,9 @@ type IntEncodingClass =
     |ASCII_ConstSize of BigInteger
     |ASCII_VarSize_LengthEmbedded
     |ASCII_VarSize_NullTerminated of byte
+    |ASCII_UINT_ConstSize of BigInteger
+    |ASCII_UINT_VarSize_LengthEmbedded
+    |ASCII_UINT_VarSize_NullTerminated of byte
     |BCD_ConstSize of BigInteger
     |BCD_VarSize_LengthEmbedded
     |BCD_VarSize_NullTerminated of byte
@@ -153,6 +156,12 @@ let GetIntEncodingClass (a:Asn1Type) (asn1:Ast.AstRoot) (acn:AcnTypes.AcnAstReso
         let endianess = GetEndianess a asn1
         let encProp = (GetEncodingProperty a asn1).Value
         let sizeProp = GetSizeProperty a encProp acn
+        let bUINT =
+            match (uPER.GetTypeUperRange a.Kind a.Constraints asn1) with
+            | Concrete(a,_) when a >= 0I    -> true
+            | PosInf(a)  when a >= 0I       -> true
+            | _                             -> false
+
         match encProp, sizeProp, endianess with
         | PosInt, SP_Fixed(8) , BigEndianness               ->  PositiveInteger_ConstSize_8
         | PosInt, SP_Fixed(16), BigEndianness               ->  PositiveInteger_ConstSize_big_endian_16
@@ -162,7 +171,8 @@ let GetIntEncodingClass (a:Asn1Type) (asn1:Ast.AstRoot) (acn:AcnTypes.AcnAstReso
         | PosInt, SP_Fixed(64), BigEndianness               ->  PositiveInteger_ConstSize_big_endian_64
         | PosInt, SP_Fixed(64), LittleEndianness            ->  PositiveInteger_ConstSize_little_endian_64
         | PosInt, SP_Fixed(fxVal) , BigEndianness           ->  PositiveInteger_ConstSize (BigInteger fxVal)
-        | PosInt, SP_NullTerminated _, _                      ->  raise(SemanticError(errLoc, "Acn properties pos-int and null-terminated are mutually exclusive"))
+        | PosInt, SP_NullTerminated _, _                    ->  raise(SemanticError(errLoc, "Acn properties pos-int and null-terminated are mutually exclusive"))
+        | TwosComplement, _,_              when bUINT       ->  raise(SemanticError(errLoc, "Acn property twos-complement cannot be applied to non negative INTEGER types"))
         | TwosComplement, SP_Fixed(8) , BigEndianness       ->  TwosComplement_ConstSize_8
         | TwosComplement, SP_Fixed(16), BigEndianness       ->  TwosComplement_ConstSize_big_endian_16
         | TwosComplement, SP_Fixed(16), LittleEndianness    ->  TwosComplement_ConstSize_little_endian_16
@@ -172,10 +182,16 @@ let GetIntEncodingClass (a:Asn1Type) (asn1:Ast.AstRoot) (acn:AcnTypes.AcnAstReso
         | TwosComplement, SP_Fixed(64), LittleEndianness    ->  TwosComplement_ConstSize_little_endian_64
         | TwosComplement, SP_Fixed(fxVal) , BigEndianness   ->  TwosComplement_ConstSize (BigInteger fxVal)
         | TwosComplement, SP_NullTerminated _, _            ->  raise(SemanticError(errLoc, "Acn properties twos-complement and null-terminated are mutually exclusive"))
-        | Ascii, SP_Fixed(fxVal) , BigEndianness            ->  ASCII_ConstSize  (BigInteger fxVal)
+        | Ascii, SP_Fixed(fxVal) , BigEndianness            ->  
+            match bUINT with
+            | true                                          -> ASCII_UINT_ConstSize  (BigInteger fxVal)
+            | false                                         -> ASCII_ConstSize  (BigInteger fxVal)
         | BCD, SP_Fixed(fxVal) , BigEndianness              ->  BCD_ConstSize (BigInteger fxVal)
         | BCD, SP_NullTerminated b, BigEndianness           ->  BCD_VarSize_NullTerminated b
-        | Ascii, SP_NullTerminated b, BigEndianness         ->  ASCII_VarSize_NullTerminated b
+        | Ascii, SP_NullTerminated b, BigEndianness         ->  
+            match bUINT with
+            | true                                          -> ASCII_UINT_VarSize_NullTerminated b
+            | false                                         -> ASCII_VarSize_NullTerminated b
         | _, SP_NullTerminated _, _                         ->  raise(SemanticError(errLoc, "null-terminated can be applied only for ASCII or BCD encodings"))
         | _, _ , LittleEndianness                           ->  raise(SemanticError(errLoc, "Little endian can be applied only for fixed size encodings and size must be 16 or 32 or 64"))
         | IEEE754_32, _, BigEndianness                      ->  raise(SemanticError(errLoc, "invalid encoding value (choose one of pos-int, twos-complement, ascii, BCD)"))
@@ -412,6 +428,11 @@ let rec RequiredBitsForAcnEncodingInt (t:Asn1Type) (absPath:AcnTypes.AbsPath) (a
             |ASCII_ConstSize(nSize)                         -> (nSize)
             |ASCII_VarSize_LengthEmbedded                   -> (8I+8I+18I*8I)
             |ASCII_VarSize_NullTerminated   _               -> (8I+8I+18I*8I)
+
+            |ASCII_UINT_ConstSize(nSize)                         -> (nSize)
+            |ASCII_UINT_VarSize_LengthEmbedded                   -> (8I+18I*8I)
+            |ASCII_UINT_VarSize_NullTerminated   _               -> (8I+18I*8I)
+
             |BCD_ConstSize(nSize)                           -> (nSize)
             |BCD_VarSize_LengthEmbedded                     -> (8I+18I*4I)
             |BCD_VarSize_NullTerminated    _                -> (19I*4I)
@@ -527,6 +548,9 @@ let rec RequiredMinBitsForAcnEncodingInt (t:Asn1Type) (absPath:AcnTypes.AbsPath)
             |ASCII_ConstSize(nSize)                         -> (nSize)
             |ASCII_VarSize_LengthEmbedded                   -> (8I)
             |ASCII_VarSize_NullTerminated   _               -> (8I)
+            |ASCII_UINT_ConstSize(nSize)                    -> (nSize)
+            |ASCII_UINT_VarSize_LengthEmbedded              -> (8I)
+            |ASCII_UINT_VarSize_NullTerminated   _          -> (8I)
             |BCD_ConstSize(nSize)                           -> (nSize)
             |BCD_VarSize_LengthEmbedded                     -> (8I)
             |BCD_VarSize_NullTerminated      _               -> (4I)

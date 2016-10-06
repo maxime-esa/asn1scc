@@ -28,8 +28,8 @@ END
 --TCLFC     MyPDU[encoding BCD, size -200]     $$$  File sample1.acn, line 4:21 no viable alternative at input 'size'
 --TCLS     MyPDU[encoding pos-int, size 37]
 --TCLS     MyPDU[]
---TCLS     CONSTANT WSIZE ::=37 CONSTANT WSIZE2 ::=37+1 MyPDU[encoding twos-complement, size WSIZE2]
---TCLS     MyPDU[encoding pos-int, size 64]
+--TCLFC     CONSTANT WSIZE ::=37 CONSTANT WSIZE2 ::=37+1 MyPDU[encoding twos-complement, size WSIZE2]  $$$ Acn property twos-complement cannot be applied to non negative INTEGER types
+--TCLS     MyPDU[encoding pos-int, size 64]		
 --TCLFC    MyPDU[encoding pos-int, size h9hd]       $$$ File:sample1.acn, line:4, Expecting an Integer value or an ACN constant as value for the size property
 
 -- TCLFC     MyPDU[encoding BCD, size 200]       $$$  File:sample1.acn, line:4, Resulting integer encoding can have values up to 99999999999999999999999999999999999999999999999999 which is larger than MAXINT (9223372036854775807)

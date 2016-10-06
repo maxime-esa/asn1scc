@@ -422,12 +422,20 @@ ret = BitStream_DecodeConstraintWholeNumber(pBitStrm, &charValue, 0, 127);
 /* INTETEGER START*/
 
 
-/*case: A:: = INTEGER (5..20) */
+/*case: A:: = INTEGER (-5..20) */
 IntFullyConstraint_encode(p, nMin, nMax, nBits, sErrCode) ::= "BitStream_EncodeConstraintWholeNumber(pBitStrm, <p>, <nMin>, <nMax>);"
 IntFullyConstraint_decode(p, nMin, nMax, nBits, sErrCode) ::= <<
 ret = BitStream_DecodeConstraintWholeNumber(pBitStrm, <p>, <nMin>, <nMax>);
 *pErrCode = ret ? 0 : ERR_INSUFFICIENT_DATA;
 >>
+
+/*case: Positive fully constraint A:: = INTEGER (5..20) */
+IntFullyConstraintPos_encode(p, nMin, nMax, nBits, sErrCode) ::= "BitStream_EncodeConstraintPosWholeNumber(pBitStrm, <p>, <nMin>, <nMax>);"
+IntFullyConstraintPos_decode(p, nMin, nMax, nBits, sErrCode) ::= <<
+ret = BitStream_DecodeConstraintPosWholeNumber(pBitStrm, <p>, <nMin>, <nMax>);
+*pErrCode = ret ? 0 : ERR_INSUFFICIENT_DATA;
+>>
+
 
 /*case: A :: = INTEGER */
 IntUnconstraint_encode(p, sErrCode) ::= "BitStream_EncodeUnConstraintWholeNumber(pBitStrm, <p>);"
@@ -438,10 +446,18 @@ ret = BitStream_DecodeUnConstraintWholeNumber(pBitStrm, <p>);
 
 
 
-/*case: A:: = INTEGER (5..MAX) */
+/*case: A:: = INTEGER (-5..MAX) */
 IntSemiConstraint_encode(p, nMin, sErrCode) ::= "BitStream_EncodeSemiConstraintWholeNumber(pBitStrm, <p>, <nMin>);"
 IntSemiConstraint_decode(p, nMin, sErrCode) ::= <<
 ret = BitStream_DecodeSemiConstraintWholeNumber(pBitStrm, <p>, <nMin>);
+*pErrCode = ret ? 0 : ERR_INSUFFICIENT_DATA;
+>>
+
+
+/*case: A:: = INTEGER (5..MAX) */
+IntSemiConstraintPos_encode(p, nMin, sErrCode) ::= "BitStream_EncodeSemiConstraintPosWholeNumber(pBitStrm, <p>, <nMin>);"
+IntSemiConstraintPos_decode(p, nMin, sErrCode) ::= <<
+ret = BitStream_DecodeSemiConstraintPosWholeNumber(pBitStrm, <p>, <nMin>);
 *pErrCode = ret ? 0 : ERR_INSUFFICIENT_DATA;
 >>
 

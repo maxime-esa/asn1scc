@@ -512,6 +512,21 @@ void BitStream_EncodeConstraintWholeNumber(BitStream* pBitStrm, asn1SccSint v, a
     BitStream_EncodeNonNegativeInteger(pBitStrm,(asn1SccUint)(v-min));
 }
 
+void BitStream_EncodeConstraintPosWholeNumber(BitStream* pBitStrm, asn1SccUint v, asn1SccUint min, asn1SccUint max)
+{
+    int nRangeBits;
+    int nBits;
+    asn1SccUint range;
+    assert(min <= v);
+    assert(v <= max);
+    range = (asn1SccUint)(max - min);
+    if (!range)
+        return;
+    nRangeBits = GetNumberOfBitsForNonNegativeInteger(range);
+    nBits = GetNumberOfBitsForNonNegativeInteger(v - min);
+    BitStream_AppendNBitZero(pBitStrm, nRangeBits - nBits);
+    BitStream_EncodeNonNegativeInteger(pBitStrm, v - min);
+}
 
 
 flag BitStream_DecodeConstraintWholeNumber(BitStream* pBitStrm, asn1SccSint* v, asn1SccSint min, asn1SccSint max)
@@ -540,6 +555,30 @@ flag BitStream_DecodeConstraintWholeNumber(BitStream* pBitStrm, asn1SccSint* v, 
     return FALSE;
 }
 
+flag BitStream_DecodeConstraintPosWholeNumber(BitStream* pBitStrm, asn1SccUint* v, asn1SccUint min, asn1SccUint max)
+{
+    asn1SccUint uv;
+    int nRangeBits;
+    asn1SccUint range = max - min;
+
+    ASSERT_OR_RETURN_FALSE(min <= max);
+
+
+    *v = 0;
+    if (!range) {
+        *v = min;
+        return TRUE;
+    }
+
+    nRangeBits = GetNumberOfBitsForNonNegativeInteger(range);
+
+    if (BitStream_DecodeNonNegativeInteger(pBitStrm, &uv, nRangeBits))
+    {
+        *v = uv + min;
+        return TRUE;
+    }
+    return FALSE;
+}
 
      
 void BitStream_EncodeSemiConstraintWholeNumber(BitStream* pBitStrm, asn1SccSint v, asn1SccSint min)
@@ -554,6 +593,20 @@ void BitStream_EncodeSemiConstraintWholeNumber(BitStream* pBitStrm, asn1SccSint 
     BitStream_AppendNBitZero(pBitStrm,nBytes*8-GetNumberOfBitsForNonNegativeInteger((asn1SccUint)(v-min)));
     /*Encode number */
     BitStream_EncodeNonNegativeInteger(pBitStrm,(asn1SccUint)(v-min));
+}
+
+void BitStream_EncodeSemiConstraintPosWholeNumber(BitStream* pBitStrm, asn1SccUint v, asn1SccUint min)
+{
+    int nBytes;
+    assert(v >= min);
+    nBytes = GetLengthInBytesOfUInt(v - min);
+
+    /* encode length */
+    BitStream_EncodeConstraintWholeNumber(pBitStrm, nBytes, 0, 255); /*8 bits, first bit is always 0*/
+                                                                     /* put required zeros*/
+    BitStream_AppendNBitZero(pBitStrm, nBytes * 8 - GetNumberOfBitsForNonNegativeInteger(v - min));
+    /*Encode number */
+    BitStream_EncodeNonNegativeInteger(pBitStrm, (v - min));
 }
 
 
@@ -574,6 +627,22 @@ flag BitStream_DecodeSemiConstraintWholeNumber(BitStream* pBitStrm, asn1SccSint*
     return TRUE;
 }
 
+flag BitStream_DecodeSemiConstraintPosWholeNumber(BitStream* pBitStrm, asn1SccUint* v, asn1SccUint min)
+{
+    asn1SccSint nBytes;
+    int i;
+    *v = 0;
+    if (!BitStream_DecodeConstraintWholeNumber(pBitStrm, &nBytes, 0, 255))
+        return FALSE;
+    for (i = 0; i<nBytes; i++) {
+        byte b = 0;
+        if (!BitStream_ReadByte(pBitStrm, &b))
+            return FALSE;
+        *v = (*v << 8) | b;
+    }
+    *v += min;
+    return TRUE;
+}
 
 
 void BitStream_EncodeUnConstraintWholeNumber(BitStream* pBitStrm, asn1SccSint v)
@@ -715,7 +784,6 @@ void BitStream_EncodeReal(BitStream* pBitStrm, double v)
 }
 
 flag DecodeRealAsBinaryEncoding(BitStream* pBitStrm, int length, byte header, double* v);
-flag DecodeRealUsingDecimalEncoding(BitStream* pBitStrm, int length, byte header, double* v);
 
 flag BitStream_DecodeReal(BitStream* pBitStrm, double* v)
 {
@@ -744,11 +812,8 @@ flag BitStream_DecodeReal(BitStream* pBitStrm, double* v)
         *v = -INFINITY;
         return TRUE;
     }
-    if (header & 0x80) 
-        return DecodeRealAsBinaryEncoding(pBitStrm, length-1, header, v);
 
-
-    return DecodeRealUsingDecimalEncoding(pBitStrm, length-1, header, v);
+    return DecodeRealAsBinaryEncoding(pBitStrm, length-1, header, v);
 }
 
 
@@ -813,17 +878,6 @@ flag DecodeRealAsBinaryEncoding(BitStream* pBitStrm, int length, byte header, do
     return TRUE;
 }
 
-flag DecodeRealUsingDecimalEncoding(BitStream* pBitStrm, int length, byte header, double* v)
-{
-    ASSERT_OR_RETURN_FALSE(0);
-
-    (void) pBitStrm;
-    (void) length;
-    (void) header;
-    (void) v;
-
-    return FALSE;
-}
 
 
 int GetCharIndex(char ch, byte Set[], int setLen)

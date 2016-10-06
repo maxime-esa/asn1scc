@@ -68,7 +68,7 @@ type LOCAL_VARIABLE =
     | SEQUENCE_OF_INDEX of int
     | LENGTH
     | EXTENSION_BIT
-    | ENUM_IDX
+    | ENUM_IDX of Ast.INTTYPE
     | CHOICE_IDX
     | SEQUENCE_BitMask  of string*BigInteger
     | REF_TYPE_PARAM   of string*string
