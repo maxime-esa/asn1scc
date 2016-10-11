@@ -50,8 +50,30 @@ let rec PrintTypeContraint (t:ConstraintType) (path:list<string>) (c:Asn1Constra
                     | _                                 -> raise(BugErrorException "")
                 | _             -> c_src.SingleValContraint p (c_variables.PrintValue v t tasName m r)
             | _             -> c_src.SingleValContraint p (c_variables.PrintValue v t tasName m r)
-    | RangeContraint(a,b,minIsIn,maxIsIn)         -> c_src.RangeContraint p (c_variables.PrintValue a t tasName m r) (c_variables.PrintValue b t tasName m r) minIsIn maxIsIn
-    | RangeContraint_val_MAX(a,minIsIn)   -> c_src.RangeContraint_val_MAX p (c_variables.PrintValue a t tasName m r) minIsIn
+    | RangeContraint(a,b,minIsIn,maxIsIn)         -> 
+        let tActual = Ast.GetActualTypeAllConsIncluded t.Type r
+        match tActual.Kind with
+        | Integer ->
+            let intType = Ast.getIntType (uPER.GetTypeUperRange tActual.Kind tActual.Constraints r)
+            match intType with
+            | UINT when minIsIn -> 
+                match a.Kind with
+                | IntegerValue(a) when a.Value = 0I -> c_src.RangeContraint_MIN_val p (c_variables.PrintValue b t tasName m r) maxIsIn
+                | _                                 -> c_src.RangeContraint p (c_variables.PrintValue a t tasName m r) (c_variables.PrintValue b t tasName m r) minIsIn maxIsIn    
+            | _                 -> c_src.RangeContraint p (c_variables.PrintValue a t tasName m r) (c_variables.PrintValue b t tasName m r) minIsIn maxIsIn
+        | _             -> c_src.RangeContraint p (c_variables.PrintValue a t tasName m r) (c_variables.PrintValue b t tasName m r) minIsIn maxIsIn
+    | RangeContraint_val_MAX(a,minIsIn)   -> 
+        let tActual = Ast.GetActualTypeAllConsIncluded t.Type r
+        match tActual.Kind with
+        | Integer ->
+            let intType = Ast.getIntType (uPER.GetTypeUperRange tActual.Kind tActual.Constraints r)
+            match intType with
+            | UINT when minIsIn -> 
+                match a.Kind with
+                | IntegerValue(a) when a.Value = 0I -> "TRUE"
+                | _                                 -> c_src.RangeContraint_val_MAX p (c_variables.PrintValue a t tasName m r) minIsIn
+            | _                                     -> c_src.RangeContraint_val_MAX p (c_variables.PrintValue a t tasName m r) minIsIn
+        | _                                         -> c_src.RangeContraint_val_MAX p (c_variables.PrintValue a t tasName m r) minIsIn
     | RangeContraint_MIN_val(b,maxIsIn)   -> c_src.RangeContraint_MIN_val p (c_variables.PrintValue b t tasName m r) maxIsIn
     | RangeContraint_MIN_MAX      -> raise(BugErrorException "This constraint should have been removed")
     | SizeContraint(inCon)        -> PrintTypeContraint  (LengthOf t.Type) path inCon alphaName m r

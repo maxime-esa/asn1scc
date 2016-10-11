@@ -519,14 +519,6 @@ static int Acn_Get_Int_Size_BCD(asn1SccUint intVal)
     return ret;
 }
 
-#if WORD_SIZE==8
-static void mystrcpy(char dest[], const char source[]) {
-    int i = 0;
-    while ((dest[i] = source[i]) != '\0') {
-        i++;
-    }
-}
-#endif
 
 
 
@@ -553,51 +545,6 @@ void Acn_Enc_Int_BCD_ConstSize(BitStream* pBitStrm, asn1SccUint intVal, int enco
     CHECK_BIT_STREAM(pBitStrm);
 }
 
-static flag Acn_Dec_Int_BCD_OR_ASCII_ConstSize(BitStream* pBitStrm,
-                                               asn1SccSint* pIntVal,
-                                               int encodedSizeInNibbles,
-                                               flag bBCD)
-{
-    byte digit;
-    asn1SccUint ret=0;
-    int sign = 1;
-
-    if (!bBCD) { // ASCII encoding enables negative integers
-        if (!BitStream_ReadByte(pBitStrm, &digit))
-            return FALSE;
-        if (digit == '+')
-            sign = 1;
-        else if (digit == '-')
-            sign = -1;
-        else {
-            ASSERT_OR_RETURN_FALSE(0);
-        }
-        encodedSizeInNibbles--;
-    }
-
-    
-    while(encodedSizeInNibbles>0) 
-    {
-        if (bBCD) {
-            if (!BitStream_ReadPartialByte(pBitStrm, &digit,4))
-                return FALSE;
-        } else {
-            if (!BitStream_ReadByte(pBitStrm, &digit))
-                return FALSE;
-            ASSERT_OR_RETURN_FALSE(digit>='0' && digit<='9');
-            digit=(byte)((int)digit - '0');
-        }
-
-        ret*=10;
-        ret+=digit;
-
-        encodedSizeInNibbles--;
-    }
-    *pIntVal = (asn1SccSint) ret;
-    
-    *pIntVal = sign*(*pIntVal);
-    return TRUE;
-}
 
 
 flag Acn_Dec_Int_BCD_ConstSize(BitStream* pBitStrm, asn1SccUint* pIntVal, int encodedSizeInNibbles)
@@ -659,50 +606,6 @@ void Acn_Enc_Int_BCD_VarSize_NullTerminated(BitStream* pBitStrm, asn1SccUint int
     BitStream_AppendPartialByte(pBitStrm,0xF,4,0);
 
     CHECK_BIT_STREAM(pBitStrm);
-}
-
-//decoding ends when 'F' is reached
-static flag Acn_Dec_Int_BCD_OR_ASCII_VarSize_NullTerminated(BitStream* pBitStrm,
-                                                            asn1SccSint* pIntVal,
-                                                            flag bBCD)
-{
-    byte digit;
-    asn1SccUint ret=0;
-    flag isNegative = FALSE;
-
-    if (!bBCD) {
-        if (!BitStream_ReadByte(pBitStrm, &digit))
-            return FALSE;
-        ASSERT_OR_RETURN_FALSE(digit == '-' || digit == '+');
-        if (digit == '-')
-            isNegative = TRUE;
-    }
-
-    
-    for(;;)
-    {
-        if (bBCD) {
-            if (!BitStream_ReadPartialByte(pBitStrm, &digit,4))
-                return FALSE;
-            if (digit>9)
-                break;
-        } else {
-            if (!BitStream_ReadByte(pBitStrm, &digit))
-                return FALSE;
-            if (digit == 0x0)
-                break;
-            digit=(byte)((int)digit - '0');
-        }
-
-        ret*=10;
-        ret+=digit;
-
-    }
-    *pIntVal = (asn1SccSint) ret;
-    if (isNegative)
-        *pIntVal = -(*pIntVal);
-
-    return TRUE;
 }
 
 flag Acn_Dec_Int_BCD_VarSize_NullTerminated(BitStream* pBitStrm, asn1SccUint* pIntVal)

@@ -66,6 +66,8 @@ namespace parseStg2
                 return "bool";
             if (hn(name, "s"))
                 return "string";
+            if (hn(name, "no"))
+                return "BigInteger option";
             if (hn(name, "n"))
                 return "BigInteger";
             if (hn(name, "d"))
@@ -112,6 +114,8 @@ namespace parseStg2
                 return "(\"" + p + "\"," + ("(if " + p + ".IsNone then null else ST.StrHelper " + p + ".Value:>Object") + ") )";
             if (p.StartsWith("s"))
                 return "(\"" + p + "\"," + ("(if " + p + " = null then null else ST.StrHelper " + p + ":>Object") + ") )";
+            if (p.StartsWith("no"))
+                return "(\"" + p + "\"," + ("(if " + p + ".IsNone then null else " + p + ".Value:>Object") + ") )";
             return "(\"" + p + "\"," + (p.StartsWith("arr") ? p + "|>Seq.toArray" : p) + " :>Object)";
         }
         

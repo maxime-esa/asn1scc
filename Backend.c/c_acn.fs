@@ -146,6 +146,7 @@ let HandleChildUpdate (ch:ChildInfo) (parentPath:list<string>) (sTasName:string)
                             let fldType = c_h.PrintTypeDeclaration ch.Type chPath r
                             let CheckRangeStatement =   
                                 match (GetTypeUperRange ch.Type.Kind ch.Type.Constraints r) with
+                                |Concrete(min, max)   when min = 0I     -> [(true, c_acn.CheckBeforeAssignToIntField_max tmpVar0  max)]
                                 |Concrete(min, max)        -> [(true, c_acn.CheckBeforeAssignToIntField_min_max tmpVar0 min max)]
                                 |NegInf(max)               -> [(true, c_acn.CheckBeforeAssignToIntField_max tmpVar0  max)]
                                 |PosInf(min)               -> [(true, c_acn.CheckBeforeAssignToIntField_min tmpVar0 min)]
@@ -206,6 +207,7 @@ let GetPointUpdateStatements  (point:AcnTypes.Point) getPntAccesPath  (tas:TypeA
                 let actAsn1Type = GetActualType asn1Type r
                 if actAsn1Type.Kind = Integer then  
                     match (GetTypeUperRange actAsn1Type.Kind actAsn1Type.Constraints r) with
+                    |Concrete(min, max)   when min = 0I     -> [(true, c_acn.CheckBeforeAssignToIntField_max tmpVar0  max)]
                     |Concrete(min, max)        -> [(true, c_acn.CheckBeforeAssignToIntField_min_max tmpVar0 min max)]
                     |NegInf(max)               -> [(true, c_acn.CheckBeforeAssignToIntField_max tmpVar0  max)]
                     |PosInf(min)               -> [(true, c_acn.CheckBeforeAssignToIntField_min tmpVar0 min)]
@@ -528,17 +530,17 @@ let rec EmitTypeBodyAux (t:Asn1Type) (sTasName:string) (path:list<string>, altPa
         let auto min max   = c_src.oct_sqf_VarSize p index intItem min max  (GetCount t pp r) codec  //c_src.oct_sqf_VarSize p index intItem min max (GetNumberOfBitsForNonNegativeInteger (max-min)) IntItemMin IntItemMax aligmVal codec 
         let fixSize size   = c_src.oct_sqf_FixedSize p index intItem size codec  //c_src.oct_sqf_FixedSize p index intItem size sTasName IntItemMin IntItemMax aligmVal codec 
         let nullTerm max       = raise(BugErrorException "Null terminated is not supported for this type")
-        let extFld  min max (fldPath:AcnTypes.Point)= 
+        let extFld  (min:BigInteger) max (fldPath:AcnTypes.Point)= 
             let extFldPath = GetPointAccessPath fldPath  r acn //GetTypeAccessPath (fldPath.AbsPath.Tail.Tail)  r 
-            c_acn.oct_sqf_external_field pp index intItem min max extFldPath codec
+            c_acn.oct_sqf_external_field pp index intItem (if min=0I then None else Some min) max extFldPath codec
         handleSizeableType auto fixSize extFld nullTerm
     | BitString ->
         let auto min max   = c_src.uper_bitString_VarSize pp min max codec  
         let fixSize size   = c_src.uper_bitString_FixSize pp size codec 
         let nullTerm max       = raise(BugErrorException "Null terminated is not supported for this type")
-        let extFld  min max (fldPath:AcnTypes.Point)= 
+        let extFld  (min:BigInteger) max (fldPath:AcnTypes.Point)= 
             let extFldPath = GetPointAccessPath fldPath  r acn 
-            c_acn.bit_string_external_field pp min max extFldPath codec
+            c_acn.bit_string_external_field pp (if min=0I then None else Some min) max extFldPath codec
         handleSizeableType auto fixSize extFld nullTerm
     | Sequence(children)                    -> 
         let GetChildThatIDepent (point:AcnTypes.Point) =
@@ -863,7 +865,7 @@ let CollectLocalVars (t:Asn1Type) (tas:TypeAssignment) (m:Asn1Module) (r:AstRoot
                                                                         | _                     -> false) 
             let nOptChildren = uPERoptionalChildren |> Seq.length
             let nSize = BigInteger (System.Math.Ceiling( (float nOptChildren) / 8.0))
-            let bitMaskVar = if nOptChildren = 0 then [] else [SEQUENCE_BitMask( sBitMaskName, nSize)]
+            let bitMaskVar = if nOptChildren = 0 || codec = Encode then [] else [SEQUENCE_BitMask( sBitMaskName, nSize)]
             state@bitMaskVar@acnInsertedFields@tmpTypes@childrenUpdateVars
         | _             -> state
 
