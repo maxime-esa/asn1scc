@@ -148,7 +148,7 @@ let DoWork (r:AstRoot) (stgFileName:string) (outFileName:string) =
         | Sequence(_) -> gen.AssigOpSpecialType () stgFileName
         | _           -> gen.AssigOpNormalType () stgFileName
     let PrintVas (vas: Ast.ValueAssignment) modName =
-        gen.VasXml vas.Name.Value (BigInteger vas.Name.Location.srcLine) (BigInteger vas.Name.Location.charPos) (PrintType vas.Type modName r stgFileName) (PrintCustomAsn1Value vas stgFileName) (ToC vas.Name.Value)  stgFileName
+        gen.VasXml vas.Name.Value (BigInteger vas.Name.Location.srcLine) (BigInteger vas.Name.Location.charPos) (PrintType vas.Type modName r stgFileName) (PrintCustomAsn1Value vas stgFileName) (ToC vas.c_name)  stgFileName
     let PrintTas (tas:Ast.TypeAssignment) modName =
         gen.TasXml tas.Name.Value (BigInteger tas.Name.Location.srcLine) (BigInteger tas.Name.Location.charPos) (PrintType tas.Type modName r stgFileName) (ToC tas.Name.Value) (AssigOp tas.Type) (PrintContract tas r stgFileName) stgFileName
     let PrintModule (m:Asn1Module) =

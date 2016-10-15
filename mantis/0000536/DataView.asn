@@ -1,0 +1,30 @@
+DataView DEFINITIONS AUTOMATIC TAGS ::= BEGIN
+
+IntNames ::= INTEGER { one (1), two(2) } (1..2) 
+
+Display-T ::= OCTET STRING (SIZE (1..255))
+
+Action-T ::= CHOICE 
+{
+    --display INTEGER (0..255),
+    display Display-T,
+    other-action INTEGER (0..1),
+    housekeeping Destination-T
+}
+
+Destination-T ::= ENUMERATED { displayer(0), other-dest(1) }
+
+TC-T ::= SEQUENCE 
+{
+    destination Destination-T,
+    action Action-T
+}
+
+TM-T ::= Display-T
+
+HK-T ::= SEQUENCE {
+    value-to-plot INTEGER (0..16535),
+    destination Destination-T
+}
+END
+
