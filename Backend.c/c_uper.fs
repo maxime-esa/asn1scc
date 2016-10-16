@@ -40,7 +40,7 @@ let rec EmitInternalItem_min_max (t:Asn1Type) (sTasName:string) (path:list<strin
             let nMax = uperGetMaxSizeInBitsAsInt inItem.Kind inItem.Constraints inItem.Location r
             let nMin = 0I
             intItem,nMin,nMax
-        | OctetString            -> c_src.InternalItem_oct_str pp index codec ,8I,8I 
+        | OctetString            -> c_src.InternalItem_oct_str pp index "ERR_INSUFFICIENT_DATA" codec ,8I,8I 
         | _      -> raise(BugErrorException "")
     | IA5String | NumericString -> 
         let alphaCons = t.Constraints |> List.filter(fun x -> match x with AlphabetContraint(_) -> true |_ -> false)

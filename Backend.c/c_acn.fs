@@ -392,7 +392,7 @@ let rec EmitTypeBodyAux (t:Asn1Type) (sTasName:string) (path:list<string>, altPa
             let intItemMax = Acn.RequiredBitsForAcnEncodingInt inItem (path@["#"]) r acn |> fst
             intItem, 0I, intItemMax
 //        | BitString                   -> su.InternalItem_bit_str p index codec, 1I, 1I 
-        | OctetString                 -> c_src.InternalItem_oct_str pp index codec ,8I,8I  //su.InternalItem_oct_str p index codec, 8I, 8I 
+        | OctetString                 -> c_src.InternalItem_oct_str pp index "ERR_INSUFFICIENT_DATA" codec ,8I,8I  //su.InternalItem_oct_str p index codec, 8I, 8I 
         | IA5String | NumericString   -> 
             let bAsciiEncode = false
             

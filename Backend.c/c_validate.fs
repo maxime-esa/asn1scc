@@ -20,6 +20,57 @@ open uPER
 open CloneTree
 open c_utils
 
+type AccessPath = string list
+
+type BaseConstraintExp =
+    | OrConstraintExp            of BaseConstraintExp*BaseConstraintExp
+    | AndConstraintExp           of BaseConstraintExp*BaseConstraintExp
+    | NotConstraintExp           of BaseConstraintExp
+    | GreaterThanExp             of Asn1Value
+    | GreaterThanOrEqExp         of Asn1Value
+    | LessThanExp                of Asn1Value
+    | LessThanOrEqExp            of Asn1Value
+    | CallAlphaFunc              of string
+
+
+type TypeIsValidFuncBody =
+    | SequenceIsValidFuncBody       of SeqeunceComponentCheckBody list
+    | SequenceOfIsValidFuncBody     of SeqeunceOfCheck
+    | BaseTypeIsValidFuncBody       of BaseTypeIsValidFuncBody
+
+and SeqeunceComponentCheckBody = 
+    | CheckComponent            of AccessPath*TypeIsValidFuncBody
+    | CheckOptionalComponent    of AccessPath*TypeIsValidFuncBody
+    | CheckComponentIsPresent   of AccessPath*AlwaysPresentOrAbsentCheck
+    | CheckComponentIsAbsent    of AccessPath*AlwaysPresentOrAbsentCheck
+
+and AlwaysPresentOrAbsentCheck = {
+    childExitsPath : string
+    errorCode      : string
+}    
+
+and SeqeunceOfCheck = {
+    path:AccessPath
+    childCheckBody:TypeIsValidFuncBody
+    sIndex : string
+    lengthCheckBody : TypeIsValidFuncBody
+    nMax : BigInteger
+    bFixed : bool
+}
+
+and BaseTypeIsValidFuncBody = {
+    path:AccessPath
+    errorCode      : string
+    consCheck      : BaseConstraintExp
+}
+
+type TypeAssIsValidFunc = {
+    funcName :string
+    sStar : string
+    localVars : LOCAL_VARIABLE list
+    sContent : unit
+    arrsAlphaCheckFunctions : unit
+}
 
 
 

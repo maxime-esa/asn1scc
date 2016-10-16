@@ -380,11 +380,11 @@ flag <sName>_Decode(<sName><sStar> pVal, BitStream* pBitStrm, int* pErrCode)
 
 
 
-InternalItem_oct_str_encode(p, i) ::=<<
+InternalItem_oct_str_encode(p, i, sErrInsufficientData) ::=<<
 BitStream_AppendByte0(pBitStrm, <p>arr[<i>]);
 >>
 
-InternalItem_oct_str_decode(p, i) ::=<<
+InternalItem_oct_str_decode(p, i, sErrInsufficientData) ::=<<
 ret = BitStream_ReadByte(pBitStrm, &<p>arr[<i>]); 
 *pErrCode = ret ? 0 : ERR_INSUFFICIENT_DATA;
 >>
