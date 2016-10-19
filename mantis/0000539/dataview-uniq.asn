@@ -1,0 +1,12 @@
+CcsdsSoisSeds DEFINITIONS AUTOMATIC TAGS ::= BEGIN
+
+TmImage10T ::= 
+SEQUENCE
+{
+  tmDays INTEGER,
+  pixelData ArrayTenbitpixel512n47T
+}
+
+ArrayTenbitpixel512n47T ::= SEQUENCE (SIZE(10)) OF BOOLEAN
+
+END

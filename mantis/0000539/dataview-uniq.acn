@@ -1,0 +1,21 @@
+
+CcsdsSoisSeds DEFINITIONS ::= BEGIN
+
+TmImage10T []
+{
+  apid NULL [pattern '00011111'B],
+  paddingAt8Of3 NULL [pattern '000'B],
+  typeKeyword NULL [pattern '0'B],
+  dataFieldHeader NULL [pattern '1'B],
+  paddingAt13Of11 NULL [pattern '00000000000'B],
+  sequenceFlag1 NULL [pattern '1'B],
+  sequenceFlag2 NULL [pattern '1'B],
+  pktLength NULL [pattern '0000001100010000'B],
+  tmSpare NULL [pattern '00010000'B],
+  tmType NULL [pattern '00000100'B],
+  tmSubtype NULL [pattern '00000000'B],
+  tmDays  [],
+  pixelData  [align-to-next byte]
+}
+
+END

@@ -39,7 +39,12 @@ let DoWork ast acn =
 
     let CloneType (old:Asn1Type) (m:Ast.Asn1Module) (key:list<string>) (cons:Constructors<State>) (state:State) =
         let moveableLongReference (x:LongReferenceResolved) = match x.Kind with SizeDeterminant | ChoiceDeteterminant -> true | _ ->false
-        let acnProps = old.AcnProperties
+        let acnProps = 
+            old.AcnProperties |> 
+            List.filter(fun x -> 
+                match x with 
+                | Aligment _ -> false
+                | _          -> true)
         let moveLongRefs = state.acn.References |> List.filter(fun x -> x.decType.AbsPath =  key && moveableLongReference x)
         match old.Kind with
         |ReferenceType(mn,nm, bTab)   when not(Seq.isEmpty old.Constraints)  || not(Seq.isEmpty acnProps) || not(Seq.isEmpty moveLongRefs)  -> 
