@@ -58,10 +58,13 @@
     <Compile Include="Header.fs" />
     <None Include="Script.fsx" />
     <Compile Include="c_utils.fs" />
+    <Compile Include="BackendAst.fs" />
     <Compile Include="c_variables.fs" />
+    <Compile Include="variable.fs" />
     <Compile Include="c_h.fs" />
     <Compile Include="c_validate.fs" />
     <Compile Include="c_validate2.fs" />
+    <Compile Include="validate.fs" />
     <Compile Include="c_equal.fs" />
     <Compile Include="c_uper.fs" />
     <Compile Include="c_acn.fs" />
