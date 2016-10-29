@@ -7,30 +7,10 @@
 #include <stdlib.h>
 
 
-#include "asn1crt.h"
+#include "asn1crt_ber.h"
+#include "asn1crt_util.h"
+#include "BitStream.h"
 
-
-
-//defined in asn1crt.c
-int GetLengthInBytesOfSInt(asn1SccSint v);
-
-static flag ByteStream_PutByte(ByteStream* pStrm, byte v)
-{
-    if (pStrm->currentByte+1>pStrm->count+1)
-        return FALSE;
-
-    pStrm->buf[pStrm->currentByte] = v;
-    pStrm->currentByte++;
-    return TRUE;
-}
-
-static flag ByteStream_GetByte(ByteStream* pStrm, byte* v)  {
-    if (pStrm->currentByte+1>pStrm->count+1)
-        return FALSE;
-    *v = pStrm->buf[pStrm->currentByte];
-    pStrm->currentByte++;
-    return TRUE;
-}
 
 
 static flag BerEncodeUInt(ByteStream* pByteStrm, asn1SccUint value, int *pErrCode) {

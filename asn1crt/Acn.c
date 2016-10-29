@@ -3,7 +3,9 @@
 #include <math.h>
 #include <float.h>
 
-#include "asn1crt.h"
+#include "asn1crt_acn.h"
+#include "asn1crt_util.h"
+
 
 static byte masks[] = { 0x80, 0x40, 0x20, 0x10, 0x08, 0x04, 0x02, 0x01 };
 
@@ -1189,13 +1191,6 @@ flag Acn_Dec_String_CharIndex_Internal_Field_Determinant(BitStream* pBitStrm, as
 
 
 
-
-
-
-
-
-
-
 /* Length Determinant functions*/
 void Acn_Enc_Length(BitStream* pBitStrm, asn1SccUint lengthValue, int lengthSizeInBits)
 {
@@ -1208,12 +1203,3 @@ flag Acn_Dec_Length(BitStream* pBitStrm, asn1SccUint* pLengthValue, int lengthSi
     return Acn_Dec_Int_PositiveInteger_ConstSize(pBitStrm, pLengthValue, lengthSizeInBits);
 }
 
-asn1SccSint milbus_encode(asn1SccSint val)
-{
-  return val == 32 ? 0 : val;
-}
-
-asn1SccSint milbus_decode(asn1SccSint val)
-{
-  return val == 0 ? 32 : val;
-}
