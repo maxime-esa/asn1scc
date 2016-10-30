@@ -107,19 +107,49 @@
     <None Include="Resources\run.sh" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="Resources\asn1crt.c" />
+    <None Include="Resources\asn1crt_acn.h" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="Resources\real.c" />
+    <None Include="Resources\asn1crt_ber.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\asn1crt_core.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\asn1crt_real.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\asn1crt_util.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\asn1crt_xer.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="Resources\asn1crt.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\BitStream.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\ByteStream.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="Resources\Acn.c" />
   </ItemGroup>
   <ItemGroup>
     <None Include="Resources\ber.c" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\BitStream.c" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\ByteStream.c" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\real.c" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\util.c" />
   </ItemGroup>
   <ItemGroup>
     <None Include="Resources\xer.c" />
@@ -132,12 +162,22 @@
       <ResourceFilesToCopy Include="$(SolutionDir)SPARK_RTL/gnat.cfg" />
       <ResourceFilesToCopy Include="$(SolutionDir)SPARK_RTL/run.sh" />
       <ResourceFilesToCopy Include="$(SolutionDir)SPARK_RTL/GPS_project.gpr" />
-      <ResourceFilesToCopy Include="$(SolutionDir)asn1crt/asn1crt.c" />
+      <ResourceFilesToCopy Include="$(SolutionDir)asn1crt/asn1crt_acn.h" />
+      <ResourceFilesToCopy Include="$(SolutionDir)asn1crt/asn1crt_ber.h" />
+      <ResourceFilesToCopy Include="$(SolutionDir)asn1crt/asn1crt_core.h" />
+      <ResourceFilesToCopy Include="$(SolutionDir)asn1crt/asn1crt_real.h" />
+      <ResourceFilesToCopy Include="$(SolutionDir)asn1crt/asn1crt_util.h" />
+      <ResourceFilesToCopy Include="$(SolutionDir)asn1crt/asn1crt_xer.h" />
       <ResourceFilesToCopy Include="$(SolutionDir)asn1crt/asn1crt.h" />
+      <ResourceFilesToCopy Include="$(SolutionDir)asn1crt/BitStream.h" />
+      <ResourceFilesToCopy Include="$(SolutionDir)asn1crt/ByteStream.h" />
       <ResourceFilesToCopy Include="$(SolutionDir)asn1crt/Acn.c" />
       <ResourceFilesToCopy Include="$(SolutionDir)asn1crt/ber.c" />
-      <ResourceFilesToCopy Include="$(SolutionDir)asn1crt/xer.c" />
+      <ResourceFilesToCopy Include="$(SolutionDir)asn1crt/BitStream.c" />
+      <ResourceFilesToCopy Include="$(SolutionDir)asn1crt/ByteStream.c" />
       <ResourceFilesToCopy Include="$(SolutionDir)asn1crt/real.c" />
+      <ResourceFilesToCopy Include="$(SolutionDir)asn1crt/util.c" />
+      <ResourceFilesToCopy Include="$(SolutionDir)asn1crt/xer.c" />
     </ItemGroup>
     <PropertyGroup>
       <ResourcesDir>$(ProjectDir)/Resources</ResourcesDir>

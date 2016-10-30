@@ -119,42 +119,69 @@
   </resheader>
   <assembly alias="System.Windows.Forms" name="System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089" />
   <data name="gnat" type="System.Resources.ResXFileRef, System.Windows.Forms">
-    <value>Resources\gnat.cfg;System.String, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089;windows-1253</value>
+    <value>Resources/gnat.cfg;System.String, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089;windows-1253</value>
   </data>
   <data name="IgnoredExaminerWarnings" type="System.Resources.ResXFileRef, System.Windows.Forms">
-    <value>Resources\IgnoredExaminerWarnings.wrn;System.String, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089;windows-1253</value>
+    <value>Resources/IgnoredExaminerWarnings.wrn;System.String, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089;windows-1253</value>
   </data>
   <data name="GPS_project" type="System.Resources.ResXFileRef, System.Windows.Forms">
-    <value>Resources\GPS_project.gpr;System.String, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089;windows-1253</value>
+    <value>Resources/GPS_project.gpr;System.String, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089;windows-1253</value>
   </data>
   <data name="run" type="System.Resources.ResXFileRef, System.Windows.Forms">
-    <value>Resources\run.sh;System.String, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089;windows-1253</value>
+    <value>Resources/run.sh;System.String, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089;windows-1253</value>
   </data>
-  <data name="asn1crt" type="System.Resources.ResXFileRef, System.Windows.Forms">
-    <value>Resources\asn1crt.c;System.String, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089;windows-1253</value>
-  </data>
-  <data name="Acn" type="System.Resources.ResXFileRef, System.Windows.Forms">
-    <value>Resources\Acn.c;System.String, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089;windows-1253</value>
-  </data>
-  <data name="asn1crt1" type="System.Resources.ResXFileRef, System.Windows.Forms">
-    <value>Resources\asn1crt.h;System.String, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089;windows-1253</value>
-  </data>
-  <data name="ber" type="System.Resources.ResXFileRef, System.Windows.Forms">
-    <value>Resources\ber.c;System.String, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089;windows-1253</value>
-  </data>
-  <data name="real" type="System.Resources.ResXFileRef, System.Windows.Forms">
-    <value>Resources\real.c;System.String, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089;windows-1253</value>
-  </data>
-  <data name="real1" type="System.Resources.ResXFileRef, System.Windows.Forms">
-    <value>Resources\real.c;System.String, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089;windows-1253</value>
-  </data>
-  <data name="xer" type="System.Resources.ResXFileRef, System.Windows.Forms">
-    <value>Resources\xer.c;System.String, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089;windows-1253</value>
-  </data>
+    <data name="asn1crt_acn_h" type="System.Resources.ResXFileRef, System.Windows.Forms">
+        <value>Resources/asn1crt_acn.h;System.String, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089;windows-1253</value>
+    </data>
+    <data name="asn1crt_ber_h" type="System.Resources.ResXFileRef, System.Windows.Forms">
+        <value>Resources/asn1crt_ber.h;System.String, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089;windows-1253</value>
+    </data>
+    <data name="asn1crt_core_h" type="System.Resources.ResXFileRef, System.Windows.Forms">
+        <value>Resources/asn1crt_core.h;System.String, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089;windows-1253</value>
+    </data>
+    <data name="asn1crt_real_h" type="System.Resources.ResXFileRef, System.Windows.Forms">
+        <value>Resources/asn1crt_real.h;System.String, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089;windows-1253</value>
+    </data>
+    <data name="asn1crt_util_h" type="System.Resources.ResXFileRef, System.Windows.Forms">
+        <value>Resources/asn1crt_util.h;System.String, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089;windows-1253</value>
+    </data>
+    <data name="asn1crt_xer_h" type="System.Resources.ResXFileRef, System.Windows.Forms">
+        <value>Resources/asn1crt_xer.h;System.String, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089;windows-1253</value>
+    </data>
+    <data name="asn1crt_h" type="System.Resources.ResXFileRef, System.Windows.Forms">
+        <value>Resources/asn1crt.h;System.String, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089;windows-1253</value>
+    </data>
+    <data name="BitStream_h" type="System.Resources.ResXFileRef, System.Windows.Forms">
+        <value>Resources/BitStream.h;System.String, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089;windows-1253</value>
+    </data>
+    <data name="ByteStream_h" type="System.Resources.ResXFileRef, System.Windows.Forms">
+        <value>Resources/ByteStream.h;System.String, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089;windows-1253</value>
+    </data>
+    <data name="Acn_c" type="System.Resources.ResXFileRef, System.Windows.Forms">
+        <value>Resources/Acn.c;System.String, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089;windows-1253</value>
+    </data>
+    <data name="ber_c" type="System.Resources.ResXFileRef, System.Windows.Forms">
+        <value>Resources/ber.c;System.String, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089;windows-1253</value>
+    </data>
+    <data name="BitStream_c" type="System.Resources.ResXFileRef, System.Windows.Forms">
+        <value>Resources/BitStream.c;System.String, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089;windows-1253</value>
+    </data>
+    <data name="ByteStream_c" type="System.Resources.ResXFileRef, System.Windows.Forms">
+        <value>Resources/ByteStream.c;System.String, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089;windows-1253</value>
+    </data>
+    <data name="real_c" type="System.Resources.ResXFileRef, System.Windows.Forms">
+        <value>Resources/real.c;System.String, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089;windows-1253</value>
+    </data>
+    <data name="util_c" type="System.Resources.ResXFileRef, System.Windows.Forms">
+        <value>Resources/util.c;System.String, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089;windows-1253</value>
+    </data>
+    <data name="xer_c" type="System.Resources.ResXFileRef, System.Windows.Forms">
+        <value>Resources/xer.c;System.String, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089;windows-1253</value>
+    </data>
   <data name="adaasn1rtl_adb" type="System.Resources.ResXFileRef, System.Windows.Forms">
-    <value>Resources\adaasn1rtl.adb;System.String, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089;windows-1253</value>
+    <value>Resources/adaasn1rtl.adb;System.String, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089;windows-1253</value>
   </data>
   <data name="adaasn1rtl_ads" type="System.Resources.ResXFileRef, System.Windows.Forms">
-    <value>Resources\adaasn1rtl.ads;System.String, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089;windows-1253</value>
+    <value>Resources/adaasn1rtl.ads;System.String, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089;windows-1253</value>
   </data>
 </root>

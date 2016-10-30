@@ -419,15 +419,26 @@ namespace Asn1f2
             }
             /*else */if (cmdArgs.HasArgument("c"))
             {
-                WriteTextFile(Path.Combine(outDir, "asn1crt.c"), Resource1.asn1crt);
-                WriteTextFile(Path.Combine(outDir, "asn1crt.h"), Resource1.asn1crt1);
-                WriteTextFile(Path.Combine(outDir, "acn.c"), Resource1.Acn);
-                WriteTextFile(Path.Combine(outDir, "real.c"), Resource1.real);
+                WriteTextFile(Path.Combine(outDir, "asn1crt_acn.h"), Resource1.asn1crt_acn_h);
+                WriteTextFile(Path.Combine(outDir, "asn1crt_ber.h"), Resource1.asn1crt_ber_h);
+                WriteTextFile(Path.Combine(outDir, "asn1crt_core.h"), Resource1.asn1crt_core_h);
+                WriteTextFile(Path.Combine(outDir, "asn1crt_real.h"), Resource1.asn1crt_real_h);
+                WriteTextFile(Path.Combine(outDir, "asn1crt_util.h"), Resource1.asn1crt_util_h);
+                WriteTextFile(Path.Combine(outDir, "asn1crt_xer.h"), Resource1.asn1crt_xer_h);
+                WriteTextFile(Path.Combine(outDir, "asn1crt.h"), Resource1.asn1crt_h);
+                WriteTextFile(Path.Combine(outDir, "BitStream.h"), Resource1.BitStream_h);
+                WriteTextFile(Path.Combine(outDir, "ByteStream.h"), Resource1.ByteStream_h);
+                WriteTextFile(Path.Combine(outDir, "Acn.c"), Resource1.Acn_c);
+                WriteTextFile(Path.Combine(outDir, "BitStream.c"), Resource1.BitStream_c);
+                WriteTextFile(Path.Combine(outDir, "ByteStream.c"), Resource1.ByteStream_c);
+                WriteTextFile(Path.Combine(outDir, "real.c"), Resource1.real_c);
+                WriteTextFile(Path.Combine(outDir, "util.c"), Resource1.util_c);                
+                
                 if (encodings.Contains(ParameterizedAsn1Ast.Asn1Encoding.BER)) {
-                    WriteTextFile(Path.Combine(outDir, "ber.c"), Resource1.ber);
+                    WriteTextFile(Path.Combine(outDir, "ber.c"), Resource1.ber_c);
                 }
                 if (encodings.Contains(ParameterizedAsn1Ast.Asn1Encoding.XER)) {
-                    WriteTextFile(Path.Combine(outDir, "xer.c"), Resource1.xer);
+                    WriteTextFile(Path.Combine(outDir, "xer.c"), Resource1.xer_c);
                 }
 
                 var renamePolicy = getRenamePolicy(cmdArgs, ParameterizedAsn1Ast.EnumRenamePolicy.SelectiveEnumerants);

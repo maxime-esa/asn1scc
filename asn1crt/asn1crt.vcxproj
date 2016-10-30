@@ -84,16 +84,26 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="Acn.c" />
-    <ClCompile Include="asn1crt.c" />
     <ClCompile Include="ber.c" />
+    <ClCompile Include="BitStream.c" />
+    <ClCompile Include="ByteStream.c" />
     <ClCompile Include="real.c" />
-    <ClCompile Include="xer.c">
+    <ClCompile Include="util.c" />
+    <ClCompile Include="xer.c" >
       <PreprocessorDefinitions Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">_CRT_SECURE_NO_WARNINGS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <PreprocessorDefinitions Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">_CRT_SECURE_NO_WARNINGS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="asn1crt_acn.h" />
+    <ClInclude Include="asn1crt_ber.h" />
+    <ClInclude Include="asn1crt_core.h" />
+    <ClInclude Include="asn1crt_real.h" />
+    <ClInclude Include="asn1crt_util.h" />
+    <ClInclude Include="asn1crt_xer.h" />
     <ClInclude Include="asn1crt.h" />
+    <ClInclude Include="BitStream.h" />
+    <ClInclude Include="ByteStream.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="ReadMe.txt" />

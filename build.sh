@@ -18,12 +18,29 @@ cp SPARK_RTL/IgnoredExaminerWarnings.wrn ./Asn1f2//Resources/
 cp SPARK_RTL/gnat.cfg ./Asn1f2//Resources/
 cp SPARK_RTL/run.sh ./Asn1f2//Resources/
 cp SPARK_RTL/GPS_project.gpr ./Asn1f2//Resources/
-cp asn1crt/asn1crt.c  ./Asn1f2//Resources/
-cp asn1crt/asn1crt.h  ./Asn1f2//Resources/
-cp asn1crt/Acn.c ./Asn1f2//Resources/
-cp asn1crt/ber.c ./Asn1f2//Resources/
-cp asn1crt/xer.c ./Asn1f2//Resources/
-cp asn1crt/real.c ./Asn1f2//Resources/
+
+CRT_FILES="\
+	Acn.c\
+	asn1crt_acn.h\
+	asn1crt_ber.h\
+	asn1crt_core.h\
+	asn1crt_real.h\
+	asn1crt_util.h\
+	asn1crt_xer.h\
+	asn1crt.h\
+	ber.c\
+	BitStream.c\
+	BitStream.h\
+	ByteStream.c\
+	ByteStream.h\
+	real.c\
+	util.c\
+	xer.c"
+
+for F in $CRT_FILES; do
+	cp asn1crt/$F ./Asn1f2/Resources
+done
+
 SVNVERSION=$(git log | head -1 | cut -c8-16)
 cd Asn1f2
 if [ ! -f SvnVersion.cs ] ; then
