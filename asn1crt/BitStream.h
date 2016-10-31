@@ -1,3 +1,5 @@
+#ifndef ASN1SCC_ASN1CRT_BITSTREAM_H_
+#define ASN1SCC_ASN1CRT_BITSTREAM_H_
 
 #include "asn1crt_core.h"
 #include "asn1crt_real.h"
@@ -64,3 +66,4 @@ void BitStream_AppendPartialByte(BitStream* pBitStrm, byte v, byte nbits, flag n
 
 #define CHECK_BIT_STREAM(pBitStrm)	assert((pBitStrm)->currentByte*8+(pBitStrm)->currentBit<=(pBitStrm)->count*8)
 
+#endif // ASN1SCC_ASN1CRT_BITSTREAM_H_
