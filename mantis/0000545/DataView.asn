@@ -1,0 +1,101 @@
+PUS-Implicit-Knowledge DEFINITIONS ::=
+BEGIN
+
+Secondary-Header {APID} ::= SEQUENCE {
+    ack-successful-completion BOOLEAN,
+    ack-successful-progress   BOOLEAN,
+    ack-successful-start      BOOLEAN,
+    ack-successful-acceptance BOOLEAN,
+    source-id                 APID
+}
+
+Packet-Data-Field {APID, User-Data} ::= SEQUENCE {
+    tc-secondary-header Secondary-Header {APID} OPTIONAL,
+    application-data    User-Data
+}
+
+Telecommand-ty {APID, SEQ-COUNT-OR-NAME, PROJECT-TC} ::= SEQUENCE {
+    dest-apid        APID,
+    packet-seq-count SEQ-COUNT-OR-NAME,
+    packet-data      PROJECT-TC
+}
+
+Telemetry-ty {APID, PROJECT-TM} ::= SEQUENCE {
+    from-apid    APID,
+    content      PROJECT-TM
+}
+
+END
+
+Generic-PUS DEFINITIONS ::=
+BEGIN
+
+
+-- 6.2.6.2 Distribute CPDU commands (p.69) Generic TC definition (TC 2,4)
+Pulse-Instruction {CPDU-OUTPUT-IDENTIFIER} ::= SEQUENCE {
+    output-line-id CPDU-OUTPUT-IDENTIFIER,
+    duration-value INTEGER (0..7)
+}
+
+CPDU-Command {CPDU-Identifier,
+              Pulse-Instruction,
+              INTEGER: max-Instr} ::=
+    SEQUENCE {
+        cpdu-id          CPDU-Identifier OPTIONAL,
+        cmd-pulse-instr  SEQUENCE (SIZE (1..max-Instr)) OF Pulse-Instruction
+}
+
+Distribute-CPDU-Commands { CPDU-Cmd, INTEGER:max-Cpdu-Cmds } ::=
+    SEQUENCE (SIZE (1..max-Cpdu-Cmds)) OF CPDU-Cmd
+
+-- End TC 2,4
+
+END
+
+My-Project DEFINITIONS ::=
+BEGIN
+IMPORTS Pulse-Instruction,
+        CPDU-Command,
+        Distribute-CPDU-Commands
+FROM Generic-PUS
+        Packet-Data-Field,
+        Telecommand-ty,
+        Telemetry-ty
+FROM PUS-Implicit-Knowledge;
+
+-- Packet sequence count or name (defined in 7.4.1) - project-specific type
+SEQ-COUNT-OR-NAME ::= INTEGER {my-name(42)} (0..16383)
+
+-- APID: use an ENUMERATED, and let ACN manage the "11 bits" constraint
+APID ::= ENUMERATED { ground (123), flight(456) }
+
+-- CPDU output Identifier defined in 9.2.1d
+CPDU-OUTPUT-ID ::= INTEGER { cpdu-1 (42), cpdu-2 (4090) } (0..4095)
+
+-- The CPDU identifier is mentioned in 6.2.6.2c.1 and then in 9.2.2b but the associated type
+-- is not specified (enumerated? bounds?) - contrary to the CPDU output identifier
+CPDU-Identifiers    ::= ENUMERATED { cpdu-id-1, cpdu-id-2 }
+PULSE-INST          ::= Pulse-Instruction { CPDU-OUTPUT-ID }
+
+-- 9.2.1.g Maximum number of command pulse instructions (project specific)
+max-Instr INTEGER (12 .. 504) ::= 12
+
+-- Max nb of CPDU commands (bounds constraints not found in PUS-C)
+max-Cpdu-Cmds INTEGER (1..128) ::= 2
+
+CPDU-Cmd ::= CPDU-Command {CPDU-Identifiers, PULSE-INST, max-Instr}
+                 (WITH COMPONENTS {..., cpdu-id PRESENT})
+
+TC-2-4-User-Data ::= Distribute-CPDU-Commands {CPDU-Cmd, max-Cpdu-Cmds}
+
+-- Insane absence of a secondary header !
+TC-2-4 ::= Packet-Data-Field { APID, TC-2-4-User-Data }
+                 (WITH COMPONENTS {..., tc-secondary-header ABSENT })
+
+TCs ::= CHOICE {
+   tc2-4 TC-2-4
+}
+
+Telecommand ::= Telecommand-ty { APID, SEQ-COUNT-OR-NAME, TCs }
+
+END

@@ -1,5 +1,7 @@
 DataView DEFINITIONS AUTOMATIC TAGS ::= BEGIN
 
+MYINT ::= INTEGER(0..MAX)
+
 Display-T ::= OCTET STRING (SIZE (1..255))
 
 Action-T ::= CHOICE 

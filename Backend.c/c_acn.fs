@@ -96,7 +96,7 @@ let UpdateDeterminant determinantPath determinantPathPtr (kind:AcnTypes.LongRefe
         | Some(actPrm)  ->
             let sNewTasName = newTas.GetCName r.TypePrefix
             let otherTypePath = GetPointAccessPathPtr ref.decType r acn
-            true, c_acn.RefTypeArgument1 determinantPathPtr sNewTasName prmName otherTypePath
+            true, c_acn.RefTypeArgument1 determinantPathPtr sNewTasName (ToC prmName) otherTypePath
 
 
 (*

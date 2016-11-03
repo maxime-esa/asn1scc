@@ -91,8 +91,8 @@ let UpdateDeterminant determinantPath (kind:AcnTypes.LongReferenceKind, refs:seq
             let bHasSuccess = acn_backend_logic.Update_param_function_requires_result prmName newTas newModule r acn
             let sNewTasName = newTas.GetCName r.TypePrefix
             match newModule.Name.Value = m.Name.Value with
-            | true ->  bHasSuccess, sa.RefTypeArgument1 determinantPath sNewTasName prmName otherTypePath bHasSuccess
-            | false -> bHasSuccess, sa.RefTypeArgument2 determinantPath (ToC newModule.Name.Value) sNewTasName prmName otherTypePath bHasSuccess
+            | true ->  bHasSuccess, sa.RefTypeArgument1 determinantPath sNewTasName (ToC prmName) otherTypePath bHasSuccess
+            | false -> bHasSuccess, sa.RefTypeArgument2 determinantPath (ToC newModule.Name.Value) sNewTasName (ToC prmName) otherTypePath bHasSuccess
 
 
 (*

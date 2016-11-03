@@ -142,21 +142,27 @@ let rec printType stgFileName (tas:Ast.TypeAssignment) (t:Ast.Asn1Type) path (m:
                 let ret = icd_acn.EmmitSeqOrChoiceRow stgFileName (icd_acn.OddRow stgFileName ()) 1I "Preamble" (icd_acn.EmmitSequencePreambleComment stgFileName ())  "always"  "Bit mask" "N.A." (nLen.ToString()) (nLen.ToString())
                 Some ret
         let getPresence (ch:ChildInfo) =
+            let aux1 = function
+                | 1 -> "st"
+                | 2 -> "nd"
+                | 3 -> "rd"
+                | _ -> "th"
             match Acn.GetPresenseEncodingClass path ch acn with
-            | None                      -> "always"
+            | None                      -> 
+                match ch.Optionality with
+                | None 
+                | Some(AlwaysPresent)   -> "always"
+                | Some(AlwaysAbsent)    -> "never"
+                | _                     ->
+                    let nBit =  optionalLikeUperChildren |> Seq.findIndex(fun x -> x.Name.Value = ch.Name.Value) |> (+) 1
+                    sprintf "when the %d%s bit of the bit mask is set" nBit (aux1 nBit)
             | Some(Acn.LikeUPER)        -> 
-                let aux1 = function
-                    | 1 -> "st"
-                    | 2 -> "nd"
-                    | 3 -> "rd"
-                    | _ -> "th"
                 let nBit =  optionalLikeUperChildren |> Seq.findIndex(fun x -> x.Name.Value = ch.Name.Value) |> (+) 1
                 sprintf "when the %d%s bit of the bit mask is set" nBit (aux1 nBit)
             | Some(Acn.PresBool(pnt))   -> sprintf "when %s is true" (printPoint pnt)
             | Some(Acn.PresInt(pnt, v)) -> sprintf "when %s is %A" (printPoint pnt) v
             | Some(Acn.PresStr(pnt, v)) -> sprintf "when %s is %A" (printPoint pnt) v
-
-        let arChildren idx = children |> Seq.mapi(fun i ch -> EmitSeqOrChoiceChild (idx + i) ch optionalLikeUperChildren (fun x-> "always")) |> Seq.toList
+        let arChildren idx = children |> Seq.mapi(fun i ch -> EmitSeqOrChoiceChild (idx + i) ch optionalLikeUperChildren getPresence) |> Seq.toList
         let arRows =
             match SeqPreamble with 
             | None          -> arChildren 1
