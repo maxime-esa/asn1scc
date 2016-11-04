@@ -337,14 +337,16 @@ PrintParam(nIndex, sName, sType, nColSpan) ::= <<
 RootCss() ::= <<
 table
 {
-    border: none;
+    border: 2px solid black;
     border-collapse: collapse;
     font-family: Arial, Helvetica, sans-serif;
+    max-width: 60em;
 }
 
 table td
 {
-    border-left: 1px solid white;
+    border-left: 1px solid grey;
+    border-top: 1px solid grey;
     padding-top: 2pt;
     padding-bottom: 2pt;
     padding-left: 3pt;
@@ -363,9 +365,9 @@ table td:first-child
 
 .typeRow
 {
-    font-size: 12pt;
+    font-size: 14pt;
     color: white;
-    background-color: #999999;
+    background-color: grey;
     white-space: nowrap;
 }
 
