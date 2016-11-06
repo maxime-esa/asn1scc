@@ -23,6 +23,41 @@ type State = {
 }
 
 
+let ApplyAlwaysPresent ast =
+    let CloneType (old:Asn1Type) m (key:list<string>) (cons:Constructors<unit>) (state:unit) =
+        let CloneChild (parenConstraints:list<Asn1Constraint>) s (ch:ChildInfo) =
+            let chooseOptionality = function
+                | WithComponentsConstraint(namedItems) -> 
+                    match namedItems |> Seq.tryFind(fun ni -> ni.Name.Value = ch.Name.Value) with
+                    | Some(item)    -> 
+                        match item.Mark with
+                        | NoMark        -> ch.Optionality
+                        | MarkPresent   -> Some(AlwaysPresent)
+                        | MarkAbsent    -> Some(AlwaysAbsent)
+                        | MarkOptional  -> ch.Optionality
+                    | _             -> None
+                | _                                   -> None
+            let newOptionality = 
+                match parenConstraints |> List.choose chooseOptionality with
+                | []    -> ch.Optionality
+                | x::xs -> Some x
+            let t,ns = cons.cloneType ch.Type m (key@[ch.Name.Value]) cons s
+            {ch with Type = t; Optionality = newOptionality},ns
+        match old.Kind with
+        | Sequence(children)  -> 
+            let newChildren, finalState = children |> foldMap (CloneChild old.Constraints) state
+            {
+                Kind = Sequence(newChildren)
+                Constraints = old.Constraints |> List.filter (fun c -> match c with WithComponentsConstraint _ -> false | _ -> true)
+                Location = old.Location
+                AcnProperties = old.AcnProperties
+            }, finalState
+        | _             -> defaultConstructors.cloneType old m key cons state
+
+
+    CloneTree ast {defaultConstructors with cloneType =  CloneType; } () |> fst
+
+
 
 let DoWork ast acn =
     let GetAcnProperties (ast:AcnAst) absPath =
@@ -124,8 +159,9 @@ let DoWork ast acn =
         match  RecursionFinished newState with
         | true -> newTree, newState.acn
         | false  -> CloneTreeMulti newTree newState
-    CloneTreeMulti ast {State.newTases=[]; Count=1; acn=acn}
-
+    let newAsn1Ast, newAcnAst = CloneTreeMulti ast {State.newTases=[]; Count=1; acn=acn}
+    let newAsn1Ast = ApplyAlwaysPresent newAsn1Ast
+    newAsn1Ast, newAcnAst
 
 
 let CheckReferences (asn1:AstRoot) (acn:AcnAstResolved) =
@@ -158,6 +194,8 @@ let CheckReferences (asn1:AstRoot) (acn:AcnAstResolved) =
         ret
     let dummy = acn.References |> List.map(fun x -> CheckReference x)
     dummy |> List.fold (&&) true
+
+
 
 
 

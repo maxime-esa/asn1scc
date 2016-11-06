@@ -115,12 +115,19 @@ and  EmitTypeBody (t:Asn1Type) (sTasName:string) (path:list<string>, pName:strin
         let printChild (k:int, c:ChildInfo) requiredBitsSoFar sNestedContent = 
             let content, bRequiresResultCheck = 
                 match k with
-                | 0     -> su.Sequence_optChild p (c.CName ProgrammingLanguage.Spark) errCode codec, false
+                | 0     -> 
+                    match c.Optionality with
+                    | Some(AlwaysPresent)   -> su.Sequence_always_present_optChild p (c.CName ProgrammingLanguage.Spark) errCode codec, false
+                    | _                     -> su.Sequence_optChild p (c.CName ProgrammingLanguage.Spark) errCode codec, false
                 | _     -> 
                     let bHasDef= match c.Optionality with Some(Default(v)) ->true |_  ->false
                     let sChildContent = EmitTypeBody c.Type sTasName (path@[c.Name.Value], None) m r codec 
-                    let bRequiresResultCheck = UperEncodeFuncRequiresResult c.Type r
-                    let content = su.Sequence_Child p (c.CName ProgrammingLanguage.Spark) c.Optionality.IsSome sChildContent bHasDef codec
+                    let bRequiresResultCheck = UperEncodeFuncRequiresResult c.Type  r
+                    let content = 
+                        match c.Optionality with
+                        //an Always present component is handled as non optional in encoding and optional in decoding.
+                        | Some(AlwaysPresent)  -> su.Sequence_Child p (c.CName ProgrammingLanguage.Spark) (codec=Encode) sChildContent bHasDef codec
+                        | _                    -> su.Sequence_Child p (c.CName ProgrammingLanguage.Spark) c.Optionality.IsSome sChildContent bHasDef codec
                     content, bRequiresResultCheck
             su.JoinItems sTasName content sNestedContent requiredBitsSoFar bRequiresResultCheck codec
 

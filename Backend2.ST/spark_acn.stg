@@ -278,6 +278,17 @@ END IF;
 
 >>
 
+Sequence_always_present_Child_encode(p, sChName, bIsUperOptional, sChildContent, bHasDefaultValue) ::= <<
+--Encode <sChName> 
+<sChildContent>
+>>
+
+
+Sequence_always_present_Child_decode(p, sChName, bIsUperOptional, sChildContent, bHasDefaultValue) ::= <<
+--Decode <sChName> 
+<p>.exist.<sChName> := 1; --default value taken from initialize
+<sChildContent>
+>>
 
 Sequence_encode(p, arrsChildren, sTasName, bRequiresInit, arrsDecOutParamsInit, bResultRequiresInit) ::= <<
 <if(arrsChildren)>

@@ -191,6 +191,11 @@ result.ErrorCode := <rtlModuleName()>.ERR_INSUFFICIENT_DATA;
 <rtlModuleName()>.BitStream_ReadBit(S, K,<p>.Exist.<sChName>, result.Success);
 >>
 
+Sequence_always_present_optChild_encode(p, sChName, sErrCode) ::= "<rtlModuleName()>.BitStream_AppendBit(S, K,1);"
+Sequence_always_present_optChild_decode(p, sChName, sErrCode) ::= <<
+result.ErrorCode := <rtlModuleName()>.ERR_INSUFFICIENT_DATA;
+<rtlModuleName()>.BitStream_ReadBit(S, K,<p>.Exist.<sChName>, result.Success);
+>>
 
 
 

@@ -623,6 +623,8 @@ if (ret) {
 uper_Sequence_optChild_encode(p, sChName) ::= "BitStream_AppendBit(pBitStrm,<p>exist.<sChName>);"
 uper_Sequence_optChild_decode(p, sChName) ::= ""
 
+uper_Sequence_optChild_always_present_encode(p, sChName) ::= "BitStream_AppendBit(pBitStrm,1);"
+uper_Sequence_optChild_always_present_decode(p, sChName) ::= ""
 
 
 uper_Sequence_mandatory_child_encode(sChName, sChildContent) ::= <<
@@ -651,7 +653,6 @@ if ((<sBitMaskName>[<nByteIndex>] & 0x<sAndMask>) != 0 ) {
 	<sChildContent>
 }
 >>
-
 
 
 uper_Sequence_default_child_encode(p, sChName, sChildContent, sBitMaskName, nByteIndex, sAndMask, sChildTypeDeclaration, sDefaultValue) ::= <<

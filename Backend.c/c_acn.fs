@@ -688,6 +688,8 @@ let rec EmitTypeBodyAux (t:Asn1Type) (sTasName:string) (path:list<string>, altPa
                         let sDefaultValue = c_variables.PrintAsn1Value vl c.Type false (sTasName,0) m r
                         let sChildTypeDeclaration = c_h.PrintTypeDeclaration c.Type childPath r
                         c_acn.Sequence_default_child pp (c.CName ProgrammingLanguage.C) sChildContent sChildTypeDeclaration sDefaultValue codec
+                    | Some (AlwaysPresent) ->
+                        c_acn.Sequence_optional_always_present_child pp (c.CName ProgrammingLanguage.C) sChildContent codec
                     | _                 ->
                         c_acn.Sequence_optional_child pp (c.CName ProgrammingLanguage.C) sChildContent codec
             c_acn.JoinItems content sNestedContent //requiredBitsSoFar bRequiresAssert  

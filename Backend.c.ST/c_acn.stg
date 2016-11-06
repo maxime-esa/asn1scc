@@ -652,6 +652,20 @@ if (<p>exist.<sChName>) {
 >>
 
 
+Sequence_optional_always_present_child_encode(p, sChName, sChildContent) ::= <<
+/*Encode <sChName> */
+<sChildContent>
+>>
+
+Sequence_optional_always_present_child_decode(p, sChName, sChildContent) ::= <<
+/*Decode <sChName> */
+<p>exist.<sChName> = 1;
+if (<p>exist.<sChName>) {
+	<sChildContent>
+}
+>>
+
+
 Sequence_default_child_encode(p, sChName, sChildContent, sChildTypeDeclaration, sDefaultValue) ::= <<
 <Sequence_optional_child_encode(p=p, sChName=sChName, sChildContent=sChildContent)>
 >>

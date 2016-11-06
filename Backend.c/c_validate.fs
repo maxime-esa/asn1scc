@@ -140,7 +140,8 @@ let rec EmitTypeBody (t:ConstraintType) (path:list<string>)  (m:Asn1Module) (r:A
                     match c.Optionality with
                     | None                              -> yield (0, c)      // 0 = check component
                     | Some(Optional) | Some(Default(_)) -> yield (1, c)      // 1 = check optional compoent
-                    | Some(AlwaysPresent)               -> yield (2, c)      // 2 = check component is always present
+                    //Always present components are not checked any more since they will be encoded any way.
+                    | Some(AlwaysPresent)               -> //yield (2, c)      // 2 = check component is always present
                                                            yield (0, c) 
                     | Some(AlwaysAbsent)                -> yield (3, c)      // 3 = check component is always absent
             } |> Seq.toList

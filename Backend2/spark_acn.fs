@@ -649,7 +649,9 @@ let rec EmitTypeBodyAux (t:Asn1Type) (sTasName:string) (path:list<string>, pName
                 | ChildEncDecStatement(c)     -> 
                     let bHasDef= match c.Optionality with Some(Default(v)) ->true |_  ->false
                     let sChildContent = EmitTypeBody c.Type sTasName (path@[c.Name.Value], None) tas m r acn codec 
-                    sa.Sequence_Child p (c.CName ProgrammingLanguage.Spark) c.Optionality.IsSome sChildContent bHasDef codec
+                    match c.Optionality with
+                    | Some(AlwaysPresent) -> sa.Sequence_always_present_Child p (c.CName ProgrammingLanguage.Spark) c.Optionality.IsSome sChildContent bHasDef codec
+                    | _                   -> sa.Sequence_Child p (c.CName ProgrammingLanguage.Spark) c.Optionality.IsSome sChildContent bHasDef codec
             let bResult = DoesItemAffectsResult childItem
             sa.JoinItems sTasName content sNestedContent requiredBitsSoFar bRequiresAssert bResult codec
         let  printChildren lst= 

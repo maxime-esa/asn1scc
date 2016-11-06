@@ -133,7 +133,10 @@ and  EmitTypeBody (t:Asn1Type) (sTasName:string) (path:list<string>, altPath:(st
         let printChild (k:int, c:ChildInfo) sNestedContent = 
             let content = 
                 match k with
-                | 0     -> c_src.uper_Sequence_optChild p (c.CName ProgrammingLanguage.C) codec
+                | 0     -> 
+                    match c.Optionality with
+                    | Some(AlwaysPresent)   -> c_src.uper_Sequence_optChild_always_present p (c.CName ProgrammingLanguage.C) codec
+                    | _                     -> c_src.uper_Sequence_optChild p (c.CName ProgrammingLanguage.C) codec
                 | _     ->
                     let childPath =  path@[c.Name.Value]
                     let sChildContent = EmitTypeBody c.Type sTasName (childPath, None) m r codec 
@@ -145,8 +148,13 @@ and  EmitTypeBody (t:Asn1Type) (sTasName:string) (path:list<string>, altPath:(st
                         let nByteIndex = BigInteger (index / 8)
                         let sAndMask=System.String.Format("{0:X2}", 0x80 >>>(index % 8) )
                         match optCase with
-                        |Optional |AlwaysPresent |AlwaysAbsent   ->  
+                        |Optional |AlwaysAbsent   ->  
                             c_src.uper_Sequence_optional_child pp (c.CName ProgrammingLanguage.C) sChildContent sBitMaskName nByteIndex sAndMask codec
+                        |AlwaysPresent            ->
+                            //an Always present component is handled as non optional in encoding and optional in decoding.
+                            match codec with
+                            | Encode    -> c_src.uper_Sequence_mandatory_child (c.CName ProgrammingLanguage.C) sChildContent codec
+                            | Decode    -> c_src.uper_Sequence_optional_child pp (c.CName ProgrammingLanguage.C) sChildContent sBitMaskName nByteIndex sAndMask codec
                         |Default(dv)    ->
                             let sDefaultValue = c_variables.PrintAsn1Value dv c.Type false (sTasName,0) m r
                             let sChildTypeDeclaration = c_h.PrintTypeDeclaration c.Type childPath r

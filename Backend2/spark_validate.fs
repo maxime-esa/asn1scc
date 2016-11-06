@@ -132,7 +132,8 @@ let rec EmitTypeBody (t:ConstraintType) (path:list<string>)  (tasList:list<(List
                     match c.Optionality with
                     | None                              -> if (HasValidateFunc c.Type r) then yield (0, c)      // 0 = check component
                     | Some(Optional) | Some(Default(_)) -> if (HasValidateFunc c.Type r) then yield (1, c)      // 1 = check optional compoent
-                    | Some(AlwaysPresent)               -> yield (2, c)      // 2 = check component is always present
+                    //Always present components are not checked any more since they will be encoded any way.
+                    | Some(AlwaysPresent)               -> //yield (2, c)      // 2 = check component is always present
                                                            if (HasValidateFunc c.Type r) then yield (0, c) 
                     | Some(AlwaysAbsent)                -> yield (3, c)      // 3 = check component is always absent
             } |> Seq.toList
