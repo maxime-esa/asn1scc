@@ -160,7 +160,7 @@ and Asn1Constraint =
     | RootConstraint                    of Asn1Constraint
     | RootConstraint2                   of Asn1Constraint*Asn1Constraint
     | WithComponentConstraint           of Asn1Constraint
-    | WithComponentsConstraint          of seq<NamedConstraint>
+    | WithComponentsConstraint          of list<NamedConstraint>
 
 and NamedConstraint = {
     Name:StringLoc;
