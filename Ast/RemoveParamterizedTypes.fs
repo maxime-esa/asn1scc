@@ -103,7 +103,7 @@ and CloneConstraint (r:AstRoot) (curModule:Asn1Module) (oldModName:string) (name
     | RootConstraint(c1)               -> RootConstraint(CloneConstraint r curModule oldModName namedArgs t c)
     | RootConstraint2(c1,c2)           -> RootConstraint2(CloneConstraint r curModule oldModName namedArgs t c1, CloneConstraint r curModule oldModName namedArgs t c2)
     | WithComponentConstraint(c)       -> WithComponentConstraint(CloneConstraint r curModule oldModName namedArgs None c)
-    | WithComponentsConstraint(ncs)    -> WithComponentsConstraint(ncs|> Seq.map (CloneNamedConstraint r curModule oldModName namedArgs))
+    | WithComponentsConstraint(ncs)    -> WithComponentsConstraint(ncs|> List.map (CloneNamedConstraint r curModule oldModName namedArgs))
 
 and CloneNamedConstraint (r:AstRoot) (curModule:Asn1Module) (oldModName:string) (namedArgs:list<StringLoc*TemplateArgument>) (x:NamedConstraint) :NamedConstraint =
     {
@@ -140,7 +140,9 @@ and CloneValue  (r:AstRoot) (curModule:Asn1Module) (oldModName:string) (namedArg
 
 and SpecializeType (r:AstRoot) (curModule:Asn1Module) (implicitImports : List<string*string>) (t:Asn1Type) : (Asn1Type * List<string*string>) =
     match t.Kind with
-    | ReferenceType(md,ts, args)   when args.Length>0 -> SpecializeRefType r curModule md ts args [] implicitImports
+    | ReferenceType(md,ts, args)   when args.Length>0 -> 
+        let (newType, implImps) = SpecializeRefType r curModule md ts args [] implicitImports
+        ({newType with Constraints = newType.Constraints@t.Constraints}, implImps)
     | ReferenceType(md,ts, args)    -> 
         let parmTas = getModuleByName r md |> getTasByName ts
         match parmTas.Parameters with

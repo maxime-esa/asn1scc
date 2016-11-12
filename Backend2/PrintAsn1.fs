@@ -55,7 +55,7 @@ let rec PrintConstraint (c:Asn1Constraint) =
     | WithComponentsConstraint(ncs) -> 
         let print_nc (nc:NamedConstraint) =
             let sConstraint = match nc.Contraint with
-                              | Some(c)     -> PrintConstraint c
+                              | Some(c1)     -> PrintConstraint c1
                               | None        -> ""
             let sPresMark = match nc.Mark with
                             | NoMark        -> ""

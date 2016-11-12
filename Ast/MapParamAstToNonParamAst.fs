@@ -189,7 +189,8 @@ and MapAsn1Constraint (r:ParameterizedAsn1Ast.AstRoot) (kind: ParameterizedAsn1A
         match getActualKind r kind with
         | ParameterizedAsn1Ast.SequenceOf(child)    ->        Ast.WithComponentConstraint(MapAsn1Constraint r child.Kind c)
         | _                                         ->        raise(SemanticError(emptyLocation,"Unexpected constraint type"))
-    | ParameterizedAsn1Ast.WithComponentsConstraint(ncs)    -> Ast.WithComponentsConstraint(ncs|> Seq.map (MapNamedConstraint r kind))
+    | ParameterizedAsn1Ast.WithComponentsConstraint(ncs)    -> 
+        Ast.WithComponentsConstraint(ncs|> List.map (MapNamedConstraint r kind))
 
 
 and MapAsn1Type (r:ParameterizedAsn1Ast.AstRoot) (t:ParameterizedAsn1Ast.Asn1Type) :Ast.Asn1Type =
