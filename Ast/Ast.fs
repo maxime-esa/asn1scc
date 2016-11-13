@@ -228,6 +228,15 @@ type ProgrammingLanguage =
             |Spark      -> s1.icompare s2
             |Html       -> s1 = s2
             |Unknown    -> s1 = s2
+        member l.DefinitionsFileExt = 
+            match l with
+            |C          -> ".h"
+            |Ada
+            |Spark      -> ".ads"
+            |Html       -> ""
+            |Unknown    -> ""
+
+
         member l.keywords = 
             match l with
             |C          -> c_keyworkds

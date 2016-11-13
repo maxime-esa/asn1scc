@@ -7,7 +7,7 @@ open System.IO
 open VisitTree
 open uPER
 open CloneTree
-open c_utils
+//open c_utils
 open BackendAst
 
 
@@ -73,7 +73,7 @@ let rec getCharComparisonBoolExp (path:list<string>) (c:Asn1Constraint) (m:Asn1M
 
 
 let rec getBackendBooleanExpression (t:ConstraintType) (path:list<string>) (c:Asn1Constraint)  (m:Asn1Module) (r:AstRoot) : BackendBooleanExpression option= 
-    let p = AccessPath (GetConstraintTypeAccessPath path  t r) 
+    let p = AccessPath ""//(GetConstraintTypeAccessPath path  t r) 
     let tasName = path.Tail.Head
     match c with
     | SingleValueContraint(v)     -> 

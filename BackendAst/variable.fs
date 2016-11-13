@@ -8,7 +8,7 @@ open Ast
 open System.IO
 open VisitTree
 open uPER
-open c_utils
+//open c_utils
 open BackendAst
 
 

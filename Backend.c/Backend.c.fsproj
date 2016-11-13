@@ -58,19 +58,17 @@
     <Compile Include="Header.fs" />
     <None Include="Script.fsx" />
     <Compile Include="c_utils.fs" />
-    <Compile Include="BackendAst.fs" />
     <Compile Include="c_variables.fs" />
-    <Compile Include="variable.fs" />
     <Compile Include="c_h.fs" />
     <Compile Include="c_validate.fs" />
     <Compile Include="c_validate2.fs" />
-    <Compile Include="validate.fs" />
     <Compile Include="c_equal.fs" />
     <Compile Include="c_uper.fs" />
     <Compile Include="c_acn.fs" />
     <Compile Include="XER.fs" />
     <Compile Include="c_body.fs" />
     <Compile Include="automatic_test_cases.fs" />
+    <Compile Include="GenerateHeaderFile.fs" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\Ast\Ast.fsproj">
@@ -84,6 +82,11 @@
     <ProjectReference Include="..\Backend2\Backend2.fsproj">
       <Name>Backend2</Name>
       <Project>{000896AE-1E52-4120-8394-0E5E07A8F194}</Project>
+    </ProjectReference>
+    <ProjectReference Include="..\BackendAst\BackendAst.fsproj">
+      <Name>BackendAst</Name>
+      <Project>{2f960476-565f-4282-90b3-606dbac5eff2}</Project>
+      <Private>True</Private>
     </ProjectReference>
   </ItemGroup>
   <Choose>

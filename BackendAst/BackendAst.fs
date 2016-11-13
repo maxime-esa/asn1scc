@@ -6,7 +6,22 @@ open Ast
 open System.IO
 open VisitTree
 open uPER
-open c_utils
+open CloneTree
+//open c_utils
+
+type LOCAL_VARIABLE =
+    | SEQUENCE_OF_INDEX of int
+    | LENGTH
+    | EXTENSION_BIT
+    | ENUM_IDX of Ast.INTTYPE
+    | CHOICE_IDX
+    | SEQUENCE_BitMask  of string*BigInteger
+    | REF_TYPE_PARAM   of string*string
+    | CHAR_VAL
+    | NCOUNT
+    | CUR_BLOCK_SIZE
+    | CUR_ITEM
+    | LEN2
 
 
 type PathToRoot = 
@@ -116,10 +131,9 @@ and BaseTypeIsValidFuncBody = {
     consCheck      : BackendBooleanExpression list
 }
 
-type TypeAssIsValidFunc = {
+type TasIsConstraintValid = {
     funcName :string
-    paramType: string
-    sContent : TypeIsValidFuncBody
+    //sContent : TypeIsValidFuncBody
 } with 
     member 
         this.LocalVars : LOCAL_VARIABLE list = 
@@ -128,4 +142,131 @@ type TypeAssIsValidFunc = {
         this.AlphaCheckFunctions : AlphabetCheckFunc list = 
             []
 
+type TasIsEqual = {
+    funcName :string
+} 
+
+type TasInititalize = {
+    funcName :string
+}
+
+(*
+type EncodingPrototype = 
+    | BER_EncPrototype of string*string
+    | BER_DecPrototype of string*string
+    | XER_EncPrototype of string*string
+    | XER_DecPrototype of string*string
+    | UPR_EncPrototype of string*string
+    | UPR_DecPrototype of string*string
+    | ACN_EncPrototype of string*string
+    | ACN_DecPrototype of string*string
+*)
+
+// represents a .h or .ads file
+type BitStringTypeInfo = {
+    nBitLen     : BigInteger
+    nBytesLen   : BigInteger
+}
+
+type TypeDefition =
+    | INTEGER
+    | POS_INTEGER
+    | BOOLEAN
+    | REAL
+    | STRING
+    | VOID_TYPE
+    | FIX_SIZE_BIT_STRING   of BitStringTypeInfo
+    | VAR_SIZE_BIT_STRING   of BitStringTypeInfo
+    | FIX_SIZE_OCT_STRING   of BigInteger
+    | VAR_SIZE_OCT_STRING   of BigInteger
+    | ENUM                  of (string*BigInteger) list
+    | CHOICE                of ChoiceTypeInfo
+    | SEQUENCE              of SequenceTypeInfo
+    | FIX_SIZE_SEQUENCE_OF  of SequenceOfTypeInfo
+    | VAR_SIZE_SEQUENCE_OF  of SequenceOfTypeInfo
+    | LOCAL_REFENCED_TYPE   of string
+
+and ChoiceTypeInfo = {
+    choiceIDForNone : string
+    enmItems        : string list
+    children    : ChoiceOrSeqChild list
+}
+
+and SequenceTypeInfo = {
+    children    : ChoiceOrSeqChild list
+    optChildren : string list
+}
+
+and ChoiceOrSeqChild = {
+    name : string
+    typeDef : TypeDefition
+    arrayPostfix : string
+}
+
+and SequenceOfTypeInfo = {
+    typeDef       : TypeDefition
+    length       : BigInteger
+    arrayPostfix : string
+}
+
+
+
+type TasDefition = {
+    sTypeDecl               : TypeDefition
+    sarrPostfix             : string
+    sName                   : string
+    nMaxBitsInPER           : BigInteger
+    nMaxBytesInPER          : BigInteger
+    nMaxBitsInACN           : BigInteger
+    nMaxBytesInACN          : BigInteger
+    nMaxBytesInXER          : int
+    sStar                   : string
+    errorCodes              : string list
+    isConstraintValidFnc    : TasIsConstraintValid
+    isEqualFnc              : TasIsEqual
+    inititalizeFnc          : TasInititalize
+}
+
+type DefinitionsFile = {
+    fileName : string
+    fileNameNoExtUpper : string
+    tases : TasDefition list
+    //vases 
+    //protos 
+    //enumAndChoiceUtils
+}
+
+let TypeItemsCount (t:Asn1Type) (r:AstRoot)=  
+    match (GetTypeUperRange t.Kind t.Constraints r) with
+    |Concrete(_, max)        -> max
+    |_                       -> raise(BugErrorException "SEQUENCE OF or OCTET STRING etc has no constraints")
+
+let rec TypeCArrayItemsCount (t:Asn1Type) (r:AstRoot)=  
+    match t.Kind with
+    | BitString(_)  -> BigInteger(System.Math.Ceiling(float(TypeItemsCount t r)/8.0))
+    | IA5String | NumericString     -> (TypeItemsCount t r) + 1I
+    | SequenceOf(_) | OctetString   -> TypeItemsCount t r
+    | ReferenceType(_)  ->
+        let basetype = Ast.GetBaseTypeConsIncluded t r
+        TypeCArrayItemsCount basetype r
+    |_                       -> raise(BugErrorException "TypeCArrayItemsCount called for a non sizeable type")
+
+
+let TypeArrayPostfix (t:Asn1Type) (r:AstRoot)= 
+    match t.Kind with
+    | IA5String | NumericString     -> "[" + (TypeCArrayItemsCount t r).ToString() + "]"
+    | ReferenceType(refCon, _, _)      -> "" 
+    | _                             -> ""
+
+let rec TypeStar (t:Asn1Type) (r:AstRoot)= 
+    match t.Kind with
+    | IA5String | NumericString -> ""
+    | ReferenceType(_)   -> TypeStar (Ast.GetActualType t r) r
+    | _                  -> "*"
+
+
+
+let TypeLongName (p:list<string>) =
+    let keyAsStr = p.Tail
+    ToC (keyAsStr.StrJoin("_").Replace("#","elem"))
 
