@@ -302,7 +302,7 @@ def submain(lang, encoding, testCaseSet):
         for case in testCases:
             resetDir(testCaseToDir(case))
 
-        with mp.Pool(2) as p:
+        with mp.Pool(mp.cpu_count()) as p:
             p.map(doWork, tasks)
             
 
