@@ -251,7 +251,9 @@ type MyState = {
     anonymousTypes : Asn1Type list
     anonymousValues : Asn1Value list
 }
-
+with 
+    member this.add (other:MyState) =
+        {MyState.anonymousTypes = this.anonymousTypes@other.anonymousTypes; anonymousValues = this.anonymousValues@other.anonymousValues}
 
 let es = {MyState.anonymousTypes=[];anonymousValues=[]}
 
@@ -356,6 +358,7 @@ let createReferenceTypeFunc (s:GenericFold2.Scope) (t:Ast.Asn1Type) (newCons:Asn
         *)
 
 let createType (s:GenericFold2.Scope) (oldType:Ast.Asn1Type) (newCons:(Asn1Constraint*MyState) list) (baseTypeId : ReferenceToType option) (newKind:Asn1TypeKind)=
+    let fs = newCons |> List.map snd |> combineStates
     {
         Asn1Type.asn1Name = s.asn1TypeName
 
@@ -364,7 +367,7 @@ let createType (s:GenericFold2.Scope) (oldType:Ast.Asn1Type) (newCons:(Asn1Const
         Kind = newKind
         Constraints = newCons |> List.map fst
         AcnProperties = oldType.AcnProperties
-    }
+    }, fs
 
 let createValue (s:GenericFold2.Scope) (baseValue : ReferenceToValue option) (refToType : ReferenceToType) (kind:Asn1ValueKind) =
     {
@@ -396,16 +399,17 @@ let createValidationAst (lang:Ast.ProgrammingLanguage) (app:Ast.AstRoot)  =
         
         //7. refTypeFunc s mdName tasName tabularized 
         (fun s t newCons (baseType, exs) mdName tasName tabularized  -> 
-            createType s t newCons (Some baseType.id)  baseType.Kind , exs)
-
+            let retT,s1 = createType s t newCons (Some baseType.id)  baseType.Kind
+            //retT, exs.add s1)
+            retT, s1)
         //8 integerFunc s 
-        (fun s t newCons -> createType s t newCons None Integer, es)
+        (fun s t newCons -> createType s t newCons None Integer)
 
         //9 realFunc s 
-        (fun s t newCons -> createType s t newCons None  Real, es)
+        (fun s t newCons -> createType s t newCons None  Real)
 
         //10 ia5StringFunc s 
-        (fun s t newCons -> createType s t newCons None  IA5String, es)
+        (fun s t newCons -> createType s t newCons None  IA5String)
 
         //11 numericStringFunc s
         (fun s t newCons -> 
@@ -415,26 +419,26 @@ let createValidationAst (lang:Ast.ProgrammingLanguage) (app:Ast.AstRoot)  =
             //let space = {Asn1Value.Kind = StringValue(" ".AsLoc); Location = emptyLocation}
             //let newConstraint = AlphabetContraint(UnionConstraint(RangeContraint(zero,nine, true, true),SingleValueContraint(space), false))
         
-            createType s t newCons None  IA5String, es)
+            createType s t newCons None  IA5String)
 
         //12 octetStringFunc
-        (fun s t newCons -> createType s t newCons None  OctetString, es)
+        (fun s t newCons -> createType s t newCons None  OctetString)
 
         //13 nullTypeFunc
-        (fun s t newCons -> createType s t newCons None  NullType, es)
+        (fun s t newCons -> createType s t newCons None  NullType)
 
         //14 bitStringFunc
-        (fun s t newCons -> createType s t newCons None  BitString, es)
+        (fun s t newCons -> createType s t newCons None  BitString)
 
         //15 booleanFunc
-        (fun s t newCons -> createType s t newCons None  Boolean, es)
+        (fun s t newCons -> createType s t newCons None  Boolean)
 
         //16 enumeratedFunc 
         (fun s t newCons  (itms:List<NamedItem*MyState>)-> 
             let newEnmItems = itms |> List.map fst
             let es = itms |> List.map snd |> combineStates
-            let newType = createType s t newCons None   (Enumerated newEnmItems) 
-            newType,es )
+            let newType,es0 = createType s t newCons None   (Enumerated newEnmItems) 
+            newType,es.add es0 )
 
         //17 enmItemFunc
         (fun ni newVal -> 
@@ -448,19 +452,22 @@ let createValidationAst (lang:Ast.ProgrammingLanguage) (app:Ast.AstRoot)  =
         //18 seqOfTypeFunc 
         (fun s  t newCons (newInnerType, state) -> 
             let newState = {state with anonymousTypes = newInnerType::state.anonymousTypes}
-            createType s t newCons None   (SequenceOf newInnerType.id), newState)
+            let retT,ss = createType s t newCons None   (SequenceOf newInnerType.id)
+            retT, newState.add ss)
 
         //19 seqTypeFunc 
         (fun s  t newCons newChildren -> 
             let nc = newChildren  |> List.map fst
             let newState = newChildren  |> List.map snd |> combineStates
-            createType s t newCons None   (Sequence nc), newState)
+            let retT,ss = createType s t newCons None   (Sequence nc) 
+            retT, newState.add ss)
 
         //20 chTypeFunc 
         (fun s  t newCons newChildren -> 
             let nc = newChildren  |> List.map fst
             let newState = newChildren  |> List.map snd |> combineStates
-            createType s t newCons None   (Choice nc), newState)
+            let retT,ss = createType s t newCons None   (Choice nc)
+            retT, newState.add ss)
 
         //21 sequenceChildFunc 
         createChildInfo

@@ -90,6 +90,10 @@
       <Project>{000896AE-1E52-4120-8394-0E5E07A8F194}</Project>
       <Name>Backend2</Name>
     </ProjectReference>
+    <ProjectReference Include="..\BackendAst\BackendAst.fsproj">
+      <Project>{2f960476-565f-4282-90b3-606dbac5eff2}</Project>
+      <Name>BackendAst</Name>
+    </ProjectReference>
   </ItemGroup>
   <ItemGroup>
     <EmbeddedResource Include="Resource1.resx">

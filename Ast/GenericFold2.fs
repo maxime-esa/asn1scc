@@ -37,13 +37,31 @@ type ScopeNode =
     | VA of string      //VALUE ASSIGNMENT
     | CH of string      //SEQUENCE OF CHOICE CHILD
     | SQF               //SEQUENCE OF CHILD
+    with
+        member this.StrValue =
+            match this with
+            | MD strVal
+            | TA strVal
+            | VA strVal
+            | CH strVal     -> strVal
+            | SQF           -> "#"
 
 type VarScopNode =
     | DV        //DEFAULT VALUE
     | NI  of string      //NAMED ITEM VALUE (enum)
     | CON of int         // constraint index
-    | SQOV              //SQOV
-    | SQCHILD   of string
+    | SQOV              //SEQUENCE OF VALUE
+    | SQCHILD   of string   //child value (SEQUENCE, CHOICE)
+    | VL of int         //value index
+    with
+        member this.StrValue =
+            match this with
+            | DV        -> "DV"
+            | NI    ni  -> ni
+            | VL   idx  -> "v" + idx.ToString()    
+            | CON idx   -> "c" + idx.ToString()
+            | SQOV      -> "#"
+            | SQCHILD  s-> s
 
 type Scope = {
     asn1TypeName : string option
@@ -89,6 +107,17 @@ let visitSilbingConstraint (s:Scope) =
         | (CON idx)::xs  -> idx, xs
         | _              -> raise(System.Exception "invalid call to visitSilbingConstraint")
     {s with varID=xs@[CON (idx+1)]}
+
+
+let visitValue (s:Scope) = 
+    {s with varID=s.varID@[VL 0]}
+
+let visitSilbingValue (s:Scope) = 
+    let idx, xs = 
+        match s.varID |> List.rev with
+        | (VL idx)::xs  -> idx, xs
+        | _              -> raise(System.Exception "invalid call to visitSilbingConstraint")
+    {s with varID=xs@[VL (idx+1)]}
 
 let visitSeqOfValue (s:Scope) =
     {s with varID=s.varID@[SQOV]}
@@ -316,43 +345,53 @@ let foldAstRoot
 
         match c with
         | SingleValueContraint v        ->
-                let newValue = loopAsn1Value (ts,vtype) (cs,v)
+                let newValue = loopAsn1Value (ts,vtype) (visitValue cs,v)
                 singleValueContraintFunc ts t checContent newValue
         | RangeContraint(v1,v2,b1,b2)   -> 
-                let newValue1 = loopAsn1Value (ts,vtype) (cs,v1)
-                let newValue2 = loopAsn1Value (ts,vtype) (cs,v2)
+                let vs1 = visitValue cs
+                let vs2 = visitSilbingValue vs1
+                let newValue1 = loopAsn1Value (ts,vtype) (vs1,v1)
+                let newValue2 = loopAsn1Value (ts,vtype) (vs2,v2)
                 rangeContraintFunc ts t checContent newValue1 newValue2 b1 b2
         | RangeContraint_val_MAX (v,b)  ->
-                let newValue = loopAsn1Value (ts,vtype) (cs,v)
+                let newValue = loopAsn1Value (ts,vtype) (visitValue cs,v)
                 rangeContraint_val_MAXFunc ts t checContent newValue b
         | RangeContraint_MIN_val (v,b)  ->
-                let newValue = loopAsn1Value (ts,vtype) (cs,v)
+                let newValue = loopAsn1Value (ts,vtype) (visitValue cs,v)
                 rangeContraint_MIN_valFunc ts t checContent newValue  b
         | RangeContraint_MIN_MAX             -> 
                 rangeContraint_MIN_MAXFunc ts t checContent 
         | TypeInclusionConstraint (md,tas)  ->
                 typeInclConstraintFunc ts t (md,tas)
         | UnionConstraint (c1,c2, virtualCon)      ->
-                let nc1 = loopConstraint (ts,t) checContent ((visitConstraint cs),c1)
-                let nc2 = loopConstraint (ts,t) checContent ((visitConstraint cs),c2)
+                let cs1 = visitConstraint cs
+                let cs2 = visitSilbingConstraint cs1
+                let nc1 = loopConstraint (ts,t) checContent (cs1,c1)
+                let nc2 = loopConstraint (ts,t) checContent (cs2,c2)
                 unionConstraintFunc ts t nc1 nc2 virtualCon
         | IntersectionConstraint(c1,c2)         ->
-                let nc1 = loopConstraint (ts,t) checContent ((visitConstraint cs),c1)
-                let nc2 = loopConstraint (ts,t) checContent ((visitConstraint cs),c2)
+                let cs1 = visitConstraint cs
+                let cs2 = visitSilbingConstraint cs1
+                let nc1 = loopConstraint (ts,t) checContent (cs1,c1)
+                let nc2 = loopConstraint (ts,t) checContent (cs2,c2)
                 intersectionConstraintFunc ts t nc1 nc2
         | AllExceptConstraint c1 ->
                 let nc = loopConstraint (ts,t) checContent ((visitConstraint cs),c1)
                 allExceptConstraintFunc ts t nc
         | ExceptConstraint (c1,c2)  ->
-                let nc1 = loopConstraint (ts,t) checContent ((visitConstraint cs),c1)
-                let nc2 = loopConstraint (ts,t) checContent ((visitConstraint cs),c2)
+                let cs1 = visitConstraint cs
+                let cs2 = visitSilbingConstraint cs1
+                let nc1 = loopConstraint (ts,t) checContent (cs1,c1)
+                let nc2 = loopConstraint (ts,t) checContent (cs2,c2)
                 exceptConstraintFunc ts t nc1 nc2
         | RootConstraint c1  ->
                 let nc = loopConstraint (ts,t) checContent ((visitConstraint cs),c1)
                 rootConstraintFunc ts t nc 
         | RootConstraint2 (c1,c2)  ->
-                let nc1 = loopConstraint (ts,t) checContent ((visitConstraint cs),c1)
-                let nc2 = loopConstraint (ts,t) checContent ((visitConstraint cs),c2)
+                let cs1 = visitConstraint cs
+                let cs2 = visitSilbingConstraint cs1
+                let nc1 = loopConstraint (ts,t) checContent (cs1,c1)
+                let nc2 = loopConstraint (ts,t) checContent (cs2,c2)
                 rootConstraint2Func ts t nc1 nc2
         | SizeContraint(sc)         -> loopConstraint (ts,t) CheckSize (cs,sc)
 

@@ -63,11 +63,17 @@
     <Compile Include="variable.fs" />
     <Compile Include="validate.fs" />
     <Compile Include="createDefinitions.fs" />
+    <Compile Include="print_debug.fs" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\Ast\Ast.fsproj">
       <Name>Ast</Name>
       <Project>{3b67372a-65c7-439e-849f-ce1a1d2fcc69}</Project>
+      <Private>True</Private>
+    </ProjectReference>
+    <ProjectReference Include="..\Backend2.ST\Backend2.ST.fsproj">
+      <Name>Backend2.ST</Name>
+      <Project>{d451f135-4104-4441-99c1-5c1a6b7c2f91}</Project>
       <Private>True</Private>
     </ProjectReference>
   </ItemGroup>

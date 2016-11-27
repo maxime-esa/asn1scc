@@ -134,8 +134,9 @@ namespace Asn1f2
                 new CmdLineArgs.CmdArg { HasValue = true, Name = "customStgAstVersion", Madatory=false}, 
                 new CmdLineArgs.CmdArg { HasValue = true, Name = "icdUper", Madatory=false}, 
                 new CmdLineArgs.CmdArg { HasValue = true, Name = "icdAcn", Madatory=false}, 
-                new CmdLineArgs.CmdArg { HasValue = false, Name = "vc", Madatory=false}, 
-                new CmdLineArgs.CmdArg { HasValue = false, Name = "debug", Madatory=false}, 
+                new CmdLineArgs.CmdArg { HasValue = false, Name = "vc", Madatory=false},
+                new CmdLineArgs.CmdArg { HasValue = false, Name = "debug", Madatory=false},
+                new CmdLineArgs.CmdArg { HasValue = false, Name = "bast", Madatory=false},
                 new CmdLineArgs.CmdArg { HasValue = true, Name = "typePrefix", Madatory=false}, 
                 new CmdLineArgs.CmdArg { HasValue = false, Name = "help", Madatory=false}, 
                 new CmdLineArgs.CmdArg { HasValue = false, Name = "atc", Madatory=false}, 
@@ -170,6 +171,7 @@ namespace Asn1f2
             }
 
             bool bDebug = cmdArgs.HasArgument("debug");
+            bool bast = cmdArgs.HasArgument("bast");
             List<ParameterizedAsn1Ast.Asn1Encoding> encodings = new List<ParameterizedAsn1Ast.Asn1Encoding>();
             if (cmdArgs.HasArgument("uPER"))
                 encodings.Add(ParameterizedAsn1Ast.Asn1Encoding.UPER);
@@ -231,6 +233,12 @@ namespace Asn1f2
              */
             var asn1Ast0 = MapParamAstToNonParamAst.DoWork(parameterized_ast);
 
+            if (bast)
+            {
+                var bast0 = BAst.createValidationAst(Ast.ProgrammingLanguage.C, asn1Ast0);
+                print_debug.DoWork(bast0, outDir, ".txt");
+                return 0;
+            }
             //PrintAsn1.DoWork(asn1Ast0, outDir, ".0.asn1");
 
             /*
