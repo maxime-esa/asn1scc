@@ -78,6 +78,7 @@
     <Compile Include="EnsureUniqueEnumNames.fs" />
     <Compile Include="Monads.fs" />
     <Compile Include="GenericFold.fs" />
+    <Compile Include="GenericFold2.fs" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\Antlr\Antlr.csproj">

@@ -57,6 +57,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="AssemblyInfo.fs" />
+    <Compile Include="BAst.fs" />
     <None Include="Script.fsx" />
     <Compile Include="BackendAst.fs" />
     <Compile Include="variable.fs" />
