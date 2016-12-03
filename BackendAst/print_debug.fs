@@ -16,7 +16,7 @@ type PRINT_CONTENT =
 let rec printReferenceToType (r:AstRoot) (p:PRINT_CONTENT) (ReferenceToType path) =
     match p with
     | REF -> path |> Seq.skip 1 |> Seq.toList |> List.map (fun x -> x.StrValue) |> Seq.StrJoin "."
-    | CON  -> (PrintType r (r.typesMap.[(ReferenceToType path)])) + "--" + (path |> Seq.skip 1 |> Seq.toList |> List.map (fun x -> x.StrValue) |> Seq.StrJoin ".")
+    | CON  -> (PrintType r (r.typesMap.[(ReferenceToType path)])) //+ "--" + (path |> Seq.skip 1 |> Seq.toList |> List.map (fun x -> x.StrValue) |> Seq.StrJoin ".")
 
 and printReferenceToValue (r:AstRoot) (p:PRINT_CONTENT) (ReferenceToValue (path, vpath)) =
     match p with
@@ -63,8 +63,15 @@ and PrintConstraint (r:AstRoot) (c:Asn1Constraint) =
 
 
 and PrintType (r:AstRoot) (t:Asn1Type) =
-    let cons = t.Constraints |> Seq.map (PrintConstraint r)  |> Seq.toList
-    let fcons = t.FromWithCompConstraints |> Seq.map (fun c -> sprintf "[%s]" (PrintConstraint r c)) |> Seq.toList
+    let rec getBaseCons (t:Asn1Type) = 
+        match t.baseTypeId with
+        | None  -> t.Constraints,t.FromWithCompConstraints
+        | Some bid ->
+            let baseCon, baseFromCom = getBaseCons (r.typesMap.[bid])
+            t.Constraints@baseCon, t.FromWithCompConstraints@baseFromCom
+    let constraints, fromWithCompConstraints = getBaseCons t
+    let cons = constraints |> Seq.map (PrintConstraint r)  |> Seq.toList
+    let fcons = fromWithCompConstraints |> Seq.map (fun c -> sprintf "[%s]" (PrintConstraint r c)) |> Seq.toList
     let cons = cons@fcons
     match t.Kind with
     |Integer    -> ASN.Print_Integer cons

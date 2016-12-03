@@ -241,13 +241,10 @@ let foldAstRoot
                 let baseType = loopType (refTypeScope, oldBaseType) []
                 refTypeFunc s t (newCons,fromWithComps) baseType  mdName tasName tabularized false
             | _  -> 
-                //let refTypeScope = visitRefTypeThatHasWithCompCons s mdName.Value tasName.Value
-                //let refTypeScope = visitRefType mdName.Value tasName.Value
                 let oldBaseType = (Ast.GetActualTypeAllConsIncluded t r)
                 let oldBaseType = {oldBaseType with Constraints = oldBaseType.Constraints@witchCompsCons}
                 let baseType = loopType (s, oldBaseType) []
                 baseType
-                //refTypeFunc s t (newCons,fromWithComps) baseType mdName tasName tabularized true
         | Integer       ->  integerFunc s t (newCons,fromWithComps) 
         | Real          ->  realFunc s t (newCons,fromWithComps) 
         | IA5String     ->  ia5StringFunc s  t (newCons,fromWithComps) 
@@ -261,14 +258,14 @@ let foldAstRoot
             enumeratedFunc s  t (newCons,fromWithComps)  newEnmItems 
         | SequenceOf (innerType)  ->
             let childScope = visitSeqOfChild s
-            let withCompCons = t.Constraints |> List.choose(fun c -> match c with WithComponentConstraint wc -> Some wc | _ -> None)
+            let withCompCons = t.Constraints@witchCompsCons |> List.choose(fun c -> match c with WithComponentConstraint wc -> Some wc | _ -> None)
             let newInnerType = 
                 match withCompCons with
                 | []    -> loopType (childScope, innerType) []
                 | _     -> loopType (visitWithComponentChild childScope, innerType) withCompCons
             seqOfTypeFunc s  t (newCons,fromWithComps)  newInnerType 
         | Sequence (children)     ->
-            let withCompCons = t.Constraints |> List.choose(fun c -> match c with WithComponentsConstraint wc -> Some wc | _ -> None) |> List.collect id
+            let withCompCons = t.Constraints@witchCompsCons |> List.choose(fun c -> match c with WithComponentsConstraint wc -> Some wc | _ -> None) |> List.collect id
             let newChildren = 
                 children |> List.map  (fun chInfo -> 
                     let childScope = visitSeqOrChoiceChild s chInfo
@@ -276,7 +273,7 @@ let foldAstRoot
                     loopSequenceChild childScope chInfo chidlWithComps)
             seqTypeFunc s  t (newCons,fromWithComps)  newChildren 
         | Choice (children)       ->
-            let withCompCons = t.Constraints |> List.choose(fun c -> match c with WithComponentsConstraint wc -> Some wc | _ -> None) |> List.collect id
+            let withCompCons = t.Constraints@witchCompsCons |> List.choose(fun c -> match c with WithComponentsConstraint wc -> Some wc | _ -> None) |> List.collect id
             let newChildren = 
                 children |> List.map  (fun chInfo ->
                     let childScope = visitSeqOrChoiceChild s chInfo
