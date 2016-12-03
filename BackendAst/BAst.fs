@@ -180,6 +180,7 @@ type Asn1Type = {
     baseTypeId : ReferenceToType option     // base type
     Kind:Asn1TypeKind;
     Constraints:list<Asn1Constraint>;
+    FromWithCompConstraints:list<Asn1Constraint>;
     AcnProperties : list<AcnTypes.AcnProperty>      //does not contain the properties with long fields 
 }
 
@@ -346,17 +347,18 @@ let createChoiceChildInfo s (ch:Ast.ChildInfo) (newType:Asn1Type, es:MyState) =
         Comments = ch.Comments
     }, newState
 
-let createType (s:GenericFold2.Scope) (oldType:Ast.Asn1Type) (newCons:((Asn1Constraint*MyState) option ) list) (baseTypeId : ReferenceToType option) (newKind:Asn1TypeKind)=
+let createType (s:GenericFold2.Scope) (oldType:Ast.Asn1Type) (newCons:((Asn1Constraint*MyState) option ) list, fromWithComps:((Asn1Constraint*MyState) option ) list) (baseTypeId : ReferenceToType option) (newKind:Asn1TypeKind)=
     let fs = newCons |> List.choose id |> List.map snd |> combineStates
+    let fs2 = fromWithComps |> List.choose id |> List.map snd |> combineStates
     {
         Asn1Type.asn1Name = s.asn1TypeName
-
         id = ReferenceToType s.typeID
         baseTypeId = baseTypeId
         Kind = newKind
         Constraints = newCons |> List.choose id|> List.map fst
+        FromWithCompConstraints = fromWithComps|> List.choose id|> List.map fst
         AcnProperties = oldType.AcnProperties
-    }, fs
+    }, fs.add fs2
 
 let createValue (s:GenericFold2.Scope) (baseValue : ReferenceToValue option) (refToType : ReferenceToType) (kind:Asn1ValueKind) =
     {
@@ -615,5 +617,8 @@ let createValidationAst (lang:Ast.ProgrammingLanguage) (app:Ast.AstRoot)  =
         (fun ts t x1 -> x1 |> Option.map (fun (nc,s1) -> AlphabetContraint nc, s1) )
 
         //54 withComponentConstraint ts t
+        (fun ts t -> None)
+
+        //55 withComponentConstraints
         (fun ts t -> None)
         app

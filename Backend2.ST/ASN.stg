@@ -75,8 +75,8 @@ ENUMERATED {
 Print_SequenceOf(sChild, arrsConstraints) ::= "SEQUENCE <arrsConstraints> OF <sChild>"
 
 
-Print_Sequence_child(sName, sChildType, bIsOptionalOrDefault, bHasDefValue, sDefValue) ::= <<
-<sName; format="-15"> <sChildType> <if(bIsOptionalOrDefault)><if(bHasDefValue)>DEFAULT <sDefValue><else>OPTIONAL<endif><endif>
+Print_Sequence_child(sName, sChildType, bIsOptionalOrDefault, soDefValue) ::= <<
+<sName; format="-15"> <sChildType> <if(bIsOptionalOrDefault)><if(soDefValue)>DEFAULT <soDefValue><else>OPTIONAL<endif><endif>
 >>
 
 Print_Sequence(arrsChildren, arrsConstraints) ::= <<

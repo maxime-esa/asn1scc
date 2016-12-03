@@ -203,6 +203,7 @@ let foldAstRoot
     sizeContraint 
     alphabetContraint
     withComponentConstraint
+    withComponentConstraints
     (r:AstRoot) =
     
     let rec loopAstRoot (r:AstRoot) =
@@ -218,62 +219,70 @@ let foldAstRoot
         modFunc r f m tases vases
     and loopTypeAssignment (s:Scope) (r:AstRoot) (f:Asn1File) (m:Asn1Module) (tas:TypeAssignment) =
         let s = visitTas s tas
-        let asn1Type = loopType (s,tas.Type)
+        let asn1Type = loopType (s,tas.Type) []
         tasFunc r f m tas asn1Type
     and loopValueAssignments (s:Scope) (r:AstRoot) (f:Asn1File) (m:Asn1Module) (vas:ValueAssignment) =
         let s = visitVas s vas
         let actType = GetActualType vas.Type  r
-        let asn1Type = loopType (s, vas.Type)
+        let asn1Type = loopType (s, vas.Type) []
         let asn1Value = loopAsn1Value (s, actType) (s,vas.Value)
         vasFunc r f m vas asn1Type asn1Value
-    and loopType (s:Scope, t:Asn1Type) =
+    and loopType (s:Scope, t:Asn1Type) (witchCompsCons:Asn1Constraint list) =
         let conScope = visitConstraint s
-        let newCons = t.Constraints |> List.map  (fun c -> loopConstraint (s,t) CheckContent (conScope,c))
+        let newCons, retScope = t.Constraints |> CloneTree.foldMap  (fun  ss c -> loopConstraint (s,t) CheckContent (ss,c), visitSilbingConstraint ss) conScope
+        let fromWithComps, _ = witchCompsCons |> CloneTree.foldMap  (fun ss c -> loopConstraint (s,t) CheckContent (ss,c), visitSilbingConstraint ss) retScope
         match t.Kind with
         | ReferenceType (mdName,tasName, tabularized) -> 
-            let withCompCons = t.Constraints |> List.choose(fun c -> match c with WithComponentConstraint _ -> Some c| WithComponentsConstraint _ -> Some c | _ -> None)
+            let withCompCons = (t.Constraints@witchCompsCons) |> List.choose(fun c -> match c with WithComponentConstraint _ -> Some c| WithComponentsConstraint _ -> Some c | _ -> None)
             match withCompCons with
             | [] ->
                 let refTypeScope = visitRefType mdName.Value tasName.Value
                 let oldBaseType = (Ast.GetBaseType t r)
-                let baseType = loopType (refTypeScope, {oldBaseType with Constraints = oldBaseType.Constraints@withCompCons})
-                refTypeFunc s t newCons baseType mdName tasName tabularized false
+                let baseType = loopType (refTypeScope, oldBaseType) []
+                refTypeFunc s t (newCons,fromWithComps) baseType  mdName tasName tabularized false
             | _  -> 
-                let refTypeScope = visitRefTypeThatHasWithCompCons s mdName.Value tasName.Value
-                let oldBaseType = (Ast.GetBaseType t r)
-                let baseType = loopType (refTypeScope, {oldBaseType with Constraints = oldBaseType.Constraints@withCompCons})
-                refTypeFunc s t newCons baseType mdName tasName tabularized true
-        | Integer       ->  integerFunc s t newCons
-        | Real          ->  realFunc s t newCons
-        | IA5String     ->  ia5StringFunc s  t newCons
-        | NumericString    -> numericStringFunc s  t newCons
-        | OctetString    -> octetStringFunc s t newCons
-        | NullType    -> nullTypeFunc s t newCons
-        | BitString    -> bitStringFunc s t newCons
-        | Boolean           ->booleanFunc s t newCons
+                //let refTypeScope = visitRefTypeThatHasWithCompCons s mdName.Value tasName.Value
+                //let refTypeScope = visitRefType mdName.Value tasName.Value
+                let oldBaseType = (Ast.GetActualTypeAllConsIncluded t r)
+                let oldBaseType = {oldBaseType with Constraints = oldBaseType.Constraints@witchCompsCons}
+                let baseType = loopType (s, oldBaseType) []
+                baseType
+                //refTypeFunc s t (newCons,fromWithComps) baseType mdName tasName tabularized true
+        | Integer       ->  integerFunc s t (newCons,fromWithComps) 
+        | Real          ->  realFunc s t (newCons,fromWithComps) 
+        | IA5String     ->  ia5StringFunc s  t (newCons,fromWithComps) 
+        | NumericString    -> numericStringFunc s  t (newCons,fromWithComps) 
+        | OctetString    -> octetStringFunc s t (newCons,fromWithComps) 
+        | NullType    -> nullTypeFunc s t (newCons,fromWithComps) 
+        | BitString    -> bitStringFunc s t (newCons,fromWithComps) 
+        | Boolean           ->booleanFunc s t (newCons,fromWithComps) 
         | Enumerated (enmItems) ->  
             let newEnmItems = enmItems |> List.map (fun ni -> loopNamedItem s ni)
-            enumeratedFunc s  t newCons newEnmItems 
+            enumeratedFunc s  t (newCons,fromWithComps)  newEnmItems 
         | SequenceOf (innerType)  ->
             let childScope = visitSeqOfChild s
             let withCompCons = t.Constraints |> List.choose(fun c -> match c with WithComponentConstraint wc -> Some wc | _ -> None)
             let newInnerType = 
                 match withCompCons with
-                | []    -> loopType (childScope, innerType)
-                | _     -> loopType (visitWithComponentChild childScope, {innerType with Constraints = innerType.Constraints@withCompCons})
-            seqOfTypeFunc s  t newCons newInnerType 
+                | []    -> loopType (childScope, innerType) []
+                | _     -> loopType (visitWithComponentChild childScope, innerType) withCompCons
+            seqOfTypeFunc s  t (newCons,fromWithComps)  newInnerType 
         | Sequence (children)     ->
+            let withCompCons = t.Constraints |> List.choose(fun c -> match c with WithComponentsConstraint wc -> Some wc | _ -> None) |> List.collect id
             let newChildren = 
                 children |> List.map  (fun chInfo -> 
                     let childScope = visitSeqOrChoiceChild s chInfo
-                    loopSequenceChild childScope chInfo)
-            seqTypeFunc s  t newCons newChildren 
+                    let chidlWithComps = withCompCons |> List.filter(fun x -> x.Name.Value = chInfo.Name.Value)
+                    loopSequenceChild childScope chInfo chidlWithComps)
+            seqTypeFunc s  t (newCons,fromWithComps)  newChildren 
         | Choice (children)       ->
+            let withCompCons = t.Constraints |> List.choose(fun c -> match c with WithComponentsConstraint wc -> Some wc | _ -> None) |> List.collect id
             let newChildren = 
                 children |> List.map  (fun chInfo ->
                     let childScope = visitSeqOrChoiceChild s chInfo
-                    loopChoiceChild childScope chInfo)
-            chTypeFunc s  t newCons newChildren 
+                    let chidlWithComps = withCompCons |> List.filter(fun x -> x.Name.Value = chInfo.Name.Value)
+                    loopChoiceChild childScope chInfo chidlWithComps)
+            chTypeFunc s  t (newCons,fromWithComps)  newChildren 
     and loopNamedItem (s:Scope) (ni:NamedItem) =
             match ni._value with
             | Some v    ->
@@ -281,22 +290,30 @@ let foldAstRoot
                 enmItemFunc  ni (Some newValue)
             | None      ->
                 enmItemFunc  ni  None
-    and loopSequenceChild (ts:Scope)  (chInfo:ChildInfo) =
-            let newType = loopType (ts,chInfo.Type)
+    and loopSequenceChild (ts:Scope)  (chInfo:ChildInfo) (nc:NamedConstraint list) =
+            let withCompCons = nc |> List.choose (fun x -> x.Contraint)
+            let newType = loopType (ts,chInfo.Type) withCompCons
+            let presMark =
+                nc |> Seq.tryFind (fun x -> x.Mark <> NoMark) |> Option.map (fun nc -> nc.Mark)
             let newOptionality = 
-                    match chInfo.Optionality with
-                    | Some Asn1Optionality.AlwaysAbsent     -> Some (alwaysAbsentFunc ts)
-                    | Some Asn1Optionality.AlwaysPresent    -> Some (alwaysPresentFunc ts)
-                    | Some Asn1Optionality.Optional         -> Some (optionalFunc ts)
-                    | None                                  -> None
-                    | Some  (Asn1Optionality.Default   vl)  ->
-                        let eqType = GetActualType chInfo.Type r
-                        let newValue = loopAsn1Value  (ts, eqType) ((visitDefaultValue ts), vl)
-                        Some (defaultFunc ts newValue)
+                    match presMark, chInfo.Optionality with
+                    | Some MarkPresent, _                   -> Some (alwaysPresentFunc ts)
+                    | Some MarkAbsent,  _                   -> Some (alwaysAbsentFunc ts)
+                    | _                                     ->
+                        match chInfo.Optionality with
+                        | Some Asn1Optionality.AlwaysAbsent     -> Some (alwaysAbsentFunc ts)
+                        | Some Asn1Optionality.AlwaysPresent    -> Some (alwaysPresentFunc ts)
+                        | Some Asn1Optionality.Optional         -> Some (optionalFunc ts)
+                        | None                                  -> None
+                        | Some  (Asn1Optionality.Default   vl)  ->
+                            let eqType = GetActualType chInfo.Type r
+                            let newValue = loopAsn1Value  (ts, eqType) ((visitDefaultValue ts), vl)
+                            Some (defaultFunc ts newValue)
             sequenceChildFunc ts chInfo newType newOptionality
 
-    and loopChoiceChild (ts:Scope)  (chInfo:ChildInfo) =
-            let newType = loopType (ts, chInfo.Type)
+    and loopChoiceChild (ts:Scope)  (chInfo:ChildInfo) (nc:NamedConstraint list) =
+            let withCompCons = nc |> List.choose (fun x -> x.Contraint)
+            let newType = loopType (ts, chInfo.Type) withCompCons
             choiceChildFunc ts   chInfo newType
     and loopAsn1Value (ts:Scope, t:Asn1Type) (vs:Scope, v:Asn1Value) =
         match v.Kind, t.Kind with
@@ -441,7 +458,7 @@ let foldAstRoot
                 let nc = loopConstraint (ts, t) CheckCharacter (visitConstraint cs,c)
                 alphabetContraint ts t nc
         | WithComponentConstraint c          -> withComponentConstraint ts t
-        | WithComponentsConstraint _         -> raise(BugErrorException "This constraint should have been removed")
+        | WithComponentsConstraint _         -> withComponentConstraints ts t
                 
 
     loopAstRoot r 

@@ -16,7 +16,7 @@ type PRINT_CONTENT =
 let rec printReferenceToType (r:AstRoot) (p:PRINT_CONTENT) (ReferenceToType path) =
     match p with
     | REF -> path |> Seq.skip 1 |> Seq.toList |> List.map (fun x -> x.StrValue) |> Seq.StrJoin "."
-    | CON  -> PrintType r (r.typesMap.[(ReferenceToType path)])
+    | CON  -> (PrintType r (r.typesMap.[(ReferenceToType path)])) + "--" + (path |> Seq.skip 1 |> Seq.toList |> List.map (fun x -> x.StrValue) |> Seq.StrJoin ".")
 
 and printReferenceToValue (r:AstRoot) (p:PRINT_CONTENT) (ReferenceToValue (path, vpath)) =
     match p with
@@ -63,7 +63,9 @@ and PrintConstraint (r:AstRoot) (c:Asn1Constraint) =
 
 
 and PrintType (r:AstRoot) (t:Asn1Type) =
-    let cons = t.Constraints |> Seq.map (PrintConstraint r) |> Seq.toArray
+    let cons = t.Constraints |> Seq.map (PrintConstraint r)  |> Seq.toList
+    let fcons = t.FromWithCompConstraints |> Seq.map (fun c -> sprintf "[%s]" (PrintConstraint r c)) |> Seq.toList
+    let cons = cons@fcons
     match t.Kind with
     |Integer    -> ASN.Print_Integer cons
     |Real       -> ASN.Print_Real cons
@@ -80,12 +82,14 @@ and PrintType (r:AstRoot) (t:Asn1Type) =
         ASN.Print_Choice (children |> Seq.map printChild |> Seq.toArray) cons
     |Sequence(children) ->
         let printChild (c:ChildInfo) = 
-            let bIsOptionalOrDefault, bHasDefValue, sDefValue = 
+            let bIsOptionalOrDefault, soDefValue = 
                 match c.Optionality with
-                |Some(Optional(_))   -> true, false, ""
-                |Some(Default(v))    -> true, true, (printReferenceToValue r CON v)
-                |_                   -> false, false, ""
-            ASN.Print_Sequence_child c.Name (printReferenceToType r CON c.refToType) bIsOptionalOrDefault bHasDefValue sDefValue
+                | Some Optional   -> true, None
+                | Some (Default v)    -> true, Some (printReferenceToValue r CON v)
+                | Some  AlwaysAbsent  -> true, None
+                | Some AlwaysPresent  -> true, None
+                | None                -> false, None
+            ASN.Print_Sequence_child c.Name (printReferenceToType r CON c.refToType) bIsOptionalOrDefault soDefValue
         ASN.Print_Sequence (children |> Seq.map printChild |> Seq.toArray) cons
     |SequenceOf(child)  -> ASN.Print_SequenceOf (printReferenceToType r CON child) cons
 

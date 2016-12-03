@@ -84,12 +84,12 @@ let rec PrintType (t:Asn1Type) (m:Asn1Module) =
         ASN.Print_Choice (children |> Seq.map printChild |> Seq.toArray) cons
     |Sequence(children) ->
         let printChild (c:ChildInfo) = 
-            let bIsOptionalOrDefault, bHasDefValue, sDefValue = 
+            let bIsOptionalOrDefault, soDefValue = 
                 match c.Optionality with
-                |Some(Optional(_))   -> true, false, ""
-                |Some(Default(v))    -> true, true, (PrintAsn1Value v)
-                |_                   -> false, false, ""
-            ASN.Print_Sequence_child c.Name.Value (PrintType c.Type m) bIsOptionalOrDefault bHasDefValue sDefValue
+                |Some(Optional(_))   -> true, None
+                |Some(Default(v))    -> true, Some (PrintAsn1Value v)
+                |_                   -> false, None
+            ASN.Print_Sequence_child c.Name.Value (PrintType c.Type m) bIsOptionalOrDefault soDefValue
         ASN.Print_Sequence (children |> Seq.map printChild |> Seq.toArray) cons
     |SequenceOf(child)  -> ASN.Print_SequenceOf (PrintType child m) cons
     |ReferenceType(mname, name, _) ->  
