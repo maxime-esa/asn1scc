@@ -164,7 +164,6 @@ type Asn1Constraint =
     | RangeContraint                    of ReferenceToValue*ReferenceToValue*bool*bool    //min, max, InclusiveMin(=true), InclusiveMax(=true)
     | RangeContraint_val_MAX            of ReferenceToValue*bool         //min, InclusiveMin(=true)
     | RangeContraint_MIN_val            of ReferenceToValue*bool         //max, InclusiveMax(=true)
-    | RangeContraint_MIN_MAX             
     | SizeContraint                     of Asn1Constraint               
     | AlphabetContraint                 of Asn1Constraint           
     | UnionConstraint                   of Asn1Constraint*Asn1Constraint*bool //left,righ, virtual constraint
@@ -231,6 +230,8 @@ type AstRoot = {
     IcdAcnHtmlFileName:string
     CheckWithOss:bool
     mappingFunctionsModule : string option
+    valsMap : Map<ReferenceToValue, Asn1Value>
+    typesMap : Map<ReferenceToType, Asn1Type>
 }
 
 
@@ -266,6 +267,7 @@ let addValue (s:MyState) (v:Asn1Value)=
 let smap = CloneTree.foldMap
 
 let createAstRoot (sr:Ast.AstRoot) (dfiles: Asn1File list)  =
+    
     {
         AstRoot.Files = dfiles 
         Encodings = sr.Encodings
@@ -276,6 +278,15 @@ let createAstRoot (sr:Ast.AstRoot) (dfiles: Asn1File list)  =
         IcdAcnHtmlFileName = sr.IcdAcnHtmlFileName
         CheckWithOss = sr.CheckWithOss
         mappingFunctionsModule = sr.mappingFunctionsModule
+        valsMap = 
+            let aa = dfiles |> List.collect(fun f -> f.Modules) |> List.collect(fun m -> m.ValueAssignments) |> List.map(fun v -> v.id, v) 
+            aa |> Seq.groupBy(fun (id,t) -> id) |> Seq.filter(fun (id, gr) -> Seq.length gr > 1) |> Seq.iter (fun x -> printfn "%A" x)
+            aa |> Map.ofList
+        typesMap = 
+            let aa = dfiles |> List.collect(fun f -> f.Modules) |> List.collect(fun m -> m.TypeAssignments) |> List.map(fun v -> v.id, v)
+            aa |> Seq.groupBy(fun (id,t) -> id) |> Seq.filter(fun (id, gr) -> Seq.length gr > 1) |> Seq.iter (fun x -> printfn "%A" x)
+            aa |> Map.ofList
+
     }
 
 let createAsn1File (r:Ast.AstRoot) (f:Ast.Asn1File) (newMods:Asn1Module list)  = 
@@ -334,38 +345,16 @@ let createChoiceChildInfo s (ch:Ast.ChildInfo) (newType:Asn1Type, es:MyState) =
         AcnInsertedField = ch.AcnInsertedField
         Comments = ch.Comments
     }, newState
-    (*
-let createReferenceTypeFunc (s:GenericFold2.Scope) (t:Ast.Asn1Type) (newCons:Asn1Constraint list) (baseTypes: Asn1Type list) (mdName:string) (tasName:string) tabularized : Asn1Type list =
-    match newCons with
-    | []    -> []
-    |
-        let thisType = 
-            {
-                Asn1Type.asn1Name = 
-                    match s.parents with
-                    | []    -> Some s.a.Name
-                    | _     -> None
 
-                id = ReferenceToType s.ID
-                baseTypeId = baseTypeId
-                Kind = newKind
-                Constraints = newCons
-                AcnProperties = t.AcnProperties
-                Location = t.Location
-
-            }
-        thisType
-        *)
-
-let createType (s:GenericFold2.Scope) (oldType:Ast.Asn1Type) (newCons:(Asn1Constraint*MyState) list) (baseTypeId : ReferenceToType option) (newKind:Asn1TypeKind)=
-    let fs = newCons |> List.map snd |> combineStates
+let createType (s:GenericFold2.Scope) (oldType:Ast.Asn1Type) (newCons:((Asn1Constraint*MyState) option ) list) (baseTypeId : ReferenceToType option) (newKind:Asn1TypeKind)=
+    let fs = newCons |> List.choose id |> List.map snd |> combineStates
     {
         Asn1Type.asn1Name = s.asn1TypeName
 
         id = ReferenceToType s.typeID
         baseTypeId = baseTypeId
         Kind = newKind
-        Constraints = newCons |> List.map fst
+        Constraints = newCons |> List.choose id|> List.map fst
         AcnProperties = oldType.AcnProperties
     }, fs
 
@@ -398,10 +387,14 @@ let createValidationAst (lang:Ast.ProgrammingLanguage) (app:Ast.AstRoot)  =
         //6. typeFunc s t newCons newKind
         
         //7. refTypeFunc s mdName tasName tabularized 
-        (fun s t newCons (baseType, exs) mdName tasName tabularized  -> 
+        (fun s t newCons (baseType, exs) mdName tasName tabularized baseTypeIsNew -> 
+            let exs = 
+                match baseTypeIsNew with
+                | true  -> {exs with anonymousTypes = baseType::exs.anonymousTypes}
+                | false -> es
             let retT,s1 = createType s t newCons (Some baseType.id)  baseType.Kind
-            //retT, exs.add s1)
-            retT, s1)
+            retT, exs.add s1)
+
         //8 integerFunc s 
         (fun s t newCons -> createType s t newCons None Integer)
 
@@ -544,48 +537,83 @@ let createValidationAst (lang:Ast.ProgrammingLanguage) (app:Ast.AstRoot)  =
         //40 singleValueContraintFunc s t checContent actType newValue
         (fun ts t checContent (newValue,st)-> 
             let nes = addValue st newValue
-            SingleValueContraint newValue.id, nes)
+            Some (SingleValueContraint newValue.id, nes))
 
         //41 rangeContraintFunc s t checContent actType newValue1 newValue2 b1 b2
         (fun ts t checContent (newValue1,st1) (newValue2,st2) b1 b2 -> 
             let nes1 = addValue st1 newValue1
             let nes2 = addValue st2 newValue2
             let fs = combineStates [nes1; nes2]
-            RangeContraint(newValue1.id, newValue2.id, b1, b2), fs)
+            Some (RangeContraint(newValue1.id, newValue2.id, b1, b2), fs))
 
         //42 rangeContraint_val_MAXFunc s t checContent actType newValue  b
         (fun ts t checContent (newValue,st) b -> 
             let nes = addValue st newValue
-            RangeContraint_val_MAX (newValue.id,b), nes)
+            Some (RangeContraint_val_MAX (newValue.id,b), nes))
 
         //43 rangeContraint_MIN_valFunc s t checContent actType newValue  b
         (fun ts t checContent (newValue,st) b  -> 
             let nes = addValue st newValue
-            RangeContraint_MIN_val(newValue.id,b),nes )
+            Some (RangeContraint_MIN_val(newValue.id,b),nes) )
 
         //44 rangeContraint_MIN_MAXFunc  s t checContent actType
-        (fun ts t checContent -> RangeContraint_MIN_MAX,es )
+        (fun ts t checContent -> None)
 
         //45 typeInclConstraintFunc s t actType (md,tas)
-        (fun ts t (md,tas) -> raise (System.Exception("typeInclConstraintFunc")))
+        (fun ts t otherCon -> 
+            match otherCon with
+            | Some x -> x
+            | None    -> None
+         )
 
         //46 unionConstraintFunc s t actType nc1 nc2
-        (fun ts t (nc1,s1) (nc2,s2) virtualCon -> 
-            UnionConstraint (nc1, nc2, virtualCon), combineStates [s1;s2])
+        (fun ts t x1 x2 virtualCon -> 
+            match x1, x2 with
+            | Some (nc1,s1), Some (nc2,s2)  -> Some (UnionConstraint (nc1, nc2, virtualCon), combineStates [s1;s2])
+            | Some (nc1,s1), None           -> None
+            | None, Some (nc2,s2)           -> None
+            | None, None                    -> None)
 
         //47 intersectionConstraintFunc s t actType nc1 nc2
-        (fun ts t (nc1,s1) (nc2,s2) -> IntersectionConstraint (nc1,nc2), combineStates [s1;s2])
+        (fun ts t x1 x2 -> 
+            match x1, x2 with
+            | Some (nc1,s1), Some (nc2,s2)  -> Some (IntersectionConstraint (nc1,nc2), combineStates [s1;s2])
+            | Some (nc1,s1), None           -> Some (nc1,s1)
+            | None, Some (nc2,s2)           -> Some (nc2,s2)
+            | None, None                    -> None)
 
         //48 allExceptConstraintFunc s t actType nc
-        (fun  ts t (nc,s1) -> AllExceptConstraint nc, s1)
+        (fun  ts t x1 -> 
+            match x1 with
+            | Some (nc1,s1)   -> Some (AllExceptConstraint nc1, s1)
+            | None            -> raise(SemanticError(t.Location, (sprintf "EXCEPT constraint makes type to allow no values. Consider changing the EXCET part"))) )
 
         //49 exceptConstraintFunc s t actType nc1 nc2
-        (fun ts t (nc1,s1) (nc2,s2) -> ExceptConstraint(nc1,nc2), combineStates [s1;s2] )
+        (fun ts t x1 x2 -> 
+            match x1, x2 with
+            | Some (nc1,s1), Some (nc2,s2)  -> Some (ExceptConstraint(nc1,nc2), combineStates [s1;s2] )
+            | Some (nc1,s1), None           -> raise(SemanticError(t.Location, (sprintf "EXCEPT constraint makes type to allow no values. Consider changing the EXCET part")))
+            | None, Some (nc2,s2)           -> Some (nc2,s2)
+            | None, None                    -> raise(SemanticError(t.Location, (sprintf "EXCEPT constraint makes type to allow no values. Consider changing the EXCET part")))
+        )
 
         //50 rootConstraintFunc s t actType nc
-        (fun ts t (nc,s1) -> RootConstraint nc, s1 )
+        (fun ts t x1 -> x1 |> Option.map (fun (nc,s1) -> RootConstraint nc, s1) )
 
         //51 rootConstraint2Func s t actType nc1 nc2
-        (fun ts t (nc1,s1) (nc2,s2) -> RootConstraint2 (nc1,nc2), combineStates [s1;s2] )
+        (fun ts t x1 x2 -> 
+            match x1, x2 with
+            | Some (nc1,s1), Some (nc2,s2)  -> Some (RootConstraint2 (nc1,nc2), combineStates [s1;s2])
+            | Some (nc1,s1), None           -> None
+            | None, Some (nc2,s2)           -> None
+            | None, None                    -> None)
+        
+        //52 sizeContraint 
+        (fun ts t x1 -> x1 |> Option.map (fun (nc,s1) -> SizeContraint nc, s1) )
+        
+        //53 alphabetContraint
+        (fun ts t x1 -> x1 |> Option.map (fun (nc,s1) -> AlphabetContraint nc, s1) )
 
+        //54 withComponentConstraint ts t
+        (fun ts t -> None)
         app

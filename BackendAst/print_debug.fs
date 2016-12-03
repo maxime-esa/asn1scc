@@ -9,14 +9,26 @@ open System
 open System.IO
 open BAst
 
-let printReferenceToType (ReferenceToType path) =
-    path |> List.map (fun x -> x.StrValue) |> Seq.StrJoin "."
-let printReferenceToValue (ReferenceToValue (path, vpath)) =
-    let p1 = path |> List.map (fun x -> x.StrValue) |> Seq.StrJoin "."
-    let p2 = vpath |> List.map (fun x -> x.StrValue) |> Seq.StrJoin "."
-    p1 + "." + p2
+type PRINT_CONTENT =
+    | REF
+    | CON
 
-let PrintAsn1Value (v:Asn1Value) = 
+let rec printReferenceToType (r:AstRoot) (p:PRINT_CONTENT) (ReferenceToType path) =
+    match p with
+    | REF -> path |> Seq.skip 1 |> Seq.toList |> List.map (fun x -> x.StrValue) |> Seq.StrJoin "."
+    | CON  -> PrintType r (r.typesMap.[(ReferenceToType path)])
+
+and printReferenceToValue (r:AstRoot) (p:PRINT_CONTENT) (ReferenceToValue (path, vpath)) =
+    match p with
+    | REF ->
+        let p1 = path |> Seq.skip 1 |> Seq.toList |> List.map (fun x -> x.StrValue) |> Seq.StrJoin "."
+        let p2 = vpath |> List.map (fun x -> x.StrValue) |> Seq.StrJoin "."
+        p1 + "." + p2
+    | CON ->
+        PrintAsn1Value r r.valsMap.[(ReferenceToValue (path, vpath))]
+    
+
+and PrintAsn1Value (r:AstRoot) (v:Asn1Value) = 
     match v.Kind with
     |IntegerValue(v)         -> ASN.Print_IntegerValue v
     |RealValue(v)            -> ASN.Print_RealValue v
@@ -25,34 +37,33 @@ let PrintAsn1Value (v:Asn1Value) =
     |BooleanValue(v)         -> ASN.Print_BooleanValue v
     |BitStringValue(v)       -> ASN.Print_BitStringValue v
     |OctetStringValue(v)     -> ASN.Print_OctetStringValue (v |> Seq.map(fun x -> x) |> Seq.toArray)
-    |SeqOfValue(vals)        -> ASN.Print_SeqOfValue (vals |> Seq.map printReferenceToValue |> Seq.toArray)
-    |SeqValue(vals)          -> ASN.Print_SeqValue (vals |> Seq.map(fun (nm, v) -> ASN.Print_SeqValue_Child nm (printReferenceToValue v) ) |> Seq.toArray)
-    |ChValue(nm,v)           -> ASN.Print_ChValue nm (printReferenceToValue v)
+    |SeqOfValue(vals)        -> ASN.Print_SeqOfValue (vals |> Seq.map (printReferenceToValue r CON ) |> Seq.toArray)
+    |SeqValue(vals)          -> ASN.Print_SeqValue (vals |> Seq.map(fun (nm, v) -> ASN.Print_SeqValue_Child nm (printReferenceToValue r CON v) ) |> Seq.toArray)
+    |ChValue(nm,v)           -> ASN.Print_ChValue nm (printReferenceToValue r CON v)
     |NullValue               -> ASN.Print_NullValue()
 
 
-let rec PrintConstraint (c:Asn1Constraint) = 
+and PrintConstraint (r:AstRoot) (c:Asn1Constraint) = 
     match c with
-    | SingleValueContraint(v)       -> ASN.Print_SingleValueContraint (printReferenceToValue v)
-    | RangeContraint(v1, v2, b1, b2)        -> ASN.Print_RangeContraint (printReferenceToValue v1) (printReferenceToValue v2) b1 b2
-    | RangeContraint_val_MAX(v, b1)     -> ASN.Print_RangeContraint_val_MAX (printReferenceToValue v) b1
-    | RangeContraint_MIN_val(v, b2)     -> ASN.Print_RangeContraint_MIN_val (printReferenceToValue v) b2  
-    | RangeContraint_MIN_MAX        -> ASN.Print_RangeContraint_MIN_MAX()
-    | SizeContraint(c)              -> ASN.Print_SizeContraint (PrintConstraint c)   
-    | AlphabetContraint(c)          -> ASN.Print_AlphabetContraint (PrintConstraint c)   
+    | SingleValueContraint(v)       -> ASN.Print_SingleValueContraint (printReferenceToValue r CON v)
+    | RangeContraint(v1, v2, b1, b2)        -> ASN.Print_RangeContraint (printReferenceToValue r CON v1) (printReferenceToValue r CON v2) b1 b2
+    | RangeContraint_val_MAX(v, b1)     -> ASN.Print_RangeContraint_val_MAX (printReferenceToValue r CON v) b1
+    | RangeContraint_MIN_val(v, b2)     -> ASN.Print_RangeContraint_MIN_val (printReferenceToValue r CON v) b2  
+    | SizeContraint(c)              -> ASN.Print_SizeContraint (PrintConstraint r c)   
+    | AlphabetContraint(c)          -> ASN.Print_AlphabetContraint (PrintConstraint r c)   
     | UnionConstraint(c1,c2,virtualCon)        -> 
         match virtualCon with
-        | false -> ASN.Print_UnionConstraint (PrintConstraint c1) (PrintConstraint c2)   
+        | false -> ASN.Print_UnionConstraint (PrintConstraint r c1) (PrintConstraint r c2)   
         | true  -> ""
-    | IntersectionConstraint(c1,c2) -> ASN.Print_IntersectionConstraint (PrintConstraint c1) (PrintConstraint c2)          
-    | AllExceptConstraint(c)        -> ASN.Print_AllExceptConstraint (PrintConstraint c)      
-    | ExceptConstraint(c1,c2)       -> ASN.Print_ExceptConstraint (PrintConstraint c1) (PrintConstraint c2)                 
-    | RootConstraint(c)             -> ASN.Print_RootConstraint  (PrintConstraint c)        
-    | RootConstraint2(c1,c2)        -> ASN.Print_RootConstraint2 (PrintConstraint c1) (PrintConstraint c2)
+    | IntersectionConstraint(c1,c2) -> ASN.Print_IntersectionConstraint (PrintConstraint r c1) (PrintConstraint r c2)          
+    | AllExceptConstraint(c)        -> ASN.Print_AllExceptConstraint (PrintConstraint r c)      
+    | ExceptConstraint(c1,c2)       -> ASN.Print_ExceptConstraint (PrintConstraint r c1) (PrintConstraint r c2)                 
+    | RootConstraint(c)             -> ASN.Print_RootConstraint  (PrintConstraint r c)        
+    | RootConstraint2(c1,c2)        -> ASN.Print_RootConstraint2 (PrintConstraint r c1) (PrintConstraint r c2)
 
 
-let PrintType (t:Asn1Type) =
-    let cons = t.Constraints |> Seq.map PrintConstraint |> Seq.toArray
+and PrintType (r:AstRoot) (t:Asn1Type) =
+    let cons = t.Constraints |> Seq.map (PrintConstraint r) |> Seq.toArray
     match t.Kind with
     |Integer    -> ASN.Print_Integer cons
     |Real       -> ASN.Print_Real cons
@@ -62,31 +73,31 @@ let PrintType (t:Asn1Type) =
     |NullType   -> ASN.Print_NullType cons
     |IA5String  -> ASN.Print_IA5String cons
     |Enumerated(items)  ->
-        let printItem (it:NamedItem) = ASN.Print_Enumerated_child it.Name it.refToValue.IsSome (if it.refToValue.IsSome then (printReferenceToValue it.refToValue.Value) else "")
+        let printItem (it:NamedItem) = ASN.Print_Enumerated_child it.Name it.refToValue.IsSome (if it.refToValue.IsSome then (printReferenceToValue r CON it.refToValue.Value) else "")
         ASN.Print_Enumerated (items |> Seq.map printItem |> Seq.toArray) cons
     |Choice(children)   ->
-        let printChild (c:ChildInfo) = ASN.Print_Choice_child c.Name (printReferenceToType c.refToType)
+        let printChild (c:ChildInfo) = ASN.Print_Choice_child c.Name (printReferenceToType r CON c.refToType)
         ASN.Print_Choice (children |> Seq.map printChild |> Seq.toArray) cons
     |Sequence(children) ->
         let printChild (c:ChildInfo) = 
             let bIsOptionalOrDefault, bHasDefValue, sDefValue = 
                 match c.Optionality with
                 |Some(Optional(_))   -> true, false, ""
-                |Some(Default(v))    -> true, true, (printReferenceToValue v)
+                |Some(Default(v))    -> true, true, (printReferenceToValue r CON v)
                 |_                   -> false, false, ""
-            ASN.Print_Sequence_child c.Name (printReferenceToType c.refToType) bIsOptionalOrDefault bHasDefValue sDefValue
+            ASN.Print_Sequence_child c.Name (printReferenceToType r CON c.refToType) bIsOptionalOrDefault bHasDefValue sDefValue
         ASN.Print_Sequence (children |> Seq.map printChild |> Seq.toArray) cons
-    |SequenceOf(child)  -> ASN.Print_SequenceOf (printReferenceToType child) cons
+    |SequenceOf(child)  -> ASN.Print_SequenceOf (printReferenceToType r CON child) cons
 
 
-let PrintTypeAss (t:Asn1Type)  = 
+let PrintTypeAss (r:AstRoot) (t:Asn1Type)  = 
     let nm = match t.asn1Name with Some x -> x | None -> "anonymous"
-    let bnm = t.baseTypeId |> Option.map printReferenceToType 
-    ASN.PrintTypeAssigment2 (printReferenceToType t.id) bnm nm (PrintType t)
+    let bnm = t.baseTypeId |> Option.map (printReferenceToType r REF)
+    ASN.PrintTypeAssigment2 (printReferenceToType r REF t.id) bnm nm (PrintType r t)
 
-let PrintValueAss (v:Asn1Value) = ASN.PrintValueAssigment (printReferenceToValue v.id) (printReferenceToType v.refToType) (PrintAsn1Value v)
+let PrintValueAss (r:AstRoot) (v:Asn1Value) = ASN.PrintValueAssigment (printReferenceToValue r REF v.id) (printReferenceToType r REF v.refToType) (PrintAsn1Value r v)
 
-let PrintModule (m:Asn1Module) =
+let PrintModule (r:AstRoot) (m:Asn1Module) =
     let exports =
         match m.Exports with
         | Ast.All               -> "ALL"
@@ -95,16 +106,16 @@ let PrintModule (m:Asn1Module) =
         m.Imports |>
         List.map(fun im -> ASN.PrintModuleImportFromModule ( (im.Types @ im.Values) |> List.map(fun s -> s.Value)) im.Name.Value )
 
-    let tases = m.TypeAssignments |> Seq.map(fun x -> PrintTypeAss x ) |> Seq.toArray
-    let vases = m.ValueAssignments |> Seq.map(fun x -> PrintValueAss x )|> Seq.toArray
+    let tases = m.TypeAssignments |> Seq.map(fun x -> PrintTypeAss r x ) |> Seq.toArray
+    let vases = m.ValueAssignments |> Seq.map(fun x -> PrintValueAss r x )|> Seq.toArray
     ASN.PrintModule m.Name tases vases exports importsFromModule
 
-let PrintFile (f:Asn1File) outDir newFileExt =
-    let modules = f.Modules |> Seq.map PrintModule |> Seq.toArray
+let PrintFile (r:AstRoot) (f:Asn1File) outDir newFileExt =
+    let modules = f.Modules |> Seq.map (PrintModule r)|> Seq.toArray
     let fileContent = ASN.PrintAsn1File modules
     let outFileName = Path.Combine(outDir, f.FileName+newFileExt)
     File.WriteAllText(outFileName, fileContent.Replace("\r",""))
 
 
 let DoWork (r:AstRoot) outDir newFileExt=
-    r.Files |> Seq.iter(fun f -> PrintFile f outDir newFileExt)
+    r.Files |> Seq.iter(fun f -> PrintFile r f outDir newFileExt)

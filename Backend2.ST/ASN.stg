@@ -29,9 +29,9 @@ PrintModule(sName, arrsTas, arrsVas, sExports, arrsImportsFromModule) ::= <<
 <endif>
 
     
-    <arrsTas: {tas|<tas>}; separator="\n">
+    <arrsTas: {tas|<tas>}; separator="\n\n">
 
-    <arrsVas: {vas|<vas>}; separator="\n">
+    <arrsVas: {vas|<vas>}; separator="\n\n">
 
 END
 >>

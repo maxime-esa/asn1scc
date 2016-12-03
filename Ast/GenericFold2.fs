@@ -37,6 +37,9 @@ type ScopeNode =
     | VA of string      //VALUE ASSIGNMENT
     | CH of string      //SEQUENCE OF CHOICE CHILD
     | SQF               //SEQUENCE OF CHILD
+    | WITH_COMP              // WITH COMPONENT
+    | WITH_COMPS of string  // WITH COMPONENTS
+    | REF_TYPE of string*string //pass through ref type
     with
         member this.StrValue =
             match this with
@@ -45,6 +48,10 @@ type ScopeNode =
             | VA strVal
             | CH strVal     -> strVal
             | SQF           -> "#"
+            | WITH_COMP     -> "WCP"
+            | WITH_COMPS strVal -> sprintf "%s(WC)" strVal
+            | REF_TYPE  (s1,s2)    -> sprintf "%s.%s" s1 s2
+
 
 type VarScopNode =
     | DV        //DEFAULT VALUE
@@ -83,6 +90,9 @@ let visitVas (s:Scope) (vs:ValueAssignment) =
 let visitRefType (md:string) (ts:string) =
     {Scope.typeID=[MD md; TA ts]; asn1TypeName=Some ts; asn1VarName=None;varID=[]}
 
+let visitRefTypeThatHasWithCompCons (s:Scope) (md:string) (ts:string) =
+    {s with typeID=s.typeID@[REF_TYPE (md,ts)]; asn1TypeName=None;asn1VarName=None; varID=[]}
+
 let visitRevValue (md:string) (vs:string) =
     {Scope.typeID=[MD md; VA vs]; asn1TypeName=None; asn1VarName=Some vs;varID=[]}
 
@@ -91,6 +101,9 @@ let visitSeqOrChoiceChild (s:Scope) (ch:ChildInfo) =
 
 let visitSeqOfChild (s:Scope) =
     {s with typeID=s.typeID@[SQF]; asn1TypeName=None;asn1VarName=None; varID=[]}
+
+let visitWithComponentChild (s:Scope) =
+    {s with typeID=s.typeID@[WITH_COMP]; asn1TypeName=None;asn1VarName=None; varID=[]}
 
 let visitDefaultValue (s:Scope) = 
     {s with varID=[DV]}
@@ -187,6 +200,9 @@ let foldAstRoot
     exceptConstraintFunc
     rootConstraintFunc
     rootConstraint2Func
+    sizeContraint 
+    alphabetContraint
+    withComponentConstraint
     (r:AstRoot) =
     
     let rec loopAstRoot (r:AstRoot) =
@@ -215,9 +231,18 @@ let foldAstRoot
         let newCons = t.Constraints |> List.map  (fun c -> loopConstraint (s,t) CheckContent (conScope,c))
         match t.Kind with
         | ReferenceType (mdName,tasName, tabularized) -> 
-            let refTypeScope = visitRefType mdName.Value tasName.Value
-            let baseType = loopType (refTypeScope, (Ast.GetBaseType t r))
-            refTypeFunc s t newCons baseType mdName tasName tabularized 
+            let withCompCons = t.Constraints |> List.choose(fun c -> match c with WithComponentConstraint _ -> Some c| WithComponentsConstraint _ -> Some c | _ -> None)
+            match withCompCons with
+            | [] ->
+                let refTypeScope = visitRefType mdName.Value tasName.Value
+                let oldBaseType = (Ast.GetBaseType t r)
+                let baseType = loopType (refTypeScope, {oldBaseType with Constraints = oldBaseType.Constraints@withCompCons})
+                refTypeFunc s t newCons baseType mdName tasName tabularized false
+            | _  -> 
+                let refTypeScope = visitRefTypeThatHasWithCompCons s mdName.Value tasName.Value
+                let oldBaseType = (Ast.GetBaseType t r)
+                let baseType = loopType (refTypeScope, {oldBaseType with Constraints = oldBaseType.Constraints@withCompCons})
+                refTypeFunc s t newCons baseType mdName tasName tabularized true
         | Integer       ->  integerFunc s t newCons
         | Real          ->  realFunc s t newCons
         | IA5String     ->  ia5StringFunc s  t newCons
@@ -231,7 +256,11 @@ let foldAstRoot
             enumeratedFunc s  t newCons newEnmItems 
         | SequenceOf (innerType)  ->
             let childScope = visitSeqOfChild s
-            let newInnerType = loopType (childScope, innerType)
+            let withCompCons = t.Constraints |> List.choose(fun c -> match c with WithComponentConstraint wc -> Some wc | _ -> None)
+            let newInnerType = 
+                match withCompCons with
+                | []    -> loopType (childScope, innerType)
+                | _     -> loopType (visitWithComponentChild childScope, {innerType with Constraints = innerType.Constraints@withCompCons})
             seqOfTypeFunc s  t newCons newInnerType 
         | Sequence (children)     ->
             let newChildren = 
@@ -362,7 +391,19 @@ let foldAstRoot
         | RangeContraint_MIN_MAX             -> 
                 rangeContraint_MIN_MAXFunc ts t checContent 
         | TypeInclusionConstraint (md,tas)  ->
-                typeInclConstraintFunc ts t (md,tas)
+                let actTypeAllCons = GetActualTypeByNameAllConsIncluded md tas r
+                let agrCon = 
+                    match actTypeAllCons.Constraints with
+                    | []    -> None
+                    | x::[] -> Some x
+                    | x::xs -> 
+                        let aa = xs |> List.fold(fun s cc -> IntersectionConstraint (s,cc)) x
+                        Some aa
+                match agrCon with
+                | Some c1 ->
+                    let nc = loopConstraint (ts,t) checContent ((visitConstraint cs),c1)
+                    typeInclConstraintFunc ts t (Some nc)
+                | None -> typeInclConstraintFunc ts t None
         | UnionConstraint (c1,c2, virtualCon)      ->
                 let cs1 = visitConstraint cs
                 let cs2 = visitSilbingConstraint cs1
@@ -393,11 +434,13 @@ let foldAstRoot
                 let nc1 = loopConstraint (ts,t) checContent (cs1,c1)
                 let nc2 = loopConstraint (ts,t) checContent (cs2,c2)
                 rootConstraint2Func ts t nc1 nc2
-        | SizeContraint(sc)         -> loopConstraint (ts,t) CheckSize (cs,sc)
-
-        | AlphabetContraint c       -> loopConstraint (ts, t) CheckCharacter (cs,c)
-
-        | WithComponentConstraint _          -> raise(BugErrorException "This constraint should have been removed")
+        | SizeContraint(sc)         -> 
+                let nc = loopConstraint (ts,t) CheckSize (visitConstraint cs,sc)
+                sizeContraint ts t nc
+        | AlphabetContraint c       -> 
+                let nc = loopConstraint (ts, t) CheckCharacter (visitConstraint cs,c)
+                alphabetContraint ts t nc
+        | WithComponentConstraint c          -> withComponentConstraint ts t
         | WithComponentsConstraint _         -> raise(BugErrorException "This constraint should have been removed")
                 
 
