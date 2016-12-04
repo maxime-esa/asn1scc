@@ -120,8 +120,25 @@ ASN.1 CONSTRAINTS
 
 *)
 
-type ReferenceToType = ReferenceToType of GenericFold2.ScopeNode list
-type ReferenceToValue = ReferenceToValue of (GenericFold2.ScopeNode list)*(GenericFold2.VarScopNode list)
+type ReferenceToType = 
+    | ReferenceToType of GenericFold2.ScopeNode list
+    with
+        member this.ModName =
+            match this with
+            | ReferenceToType path -> 
+                match path with
+                | (GenericFold2.MD modName)::_    -> modName
+                | _                               -> raise(BugErrorException "Did not find module at the begining of the scope path")
+            
+type ReferenceToValue = 
+    | ReferenceToValue of (GenericFold2.ScopeNode list)*(GenericFold2.VarScopNode list)
+    with
+        member this.ModName =
+            match this with
+            | ReferenceToValue (path,_) -> 
+                match path with
+                | (GenericFold2.MD modName)::_    -> modName
+                | _                               -> raise(BugErrorException "Did not find module at the begining of the scope path")
 
 type Asn1Optionality = 
     | AlwaysAbsent
@@ -201,7 +218,7 @@ type Asn1ValueKind =
 type Asn1Value = {
     asn1Name : string option
     id : ReferenceToValue
-    baseValue : ReferenceToValue option     
+    //baseValue : ReferenceToValue option     
     refToType : ReferenceToType
     Kind:Asn1ValueKind
 }
@@ -249,26 +266,26 @@ type AstRoot = {
 
 //let createValue vk l = {Asn1Value.Kind = vk ;Location = l}
 
-type MyState = {
+type State = {
     anonymousTypes : Asn1Type list
     anonymousValues : Asn1Value list
 }
 with 
-    member this.add (other:MyState) =
-        {MyState.anonymousTypes = this.anonymousTypes@other.anonymousTypes; anonymousValues = this.anonymousValues@other.anonymousValues}
+    member this.add (other:State) =
+        {State.anonymousTypes = this.anonymousTypes@other.anonymousTypes; anonymousValues = this.anonymousValues@other.anonymousValues}
 
-let es = {MyState.anonymousTypes=[];anonymousValues=[]}
 
-let combineStates (states:MyState list)= 
-    states |> List.fold (fun s c -> {s with anonymousTypes = s.anonymousTypes@c.anonymousTypes; anonymousValues = s.anonymousValues@c.anonymousValues}) es
+let combineStates (states:State list)= 
+    states |> List.fold (fun s c -> {s with anonymousTypes = s.anonymousTypes@c.anonymousTypes; anonymousValues = s.anonymousValues@c.anonymousValues}) {State.anonymousTypes =[]; anonymousValues = []}
 
-let addValue (s:MyState) (v:Asn1Value)=
+let addValue (s:State) (v:Asn1Value)=
     {s with anonymousValues=s.anonymousValues@[v]}
 
 let smap = CloneTree.foldMap
 
-let createAstRoot (sr:Ast.AstRoot) (dfiles: Asn1File list)  =
-    
+
+
+let createAstRoot (s:State) (sr:Ast.AstRoot) (dfiles: Asn1File list)  =
     {
         AstRoot.Files = dfiles 
         Encodings = sr.Encodings
@@ -281,93 +298,101 @@ let createAstRoot (sr:Ast.AstRoot) (dfiles: Asn1File list)  =
         mappingFunctionsModule = sr.mappingFunctionsModule
         valsMap = 
             let aa = dfiles |> List.collect(fun f -> f.Modules) |> List.collect(fun m -> m.ValueAssignments) |> List.map(fun v -> v.id, v) 
-            aa |> Seq.groupBy(fun (id,t) -> id) |> Seq.filter(fun (id, gr) -> Seq.length gr > 1) |> Seq.iter (fun x -> printfn "%A" x)
+            aa |> Seq.groupBy(fun (id,t) -> id) |> Seq.filter(fun (id, gr) -> gr |> (*Seq.distinct |>*) Seq.length > 1) |> Seq.iter (fun x -> printfn "%A" x)
             aa |> Map.ofList
         typesMap = 
             let aa = dfiles |> List.collect(fun f -> f.Modules) |> List.collect(fun m -> m.TypeAssignments) |> List.map(fun v -> v.id, v)
-            aa |> Seq.groupBy(fun (id,t) -> id) |> Seq.filter(fun (id, gr) -> Seq.length gr > 1) |> Seq.iter (fun x -> printfn "%A" x)
+            aa |> Seq.groupBy(fun (id,t) -> id) |> Seq.filter(fun (id, gr) -> gr |> (*Seq.distinct |>*) Seq.length > 1) |> Seq.iter (fun x -> printfn "%A" x)
             aa |> Map.ofList
 
     }
 
-let createAsn1File (r:Ast.AstRoot) (f:Ast.Asn1File) (newMods:Asn1Module list)  = 
+let createAsn1File (s:State) (r:Ast.AstRoot) (f:Ast.Asn1File) (newMods:Asn1Module list)  = 
     {
         Asn1File.FileName = f.FileName;
         Tokens = f.Tokens
         Modules  = newMods 
-    }
+    },s
 
-let createAsn1Module (r:Ast.AstRoot) (f:Ast.Asn1File) (m:Ast.Asn1Module) (newtases: (Asn1Type*MyState) list ) (vases:(Asn1Value*MyState) list ) = 
-    let newTypes = newtases |> List.map fst
-    let newVases = vases |> List.map fst
-    let anonymousTypes1 = newtases |> List.map snd |> List.collect (fun x -> x.anonymousTypes)
-    let anonymousValues1 = newtases |> List.map snd |> List.collect (fun x -> x.anonymousValues)
-    let anonymousTypes2 = vases |> List.map snd |> List.collect (fun x -> x.anonymousTypes)
-    let anonymousValues2 = vases |> List.map snd |> List.collect (fun x -> x.anonymousValues)
+let createAsn1Module (s:State) (r:Ast.AstRoot) (f:Ast.Asn1File) (m:Ast.Asn1Module) (newtases: Asn1Type list ) (vases:Asn1Value list ) = 
+    //let newTypes = newtases |> List.map fst
+    //let newVases = vases |> List.map fst
+    //let anonymousTypes1 = newtases |> List.map snd |> List.collect (fun x -> x.anonymousTypes)
+    //let anonymousValues1 = newtases |> List.map snd |> List.collect (fun x -> x.anonymousValues)
+    //let anonymousTypes2 = vases |> List.map snd |> List.collect (fun x -> x.anonymousTypes)
+    //let anonymousValues2 = vases |> List.map snd |> List.collect (fun x -> x.anonymousValues)
 
     {
         Asn1Module.Name = m.Name.Value
-        TypeAssignments = newTypes@anonymousTypes1@anonymousTypes2 
-        ValueAssignments = newVases@anonymousValues1@anonymousValues2
+        //TypeAssignments = newTypes@anonymousTypes1@anonymousTypes2 
+        //ValueAssignments = newVases@anonymousValues1@anonymousValues2
+        TypeAssignments = s.anonymousTypes |> List.filter(fun x -> x.id.ModName = m.Name.Value)
+        ValueAssignments = s.anonymousValues |> List.filter(fun x -> x.id.ModName = m.Name.Value)
         Imports = m.Imports
         Exports = m.Exports
         Comments = m.Comments
-    }
+    }, s
 
 
-let createTypeAssignment (r:Ast.AstRoot) (f:Ast.Asn1File) (m:Ast.Asn1Module) (tas:Ast.TypeAssignment) (newType:Asn1Type, es:MyState) = 
-    newType, es
+let createTypeAssignment (s:State) (r:Ast.AstRoot) (f:Ast.Asn1File) (m:Ast.Asn1Module) (tas:Ast.TypeAssignment) (newType:Asn1Type) = 
+    newType,s
 
-let createValueAssignment (r:Ast.AstRoot) (f:Ast.Asn1File) (m:Ast.Asn1Module) (vas:Ast.ValueAssignment) (t:Asn1Type, es:MyState) (v:Asn1Value, es2:MyState) = 
-    v, {es with anonymousTypes = es.anonymousTypes@es.anonymousTypes; anonymousValues = es.anonymousValues@es2.anonymousValues}    
+let createValueAssignment (s:State) (r:Ast.AstRoot) (f:Ast.Asn1File) (m:Ast.Asn1Module) (vas:Ast.ValueAssignment) (t:Asn1Type) (v:Asn1Value) = 
+    //(v, {es with anonymousTypes = es.anonymousTypes@es.anonymousTypes; anonymousValues = es.anonymousValues@es2.anonymousValues})    ,s
+    v, s
 
      
 
-let createChildInfo s (ch:Ast.ChildInfo) (newType:Asn1Type, es:MyState) (newOptionality:(Asn1Optionality*MyState) option) = 
-    let newState = {es with anonymousTypes = newType::es.anonymousTypes}
-    let newOptionality, finalSate =
-        match newOptionality with
-        | None  -> None, newState
-        | Some(no,s2) -> Some no, combineStates [s2;newState]
+let createChildInfo (st:State) s (ch:Ast.ChildInfo) (newType:Asn1Type) (newOptionality:Asn1Optionality option) = 
     {
         ChildInfo.Name = ch.Name.Value
         refToType = newType.id
         Optionality = newOptionality
         AcnInsertedField = ch.AcnInsertedField
         Comments = ch.Comments
-    }, finalSate
+    }, st
 
-let createChoiceChildInfo s (ch:Ast.ChildInfo) (newType:Asn1Type, es:MyState) = 
-    let newState = {es with anonymousTypes = newType::es.anonymousTypes}
+let createChoiceChildInfo (st:State) s (ch:Ast.ChildInfo) (newType:Asn1Type) = 
     {
         ChildInfo.Name = ch.Name.Value
         refToType = newType.id
         Optionality = None
         AcnInsertedField = ch.AcnInsertedField
         Comments = ch.Comments
-    }, newState
+    }, st
 
-let createType (s:GenericFold2.Scope) (oldType:Ast.Asn1Type) (newCons:((Asn1Constraint*MyState) option ) list, fromWithComps:((Asn1Constraint*MyState) option ) list) (baseTypeId : ReferenceToType option) (newKind:Asn1TypeKind)=
-    let fs = newCons |> List.choose id |> List.map snd |> combineStates
-    let fs2 = fromWithComps |> List.choose id |> List.map snd |> combineStates
-    {
-        Asn1Type.asn1Name = s.asn1TypeName
-        id = ReferenceToType s.typeID
-        baseTypeId = baseTypeId
-        Kind = newKind
-        Constraints = newCons |> List.choose id|> List.map fst
-        FromWithCompConstraints = fromWithComps|> List.choose id|> List.map fst
-        AcnProperties = oldType.AcnProperties
-    }, fs.add fs2
+let createType (s:State) (ts:GenericFold2.UserDefinedTypeScope) (oldType:Ast.Asn1Type) (newCons:((Asn1Constraint) option ) list, fromWithComps:((Asn1Constraint) option ) list) (baseTypeId : ReferenceToType option) (newKind:Asn1TypeKind)=
+    let ret = 
+        {
+            Asn1Type.asn1Name = 
+                match ts with
+                | (GenericFold2.MD _)::(GenericFold2.TA tasName)::[]    -> Some tasName
+                | _                                                     -> None
+            id = ReferenceToType ts
+            baseTypeId = baseTypeId
+            Kind = newKind
+            Constraints = newCons |> List.choose id
+            FromWithCompConstraints = fromWithComps|> List.choose id
+            AcnProperties = oldType.AcnProperties
+        }
+    ret, {s with anonymousTypes = s.anonymousTypes@[ret]}
 
-let createValue (s:GenericFold2.Scope) (baseValue : ReferenceToValue option) (refToType : ReferenceToType) (kind:Asn1ValueKind) =
-    {
-        Asn1Value.asn1Name = s.asn1VarName
-        id = ReferenceToValue (s.typeID, s.varID)
-        baseValue = baseValue
-        refToType = refToType 
-        Kind = kind
-    }
+let createValue (us:State) (asn1ValName:(StringLoc*StringLoc) option) (ts:GenericFold2.UserDefinedTypeScope) (vs:GenericFold2.UserDefinedVarScope) (kind:Asn1ValueKind) =
+    let ret = 
+        {
+            Asn1Value.asn1Name = 
+                match asn1ValName with
+                | Some (md,vs)  -> Some vs.Value
+                | None          -> None
+            id = ReferenceToValue (ts, vs)
+            //baseValue = baseValue
+            refToType = ReferenceToType ts
+            Kind = kind
+        }
+    ret, {us with anonymousValues=us.anonymousValues@[ret]}
+
+
+
 
 let createValidationAst (lang:Ast.ProgrammingLanguage) (app:Ast.AstRoot)  =
     GenericFold2.foldAstRoot
@@ -386,239 +411,256 @@ let createValidationAst (lang:Ast.ProgrammingLanguage) (app:Ast.AstRoot)  =
         //5. vasFunc r f m vas asn1Type asn1Value
         createValueAssignment
 
-        //6. typeFunc s t newCons newKind
-        
+        //6. typeFunc s t newTypeKind baseTypeId (newCons,fromWithComps)
+        (fun ustate s t newTypeKind baseTypeId (newCons,fromWithComps) -> 
+            createType ustate s t (newCons,fromWithComps) (baseTypeId |> Option.map(fun  x -> ReferenceToType x)) newTypeKind )
+(*
         //7. refTypeFunc s mdName tasName tabularized 
-        (fun s t newCons (baseType, exs) mdName tasName tabularized baseTypeIsNew -> 
+        (fun ustate s t newCons (baseType, exs) mdName tasName tabularized baseTypeIsNew -> 
             let exs = 
                 match baseTypeIsNew with
                 | true  -> {exs with anonymousTypes = baseType::exs.anonymousTypes}
                 | false -> es
             let retT,s1 = createType s t newCons (Some baseType.id)  baseType.Kind
             retT, exs.add s1)
+            *)
 
         //8 integerFunc s 
-        (fun s t newCons -> createType s t newCons None Integer)
+        (fun ustate  ->  Integer,ustate)
 
         //9 realFunc s 
-        (fun s t newCons -> createType s t newCons None  Real)
+        (fun ustate  -> Real, ustate)
 
         //10 ia5StringFunc s 
-        (fun s t newCons -> createType s t newCons None  IA5String)
+        (fun ustate  -> IA5String, ustate)
 
         //11 numericStringFunc s
-        (fun s t newCons -> 
+        (fun ustate  -> 
         
             //let zero = {Asn1Value.Kind = StringValue("0".AsLoc); Location = emptyLocation}
             //let nine = {Asn1Value.Kind = StringValue("9".AsLoc); Location = emptyLocation}
             //let space = {Asn1Value.Kind = StringValue(" ".AsLoc); Location = emptyLocation}
             //let newConstraint = AlphabetContraint(UnionConstraint(RangeContraint(zero,nine, true, true),SingleValueContraint(space), false))
         
-            createType s t newCons None  IA5String)
+            IA5String, ustate)
 
         //12 octetStringFunc
-        (fun s t newCons -> createType s t newCons None  OctetString)
+        (fun ustate -> OctetString, ustate)
 
         //13 nullTypeFunc
-        (fun s t newCons -> createType s t newCons None  NullType)
+        (fun ustate -> NullType, ustate)
 
         //14 bitStringFunc
-        (fun s t newCons -> createType s t newCons None  BitString)
+        (fun ustate -> BitString, ustate)
 
         //15 booleanFunc
-        (fun s t newCons -> createType s t newCons None  Boolean)
+        (fun ustate -> Boolean, ustate)
 
         //16 enumeratedFunc 
-        (fun s t newCons  (itms:List<NamedItem*MyState>)-> 
-            let newEnmItems = itms |> List.map fst
-            let es = itms |> List.map snd |> combineStates
-            let newType,es0 = createType s t newCons None   (Enumerated newEnmItems) 
-            newType,es.add es0 )
+        (fun ustate (itms:List<NamedItem>)-> 
+            //let newEnmItems = itms |> List.map fst
+            //let fs = itms |> List.map snd |> combineStates
+            (Enumerated itms), ustate)
 
         //17 enmItemFunc
-        (fun ni newVal -> 
-            let newNamedItem, newValue = 
-                match newVal with
-                | None  -> {NamedItem.Name = ni.Name.Value; refToValue = None; Comments=ni.Comments}, es
-                | Some (vl,ex) ->  
-                    {NamedItem.Name = ni.Name.Value; refToValue = Some vl.id; Comments=ni.Comments}, ex
-            newNamedItem, newValue )
+        (fun ustate ni newVal -> 
+                {NamedItem.Name = ni.Name.Value; refToValue = newVal |> Option.map(fun vl -> vl.id); Comments=ni.Comments}, ustate)
 
         //18 seqOfTypeFunc 
-        (fun s  t newCons (newInnerType, state) -> 
-            let newState = {state with anonymousTypes = newInnerType::state.anonymousTypes}
-            let retT,ss = createType s t newCons None   (SequenceOf newInnerType.id)
-            retT, newState.add ss)
+        (fun ustate newInnerType -> 
+            let newState = {ustate with anonymousTypes = newInnerType::ustate.anonymousTypes}
+            (SequenceOf newInnerType.id), newState)
 
         //19 seqTypeFunc 
-        (fun s  t newCons newChildren -> 
-            let nc = newChildren  |> List.map fst
-            let newState = newChildren  |> List.map snd |> combineStates
-            let retT,ss = createType s t newCons None   (Sequence nc) 
-            retT, newState.add ss)
+        (fun ustate newChildren -> 
+            (Sequence newChildren) , ustate)
 
         //20 chTypeFunc 
-        (fun s  t newCons newChildren -> 
-            let nc = newChildren  |> List.map fst
-            let newState = newChildren  |> List.map snd |> combineStates
-            let retT,ss = createType s t newCons None   (Choice nc)
-            retT, newState.add ss)
+        (fun ustate newChildren -> 
+            (Choice newChildren), ustate)
 
         //21 sequenceChildFunc 
         createChildInfo
 
         //22 alwaysAbsentFunc
-        (fun s -> Asn1Optionality.AlwaysAbsent, es)
+        (fun s -> Asn1Optionality.AlwaysAbsent)
 
         //23 alwaysPresentFunc
-        (fun s -> Asn1Optionality.AlwaysPresent,es)
+        (fun s -> Asn1Optionality.AlwaysPresent)
 
         //24 optionalFunc
-        (fun s -> Asn1Optionality.Optional, es)
+        (fun s -> Asn1Optionality.Optional)
 
         //25 defaultFunc
-        (fun s (newValue,st) -> 
-        Asn1Optionality.Default newValue.id, {st with anonymousValues = newValue::st.anonymousValues})
+        (fun s (newValue) -> 
+            Asn1Optionality.Default newValue.id)
 
         //26 choiceChildFunc
         createChoiceChildInfo
 
         //27 refValueFunc 
-        (fun ts vs v (md, vas) (newActVal, st) -> 
-            createValue vs (Some newActVal.id) (ReferenceToType ts.typeID) newActVal.Kind, st) 
+        (fun _ -> 0) 
 
         //28 enumValueFunc
-        (fun ts vs v nmItem -> 
-            createValue vs None (ReferenceToType ts.typeID) (EnumValue nmItem.Value), es)
+        (fun us asn1ValName ts vs v nmItem -> createValue us asn1ValName ts vs (EnumValue nmItem.Value))
 
         //29 intValFunc
-        (fun ts vs v bi -> createValue vs None (ReferenceToType ts.typeID) (IntegerValue bi.Value), es)
+        (fun us asn1ValName ts vs v bi -> createValue us asn1ValName ts vs  (IntegerValue bi.Value))
 
         //30 realValFunc
-        (fun ts vs v bi -> createValue vs None (ReferenceToType ts.typeID) (RealValue bi.Value), es)
+        (fun us asn1ValName ts vs v bi -> createValue us asn1ValName ts vs  (RealValue bi.Value))
 
         //31 ia5StringValFunc 
-        (fun ts vs v str -> createValue vs None (ReferenceToType ts.typeID) (StringValue str.Value), es)
+        (fun us asn1ValName ts vs v str -> createValue us asn1ValName ts vs  (StringValue str.Value))
 
         //32 numStringValFunc 
-        (fun ts vs v str -> createValue vs None (ReferenceToType ts.typeID) (StringValue str.Value), es)
+        (fun us asn1ValName ts vs v str -> createValue us asn1ValName ts vs  (StringValue str.Value))
 
         //33 boolValFunc 
-        (fun ts vs v b -> createValue vs None (ReferenceToType ts.typeID) (BooleanValue b.Value), es)
+        (fun us asn1ValName ts vs v b -> createValue us asn1ValName ts vs  (BooleanValue b.Value))
 
         //34 octetStringValueFunc
-        (fun ts vs v bytes -> createValue vs None (ReferenceToType ts.typeID) (OctetStringValue (bytes |> List.map(fun b->b.Value))), es)
+        (fun us asn1ValName ts vs v bytes -> createValue us asn1ValName ts vs  (OctetStringValue (bytes |> List.map(fun b->b.Value))) )
 
         //35 octetStringValueFunc
-        (fun ts vs v b -> createValue vs None (ReferenceToType ts.typeID) (BitStringValue b.Value), es)
+        (fun us asn1ValName ts vs v b -> createValue us asn1ValName ts vs  (BitStringValue b.Value) )
 
         //36 nullValueFunc
-        (fun ts vs v  -> createValue vs None (ReferenceToType ts.typeID) NullValue, es)
+        (fun us asn1ValName  ts vs v  -> createValue us asn1ValName ts vs NullValue )
 
         //37 seqOfValueFunc s t v actType  newVals
-        (fun ts vs v  newVals -> 
-            let nvs = newVals |> List.map fst
-            let ss = newVals |> List.map snd
-            let refToValsList = nvs |> List.map (fun v -> v.id)
-            let exts = {MyState.anonymousValues = nvs; anonymousTypes=[]}::ss |> combineStates
-            createValue vs None (ReferenceToType ts.typeID) (SeqOfValue refToValsList), exts)
+        (fun us asn1ValName ts vs v  newVals -> 
+            let refToValsList = newVals |> List.map (fun v -> v.id)
+            createValue us asn1ValName ts vs (SeqOfValue refToValsList))
 
         //38 seqValueFunc 
-        (fun ts vs v  newVals -> 
-            let nvs = newVals |> List.map snd |> List.map fst
-            let ss = newVals |> List.map snd |> List.map snd
-            let refToValsList = newVals |> List.map (fun (nm, (v,_)) -> (nm.Value, v.id))
-            let exts = {MyState.anonymousValues = nvs; anonymousTypes=[]}::ss |> combineStates
-            createValue vs None (ReferenceToType ts.typeID) (SeqValue refToValsList), exts)
+        (fun us asn1ValName ts vs v  newVals -> 
+            let refToValsList = newVals |> List.map (fun (nm, (v)) -> (nm.Value, v.id))
+            createValue us asn1ValName ts vs (SeqValue refToValsList) )
 
         //39 chValueFunc s t v actType name newValue
-        (fun ts vs v name (newChValue,st) -> 
-            let nes = addValue st newChValue
-            createValue vs None (ReferenceToType ts.typeID) (ChValue (name.Value, newChValue.id)), nes)
+        (fun us asn1ValName ts vs v name newChValue -> 
+            createValue us asn1ValName ts vs (ChValue (name.Value, newChValue.id)) )
 
         //40 singleValueContraintFunc s t checContent actType newValue
-        (fun ts t checContent (newValue,st)-> 
-            let nes = addValue st newValue
-            Some (SingleValueContraint newValue.id, nes))
+        (fun us ts t checContent newValue-> 
+            Some (SingleValueContraint newValue.id), us)
 
         //41 rangeContraintFunc s t checContent actType newValue1 newValue2 b1 b2
-        (fun ts t checContent (newValue1,st1) (newValue2,st2) b1 b2 -> 
-            let nes1 = addValue st1 newValue1
-            let nes2 = addValue st2 newValue2
-            let fs = combineStates [nes1; nes2]
-            Some (RangeContraint(newValue1.id, newValue2.id, b1, b2), fs))
+        (fun us ts t checContent (newValue1) (newValue2) b1 b2 -> 
+            Some (RangeContraint(newValue1.id, newValue2.id, b1, b2)), us)
 
         //42 rangeContraint_val_MAXFunc s t checContent actType newValue  b
-        (fun ts t checContent (newValue,st) b -> 
-            let nes = addValue st newValue
-            Some (RangeContraint_val_MAX (newValue.id,b), nes))
+        (fun us ts t checContent (newValue) b -> 
+            Some (RangeContraint_val_MAX (newValue.id,b)), us)
 
         //43 rangeContraint_MIN_valFunc s t checContent actType newValue  b
-        (fun ts t checContent (newValue,st) b  -> 
-            let nes = addValue st newValue
-            Some (RangeContraint_MIN_val(newValue.id,b),nes) )
+        (fun us ts t checContent (newValue) b  -> 
+            Some (RangeContraint_MIN_val(newValue.id,b)), us )
 
         //44 rangeContraint_MIN_MAXFunc  s t checContent actType
-        (fun ts t checContent -> None)
+        (fun us ts t checContent -> None, us)
 
         //45 typeInclConstraintFunc s t actType (md,tas)
-        (fun ts t otherCon -> 
+        (fun us ts t otherCon -> 
             match otherCon with
-            | Some x -> x
-            | None    -> None
+            | Some x -> x, us
+            | None    -> None, us
          )
 
         //46 unionConstraintFunc s t actType nc1 nc2
-        (fun ts t x1 x2 virtualCon -> 
+        (fun us ts t x1 x2 virtualCon -> 
             match x1, x2 with
-            | Some (nc1,s1), Some (nc2,s2)  -> Some (UnionConstraint (nc1, nc2, virtualCon), combineStates [s1;s2])
-            | Some (nc1,s1), None           -> None
-            | None, Some (nc2,s2)           -> None
-            | None, None                    -> None)
+            | Some (nc1), Some (nc2)  -> Some (UnionConstraint (nc1, nc2, virtualCon)), us
+            | Some (nc1), None        -> None, us
+            | None, Some (nc2)        -> None, us
+            | None, None              -> None, us)
 
         //47 intersectionConstraintFunc s t actType nc1 nc2
-        (fun ts t x1 x2 -> 
+        (fun us ts t x1 x2 -> 
             match x1, x2 with
-            | Some (nc1,s1), Some (nc2,s2)  -> Some (IntersectionConstraint (nc1,nc2), combineStates [s1;s2])
-            | Some (nc1,s1), None           -> Some (nc1,s1)
-            | None, Some (nc2,s2)           -> Some (nc2,s2)
-            | None, None                    -> None)
+            | Some (nc1), Some (nc2)  -> Some (IntersectionConstraint (nc1,nc2)), us
+            | Some (nc1), None        -> Some (nc1), us
+            | None, Some (nc2)        -> Some (nc2), us
+            | None, None              -> None, us)
 
         //48 allExceptConstraintFunc s t actType nc
-        (fun  ts t x1 -> 
+        (fun  us ts t x1 -> 
             match x1 with
-            | Some (nc1,s1)   -> Some (AllExceptConstraint nc1, s1)
+            | Some (nc1)   -> Some (AllExceptConstraint nc1), us
             | None            -> raise(SemanticError(t.Location, (sprintf "EXCEPT constraint makes type to allow no values. Consider changing the EXCET part"))) )
 
         //49 exceptConstraintFunc s t actType nc1 nc2
-        (fun ts t x1 x2 -> 
+        (fun us ts t x1 x2 -> 
             match x1, x2 with
-            | Some (nc1,s1), Some (nc2,s2)  -> Some (ExceptConstraint(nc1,nc2), combineStates [s1;s2] )
-            | Some (nc1,s1), None           -> raise(SemanticError(t.Location, (sprintf "EXCEPT constraint makes type to allow no values. Consider changing the EXCET part")))
-            | None, Some (nc2,s2)           -> Some (nc2,s2)
-            | None, None                    -> raise(SemanticError(t.Location, (sprintf "EXCEPT constraint makes type to allow no values. Consider changing the EXCET part")))
+            | Some (nc1), Some (nc2)  -> Some (ExceptConstraint(nc1,nc2)), us
+            | Some (nc1), None           -> raise(SemanticError(t.Location, (sprintf "EXCEPT constraint makes type to allow no values. Consider changing the EXCET part")))
+            | None, Some (nc2)           -> Some (nc2), us
+            | None, None                 -> raise(SemanticError(t.Location, (sprintf "EXCEPT constraint makes type to allow no values. Consider changing the EXCET part")))
         )
 
         //50 rootConstraintFunc s t actType nc
-        (fun ts t x1 -> x1 |> Option.map (fun (nc,s1) -> RootConstraint nc, s1) )
+        (fun us ts t x1 -> x1 |> Option.map (fun (nc) -> RootConstraint nc), us )
 
         //51 rootConstraint2Func s t actType nc1 nc2
-        (fun ts t x1 x2 -> 
+        (fun us ts t x1 x2 -> 
             match x1, x2 with
-            | Some (nc1,s1), Some (nc2,s2)  -> Some (RootConstraint2 (nc1,nc2), combineStates [s1;s2])
-            | Some (nc1,s1), None           -> None
-            | None, Some (nc2,s2)           -> None
-            | None, None                    -> None)
+            | Some (nc1), Some (nc2)     -> Some (RootConstraint2 (nc1,nc2)), us
+            | Some (nc1), None           -> None, us
+            | None, Some (nc2)           -> None, us
+            | None, None                 -> None, us)
         
         //52 sizeContraint 
-        (fun ts t x1 -> x1 |> Option.map (fun (nc,s1) -> SizeContraint nc, s1) )
+        (fun us ts t x1 -> x1 |> Option.map (fun (nc) -> SizeContraint nc), us )
         
         //53 alphabetContraint
-        (fun ts t x1 -> x1 |> Option.map (fun (nc,s1) -> AlphabetContraint nc, s1) )
+        (fun us ts t x1 -> x1 |> Option.map (fun (nc) -> AlphabetContraint nc), us )
 
         //54 withComponentConstraint ts t
-        (fun ts t -> None)
+        (fun us ts t -> None, us)
 
         //55 withComponentConstraints
-        (fun ts t -> None)
-        app
+        (fun us ts t  -> None, us)
+
+        //56 globalIntType
+        (fun _ -> [], Integer)
+
+        //57 getSequenceOfTypeChild
+        (fun us newTypeKind -> 
+            match newTypeKind with
+            | SequenceOf  (ReferenceToType referenceToType)   -> 
+                let retType = us.anonymousTypes |> Seq.find(fun at -> at.id = (ReferenceToType referenceToType))
+                (referenceToType, retType.Kind) 
+            | _                             -> raise(BugErrorException(sprintf "Expecting SequenceOf, found %A" newTypeKind)))
+
+        //58 getChoiceTypeChild
+        (fun us newTypeKind chName ->
+            match newTypeKind with
+            | Choice  children   -> 
+                match children |> List.tryFind (fun c -> c.Name = chName.Value) with
+                | Some ch       -> 
+                    let (ReferenceToType referenceToType) = ch.refToType
+                    let retType = us.anonymousTypes |> Seq.find(fun at -> at.id = (ReferenceToType referenceToType))
+                    (referenceToType, retType.Kind ) 
+                | None          -> raise(SemanticError(chName.Location, (sprintf "CHOICE type has no alternative with name '%s'" chName.Value)))
+            | _                 -> raise(BugErrorException(sprintf "Expecting Choice, found %A" newTypeKind)) )
+        
+
+        //59 getSequenceTypeChild
+        (fun us newTypeKind chName ->
+            match newTypeKind with
+            | Sequence  children   -> 
+                match children |> List.tryFind (fun c -> c.Name = chName.Value) with
+                | Some ch   -> 
+                    let (ReferenceToType referenceToType) = ch.refToType
+                    let retType = us.anonymousTypes |> Seq.find(fun at -> at.id = (ReferenceToType referenceToType))
+                    (referenceToType, retType.Kind )  
+                | None          -> raise(SemanticError(chName.Location, (sprintf "SEQUENCE type has no alternative with name '%s'" chName.Value)))
+            | _                 -> raise(BugErrorException(sprintf "Expecting SEQUENCE, found %A" newTypeKind)) )
+
+        //60 getTypeKind
+        (fun newT -> newT.Kind)
+
+
+
+        app {State.anonymousTypes =[]; anonymousValues = []}

@@ -29,7 +29,7 @@ let sizeIntegerType =
 
 
 
-
+let foldMap = CloneTree.foldMap
 
 type ScopeNode =
     | MD of string      //MODULE
@@ -37,9 +37,8 @@ type ScopeNode =
     | VA of string      //VALUE ASSIGNMENT
     | CH of string      //SEQUENCE OF CHOICE CHILD
     | SQF               //SEQUENCE OF CHILD
-    | WITH_COMP              // WITH COMPONENT
-    | WITH_COMPS of string  // WITH COMPONENTS
-    | REF_TYPE of string*string //pass through ref type
+    //| WITH_COMP              // WITH COMPONENT
+    //| WITH_COMPS of string  // WITH COMPONENTS
     with
         member this.StrValue =
             match this with
@@ -48,9 +47,34 @@ type ScopeNode =
             | VA strVal
             | CH strVal     -> strVal
             | SQF           -> "#"
-            | WITH_COMP     -> "WCP"
-            | WITH_COMPS strVal -> sprintf "%s(WC)" strVal
-            | REF_TYPE  (s1,s2)    -> sprintf "%s.%s" s1 s2
+           // | WITH_COMP     -> "WCP"
+           // | WITH_COMPS strVal -> sprintf "%s(WC)" strVal
+
+type UserDefinedTypeScope = ScopeNode list
+
+let visitModule (md:Asn1Module) : UserDefinedTypeScope=
+    [MD md.Name.Value]
+
+let visitTas (s:UserDefinedTypeScope) (ts:TypeAssignment) : UserDefinedTypeScope=
+    s@[TA ts.Name.Value]
+
+let visitVas (s:UserDefinedTypeScope) (vs:ValueAssignment) : UserDefinedTypeScope=
+    s@[VA vs.Name.Value]
+
+let visitRefType (md:string) (ts:string) : UserDefinedTypeScope=
+    [MD md; TA ts]
+
+//let visitRevValue (md:string) (vs:string) =
+//    {UserDefinedTypeScope.typeID=[MD md; VA vs]; asn1TypeName=None; asn1VarName=Some vs;varID=[]}
+
+let visitSeqOrChoiceChild (s:UserDefinedTypeScope) (ch:ChildInfo) : UserDefinedTypeScope=
+    s@[CH ch.Name.Value]
+
+let visitSeqOfChild (s:UserDefinedTypeScope) : UserDefinedTypeScope =
+    s@[SQF]
+
+//let visitWithComponentChild (s:UserDefinedTypeScope) =
+//    s@[WITH_COMP]
 
 
 type VarScopNode =
@@ -70,73 +94,57 @@ type VarScopNode =
             | SQOV      -> "#"
             | SQCHILD  s-> s
 
-type Scope = {
+(*
+{
     asn1TypeName : string option
     asn1VarName : string option
     typeID : ScopeNode list
     varID : VarScopNode list
-}
+}*)
+
+type Scope =
+    | UserDefinedTypeScope of UserDefinedTypeScope
+    | GlobanIntScope
+
+            
+
+type UserDefinedVarScope = VarScopNode list
 
 
-let visitModule (md:Asn1Module) =
-    {Scope.typeID=[MD md.Name.Value]; asn1TypeName=None; asn1VarName=None;varID=[]}
 
-let visitTas (s:Scope) (ts:TypeAssignment) =
-    {s with typeID=s.typeID@[TA ts.Name.Value]; asn1TypeName=Some ts.Name.Value; asn1VarName=None; varID=[]}
 
-let visitVas (s:Scope) (vs:ValueAssignment) =
-    {s with typeID=s.typeID@[VA vs.Name.Value]; asn1TypeName=None;asn1VarName=Some vs.Name.Value; varID=[]}
+let visitDefaultValue () : UserDefinedVarScope = 
+    [DV]
 
-let visitRefType (md:string) (ts:string) =
-    {Scope.typeID=[MD md; TA ts]; asn1TypeName=Some ts; asn1VarName=None;varID=[]}
+let visitNamedItemValue  (nm:NamedItem) : UserDefinedVarScope= 
+    [NI nm.Name.Value]
 
-let visitRefTypeThatHasWithCompCons (s:Scope) (md:string) (ts:string) =
-    {s with typeID=s.typeID@[REF_TYPE (md,ts)]; asn1TypeName=None;asn1VarName=None; varID=[]}
+let visitConstraint (s:UserDefinedVarScope) : UserDefinedVarScope= 
+    s@[CON 0]
 
-let visitRevValue (md:string) (vs:string) =
-    {Scope.typeID=[MD md; VA vs]; asn1TypeName=None; asn1VarName=Some vs;varID=[]}
-
-let visitSeqOrChoiceChild (s:Scope) (ch:ChildInfo) =
-    {s with typeID=s.typeID@[CH ch.Name.Value]; asn1TypeName=None;asn1VarName=None; varID=[]}
-
-let visitSeqOfChild (s:Scope) =
-    {s with typeID=s.typeID@[SQF]; asn1TypeName=None;asn1VarName=None; varID=[]}
-
-let visitWithComponentChild (s:Scope) =
-    {s with typeID=s.typeID@[WITH_COMP]; asn1TypeName=None;asn1VarName=None; varID=[]}
-
-let visitDefaultValue (s:Scope) = 
-    {s with varID=[DV]}
-
-let visitNamedItemValue (s:Scope) (nm:NamedItem) = 
-    {s with varID=[NI nm.Name.Value]}
-
-let visitConstraint (s:Scope) = 
-    {s with varID=s.varID@[CON 0]}
-
-let visitSilbingConstraint (s:Scope) = 
+let visitSilbingConstraint (s:UserDefinedVarScope) : UserDefinedVarScope = 
     let idx, xs = 
-        match s.varID |> List.rev with
+        match s |> List.rev with
         | (CON idx)::xs  -> idx, xs
-        | _              -> raise(System.Exception "invalid call to visitSilbingConstraint")
-    {s with varID=xs@[CON (idx+1)]}
+        | _              -> raise(BugErrorException "invalid call to visitSilbingConstraint")
+    xs@[CON (idx+1)]
 
 
-let visitValue (s:Scope) = 
-    {s with varID=s.varID@[VL 0]}
+let visitValue (s:UserDefinedVarScope) :UserDefinedVarScope = 
+    s @[VL 0]
 
-let visitSilbingValue (s:Scope) = 
+let visitSilbingValue (s:UserDefinedVarScope) :UserDefinedVarScope = 
     let idx, xs = 
-        match s.varID |> List.rev with
+        match s |> List.rev with
         | (VL idx)::xs  -> idx, xs
-        | _              -> raise(System.Exception "invalid call to visitSilbingConstraint")
-    {s with varID=xs@[VL (idx+1)]}
+        | _              -> raise(BugErrorException "invalid call to visitSilbingConstraint")
+    xs@[VL (idx+1)]
 
-let visitSeqOfValue (s:Scope) =
-    {s with varID=s.varID@[SQOV]}
+let visitSeqOfValue (s:UserDefinedVarScope) :UserDefinedVarScope =
+    s @[SQOV]
 
-let visitSeqChildValue (s:Scope) childName =
-    {s with varID=s.varID@[SQCHILD childName ]}
+let visitSeqChildValue (s:UserDefinedVarScope) childName :UserDefinedVarScope =
+    s @[SQCHILD childName ]
 
 let error (loc: SrcLoc) format = 
     let doAfter s = 
@@ -155,7 +163,7 @@ let foldAstRoot
     modFunc 
     tasFunc 
     vasFunc 
-    refTypeFunc 
+    typeFunc
     integerFunc 
     realFunc
     ia5StringFunc
@@ -204,182 +212,196 @@ let foldAstRoot
     alphabetContraint
     withComponentConstraint
     withComponentConstraints
-    (r:AstRoot) =
+    globalIntType
+    getSequenceOfTypeChild
+    getChoiceTypeChild
+    getSequenceTypeChild
+    getTypeKind
+    (r:AstRoot) 
+    (us:'UserState) =
     
-    let rec loopAstRoot (r:AstRoot) =
-        let files = r.Files |> List.map (loopFile r)
-        rootFunc r files
-    and loopFile (r:AstRoot) (f:Asn1File) =
-        let modules = f.Modules |> List.map (loopModule r f)
-        fileFunc r f modules
-    and loopModule (r:AstRoot) (f:Asn1File) (m:Asn1Module) =
+    let rec loopAstRoot (r:AstRoot) (us:'UserState) =
+        let files, nus = r.Files |> foldMap (loopFile r) us
+        rootFunc nus r files
+    and loopFile (r:AstRoot) us (f:Asn1File) =
+        let modules, nus = f.Modules |> foldMap (loopModule r f) us
+        fileFunc nus r f modules
+    and loopModule (r:AstRoot) (f:Asn1File) us (m:Asn1Module) =
         let s = visitModule m
-        let tases = m.TypeAssignments |> List.map (loopTypeAssignment s r f m)
-        let vases = m.ValueAssignments |> List.map  (loopValueAssignments s r f m)
-        modFunc r f m tases vases
-    and loopTypeAssignment (s:Scope) (r:AstRoot) (f:Asn1File) (m:Asn1Module) (tas:TypeAssignment) =
+        let tases, nus1 = m.TypeAssignments |> foldMap (loopTypeAssignment s r f m) us
+        let vases, nus2 = m.ValueAssignments |> foldMap  (loopValueAssignments s r f m) nus1
+        modFunc nus2 r f m tases vases
+    and loopTypeAssignment (s:UserDefinedTypeScope) (r:AstRoot) (f:Asn1File) (m:Asn1Module) (us:'UserState) (tas:TypeAssignment) =
         let s = visitTas s tas
-        let asn1Type = loopType (s,tas.Type) []
-        tasFunc r f m tas asn1Type
-    and loopValueAssignments (s:Scope) (r:AstRoot) (f:Asn1File) (m:Asn1Module) (vas:ValueAssignment) =
+        let asn1Type, newUs = loopType us (s,tas.Type) []
+        tasFunc newUs r f m tas asn1Type
+    and loopValueAssignments (s:UserDefinedTypeScope) (r:AstRoot) (f:Asn1File) (m:Asn1Module) (us:'UserState) (vas:ValueAssignment) =
         let s = visitVas s vas
         let actType = GetActualType vas.Type  r
-        let asn1Type = loopType (s, vas.Type) []
-        let asn1Value = loopAsn1Value (s, actType) (s,vas.Value)
-        vasFunc r f m vas asn1Type asn1Value
-    and loopType (s:Scope, t:Asn1Type) (witchCompsCons:Asn1Constraint list) =
-        let conScope = visitConstraint s
-        let newCons, retScope = t.Constraints |> CloneTree.foldMap  (fun  ss c -> loopConstraint (s,t) CheckContent (ss,c), visitSilbingConstraint ss) conScope
-        let fromWithComps, _ = witchCompsCons |> CloneTree.foldMap  (fun ss c -> loopConstraint (s,t) CheckContent (ss,c), visitSilbingConstraint ss) retScope
+        let newAsn1Type, nus1 = loopType us (s, vas.Type) []
+        let asn1Value, nus2 = loopAsn1Value nus1 (s, (getTypeKind newAsn1Type), actType) (Some (m.Name, vas.Name)) ([],vas.Value)
+        vasFunc nus2 r f m vas newAsn1Type asn1Value
+    and loopType (us:'UserState) (s:UserDefinedTypeScope, t:Asn1Type) (witchCompsCons:Asn1Constraint list) =
+        let conScope = visitConstraint []
+        let withCompCons = (t.Constraints@witchCompsCons) |> List.choose(fun c -> match c with WithComponentConstraint _ -> Some c| WithComponentsConstraint _ -> Some c | _ -> None)
+        let baseTypeId = 
+            match t.Kind with
+            | ReferenceType (mdName,tasName, tabularized) when not (withCompCons.IsEmpty) -> 
+                None
+            | ReferenceType (mdName,tasName, tabularized) when withCompCons.IsEmpty -> 
+                Some (visitRefType mdName.Value tasName.Value)
+            | _ -> 
+                None
         match t.Kind with
+        | ReferenceType (mdName,tasName, tabularized) when not (withCompCons.IsEmpty) -> 
+            let oldBaseType = (Ast.GetActualTypeAllConsIncluded t r)
+            let oldBaseType = {oldBaseType with Constraints = oldBaseType.Constraints@witchCompsCons}
+            loopType us (s, oldBaseType) []
+        | _     ->
+            let newTypeKind, nus = loopTypeKind us s t.Kind t.Constraints witchCompsCons
+            let newCons, (retScope, nus1) = t.Constraints |> foldMap  (fun (ss, uds) c -> 
+                                                                            let lc, uds2 = loopConstraint uds (s, newTypeKind,t) CheckContent (ss,c)
+                                                                            lc, (visitSilbingConstraint ss,uds2)) (conScope, nus)
+            let fromWithComps, (_, nus2) = witchCompsCons |> foldMap  (fun (ss, uds) c -> 
+                                                                            let lc, uds2 = loopConstraint uds (s, newTypeKind,t) CheckContent (ss,c)
+                                                                            lc, (visitSilbingConstraint ss, uds2)) (retScope, nus1)
+            typeFunc nus2 s t newTypeKind baseTypeId (newCons,fromWithComps) 
+    and loopTypeKind (us:'UserState) (s:UserDefinedTypeScope) (asn1TypeKind:Asn1TypeKind) (oldTypeCons: Asn1Constraint list) (witchCompsCons:Asn1Constraint list) =
+        match asn1TypeKind with
         | ReferenceType (mdName,tasName, tabularized) -> 
-            let withCompCons = (t.Constraints@witchCompsCons) |> List.choose(fun c -> match c with WithComponentConstraint _ -> Some c| WithComponentsConstraint _ -> Some c | _ -> None)
-            match withCompCons with
-            | [] ->
-                let refTypeScope = visitRefType mdName.Value tasName.Value
-                let oldBaseType = (Ast.GetBaseType t r)
-                let baseType = loopType (refTypeScope, oldBaseType) []
-                refTypeFunc s t (newCons,fromWithComps) baseType  mdName tasName tabularized false
-            | _  -> 
-                let oldBaseType = (Ast.GetActualTypeAllConsIncluded t r)
-                let oldBaseType = {oldBaseType with Constraints = oldBaseType.Constraints@witchCompsCons}
-                let baseType = loopType (s, oldBaseType) []
-                baseType
-        | Integer       ->  integerFunc s t (newCons,fromWithComps) 
-        | Real          ->  realFunc s t (newCons,fromWithComps) 
-        | IA5String     ->  ia5StringFunc s  t (newCons,fromWithComps) 
-        | NumericString    -> numericStringFunc s  t (newCons,fromWithComps) 
-        | OctetString    -> octetStringFunc s t (newCons,fromWithComps) 
-        | NullType    -> nullTypeFunc s t (newCons,fromWithComps) 
-        | BitString    -> bitStringFunc s t (newCons,fromWithComps) 
-        | Boolean           ->booleanFunc s t (newCons,fromWithComps) 
+            let oldBaseType = GetBaseTypeByName mdName tasName r
+            loopTypeKind us s oldBaseType.Kind oldBaseType.Constraints witchCompsCons
+        | Integer       ->  integerFunc us
+        | Real          ->  realFunc us
+        | IA5String     ->  ia5StringFunc us
+        | NumericString    -> numericStringFunc us
+        | OctetString    -> octetStringFunc us
+        | NullType    -> nullTypeFunc us
+        | BitString    -> bitStringFunc us 
+        | Boolean           ->booleanFunc us
         | Enumerated (enmItems) ->  
-            let newEnmItems = enmItems |> List.map (fun ni -> loopNamedItem s ni)
-            enumeratedFunc s  t (newCons,fromWithComps)  newEnmItems 
+            let newEnmItems, nus = enmItems |> foldMap (fun uss ni -> loopNamedItem uss s ni) us
+            enumeratedFunc nus newEnmItems 
         | SequenceOf (innerType)  ->
             let childScope = visitSeqOfChild s
-            let withCompCons = t.Constraints@witchCompsCons |> List.choose(fun c -> match c with WithComponentConstraint wc -> Some wc | _ -> None)
-            let newInnerType = 
-                match withCompCons with
-                | []    -> loopType (childScope, innerType) []
-                | _     -> loopType (visitWithComponentChild childScope, innerType) withCompCons
-            seqOfTypeFunc s  t (newCons,fromWithComps)  newInnerType 
+            let withCompCons = oldTypeCons@witchCompsCons |> List.choose(fun c -> match c with WithComponentConstraint wc -> Some wc | _ -> None)
+            let newInnerType, nus = 
+                loopType us (childScope, innerType) withCompCons
+            seqOfTypeFunc nus newInnerType 
         | Sequence (children)     ->
-            let withCompCons = t.Constraints@witchCompsCons |> List.choose(fun c -> match c with WithComponentsConstraint wc -> Some wc | _ -> None) |> List.collect id
-            let newChildren = 
-                children |> List.map  (fun chInfo -> 
+            let withCompCons = oldTypeCons@witchCompsCons |> List.choose(fun c -> match c with WithComponentsConstraint wc -> Some wc | _ -> None) |> List.collect id
+            let newChildren, fus = 
+                children |> foldMap  (fun cs chInfo -> 
                     let childScope = visitSeqOrChoiceChild s chInfo
                     let chidlWithComps = withCompCons |> List.filter(fun x -> x.Name.Value = chInfo.Name.Value)
-                    loopSequenceChild childScope chInfo chidlWithComps)
-            seqTypeFunc s  t (newCons,fromWithComps)  newChildren 
+                    loopSequenceChild cs childScope chInfo chidlWithComps) us
+            seqTypeFunc fus newChildren 
         | Choice (children)       ->
-            let withCompCons = t.Constraints@witchCompsCons |> List.choose(fun c -> match c with WithComponentsConstraint wc -> Some wc | _ -> None) |> List.collect id
-            let newChildren = 
-                children |> List.map  (fun chInfo ->
+            let withCompCons = oldTypeCons@witchCompsCons |> List.choose(fun c -> match c with WithComponentsConstraint wc -> Some wc | _ -> None) |> List.collect id
+            let newChildren, fus = 
+                children |> foldMap  (fun cs chInfo ->
                     let childScope = visitSeqOrChoiceChild s chInfo
                     let chidlWithComps = withCompCons |> List.filter(fun x -> x.Name.Value = chInfo.Name.Value)
-                    loopChoiceChild childScope chInfo chidlWithComps)
-            chTypeFunc s  t (newCons,fromWithComps)  newChildren 
-    and loopNamedItem (s:Scope) (ni:NamedItem) =
+                    loopChoiceChild cs childScope chInfo chidlWithComps) us
+            chTypeFunc fus newChildren 
+    and loopNamedItem (us:'UserState) (s:UserDefinedTypeScope) (ni:NamedItem) =
             match ni._value with
             | Some v    ->
-                let newValue = loopAsn1Value (s, enumIntegerType) ((visitNamedItemValue s ni),v)
-                enmItemFunc  ni (Some newValue)
+                let globalIntScope, gloabIntKind = globalIntType()
+                let newValue, fs = loopAsn1Value us (globalIntScope, gloabIntKind, enumIntegerType) None ((visitNamedItemValue ni),v)
+                enmItemFunc  fs ni (Some newValue)
             | None      ->
-                enmItemFunc  ni  None
-    and loopSequenceChild (ts:Scope)  (chInfo:ChildInfo) (nc:NamedConstraint list) =
+                enmItemFunc us ni  None
+    and loopSequenceChild (us:'UserState) (ts:UserDefinedTypeScope)  (chInfo:ChildInfo) (nc:NamedConstraint list) =
             let withCompCons = nc |> List.choose (fun x -> x.Contraint)
-            let newType = loopType (ts,chInfo.Type) withCompCons
+            let newType, us1 = loopType us (ts,chInfo.Type) withCompCons
             let presMark =
                 nc |> Seq.tryFind (fun x -> x.Mark <> NoMark) |> Option.map (fun nc -> nc.Mark)
-            let newOptionality = 
+            let newOptionality, us2 = 
                     match presMark, chInfo.Optionality with
-                    | Some MarkPresent, _                   -> Some (alwaysPresentFunc ts)
-                    | Some MarkAbsent,  _                   -> Some (alwaysAbsentFunc ts)
+                    | Some MarkPresent, _                   -> Some (alwaysPresentFunc ts), us1
+                    | Some MarkAbsent,  _                   -> Some (alwaysAbsentFunc ts), us1
                     | _                                     ->
                         match chInfo.Optionality with
-                        | Some Asn1Optionality.AlwaysAbsent     -> Some (alwaysAbsentFunc ts)
-                        | Some Asn1Optionality.AlwaysPresent    -> Some (alwaysPresentFunc ts)
-                        | Some Asn1Optionality.Optional         -> Some (optionalFunc ts)
-                        | None                                  -> None
+                        | Some Asn1Optionality.AlwaysAbsent     -> Some (alwaysAbsentFunc ts), us1
+                        | Some Asn1Optionality.AlwaysPresent    -> Some (alwaysPresentFunc ts), us1
+                        | Some Asn1Optionality.Optional         -> Some (optionalFunc ts), us1
+                        | None                                  -> None, us1
                         | Some  (Asn1Optionality.Default   vl)  ->
                             let eqType = GetActualType chInfo.Type r
-                            let newValue = loopAsn1Value  (ts, eqType) ((visitDefaultValue ts), vl)
-                            Some (defaultFunc ts newValue)
-            sequenceChildFunc ts chInfo newType newOptionality
+                            let newValue, us2 = loopAsn1Value  us1 (ts, getTypeKind newType, eqType) None ((visitDefaultValue ()), vl)
+                            Some (defaultFunc ts newValue), us2
+            sequenceChildFunc us2 ts chInfo newType newOptionality
 
-    and loopChoiceChild (ts:Scope)  (chInfo:ChildInfo) (nc:NamedConstraint list) =
+    and loopChoiceChild (us:'UserState) (ts:UserDefinedTypeScope)  (chInfo:ChildInfo) (nc:NamedConstraint list) =
             let withCompCons = nc |> List.choose (fun x -> x.Contraint)
-            let newType = loopType (ts, chInfo.Type) withCompCons
-            choiceChildFunc ts   chInfo newType
-    and loopAsn1Value (ts:Scope, t:Asn1Type) (vs:Scope, v:Asn1Value) =
+            let newType, nus = loopType us (ts, chInfo.Type) withCompCons
+            choiceChildFunc nus ts   chInfo newType
+    and loopAsn1Value (us:'UserState) (ts:UserDefinedTypeScope, newTypeKind, t:Asn1Type) (asn1ValName:(StringLoc*StringLoc) option) (vs:UserDefinedVarScope, v:Asn1Value) : 'ASN1VALUE*'UserState =
         match v.Kind, t.Kind with
         | RefValue (md,vas), Enumerated (enmItems)   ->
                 match enmItems |> Seq.tryFind (fun x -> x.Name.Value = vas.Value) with
                 | Some enmItem    ->
-                        enumValueFunc ts vs v vas            
+                        enumValueFunc us asn1ValName ts vs v vas            
                 | None          ->
-                    
-                        let actValue = GetBaseValue md vas r
-                        let newActVal = loopAsn1Value (ts,t) (visitRevValue md.Value vas.Value,actValue)
-                        refValueFunc ts vs v (md, vas) newActVal            
+                        let baseVal = GetBaseValue md vas r
+                        loopAsn1Value us (ts, newTypeKind, t) (Some (md,vas)) (vs, baseVal)
         | RefValue (md,vas), _   ->
-                        let actValue = GetBaseValue md vas r
-                        let newActVal = loopAsn1Value (ts,t) (visitRevValue md.Value vas.Value,actValue)
-                        refValueFunc ts vs v (md, vas) newActVal            
+                        let baseVal = GetBaseValue md vas r
+                        loopAsn1Value us (ts, newTypeKind, t) (Some (md,vas)) (vs, baseVal)
         | IntegerValue bi, Integer          ->
-            intValFunc ts vs v bi
+            intValFunc us asn1ValName ts vs v bi
         | IntegerValue bi, Real  _           ->
             let dc:double = (double)bi.Value
-            realValFunc ts vs v {Value=dc;Location=v.Location}
+            realValFunc us asn1ValName ts vs v {Value=dc;Location=v.Location}
         | RealValue dc , Real   _                  -> 
-            realValFunc ts vs v dc
+            realValFunc us asn1ValName ts vs v dc
         | StringValue str, IA5String _   -> 
-                ia5StringValFunc ts vs v str
+            ia5StringValFunc us asn1ValName ts vs v str
         | StringValue str , NumericString _   -> 
-                numStringValFunc ts vs v str
+            numStringValFunc us asn1ValName ts vs v str
         | BooleanValue b, Boolean _       ->
-                boolValFunc ts vs v b
+            boolValFunc us asn1ValName ts vs v b
         | OctetStringValue b, OctetString _         ->
-                octetStringValueFunc ts vs v b
+            octetStringValueFunc us asn1ValName ts vs v b
         | OctetStringValue b, BitString _        ->
-                octetStringValueFunc ts vs v b
+            octetStringValueFunc us asn1ValName ts vs v b
         | BitStringValue b, BitString _           ->
-                bitStringValueFunc ts vs v b 
+            bitStringValueFunc us asn1ValName ts vs v b 
         | NullValue , NullType _   ->
-                nullValueFunc ts vs v
+            nullValueFunc us asn1ValName ts vs v
         | SeqOfValue  vals, SequenceOf chType    ->
-                let eqType = GetActualType chType r
-                let newTSCh = visitSeqOfChild ts
-                let newVals = vals |> List.map  (fun chVal -> loopAsn1Value (newTSCh, eqType) ((visitSeqOfValue vs), chVal))
-                seqOfValueFunc ts vs v  newVals
+            let eqType = GetActualType chType r
+            let newChScope, newChT = getSequenceOfTypeChild us newTypeKind
+            let newVals, fs = vals |> foldMap  (fun ust chVal -> loopAsn1Value ust (newChScope, newChT, eqType) None ((visitSeqOfValue vs), chVal)) us
+            seqOfValueFunc fs asn1ValName ts vs v  newVals
         | SeqValue    namedValues, Sequence children ->
-                let newValues =  namedValues |> List.map  (loopSeqValueChild ts children vs )
-                seqValueFunc ts vs v newValues
+            let newValues, fs =  namedValues |> foldMap (fun ust nc -> loopSeqValueChild ust newTypeKind children vs nc ) us
+            seqValueFunc fs asn1ValName ts vs v newValues
         | ChValue (name,vl), Choice children         ->
             match children |> Seq.tryFind(fun ch -> ch.Name.Value = name.Value) with
             | Some chType   ->
-                    let chTs = visitSeqOrChoiceChild ts chType
+                    let newChScope, newChT = getChoiceTypeChild us newTypeKind name
                     let eqType = GetActualType chType.Type r 
-                    let newValue = loopAsn1Value (chTs,eqType) ((visitSeqChildValue vs name.Value),vl)
-                    chValueFunc ts vs v name newValue
+                    let newValue, fs = loopAsn1Value us (newChScope, newChT,eqType) None ((visitSeqChildValue vs name.Value),vl)
+                    chValueFunc fs asn1ValName ts vs v name newValue
             | None  -> 
                 error name.Location "Invalid alternative name '%s'" name.Value
         | _         ->
             error v.Location "Invalid combination ASN.1 type and ASN.1 value"
 
 
-    and loopSeqValueChild (ts:Scope)  (children: list<ChildInfo>)  (vs:Scope) (nm:StringLoc, chv:Asn1Value) = 
+    and loopSeqValueChild (us:'UserState) (newSeqT)  (children: list<ChildInfo>)  (vs:UserDefinedVarScope) (nm:StringLoc, chv:Asn1Value) = 
             let child = 
                 match children |> Seq.tryFind (fun ch -> ch.Name.Value = nm.Value) with
                 | Some ch -> ch
                 | None    -> error nm.Location "Invalid child name '%s'" nm.Value
-            let chTs = visitSeqOrChoiceChild ts child
+            let newChScope, newChT = getSequenceTypeChild us newSeqT nm
             let eqType = GetActualType child.Type r
-            let newValue = loopAsn1Value (chTs,eqType) ((visitSeqChildValue vs nm.Value),chv)
-            (nm,newValue)
+            let newValue, fs = loopAsn1Value us (newChScope, newChT, eqType) None ((visitSeqChildValue vs nm.Value),chv)
+            (nm,newValue), fs
 
-    and loopConstraint (ts:Scope, t:Asn1Type) (checContent:CheckContext) (cs:Scope, c:Asn1Constraint) =
+    and loopConstraint (us:'UserState) (s:UserDefinedTypeScope, newT, t:Asn1Type) (checContent:CheckContext) (cs:UserDefinedVarScope, c:Asn1Constraint) =
         let vtype =
             match checContent with
             | CheckSize         -> sizeIntegerType
@@ -388,22 +410,22 @@ let foldAstRoot
 
         match c with
         | SingleValueContraint v        ->
-                let newValue = loopAsn1Value (ts,vtype) (visitValue cs,v)
-                singleValueContraintFunc ts t checContent newValue
+                let newValue, fs = loopAsn1Value us (s, newT ,vtype) None (visitValue cs,v)
+                singleValueContraintFunc fs newT t checContent newValue
         | RangeContraint(v1,v2,b1,b2)   -> 
                 let vs1 = visitValue cs
                 let vs2 = visitSilbingValue vs1
-                let newValue1 = loopAsn1Value (ts,vtype) (vs1,v1)
-                let newValue2 = loopAsn1Value (ts,vtype) (vs2,v2)
-                rangeContraintFunc ts t checContent newValue1 newValue2 b1 b2
+                let newValue1, fs1 = loopAsn1Value us (s, newT,vtype) None (vs1,v1)
+                let newValue2, fs2 = loopAsn1Value fs1 (s, newT,vtype) None (vs2,v2)
+                rangeContraintFunc fs2 newT t checContent newValue1 newValue2 b1 b2
         | RangeContraint_val_MAX (v,b)  ->
-                let newValue = loopAsn1Value (ts,vtype) (visitValue cs,v)
-                rangeContraint_val_MAXFunc ts t checContent newValue b
+                let newValue, fs = loopAsn1Value us (s, newT,vtype) None (visitValue cs,v)
+                rangeContraint_val_MAXFunc fs newT t checContent newValue b
         | RangeContraint_MIN_val (v,b)  ->
-                let newValue = loopAsn1Value (ts,vtype) (visitValue cs,v)
-                rangeContraint_MIN_valFunc ts t checContent newValue  b
+                let newValue, fs = loopAsn1Value us (s, newT,vtype) None (visitValue cs,v)
+                rangeContraint_MIN_valFunc fs newT t checContent newValue  b
         | RangeContraint_MIN_MAX             -> 
-                rangeContraint_MIN_MAXFunc ts t checContent 
+                rangeContraint_MIN_MAXFunc us newT t checContent 
         | TypeInclusionConstraint (md,tas)  ->
                 let actTypeAllCons = GetActualTypeByNameAllConsIncluded md tas r
                 let agrCon = 
@@ -415,49 +437,47 @@ let foldAstRoot
                         Some aa
                 match agrCon with
                 | Some c1 ->
-                    let nc = loopConstraint (ts,t) checContent ((visitConstraint cs),c1)
-                    typeInclConstraintFunc ts t (Some nc)
-                | None -> typeInclConstraintFunc ts t None
+                    let nc, fs = loopConstraint us (s, newT,t) checContent ((visitConstraint cs),c1)
+                    typeInclConstraintFunc fs newT t (Some nc)
+                | None -> typeInclConstraintFunc us newT t None
         | UnionConstraint (c1,c2, virtualCon)      ->
                 let cs1 = visitConstraint cs
                 let cs2 = visitSilbingConstraint cs1
-                let nc1 = loopConstraint (ts,t) checContent (cs1,c1)
-                let nc2 = loopConstraint (ts,t) checContent (cs2,c2)
-                unionConstraintFunc ts t nc1 nc2 virtualCon
+                let nc1, fs1 = loopConstraint us ( s, newT,t) checContent (cs1,c1)
+                let nc2, fs2 = loopConstraint fs1 (s, newT,t) checContent (cs2,c2)
+                unionConstraintFunc fs2 newT t nc1 nc2 virtualCon
         | IntersectionConstraint(c1,c2)         ->
                 let cs1 = visitConstraint cs
                 let cs2 = visitSilbingConstraint cs1
-                let nc1 = loopConstraint (ts,t) checContent (cs1,c1)
-                let nc2 = loopConstraint (ts,t) checContent (cs2,c2)
-                intersectionConstraintFunc ts t nc1 nc2
+                let nc1, fs1 = loopConstraint us  (s, newT,t) checContent (cs1,c1)
+                let nc2, fs2 = loopConstraint fs1 (s, newT,t) checContent (cs2,c2)
+                intersectionConstraintFunc fs2 newT t nc1 nc2
         | AllExceptConstraint c1 ->
-                let nc = loopConstraint (ts,t) checContent ((visitConstraint cs),c1)
-                allExceptConstraintFunc ts t nc
+                let nc, fs = loopConstraint us (s, newT,t) checContent ((visitConstraint cs),c1)
+                allExceptConstraintFunc fs newT t nc
         | ExceptConstraint (c1,c2)  ->
                 let cs1 = visitConstraint cs
                 let cs2 = visitSilbingConstraint cs1
-                let nc1 = loopConstraint (ts,t) checContent (cs1,c1)
-                let nc2 = loopConstraint (ts,t) checContent (cs2,c2)
-                exceptConstraintFunc ts t nc1 nc2
+                let nc1, fs1 = loopConstraint us  (s, newT,t) checContent (cs1,c1)
+                let nc2, fs2 = loopConstraint fs1 (s, newT,t) checContent (cs2,c2)
+                exceptConstraintFunc fs2 newT t nc1 nc2
         | RootConstraint c1  ->
-                let nc = loopConstraint (ts,t) checContent ((visitConstraint cs),c1)
-                rootConstraintFunc ts t nc 
+                let nc, fs = loopConstraint us (s, newT,t) checContent ((visitConstraint cs),c1)
+                rootConstraintFunc fs newT t nc 
         | RootConstraint2 (c1,c2)  ->
                 let cs1 = visitConstraint cs
                 let cs2 = visitSilbingConstraint cs1
-                let nc1 = loopConstraint (ts,t) checContent (cs1,c1)
-                let nc2 = loopConstraint (ts,t) checContent (cs2,c2)
-                rootConstraint2Func ts t nc1 nc2
+                let nc1, fs1  = loopConstraint us (s, newT,t) checContent (cs1,c1)
+                let nc2, fs2  = loopConstraint fs1 (s, newT,t) checContent (cs2,c2)
+                rootConstraint2Func fs2 newT t nc1 nc2
         | SizeContraint(sc)         -> 
-                let nc = loopConstraint (ts,t) CheckSize (visitConstraint cs,sc)
-                sizeContraint ts t nc
+                let nc, fs = loopConstraint us (s, newT,t) CheckSize (visitConstraint cs,sc)
+                sizeContraint fs newT t nc
         | AlphabetContraint c       -> 
-                let nc = loopConstraint (ts, t) CheckCharacter (visitConstraint cs,c)
-                alphabetContraint ts t nc
-        | WithComponentConstraint c          -> withComponentConstraint ts t
-        | WithComponentsConstraint _         -> withComponentConstraints ts t
-                
-
-    loopAstRoot r 
+                let nc, fs = loopConstraint us (s, newT, t) CheckCharacter (visitConstraint cs,c)
+                alphabetContraint fs newT t nc
+        | WithComponentConstraint c          -> withComponentConstraint us newT t
+        | WithComponentsConstraint _         -> withComponentConstraints us newT t
+    loopAstRoot r us
 
 
