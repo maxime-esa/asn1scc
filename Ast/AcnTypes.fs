@@ -87,6 +87,10 @@ and booleanEncoding =
     | FalseValue   of StringLoc
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////
+type ParamMode =
+    | DecodeMode
+    | EncodeDecodeMode
+
 type AcnType = {
     TypeID     : AbsPath
     ImpMode    : AcnTypeImplMode
@@ -102,8 +106,8 @@ and AcnTempType = {                // this type is not encoded decoded. It is de
     Asn1Type   : AcnAsn1Type
 }
 and AcnTypeImplMode =
-    | RecordField
-    | LocalVariable of AcnAsn1Type
+    | RecordField                           // normal ASN.1 type
+    | LocalVariable of AcnAsn1Type          // ACN inserted type
     | FunctionParameter of AcnAsn1Type
 
 and AcnParameter = {
@@ -122,9 +126,6 @@ and AcnAsn1Type =
     | RefTypeCon of StringLoc*StringLoc
 
 
-and ParamMode =
-    | DecodeMode
-    | EncodeDecodeMode
 
 type LongReference = {
     TypeID  : AbsPath           // the type that has a property with the LongReference path

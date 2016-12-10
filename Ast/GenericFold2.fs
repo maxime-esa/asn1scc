@@ -43,8 +43,6 @@ type ScopeNode =
     | VA of string      //VALUE ASSIGNMENT
     | CH of string      //SEQUENCE OF CHOICE CHILD
     | SQF               //SEQUENCE OF CHILD
-    //| WITH_COMP              // WITH COMPONENT
-    //| WITH_COMPS of string  // WITH COMPONENTS
     with
         member this.StrValue =
             match this with
@@ -53,8 +51,6 @@ type ScopeNode =
             | VA strVal
             | CH strVal     -> strVal
             | SQF           -> "#"
-           // | WITH_COMP     -> "WCP"
-           // | WITH_COMPS strVal -> sprintf "%s(WC)" strVal
         override this.ToString() = this.StrValue
 
 type UserDefinedTypeScope = ScopeNode list

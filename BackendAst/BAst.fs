@@ -154,7 +154,6 @@ type ChildInfo = {
     Name:string;
     refToType:ReferenceToType;
     Optionality:Asn1Optionality option
-    AcnInsertedField:bool
     Comments: string array
 }
 
@@ -200,7 +199,6 @@ type Asn1Type = {
     Kind:Asn1TypeKind;
     Constraints:list<Asn1Constraint>;
     FromWithCompConstraints:list<Asn1Constraint>;
-    AcnProperties : list<AcnTypes.AcnProperty>      //does not contain the properties with long fields 
 }
 
 type Asn1ValueKind =
@@ -341,7 +339,6 @@ let createChildInfo (st:State) s (ch:Ast.ChildInfo) (newType:Asn1Type) (newOptio
         ChildInfo.Name = ch.Name.Value
         refToType = newType.id
         Optionality = newOptionality
-        AcnInsertedField = ch.AcnInsertedField
         Comments = ch.Comments
     }, st
 
@@ -350,7 +347,6 @@ let createChoiceChildInfo (st:State) s (ch:Ast.ChildInfo) (newType:Asn1Type) =
         ChildInfo.Name = ch.Name.Value
         refToType = newType.id
         Optionality = None
-        AcnInsertedField = ch.AcnInsertedField
         Comments = ch.Comments
     }, st
 
@@ -366,9 +362,8 @@ let createType (s:State) (ts:GenericFold2.UserDefinedTypeScope) (oldType:Ast.Asn
             Kind = newKind
             Constraints = newCons |> List.choose id
             FromWithCompConstraints = fromWithComps|> List.choose id
-            AcnProperties = oldType.AcnProperties
         }
-    printfn "Creating type with id %s" (ret.id.ToString())
+    //printfn "Creating type with id %s" (ret.id.ToString())
     ret, {s with anonymousTypes = s.anonymousTypes@[ret]}
 
 let createValue (us:State) (asn1ValName:(StringLoc*StringLoc) option) (ts:GenericFold2.UserDefinedTypeScope) (vs:GenericFold2.UserDefinedVarScope) (kind:Asn1ValueKind) =
