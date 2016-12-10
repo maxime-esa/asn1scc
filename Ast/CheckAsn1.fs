@@ -448,11 +448,11 @@ let rec CheckType(t:Asn1Type) (m:Asn1Module) ast =
 /// semantically check module
 let CheckModule (m:Asn1Module) ast=
     //check for duplicate type assignments
-    let typeAssNames = m.TypeAssignments |> Seq.map(fun t -> t.Name) 
+    let typeAssNames = m.TypeAssignments |> List.map(fun t -> t.Name) 
     typeAssNames |> CheckForDuplicates 
     
     //check for duplicate imported types
-    let importedTypeAssNames = m.Imports |> Seq.collect(fun imp -> imp.Types) 
+    let importedTypeAssNames = m.Imports |> Seq.collect(fun imp -> imp.Types) |> Seq.toList
     importedTypeAssNames |> CheckForDuplicates 
 
     //check for duplicate in type assignments AND imported types

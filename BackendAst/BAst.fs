@@ -123,6 +123,9 @@ ASN.1 CONSTRAINTS
 type ReferenceToType = 
     | ReferenceToType of GenericFold2.ScopeNode list
     with
+        override this.ToString() =
+            match this with
+            | ReferenceToType path -> path |> Seq.StrJoin "."
         member this.ModName =
             match this with
             | ReferenceToType path -> 
@@ -155,11 +158,10 @@ type ChildInfo = {
     Comments: string array
 }
 
-type NamedItem = {
-    Name:string
-    refToValue:ReferenceToValue option
-    Comments: string array
-}
+type EnumItems =
+    | EnumItemsWithValues of (string*BigInteger*List<string>) list
+    | EnumItemsWithoutValues of (string*List<string>) list
+
 
 
 type Asn1TypeKind =
@@ -170,7 +172,7 @@ type Asn1TypeKind =
     | NullType
     | BitString
     | Boolean 
-    | Enumerated        of list<NamedItem>
+    | Enumerated        of EnumItems
     | SequenceOf        of ReferenceToType
     | Sequence          of list<ChildInfo>
     | Choice            of list<ChildInfo>
@@ -264,6 +266,7 @@ type AstRoot = {
 
 
 
+
 //let createValue vk l = {Asn1Value.Kind = vk ;Location = l}
 
 type State = {
@@ -315,17 +318,8 @@ let createAsn1File (s:State) (r:Ast.AstRoot) (f:Ast.Asn1File) (newMods:Asn1Modul
     },s
 
 let createAsn1Module (s:State) (r:Ast.AstRoot) (f:Ast.Asn1File) (m:Ast.Asn1Module) (newtases: Asn1Type list ) (vases:Asn1Value list ) = 
-    //let newTypes = newtases |> List.map fst
-    //let newVases = vases |> List.map fst
-    //let anonymousTypes1 = newtases |> List.map snd |> List.collect (fun x -> x.anonymousTypes)
-    //let anonymousValues1 = newtases |> List.map snd |> List.collect (fun x -> x.anonymousValues)
-    //let anonymousTypes2 = vases |> List.map snd |> List.collect (fun x -> x.anonymousTypes)
-    //let anonymousValues2 = vases |> List.map snd |> List.collect (fun x -> x.anonymousValues)
-
     {
         Asn1Module.Name = m.Name.Value
-        //TypeAssignments = newTypes@anonymousTypes1@anonymousTypes2 
-        //ValueAssignments = newVases@anonymousValues1@anonymousValues2
         TypeAssignments = s.anonymousTypes |> List.filter(fun x -> x.id.ModName = m.Name.Value)
         ValueAssignments = s.anonymousValues |> List.filter(fun x -> x.id.ModName = m.Name.Value)
         Imports = m.Imports
@@ -338,7 +332,6 @@ let createTypeAssignment (s:State) (r:Ast.AstRoot) (f:Ast.Asn1File) (m:Ast.Asn1M
     newType,s
 
 let createValueAssignment (s:State) (r:Ast.AstRoot) (f:Ast.Asn1File) (m:Ast.Asn1Module) (vas:Ast.ValueAssignment) (t:Asn1Type) (v:Asn1Value) = 
-    //(v, {es with anonymousTypes = es.anonymousTypes@es.anonymousTypes; anonymousValues = es.anonymousValues@es2.anonymousValues})    ,s
     v, s
 
      
@@ -375,6 +368,7 @@ let createType (s:State) (ts:GenericFold2.UserDefinedTypeScope) (oldType:Ast.Asn
             FromWithCompConstraints = fromWithComps|> List.choose id
             AcnProperties = oldType.AcnProperties
         }
+    printfn "Creating type with id %s" (ret.id.ToString())
     ret, {s with anonymousTypes = s.anonymousTypes@[ret]}
 
 let createValue (us:State) (asn1ValName:(StringLoc*StringLoc) option) (ts:GenericFold2.UserDefinedTypeScope) (vs:GenericFold2.UserDefinedVarScope) (kind:Asn1ValueKind) =
@@ -437,10 +431,10 @@ let createValidationAst (lang:Ast.ProgrammingLanguage) (app:Ast.AstRoot)  =
         //11 numericStringFunc s
         (fun ustate  -> 
         
-            //let zero = {Asn1Value.Kind = StringValue("0".AsLoc); Location = emptyLocation}
-            //let nine = {Asn1Value.Kind = StringValue("9".AsLoc); Location = emptyLocation}
-            //let space = {Asn1Value.Kind = StringValue(" ".AsLoc); Location = emptyLocation}
-            //let newConstraint = AlphabetContraint(UnionConstraint(RangeContraint(zero,nine, true, true),SingleValueContraint(space), false))
+            //let zero = {Asn1Value.Kind = StringValue("0"); asn1Name=None; id=zeroId; refToType=refToType}
+            //let nine = {Asn1Value.Kind = StringValue("9"); asn1Name=None; id=zeroId; refToType=refToType}
+            //let space = {Asn1Value.Kind = StringValue(" "); asn1Name=None; id=zeroId; refToType=refToType}
+            //let newConstraint = AlphabetContraint(UnionConstraint(RangeContraint(zero.id,nine.id, true, true),SingleValueContraint(space.id), false))
         
             IA5String, ustate)
 
@@ -457,19 +451,23 @@ let createValidationAst (lang:Ast.ProgrammingLanguage) (app:Ast.AstRoot)  =
         (fun ustate -> Boolean, ustate)
 
         //16 enumeratedFunc 
-        (fun ustate (itms:List<NamedItem>)-> 
-            //let newEnmItems = itms |> List.map fst
-            //let fs = itms |> List.map snd |> combineStates
-            (Enumerated itms), ustate)
+        (fun ustate (enmItems : Ast.NamedItem list)-> 
+            let newEnmItems = 
+                match enmItems |> Seq.exists (fun nm -> nm._value.IsSome) with
+                | false ->
+                    EnumItemsWithoutValues (enmItems |> List.map(fun x-> x.Name.Value, x.Comments|> Seq.toList) )
+                | true  ->
+                    let withVals = RemoveNumericStringsAndFixEnums.allocatedValuesToAllEnumItems enmItems app |> List.map(fun ni -> (ni.Name.Value, Ast.GetValueAsInt ni._value.Value app, ni.Comments|> Seq.toList))
+                    EnumItemsWithValues withVals
+
+            (Enumerated newEnmItems), ustate)
 
         //17 enmItemFunc
-        (fun ustate ni newVal -> 
-                {NamedItem.Name = ni.Name.Value; refToValue = newVal |> Option.map(fun vl -> vl.id); Comments=ni.Comments}, ustate)
+        (fun ustate ni newVal -> 0, ustate)
 
         //18 seqOfTypeFunc 
         (fun ustate newInnerType -> 
-            let newState = {ustate with anonymousTypes = newInnerType::ustate.anonymousTypes}
-            (SequenceOf newInnerType.id), newState)
+            (SequenceOf newInnerType.id), ustate)
 
         //19 seqTypeFunc 
         (fun ustate newChildren -> 

@@ -1,7 +1,11 @@
 ﻿module GenericFold2
+open System
+open System.Numerics
+
 open Ast
 open Monads
 open FsUtils
+
 
 let enumIntegerType = 
     {
@@ -31,6 +35,8 @@ let sizeIntegerType =
 
 let foldMap = CloneTree.foldMap
 
+
+
 type ScopeNode =
     | MD of string      //MODULE
     | TA of string      //TYPE ASSIGNMENT
@@ -49,6 +55,7 @@ type ScopeNode =
             | SQF           -> "#"
            // | WITH_COMP     -> "WCP"
            // | WITH_COMPS strVal -> sprintf "%s(WC)" strVal
+        override this.ToString() = this.StrValue
 
 type UserDefinedTypeScope = ScopeNode list
 
@@ -81,7 +88,7 @@ type VarScopNode =
     | DV        //DEFAULT VALUE
     | NI  of string      //NAMED ITEM VALUE (enum)
     | CON of int         // constraint index
-    | SQOV              //SEQUENCE OF VALUE
+    | SQOV of int             //SEQUENCE OF VALUE (value index)
     | SQCHILD   of string   //child value (SEQUENCE, CHOICE)
     | VL of int         //value index
     with
@@ -91,8 +98,9 @@ type VarScopNode =
             | NI    ni  -> ni
             | VL   idx  -> "v" + idx.ToString()    
             | CON idx   -> "c" + idx.ToString()
-            | SQOV      -> "#"
+            | SQOV i     -> sprintf"[%d]" i
             | SQCHILD  s-> s
+        override this.ToString() = this.StrValue
 
 (*
 {
@@ -140,8 +148,8 @@ let visitSilbingValue (s:UserDefinedVarScope) :UserDefinedVarScope =
         | _              -> raise(BugErrorException "invalid call to visitSilbingConstraint")
     xs@[VL (idx+1)]
 
-let visitSeqOfValue (s:UserDefinedVarScope) :UserDefinedVarScope =
-    s @[SQOV]
+let visitSeqOfValue (s:UserDefinedVarScope) idx :UserDefinedVarScope =
+    s @[SQOV idx]
 
 let visitSeqChildValue (s:UserDefinedVarScope) childName :UserDefinedVarScope =
     s @[SQCHILD childName ]
@@ -252,20 +260,26 @@ let foldAstRoot
                 Some (visitRefType mdName.Value tasName.Value)
             | _ -> 
                 None
+        let numericStringCons =
+            match t.Kind with
+            | NumericString -> [RemoveNumericStringsAndFixEnums.numericStringDefaultConstraints()]
+            | _             -> []
+
         match t.Kind with
         | ReferenceType (mdName,tasName, tabularized) when not (withCompCons.IsEmpty) -> 
             let oldBaseType = (Ast.GetActualTypeAllConsIncluded t r)
             let oldBaseType = {oldBaseType with Constraints = oldBaseType.Constraints@witchCompsCons}
             loopType us (s, oldBaseType) []
         | _     ->
-            let newTypeKind, nus = loopTypeKind us s t.Kind t.Constraints witchCompsCons
-            let newCons, (retScope, nus1) = t.Constraints |> foldMap  (fun (ss, uds) c -> 
-                                                                            let lc, uds2 = loopConstraint uds (s, newTypeKind,t) CheckContent (ss,c)
-                                                                            lc, (visitSilbingConstraint ss,uds2)) (conScope, nus)
+            let newTypeKind, nus = loopTypeKind us s t.Kind (numericStringCons@t.Constraints) witchCompsCons
+            let newCons, (retScope, nus1) = (numericStringCons@t.Constraints) |> foldMap  (fun (ss, uds) c -> 
+                                                                                    let lc, uds2 = loopConstraint uds (s, newTypeKind,t) CheckContent (ss,c)
+                                                                                    lc, (visitSilbingConstraint ss,uds2)) (conScope, nus)
             let fromWithComps, (_, nus2) = witchCompsCons |> foldMap  (fun (ss, uds) c -> 
                                                                             let lc, uds2 = loopConstraint uds (s, newTypeKind,t) CheckContent (ss,c)
                                                                             lc, (visitSilbingConstraint ss, uds2)) (retScope, nus1)
             typeFunc nus2 s t newTypeKind baseTypeId (newCons,fromWithComps) 
+
     and loopTypeKind (us:'UserState) (s:UserDefinedTypeScope) (asn1TypeKind:Asn1TypeKind) (oldTypeCons: Asn1Constraint list) (witchCompsCons:Asn1Constraint list) =
         match asn1TypeKind with
         | ReferenceType (mdName,tasName, tabularized) -> 
@@ -280,8 +294,7 @@ let foldAstRoot
         | BitString    -> bitStringFunc us 
         | Boolean           ->booleanFunc us
         | Enumerated (enmItems) ->  
-            let newEnmItems, nus = enmItems |> foldMap (fun uss ni -> loopNamedItem uss s ni) us
-            enumeratedFunc nus newEnmItems 
+            enumeratedFunc us enmItems 
         | SequenceOf (innerType)  ->
             let childScope = visitSeqOfChild s
             let withCompCons = oldTypeCons@witchCompsCons |> List.choose(fun c -> match c with WithComponentConstraint wc -> Some wc | _ -> None)
@@ -373,7 +386,9 @@ let foldAstRoot
         | SeqOfValue  vals, SequenceOf chType    ->
             let eqType = GetActualType chType r
             let newChScope, newChT = getSequenceOfTypeChild us newTypeKind
-            let newVals, fs = vals |> foldMap  (fun ust chVal -> loopAsn1Value ust (newChScope, newChT, eqType) None ((visitSeqOfValue vs), chVal)) us
+            let newVals, (fs,_) = vals |> foldMap  (fun (ust,idx) chVal -> 
+                                                    let newV,newS = loopAsn1Value ust (newChScope, newChT, eqType) None ((visitSeqOfValue vs idx), chVal)
+                                                    newV,(newS, idx+1)) (us,0)
             seqOfValueFunc fs asn1ValName ts vs v  newVals
         | SeqValue    namedValues, Sequence children ->
             let newValues, fs =  namedValues |> foldMap (fun ust nc -> loopSeqValueChild ust newTypeKind children vs nc ) us

@@ -82,8 +82,11 @@ and PrintType (r:AstRoot) (t:Asn1Type) =
     |NullType   -> ASN.Print_NullType cons
     |IA5String  -> ASN.Print_IA5String cons
     |Enumerated(items)  ->
-        let printItem (it:NamedItem) = ASN.Print_Enumerated_child it.Name it.refToValue.IsSome (if it.refToValue.IsSome then (printReferenceToValue r CON it.refToValue.Value) else "")
-        ASN.Print_Enumerated (items |> Seq.map printItem |> Seq.toArray) cons
+        let items =
+            match items with
+            | EnumItemsWithValues itms      -> itms |> List.map(fun (nm,vl,_) -> ASN.Print_Enumerated_child nm true (vl.ToString()))
+            | EnumItemsWithoutValues itms   -> itms |> List.map(fun (nm,_) -> ASN.Print_Enumerated_child nm false "")
+        ASN.Print_Enumerated items  cons
     |Choice(children)   ->
         let printChild (c:ChildInfo) = ASN.Print_Choice_child c.Name (printReferenceToType r CON c.refToType)
         ASN.Print_Choice (children |> Seq.map printChild |> Seq.toArray) cons

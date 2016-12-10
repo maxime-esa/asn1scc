@@ -233,12 +233,6 @@ namespace Asn1f2
              */
             var asn1Ast0 = MapParamAstToNonParamAst.DoWork(parameterized_ast);
 
-            if (bast)
-            {
-                var bast0 = BAst.createValidationAst(Ast.ProgrammingLanguage.C, asn1Ast0);
-                print_debug.DoWork(bast0, outDir, ".txt");
-                return 0;
-            }
             //PrintAsn1.DoWork(asn1Ast0, outDir, ".0.asn1");
 
             /*
@@ -248,6 +242,12 @@ namespace Asn1f2
              * is OK for ANTLR but of course not OK for ASN.1
              */
             CheckAsn1.CheckFiles(asn1Ast0);
+            if (bast)
+            {
+                var bast0 = BAst.createValidationAst(Ast.ProgrammingLanguage.C, asn1Ast0);
+                print_debug.DoWork(bast0, outDir, ".txt");
+                return 0;
+            }
 
             if (astXmlFile != "")
             {
