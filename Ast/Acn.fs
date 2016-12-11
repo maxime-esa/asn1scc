@@ -34,8 +34,8 @@ let rec GetNullEncodingValue(t:Asn1Type) (asn1:Ast.AstRoot)   =
     | hd::_   -> Some hd.Value
     | []      -> None
 
-let rec GetEndianess (t:Asn1Type) (asn1:Ast.AstRoot)   =
-    match t.AcnProperties |> List.choose(fun x -> match x with Endianness(a) -> Some a | _ -> None ) with
+let rec GetEndianess acnProperties    =
+    match acnProperties |> List.choose(fun x -> match x with Endianness(a) -> Some a | _ -> None ) with
     | hd::_   -> hd
     | []      -> AcnTypes.endianness.BigEndianness
 
@@ -43,8 +43,8 @@ let rec GetEndianess (t:Asn1Type) (asn1:Ast.AstRoot)   =
 let rec isEnumEncodingValues (t:Asn1Type) (asn1:Ast.AstRoot)   =
     t.AcnProperties |> List.exists(fun x -> match x with EncodeValues -> true | _ -> false ) 
 
-let GetEncodingProperty (a:Asn1Type) (asn1:Ast.AstRoot)   =
-    match a.AcnProperties |> List.choose(fun x -> match x with Encoding(a) -> Some a | _ -> None ) with
+let GetEncodingProperty acnProperties =
+    match acnProperties |> List.choose(fun x -> match x with Encoding(a) -> Some a | _ -> None ) with
     | hd::_ -> Some hd
     | []    -> None
 
@@ -153,8 +153,8 @@ let tryGetSizeProperty  (a:Asn1Type) (acn:AcnTypes.AcnAstResolved) =
 
 let GetIntEncodingClass (a:Asn1Type) (asn1:Ast.AstRoot) (acn:AcnTypes.AcnAstResolved) errLoc =
     let acnEncodingClass() =
-        let endianess = GetEndianess a asn1
-        let encProp = (GetEncodingProperty a asn1).Value
+        let endianess = GetEndianess a.AcnProperties
+        let encProp = (GetEncodingProperty a.AcnProperties).Value
         let sizeProp = GetSizeProperty a encProp acn
         let bUINT =
             match (uPER.GetTypeUperRange a.Kind a.Constraints asn1) with
@@ -227,7 +227,7 @@ let GetStringEncodingClass (a:Asn1Type) (absPath:AcnTypes.AbsPath) (asn1:Ast.Ast
             let asn1Min, asn1Max = uPER.GetSizebaleMinMax a.Kind a.Constraints asn1
             let bAsn1FixedSize = asn1Min = asn1Max
             let bAsciiEncoding =
-                match GetEncodingProperty a asn1 with
+                match GetEncodingProperty a.AcnProperties with
                 | Some Ascii     -> true
                 | _              -> false
             
@@ -303,8 +303,8 @@ let GetRealEncodingClass (a:Asn1Type)  (asn1:Ast.AstRoot) =
     match a.AcnProperties |> List.exists(fun x -> match x with Encoding(_) -> true | _ -> false ) with     
     | false     -> Real_uPER
     | true      ->
-        let enc = (GetEncodingProperty a asn1).Value
-        let endianess = GetEndianess a asn1
+        let enc = (GetEncodingProperty a.AcnProperties).Value
+        let endianess = GetEndianess a.AcnProperties
         match enc, endianess with
         | IEEE754_32, BigEndianness     -> Real_IEEE754_32_big_endian
         | IEEE754_64, BigEndianness     -> Real_IEEE754_64_big_endian
@@ -437,7 +437,7 @@ let rec RequiredBitsForAcnEncodingInt (t:Asn1Type) (absPath:AcnTypes.AbsPath) (a
             |BCD_VarSize_LengthEmbedded                     -> (8I+18I*4I)
             |BCD_VarSize_NullTerminated    _                -> (19I*4I)
         | Real  ->
-            let encProp = GetEncodingProperty t asn1
+            let encProp = GetEncodingProperty t.AcnProperties
             match encProp with
             | Some(IEEE754_32)    -> 32I
             | Some(IEEE754_64)    -> 64I
@@ -555,7 +555,7 @@ let rec RequiredMinBitsForAcnEncodingInt (t:Asn1Type) (absPath:AcnTypes.AbsPath)
             |BCD_VarSize_LengthEmbedded                     -> (8I)
             |BCD_VarSize_NullTerminated      _               -> (4I)
         | Real  ->
-            let encProp = GetEncodingProperty t asn1
+            let encProp = GetEncodingProperty t.AcnProperties
             match encProp with
             | Some(IEEE754_32)    -> 32I
             | Some(IEEE754_64)    -> 64I

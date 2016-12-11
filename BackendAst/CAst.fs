@@ -1,4 +1,5 @@
 ﻿module CAst
+open System
 open System.Numerics
 open Antlr.Runtime.Tree
 open Antlr.Runtime
@@ -68,7 +69,7 @@ type UperIntRange           = Ast.uperRange<BigInteger>
 type IntegerType = {
     uperRange               : UperIntRange
     acnEndianness           : AcnEndianness
-    acnIntEncoding          : AcnIntEncoding
+    acnIntEncoding          : AcnIntEncoding option
     acnIntSize              : AcnIntSize
 }
 
@@ -122,19 +123,7 @@ type Asn1TypeKind =
     | Choice            of list<ChildInfo>
 
 
-type Asn1Constraint = 
-    | SingleValueContraint              of ReferenceToValue             
-    | RangeContraint                    of ReferenceToValue*ReferenceToValue*bool*bool    //min, max, InclusiveMin(=true), InclusiveMax(=true)
-    | RangeContraint_val_MAX            of ReferenceToValue*bool         //min, InclusiveMin(=true)
-    | RangeContraint_MIN_val            of ReferenceToValue*bool         //max, InclusiveMax(=true)
-    | SizeContraint                     of Asn1Constraint               
-    | AlphabetContraint                 of Asn1Constraint           
-    | UnionConstraint                   of Asn1Constraint*Asn1Constraint*bool //left,righ, virtual constraint
-    | IntersectionConstraint            of Asn1Constraint*Asn1Constraint
-    | AllExceptConstraint               of Asn1Constraint
-    | ExceptConstraint                  of Asn1Constraint*Asn1Constraint
-    | RootConstraint                    of Asn1Constraint
-    | RootConstraint2                   of Asn1Constraint*Asn1Constraint
+type Asn1Constraint = BAst.Asn1Constraint
 
 
 type Asn1Type = {
@@ -146,3 +135,73 @@ type Asn1Type = {
     FromWithCompConstraints:list<Asn1Constraint>
     acnAligment : AcnAligment option
 }
+
+type Asn1File = BAst.Asn1File
+type Asn1Value = BAst.Asn1Value
+
+type AstRoot = {
+    Files: list<Asn1File>
+    Encodings:list<Ast.Asn1Encoding>
+    GenerateEqualFunctions:bool
+    TypePrefix:string
+    AstXmlAbsFileName:string
+    IcdUperHtmlFileName:string
+    IcdAcnHtmlFileName:string
+    CheckWithOss:bool
+    mappingFunctionsModule : string option
+    valsMap : Map<ReferenceToValue, Asn1Value>
+    typesMap : Map<ReferenceToType, Asn1Type>
+    TypeAssignments : list<Asn1Type>
+    ValueAssignments : list<Asn1Value>
+}
+
+
+let mapBastToCast0 (r:BAst.AstRoot) (c:AcnTypes.AcnAst) : unit=
+    printfn "ASN1"
+    r.TypeAssignments |> List.map(fun s -> s.id.ToString()) |> Seq.iter (printfn "%s")
+    printfn "ACN TYPES"
+    c.Types|> List.map(fun s -> s.TypeID |> Seq.StrJoin ".") |> Seq.iter (printfn "%s")
+    
+    (*
+let createInteger (acnProps:AcnTypes.AcnProperty list) =
+    {
+        IntegerType.uperRange   = uperRange
+        acnEndianness           = Acn.GetEndianess acnProps
+        acnIntEncoding          = 
+            match Acn.GetEncodingProperty acnProps with
+            | None          -> None
+            | Some (AcnTypes.encoding.PosInt)   -> Some PosInt
+            | Some (AcnTypes.encoding.TwosComplement)   -> Some TwosComplement
+            | Some (AcnTypes.encoding.BCD)   -> Some BCD
+            | Some (AcnTypes.encoding.Ascii)   -> Some Ascii
+            | Some (AcnTypes.encoding.IEEE754_32)   -> Some Ascii
+            | Some (AcnTypes.encoding.IEEE754_64)   -> Some Ascii
+
+
+        acnIntSize              = acnIntSize
+    }
+    *)
+let mapBastToCast (r:BAst.AstRoot) (c:AcnTypes.AcnAst): AstRoot=
+    let acnMap = c.Types |> List.map(fun s -> s.TypeID |> Seq.StrJoin ".", s) |> Map.ofList
+    let mapType (t:BAst.Asn1Type) : Asn1Type =
+        let acnProps = 
+            match acnMap.TryFind (t.id.ToString()) with
+            | None  -> []
+            | Some acnT -> acnT.Properties
+        raise(Exception "")
+    let newTypes = r.TypeAssignments |> List.map mapType
+    {
+        AstRoot.Files = r.Files
+        Encodings = r.Encodings
+        GenerateEqualFunctions = r.GenerateEqualFunctions
+        TypePrefix = r.TypePrefix
+        AstXmlAbsFileName = r.AstXmlAbsFileName
+        IcdUperHtmlFileName = r.IcdUperHtmlFileName
+        IcdAcnHtmlFileName = r.IcdUperHtmlFileName
+        CheckWithOss = r.CheckWithOss
+        mappingFunctionsModule = r.mappingFunctionsModule
+        valsMap = r.valsMap
+        typesMap = newTypes |> List.map(fun x -> x.id, x) |> Map.ofList
+        TypeAssignments = newTypes
+        ValueAssignments = r.ValueAssignments
+    }    

@@ -225,8 +225,6 @@ type Asn1Value = {
 
 type Asn1Module = {
     Name : string
-    TypeAssignments : list<Asn1Type>
-    ValueAssignments : list<Asn1Value>
     Imports : list<Ast.ImportedModule>
     Exports : Ast.Exports
     Comments : string array
@@ -250,17 +248,9 @@ type AstRoot = {
     mappingFunctionsModule : string option
     valsMap : Map<ReferenceToValue, Asn1Value>
     typesMap : Map<ReferenceToType, Asn1Type>
+    TypeAssignments : list<Asn1Type>
+    ValueAssignments : list<Asn1Value>
 }
-
-
-
-
-
-
-
-
-
-
 
 
 
@@ -297,12 +287,14 @@ let createAstRoot (s:State) (sr:Ast.AstRoot) (dfiles: Asn1File list)  =
         IcdAcnHtmlFileName = sr.IcdAcnHtmlFileName
         CheckWithOss = sr.CheckWithOss
         mappingFunctionsModule = sr.mappingFunctionsModule
+        TypeAssignments = s.anonymousTypes 
+        ValueAssignments = s.anonymousValues 
         valsMap = 
-            let aa = dfiles |> List.collect(fun f -> f.Modules) |> List.collect(fun m -> m.ValueAssignments) |> List.map(fun v -> v.id, v) 
+            let aa = s.anonymousValues |> List.map(fun v -> v.id, v) 
             aa |> Seq.groupBy(fun (id,t) -> id) |> Seq.filter(fun (id, gr) -> gr |> (*Seq.distinct |>*) Seq.length > 1) |> Seq.iter (fun x -> printfn "%A" x)
             aa |> Map.ofList
         typesMap = 
-            let aa = dfiles |> List.collect(fun f -> f.Modules) |> List.collect(fun m -> m.TypeAssignments) |> List.map(fun v -> v.id, v)
+            let aa = s.anonymousTypes |> List.map(fun v -> v.id, v)
             aa |> Seq.groupBy(fun (id,t) -> id) |> Seq.filter(fun (id, gr) -> gr |> (*Seq.distinct |>*) Seq.length > 1) |> Seq.iter (fun x -> printfn "%A" x)
             aa |> Map.ofList
 
@@ -318,8 +310,6 @@ let createAsn1File (s:State) (r:Ast.AstRoot) (f:Ast.Asn1File) (newMods:Asn1Modul
 let createAsn1Module (s:State) (r:Ast.AstRoot) (f:Ast.Asn1File) (m:Ast.Asn1Module) (newtases: Asn1Type list ) (vases:Asn1Value list ) = 
     {
         Asn1Module.Name = m.Name.Value
-        TypeAssignments = s.anonymousTypes |> List.filter(fun x -> x.id.ModName = m.Name.Value)
-        ValueAssignments = s.anonymousValues |> List.filter(fun x -> x.id.ModName = m.Name.Value)
         Imports = m.Imports
         Exports = m.Exports
         Comments = m.Comments

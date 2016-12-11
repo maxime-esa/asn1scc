@@ -120,8 +120,8 @@ let PrintModule (r:AstRoot) (m:Asn1Module) =
         m.Imports |>
         List.map(fun im -> ASN.PrintModuleImportFromModule ( (im.Types @ im.Values) |> List.map(fun s -> s.Value)) im.Name.Value )
 
-    let tases = m.TypeAssignments |> Seq.map(fun x -> PrintTypeAss r x ) |> Seq.toArray
-    let vases = m.ValueAssignments |> Seq.map(fun x -> PrintValueAss r x )|> Seq.toArray
+    let tases = r.TypeAssignments |> Seq.filter(fun x ->x.id.ModName=m.Name) |> Seq.map(fun x -> PrintTypeAss r x ) |> Seq.toArray
+    let vases = r.ValueAssignments |> Seq.filter(fun x ->x.id.ModName=m.Name)|> Seq.map(fun x -> PrintValueAss r x )|> Seq.toArray
     ASN.PrintModule m.Name tases vases exports importsFromModule
 
 let PrintFile (r:AstRoot) (f:Asn1File) outDir newFileExt =

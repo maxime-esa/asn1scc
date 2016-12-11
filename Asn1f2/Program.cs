@@ -242,12 +242,6 @@ namespace Asn1f2
              * is OK for ANTLR but of course not OK for ASN.1
              */
             CheckAsn1.CheckFiles(asn1Ast0);
-            if (bast)
-            {
-                var bast0 = BAst.createValidationAst(Ast.ProgrammingLanguage.C, asn1Ast0);
-                print_debug.DoWork(bast0, outDir, ".txt");
-                return 0;
-            }
 
             if (astXmlFile != "")
             {
@@ -271,6 +265,13 @@ namespace Asn1f2
             /*
              * The ASN.1 AST is enriched from ACN ast
              */
+            if (bast)
+            {
+                var bast0 = BAst.createValidationAst(Ast.ProgrammingLanguage.C, asn1Ast0);
+                print_debug.DoWork(bast0, outDir, ".txt");
+                CAst.mapBastToCast0(bast0, acnAstUnresolved);
+                return 0;
+            }
             var asn1Ast = UpdateAcnProperties.DoWork(asn1Ast0, acnAstUnresolved).Item1;
 
             
