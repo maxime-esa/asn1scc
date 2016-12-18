@@ -5,10 +5,8 @@ open Antlr.Runtime.Tree
 open Antlr.Runtime
 
 open FsUtils
+open Constraints
 
-
-type ReferenceToValue       = BAst.ReferenceToValue
-type ReferenceToType        = BAst.ReferenceToType
 type ReferenceToAcnParam    = string*string*string
 type ReferenceToAcnTempType = string*string*string
 

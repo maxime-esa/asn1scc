@@ -3,7 +3,7 @@
 open System.Numerics
 open Antlr.Runtime.Tree
 open Antlr.Runtime
-
+open Constraints
 open FsUtils
 
 (*
@@ -120,28 +120,6 @@ ASN.1 CONSTRAINTS
 
 *)
 
-type ReferenceToType = 
-    | ReferenceToType of GenericFold2.ScopeNode list
-    with
-        override this.ToString() =
-            match this with
-            | ReferenceToType path -> path |> Seq.StrJoin "."
-        member this.ModName =
-            match this with
-            | ReferenceToType path -> 
-                match path with
-                | (GenericFold2.MD modName)::_    -> modName
-                | _                               -> raise(BugErrorException "Did not find module at the begining of the scope path")
-            
-type ReferenceToValue = 
-    | ReferenceToValue of (GenericFold2.ScopeNode list)*(GenericFold2.VarScopNode list)
-    with
-        member this.ModName =
-            match this with
-            | ReferenceToValue (path,_) -> 
-                match path with
-                | (GenericFold2.MD modName)::_    -> modName
-                | _                               -> raise(BugErrorException "Did not find module at the begining of the scope path")
 
 type Asn1Optionality = 
     | AlwaysAbsent
@@ -158,7 +136,7 @@ type ChildInfo = {
 }
 
 type EnumItems =
-    | EnumItemsWithValues of (string*BigInteger*List<string>) list
+    | EnumItemsWithValues    of (string*BigInteger*List<string>) list
     | EnumItemsWithoutValues of (string*List<string>) list
 
 
@@ -175,6 +153,7 @@ type Asn1TypeKind =
     | SequenceOf        of ReferenceToType
     | Sequence          of list<ChildInfo>
     | Choice            of list<ChildInfo>
+
 
 
 type Asn1Constraint = 
@@ -199,6 +178,7 @@ type Asn1Type = {
     Kind:Asn1TypeKind;
     Constraints:list<Asn1Constraint>;
     FromWithCompConstraints:list<Asn1Constraint>;
+    Location: SrcLoc   //Line no, Char pos
 }
 
 type Asn1ValueKind =
@@ -352,6 +332,7 @@ let createType (s:State) (ts:GenericFold2.UserDefinedTypeScope) (oldType:Ast.Asn
             Kind = newKind
             Constraints = newCons |> List.choose id
             FromWithCompConstraints = fromWithComps|> List.choose id
+            Location = oldType.Location
         }
     //printfn "Creating type with id %s" (ret.id.ToString())
     ret, {s with anonymousTypes = s.anonymousTypes@[ret]}

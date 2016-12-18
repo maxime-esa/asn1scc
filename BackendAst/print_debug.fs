@@ -7,8 +7,8 @@ open Antlr.Runtime
 open FsUtils
 open System
 open System.IO
+open Constraints
 open BAst
-
 type PRINT_CONTENT =
     | REF
     | CON
