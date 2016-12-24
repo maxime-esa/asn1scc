@@ -150,7 +150,7 @@ let rec PrintValue (v:Asn1Value) (t:ConstraintType) (tasName:string) (m:Asn1Modu
     | LengthOf(_) -> 
         match v.Kind with
         |IntegerValue(a)               -> c_var.PrintIntValue a.Value
-        |RefValue(modName,vasName)     -> (ToC vasName.Value)
+        |RefValue(modName,vasName)     -> "(int)" + (ToC vasName.Value)
         | _                            -> raise(BugErrorException "Invalid combination type/value")
     | AlphabetOf(_) ->
         match v.Kind with

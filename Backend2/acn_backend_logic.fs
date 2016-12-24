@@ -210,8 +210,9 @@ let rec GenerateValues (a:Asn1Type) modName (r:AstRoot) (acn:AcnTypes.AcnAstReso
                 | []    ->
                     let min,max = uPER.GetSizebaleMinMax kind cons r
                     yield OctetStringValue ([1I..min] |> List.map(fun i -> ByteLoc.ByValue 0uy))
-                    if min <> max then
-                        yield OctetStringValue ([1I..max] |> List.map(fun i -> ByteLoc.ByValue 0uy))
+                    let newMax = if max <= 100000I then max else 100000I
+                    if min < newMax && min <> newMax then
+                        yield OctetStringValue ([1I..newMax] |> List.map(fun i -> ByteLoc.ByValue 0uy))
                 | _     -> for x in valFromCons do yield x.Kind
             | BitString    ->
                 let valFromCons = GetValueFromConstraint a
@@ -219,8 +220,9 @@ let rec GenerateValues (a:Asn1Type) modName (r:AstRoot) (acn:AcnTypes.AcnAstReso
                 | []    ->
                     let min,max = uPER.GetSizebaleMinMax kind cons r
                     yield BitStringValue (loc (System.String('0',int min)) )
-                    if min <> max then
-                        yield BitStringValue (loc (System.String('0',int max)) )
+                    let newMax = if max <= 100000I then max else 100000I
+                    if min < newMax && min <> newMax then
+                        yield BitStringValue (loc (System.String('0',int newMax)) )
                 | _     -> for x in valFromCons do yield x.Kind
             | Boolean                   -> yield BooleanValue (loc false); yield BooleanValue (loc true)
             | ReferenceType(mdName, tasName, _) ->
