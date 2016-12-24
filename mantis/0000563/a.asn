@@ -1,0 +1,5 @@
+Frame-Types DEFINITIONS ::= BEGIN
+	MyInt ::= INTEGER (0..2359296)
+	frameMaxBytes MyInt ::= 2359296
+    MySeq ::= OCTET STRING (SIZE(0..frameMaxBytes))
+END
