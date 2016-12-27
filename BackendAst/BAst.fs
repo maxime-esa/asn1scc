@@ -148,12 +148,26 @@ type Enumerated = {
     cons                : (bool*EnumConstraint) list
 }
 
+type Boolean = {
+    cons                : (bool*BoolConstraint) list
+}
+
 type SequenceOf = {
     childTypeRef        : ReferenceToType
     cons                : (bool*SequenceOfConstraint) list
+    sizeUperRange       : uperRange<UInt32>
 }
  
 
+type OctetString = {
+    cons                : (bool*OctetStringConstraint) list
+    sizeUperRange       : uperRange<UInt32>
+}
+
+type BitString = {
+    cons                : (bool*BitStringConstraint) list
+    sizeUperRange       : uperRange<UInt32>
+}
 
 type Asn1Optionality = 
     | AlwaysAbsent
@@ -186,10 +200,10 @@ and Asn1TypeKind =
     | Integer           of Integer
     | Real              of Real
     | IA5String         of StringType
-    | OctetString       of (bool*OctetStringConstraint) list
+    | OctetString       of OctetString
     | NullType
-    | BitString         of (bool*BitStringConstraint) list
-    | Boolean           of (bool*BoolConstraint) list
+    | BitString         of BitString
+    | Boolean           of Boolean
     | Enumerated        of Enumerated
     | SequenceOf        of SequenceOf
     | Sequence          of Sequence
