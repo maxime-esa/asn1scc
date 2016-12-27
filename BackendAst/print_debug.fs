@@ -152,13 +152,13 @@ and PrintType (r:AstRoot) (t:Asn1Type) =
         | true  -> sprintf "[%s]" s
         | false -> s
 
-    match t.Kind with
+    match t with
     |Integer intt       -> ASN.Print_Integer (printUperRange intt.uperRange) (intt.cons |> List.map (printCon printRangeConstraint (fun x -> x.ToString()) ) )
     |Real  rCons        -> ASN.Print_Real (rCons.cons |> List.map (printCon printRangeConstraint (fun x -> x.ToString()) ) )
     |Boolean b          -> ASN.Print_Boolean (b.cons |> List.map (printCon printGenericConstraint (fun x -> x.ToString()) ) )
     |BitString bs       -> ASN.Print_BitString (bs.cons |> List.map (printCon printSizableConstraint (fun x -> x.ToString()) ) )
     |OctetString  oc    -> ASN.Print_OctetString (oc.cons |> List.map (printCon printSizableConstraint (fun x -> x.ToString()) ) )
-    |NullType           -> ASN.Print_NullType []
+    |NullType _         -> ASN.Print_NullType []
     |IA5String str  -> 
         ASN.Print_IA5String2 (printUperRange str.sizeUperRange) (printUperRange str.charUperRange) (str.cons |> List.map (printCon printAlphaConstraint (fun x -> x.ToString()) ) )
     |Enumerated enumItem  ->
@@ -193,7 +193,7 @@ and PrintType (r:AstRoot) (t:Asn1Type) =
 
 let PrintTypeAss (r:AstRoot) (t:Asn1Type)  = 
     let nm = match t.asn1Name with Some x -> x | None -> "anonymous"
-    let bnm = t.baseTypeId |> Option.map (printReferenceToType r REF)
+    let bnm = t.baseType |> Option.map (fun t -> printReferenceToType r REF t.id)
     ASN.PrintTypeAssigment2 (printReferenceToType r REF t.id) bnm nm (PrintType r t)
 
 let PrintValueAss (r:AstRoot) (v:Asn1GenericValue) = 

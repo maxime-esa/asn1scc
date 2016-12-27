@@ -60,7 +60,6 @@
     <Compile Include="Constraints.fs" />
     <Compile Include="ConstraintsMapping.fs" />
     <Compile Include="BAst.fs" />
-    <Compile Include="BAst2.fs" />
     <Compile Include="BAstConstruction.fs" />
     <Compile Include="CAst.fs" />
     <None Include="Script.fsx" />
