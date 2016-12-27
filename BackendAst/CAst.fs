@@ -6,7 +6,7 @@ open Antlr.Runtime
 
 open FsUtils
 open Constraints
-
+(*
 type ReferenceToAcnParam    = string*string*string
 type ReferenceToAcnTempType = string*string*string
 
@@ -159,6 +159,7 @@ let mapBastToCast0 (r:BAst.AstRoot) (c:AcnTypes.AcnAst) : unit=
     r.TypeAssignments |> List.map(fun s -> s.id.ToString()) |> Seq.iter (printfn "%s")
     printfn "ACN TYPES"
     c.Types|> List.map(fun s -> s.TypeID |> Seq.StrJoin ".") |> Seq.iter (printfn "%s")
+*)
     
     (*
 let createInteger (acnProps:AcnTypes.AcnProperty list) =
@@ -179,6 +180,8 @@ let createInteger (acnProps:AcnTypes.AcnProperty list) =
         acnIntSize              = acnIntSize
     }
     *)
+
+(*
 let mapBastToCast (r:BAst.AstRoot) (c:AcnTypes.AcnAst): AstRoot=
     let acnMap = c.Types |> List.map(fun s -> s.TypeID |> Seq.StrJoin ".", s) |> Map.ofList
     let mapType (t:BAst.Asn1Type) : Asn1Type =
@@ -203,3 +206,4 @@ let mapBastToCast (r:BAst.AstRoot) (c:AcnTypes.AcnAst): AstRoot=
         TypeAssignments = newTypes
         ValueAssignments = r.ValueAssignments
     }    
+*)

@@ -276,10 +276,20 @@ let foldAstRoot
                                                                             lc, (visitSilbingConstraint ss, uds2)) (retScope, nus1)
             typeFunc nus2 s t newTypeKind baseTypeId (newCons,fromWithComps) 
 
+(*
+MyInt1 ::= MyInt2 (1..10)
+MyInt2 ::= MyInt3 (1..100)
+MyInt3 ::= INTEGER (1..1000)
+MyInt1A ::= MyInt2 (1..5)
+
+*)
+
     and loopTypeKind (us:'UserState) (s:UserDefinedTypeScope) (asn1TypeKind:Asn1TypeKind) (oldTypeCons: Asn1Constraint list) (witchCompsCons:Asn1Constraint list) =
         match asn1TypeKind with
         | ReferenceType (mdName,tasName, tabularized) -> 
             let oldBaseType = GetBaseTypeByName mdName tasName r
+            //let refTypeScope = [MD mdName.Value; TA tasName.Value]
+            //let baseType, newState = loopType us (refTypeScope, oldBaseType) witchCompsCons
             loopTypeKind us s oldBaseType.Kind oldBaseType.Constraints witchCompsCons
         | Integer       ->  integerFunc us
         | Real          ->  realFunc us

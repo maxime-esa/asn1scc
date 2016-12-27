@@ -269,7 +269,7 @@ namespace Asn1f2
             {
                 var bast0 = BAstConstruction.createValidationAst(Ast.ProgrammingLanguage.C, asn1Ast0);
                 print_debug.DoWork(bast0, outDir, ".txt");
-                CAst.mapBastToCast0(bast0, acnAstUnresolved);
+                //CAst.mapBastToCast0(bast0, acnAstUnresolved);
                 return 0;
             }
             var asn1Ast = UpdateAcnProperties.DoWork(asn1Ast0, acnAstUnresolved).Item1;

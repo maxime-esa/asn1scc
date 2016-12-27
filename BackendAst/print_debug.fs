@@ -96,22 +96,22 @@ and printReferenceToValue (r:AstRoot) (p:PRINT_CONTENT) (ReferenceToValue (path,
         let p2 = vpath |> List.map (fun x -> x.StrValue) |> Seq.StrJoin "."
         p1 + "." + p2
     | CON ->
-        PrintAsn1Value r r.valsMap.[(ReferenceToValue (path, vpath))]
+        PrintAsn1GenericValue r r.valsMap.[(ReferenceToValue (path, vpath))]
     
 
-and PrintAsn1Value (r:AstRoot) (v:Asn1Value) = 
-    match v.Kind with
-    |IntegerValue(v)         -> ASN.Print_IntegerValue v
-    |RealValue(v)            -> ASN.Print_RealValue v
-    |StringValue(v)          -> ASN.Print_StringValue v
-    |EnumValue(v)            -> ASN.Print_StringValue v
-    |BooleanValue(v)         -> ASN.Print_BooleanValue v
-    |BitStringValue(v)       -> ASN.Print_BitStringValue v
-    |OctetStringValue(v)     -> ASN.Print_OctetStringValue (v |> Seq.map(fun x -> x) |> Seq.toArray)
-    |SeqOfValue(vals)        -> ASN.Print_SeqOfValue (vals |> Seq.map (fun v -> printReferenceToValue r CON v.id) |> Seq.toArray)
-    |SeqValue(vals)          -> ASN.Print_SeqValue (vals |> Seq.map(fun (nm, v) -> ASN.Print_SeqValue_Child nm (printReferenceToValue r CON v.id) ) |> Seq.toArray)
-    |ChValue(nm,v)           -> ASN.Print_ChValue nm (printReferenceToValue r CON v.id)
-    |NullValue               -> ASN.Print_NullValue()
+and PrintAsn1GenericValue (r:AstRoot) (v:Asn1GenericValue) = 
+    match v with
+    |IntegerValue(v)         -> ASN.Print_IntegerValue v.Value
+    |RealValue(v)            -> ASN.Print_RealValue v.Value
+    |StringValue(v)          -> ASN.Print_StringValue v.Value
+    |EnumValue(v)            -> ASN.Print_StringValue v.Value
+    |BooleanValue(v)         -> ASN.Print_BooleanValue v.Value
+    |BitStringValue(v)       -> ASN.Print_BitStringValue v.Value
+    |OctetStringValue(v)     -> ASN.Print_OctetStringValue (v.Value |> Seq.map(fun x -> x) |> Seq.toArray)
+    |SeqOfValue(v)           -> ASN.Print_SeqOfValue (v.Value |> Seq.map (fun v -> printReferenceToValue r CON v.id) |> Seq.toArray)
+    |SeqValue(v)             -> ASN.Print_SeqValue (v.Value |> Seq.map(fun nv -> ASN.Print_SeqValue_Child nv.name (printReferenceToValue r CON nv.Value.id) ) |> Seq.toArray)
+    |ChValue(v)              -> ASN.Print_ChValue v.Value.name (printReferenceToValue r CON v.Value.Value.id)
+    |NullValue   _           -> ASN.Print_NullValue()
 
 (*
 and PrintConstraint (r:AstRoot) (c:Asn1Constraint) = 
@@ -196,7 +196,8 @@ let PrintTypeAss (r:AstRoot) (t:Asn1Type)  =
     let bnm = t.baseTypeId |> Option.map (printReferenceToType r REF)
     ASN.PrintTypeAssigment2 (printReferenceToType r REF t.id) bnm nm (PrintType r t)
 
-let PrintValueAss (r:AstRoot) (v:Asn1Value) = ASN.PrintValueAssigment (printReferenceToValue r REF v.id) (printReferenceToType r REF v.refToType) (PrintAsn1Value r v)
+let PrintValueAss (r:AstRoot) (v:Asn1GenericValue) = 
+    ASN.PrintValueAssigment (printReferenceToValue r REF v.id) (printReferenceToType r REF v.refToType) (PrintAsn1GenericValue r v)
 
 let PrintModule (r:AstRoot) (m:Asn1Module) =
     let exports =
