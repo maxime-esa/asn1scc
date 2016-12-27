@@ -68,7 +68,7 @@ let rec PrintConstraint (c:Asn1Constraint) =
 let rec PrintType (t:Asn1Type) (m:Asn1Module) =
     let cons = t.Constraints |> Seq.map PrintConstraint |> Seq.toArray
     match t.Kind with
-    |Integer    -> ASN.Print_Integer cons
+    |Integer    -> ASN.Print_Integer "" cons
     |Real       -> ASN.Print_Real cons
     |Boolean    -> ASN.Print_Boolean cons
     |BitString  -> ASN.Print_BitString cons

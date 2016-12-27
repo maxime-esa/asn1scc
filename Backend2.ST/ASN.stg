@@ -55,9 +55,12 @@ PrintValueAssigment(sName, sType, sValue) ::= "<sName> <sType> ::= <sValue>"
 PrintType(sTypeSpecific) ::= "<sTypeSpecific>"
 
 
-Print_Integer(arrsConstraints) ::= "INTEGER <arrsConstraints>"
+Print_Integer(sUPER, arrsConstraints) ::= "INTEGER <sUPER> <arrsConstraints>"
 Print_Real(arrsConstraints) ::= "REAL <arrsConstraints>"
 Print_IA5String(arrsConstraints) ::= "IA5String <arrsConstraints>"
+Print_IA5String2(sSizeUper, sAlphaUper, arrsConstraints) ::= "IA5String [Size <sSizeUper>] [FROM <sAlphaUper>] <arrsConstraints>"
+
+
 Print_NumericString(arrsConstraints) ::= "NumericString <arrsConstraints>"
 Print_OctetString(arrsConstraints) ::= "OCTET STRING <arrsConstraints>"
 Print_NullType(arrsConstraints) ::= "NULL <arrsConstraints>"

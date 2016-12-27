@@ -59,6 +59,8 @@
     <Compile Include="AssemblyInfo.fs" />
     <Compile Include="Constraints.fs" />
     <Compile Include="BAst.fs" />
+    <Compile Include="ConstraintsMapping.fs" />
+    <Compile Include="BAstConstruction.fs" />
     <Compile Include="CAst.fs" />
     <None Include="Script.fsx" />
     <Compile Include="BackendAst.fs" />

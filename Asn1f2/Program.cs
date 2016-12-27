@@ -267,7 +267,7 @@ namespace Asn1f2
              */
             if (bast)
             {
-                var bast0 = BAst.createValidationAst(Ast.ProgrammingLanguage.C, asn1Ast0);
+                var bast0 = BAstConstruction.createValidationAst(Ast.ProgrammingLanguage.C, asn1Ast0);
                 print_debug.DoWork(bast0, outDir, ".txt");
                 CAst.mapBastToCast0(bast0, acnAstUnresolved);
                 return 0;
