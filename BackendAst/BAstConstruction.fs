@@ -76,17 +76,17 @@ let createValueAssignment (s:State) (r:Ast.AstRoot) (f:Ast.Asn1File) (m:Ast.Asn1
 let createChildInfo (st:State) s (ch:Ast.ChildInfo) (newType:Asn1Type) (newOptionality:Asn1Optionality option) = 
     {
         ChildInfo.Name = ch.Name.Value
-        refToType = newType.id
+        chType = newType
         Optionality = newOptionality
-        Comments = ch.Comments
+        Comments = ch.Comments |> Seq.toList
     }, st
 
 let createChoiceChildInfo (st:State) s (ch:Ast.ChildInfo) (newType:Asn1Type) = 
     {
         ChildInfo.Name = ch.Name.Value
-        refToType = newType.id
+        chType = newType
         Optionality = None
-        Comments = ch.Comments
+        Comments = ch.Comments |> Seq.toList
     }, st
 
 let createType (s:State) (ts:GenericFold2.UserDefinedTypeScope) (oldType:Ast.Asn1Type) (newCons:((Asn1AnyConstraint) option ) list, fromWithComps:((Asn1AnyConstraint) option ) list) (baseTypeId : ReferenceToType option) (newKind:Asn1Type)=
@@ -246,7 +246,7 @@ let createValidationAst (lang:Ast.ProgrammingLanguage) (app:Ast.AstRoot)  =
 
         //18 seqOfTypeFunc 
         (fun ustate newInnerType -> 
-            (SequenceOf {SequenceOf.childTypeRef=newInnerType.id; cons=[]; sizeUperRange=Full; baseType=None; Location=emptyLocation; id=ReferenceToType []}), ustate)
+            (SequenceOf {SequenceOf.childType=newInnerType; cons=[]; sizeUperRange=Full; baseType=None; Location=emptyLocation; id=ReferenceToType []}), ustate)
 
         //19 seqTypeFunc 
         (fun ustate newChildren -> 
@@ -427,9 +427,9 @@ let createValidationAst (lang:Ast.ProgrammingLanguage) (app:Ast.AstRoot)  =
         (fun us newTypeKind -> 
             match newTypeKind with
             | SequenceOf  sq   -> 
-                let retType = us.anonymousTypes |> Seq.find(fun at -> at.id = sq.childTypeRef)
-                let (ReferenceToType referenceToType) = sq.childTypeRef
-                (referenceToType, retType) 
+                //let retType = us.anonymousTypes |> Seq.find(fun at -> at.id = sq.childTypeRef)
+                let (ReferenceToType referenceToType) = sq.childType.id
+                (referenceToType, sq.childType) 
             | _                             -> raise(BugErrorException(sprintf "Expecting SequenceOf, found %A" newTypeKind)))
 
         //58 getChoiceTypeChild
@@ -438,9 +438,9 @@ let createValidationAst (lang:Ast.ProgrammingLanguage) (app:Ast.AstRoot)  =
             | Choice  ch   -> 
                 match ch.children |> List.tryFind (fun c -> c.Name = chName.Value) with
                 | Some ch       -> 
-                    let (ReferenceToType referenceToType) = ch.refToType
-                    let retType = us.anonymousTypes |> Seq.find(fun at -> at.id = (ReferenceToType referenceToType))
-                    (referenceToType, retType) 
+                    let (ReferenceToType referenceToType) = ch.chType.id
+                    //let retType = us.anonymousTypes |> Seq.find(fun at -> at.id = (ReferenceToType referenceToType))
+                    (referenceToType, ch.chType) 
                 | None          -> raise(SemanticError(chName.Location, (sprintf "CHOICE type has no alternative with name '%s'" chName.Value)))
             | _                 -> raise(BugErrorException(sprintf "Expecting Choice, found %A" newTypeKind)) )
         
@@ -451,9 +451,9 @@ let createValidationAst (lang:Ast.ProgrammingLanguage) (app:Ast.AstRoot)  =
             | Sequence  sq   -> 
                 match sq.children |> List.tryFind (fun c -> c.Name = chName.Value) with
                 | Some ch   -> 
-                    let (ReferenceToType referenceToType) = ch.refToType
-                    let retType = us.anonymousTypes |> Seq.find(fun at -> at.id = (ReferenceToType referenceToType))
-                    (referenceToType, retType)  
+                    let (ReferenceToType referenceToType) = ch.chType.id
+                    //let retType = us.anonymousTypes |> Seq.find(fun at -> at.id = (ReferenceToType referenceToType))
+                    (referenceToType, ch.chType)  
                 | None          -> raise(SemanticError(chName.Location, (sprintf "SEQUENCE type has no alternative with name '%s'" chName.Value)))
             | _                 -> raise(BugErrorException(sprintf "Expecting SEQUENCE, found %A" newTypeKind)) )
 

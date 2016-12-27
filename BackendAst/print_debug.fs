@@ -168,7 +168,7 @@ and PrintType (r:AstRoot) (t:Asn1Type) =
             (enumItem.cons |> List.map (printCon printGenericConstraint (fun x -> x.ToString()) ) )
         ASN.Print_Enumerated items  cons
     |Choice ch   ->
-        let printChild (c:ChildInfo) = ASN.Print_Choice_child c.Name (printReferenceToType r CON c.refToType)
+        let printChild (c:ChildInfo) = ASN.Print_Choice_child c.Name (printReferenceToType r CON c.chType.id)
         let cons =
             (ch.cons |> List.map (printCon printGenericConstraint (fun (nm,rv) -> ASN.Print_ChValue nm (printReferenceToValue r CON rv)  ) ) )
         ASN.Print_Choice (ch.children |> Seq.map printChild |> Seq.toArray) cons
@@ -181,14 +181,14 @@ and PrintType (r:AstRoot) (t:Asn1Type) =
                 | Some  AlwaysAbsent  -> true, None
                 | Some AlwaysPresent  -> true, None
                 | None                -> false, None
-            ASN.Print_Sequence_child c.Name (printReferenceToType r CON c.refToType) bIsOptionalOrDefault soDefValue
+            ASN.Print_Sequence_child c.Name (printReferenceToType r CON c.chType.id) bIsOptionalOrDefault soDefValue
         let cons =
             (sq.cons |> List.map (printCon printGenericConstraint (fun vals -> ASN.Print_SeqValue (vals |> List.map(fun (nm, v) -> ASN.Print_SeqValue_Child nm (printReferenceToValue r CON v) ) )  ) ) )
         ASN.Print_Sequence (sq.children |> Seq.map printChild |> Seq.toArray) cons
     |SequenceOf sqOf  -> 
         let cons =
             (sqOf.cons |> List.map (printCon printSizableConstraint (fun vals -> ASN.Print_SeqOfValue (vals |> Seq.map (fun v -> printReferenceToValue r CON v) |> Seq.toArray) ) ) )
-        ASN.Print_SequenceOf (printReferenceToType r CON sqOf.childTypeRef) cons
+        ASN.Print_SequenceOf (printReferenceToType r CON sqOf.childType.id) cons
 
 
 let PrintTypeAss (r:AstRoot) (t:Asn1Type)  = 

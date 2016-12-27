@@ -55,14 +55,6 @@ type Boolean = {
     Location            : SrcLoc   
 }
 
-type SequenceOf = {
-    id                  : ReferenceToType
-    childTypeRef        : ReferenceToType
-    cons                : (bool*SequenceOfConstraint) list
-    sizeUperRange       : uperRange<UInt32>
-    baseType            : SequenceOf option
-    Location            : SrcLoc   
-}
  
 
 type OctetString = {
@@ -93,12 +85,20 @@ type Asn1Optionality =
     | Optional  
     | Default   of Asn1GenericValue
 
+type SequenceOf = {
+    id                  : ReferenceToType
+    childType           : Asn1Type
+    cons                : (bool*SequenceOfConstraint) list
+    sizeUperRange       : uperRange<UInt32>
+    baseType            : SequenceOf option
+    Location            : SrcLoc   
+}
 
 and ChildInfo = {
-    Name:string;
-    refToType:ReferenceToType;
-    Optionality:Asn1Optionality option
-    Comments: string array
+    Name                :string
+    chType              :Asn1Type
+    Optionality         :Asn1Optionality option
+    Comments            :string list
 }
 
 and Sequence = {
