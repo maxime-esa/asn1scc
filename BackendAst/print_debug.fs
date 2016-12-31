@@ -9,6 +9,8 @@ open System
 open System.IO
 open Constraints
 open BAst
+open uPER2
+
 type PRINT_CONTENT =
     | REF
     | CON
@@ -134,18 +136,11 @@ and PrintConstraint (r:AstRoot) (c:Asn1Constraint) =
 *)
 
 and PrintType (r:AstRoot) (t:Asn1Type) =
-    (*
-    let rec getBaseCons (t:Asn1Type) = 
-        match t.baseTypeId with
-        | None  -> t.Constraints,t.FromWithCompConstraints
-        | Some bid ->
-            let baseCon, baseFromCom = getBaseCons (r.typesMap.[bid])
-            t.Constraints@baseCon, t.FromWithCompConstraints@baseFromCom
-    let constraints, fromWithCompConstraints = getBaseCons t
-    let cons = constraints |> Seq.map (PrintConstraint r)  |> Seq.toList
-    let fcons = fromWithCompConstraints |> Seq.map (fun c -> sprintf "[%s]" (PrintConstraint r c)) |> Seq.toList
-    let cons = cons@fcons
-    *)
+    let inline cmb (t : ^T) =
+        let cons     = (^T : (member Cons     : ^C list)(t))
+        let withcons = (^T : (member WithCons : ^C list)(t))
+        (cons |> List.map(fun x -> (false,x)))@(withcons |> List.map(fun x -> (true,x)))
+
     let printCon  printConFunc vGetter (b:bool,c:'con) =
         let s,_ = printConFunc vGetter  c
         match b with
@@ -153,26 +148,24 @@ and PrintType (r:AstRoot) (t:Asn1Type) =
         | false -> s
 
     match t with
-    |Integer intt       -> ASN.Print_Integer (printUperRange intt.uperRange) (intt.cons |> List.map (printCon printRangeConstraint (fun x -> x.ToString()) ) )
-    |Real  rCons        -> ASN.Print_Real (rCons.cons |> List.map (printCon printRangeConstraint (fun x -> x.ToString()) ) )
-    |Boolean b          -> ASN.Print_Boolean (b.cons |> List.map (printCon printGenericConstraint (fun x -> x.ToString()) ) )
-    |BitString bs       -> ASN.Print_BitString (bs.cons |> List.map (printCon printSizableConstraint (fun x -> x.ToString()) ) )
-    |OctetString  oc    -> ASN.Print_OctetString (oc.cons |> List.map (printCon printSizableConstraint (fun x -> x.ToString()) ) )
-    |NullType _         -> ASN.Print_NullType []
-    |IA5String str  -> 
-        ASN.Print_IA5String2 (printUperRange str.sizeUperRange) (printUperRange str.charUperRange) (str.cons |> List.map (printCon printAlphaConstraint (fun x -> x.ToString()) ) )
-    |Enumerated enumItem  ->
+    |Integer x       -> ASN.Print_Integer (printUperRange x.uperRange) ( cmb x  |> List.map (printCon printRangeConstraint (fun x -> x.ToString()) ) )
+    |Real  x         -> ASN.Print_Real (cmb x |> List.map (printCon printRangeConstraint (fun x -> x.ToString()) ) )
+    |Boolean x       -> ASN.Print_Boolean (cmb x |> List.map (printCon printGenericConstraint (fun x -> x.ToString()) ) )
+    |BitString x     -> ASN.Print_BitString (cmb x |> List.map (printCon printSizableConstraint (fun x -> x.ToString()) ) )
+    |OctetString  x  -> ASN.Print_OctetString (cmb x  |> List.map (printCon printSizableConstraint (fun x -> x.ToString()) ) )
+    |NullType _      -> ASN.Print_NullType []
+    |IA5String x  -> 
+        ASN.Print_IA5String2 (printUperRange x.sizeUperRange) (printUperRange x.charUperRange) (cmb x |> List.map (printCon printAlphaConstraint (fun x -> x.ToString()) ) )
+    |Enumerated x  ->
         let items =
-            enumItem.items |> List.map(fun itm -> ASN.Print_Enumerated_child itm.name true (itm.Value.ToString() ))
-        let cons =
-            (enumItem.cons |> List.map (printCon printGenericConstraint (fun x -> x.ToString()) ) )
+            x.items |> List.map(fun itm -> ASN.Print_Enumerated_child itm.name true (itm.Value.ToString() ))
+        let cons = cmb x |> List.map (printCon printGenericConstraint (fun x -> x.ToString()) ) 
         ASN.Print_Enumerated items  cons
-    |Choice ch   ->
+    |Choice x   ->
         let printChild (c:ChildInfo) = ASN.Print_Choice_child c.Name (printReferenceToType r CON c.chType.id)
-        let cons =
-            (ch.cons |> List.map (printCon printGenericConstraint (fun (nm,rv) -> ASN.Print_ChValue nm (printReferenceToValue r CON rv)  ) ) )
-        ASN.Print_Choice (ch.children |> Seq.map printChild |> Seq.toArray) cons
-    |Sequence sq ->
+        let cons = cmb x |> List.map (printCon printGenericConstraint (fun (nm,rv) -> ASN.Print_ChValue nm (printReferenceToValue r CON rv)  ) ) 
+        ASN.Print_Choice (x.children |> Seq.map printChild |> Seq.toArray) cons
+    |Sequence x ->
         let printChild (c:ChildInfo) = 
             let bIsOptionalOrDefault, soDefValue = 
                 match c.Optionality with
@@ -182,13 +175,11 @@ and PrintType (r:AstRoot) (t:Asn1Type) =
                 | Some AlwaysPresent  -> true, None
                 | None                -> false, None
             ASN.Print_Sequence_child c.Name (printReferenceToType r CON c.chType.id) bIsOptionalOrDefault soDefValue
-        let cons =
-            (sq.cons |> List.map (printCon printGenericConstraint (fun vals -> ASN.Print_SeqValue (vals |> List.map(fun (nm, v) -> ASN.Print_SeqValue_Child nm (printReferenceToValue r CON v) ) )  ) ) )
-        ASN.Print_Sequence (sq.children |> Seq.map printChild |> Seq.toArray) cons
-    |SequenceOf sqOf  -> 
-        let cons =
-            (sqOf.cons |> List.map (printCon printSizableConstraint (fun vals -> ASN.Print_SeqOfValue (vals |> Seq.map (fun v -> printReferenceToValue r CON v) |> Seq.toArray) ) ) )
-        ASN.Print_SequenceOf (printReferenceToType r CON sqOf.childType.id) cons
+        let cons = cmb x |> List.map (printCon printGenericConstraint (fun vals -> ASN.Print_SeqValue (vals |> List.map(fun (nm, v) -> ASN.Print_SeqValue_Child nm (printReferenceToValue r CON v) ) )  ) ) 
+        ASN.Print_Sequence (x.children |> Seq.map printChild |> Seq.toArray) cons
+    |SequenceOf x  -> 
+        let cons = cmb x |> List.map (printCon printSizableConstraint (fun vals -> ASN.Print_SeqOfValue (vals |> Seq.map (fun v -> printReferenceToValue r CON v) |> Seq.toArray) ) ) 
+        ASN.Print_SequenceOf (printReferenceToType r CON x.childType.id) cons
 
 
 let PrintTypeAss (r:AstRoot) (t:Asn1Type)  = 
