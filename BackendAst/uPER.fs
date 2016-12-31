@@ -175,61 +175,73 @@ let getSrtingSizeUperRange (cons:IA5StringConstraint list) (l:SrcLoc) =
         getStringConstraintSizeUperRange c  l 
     cons |> List.fold(fun s c -> uperIntersection s (getConUperRange c l) l) Full
 
+let IntersectArrays (s1:char array) (s2:char array) (l:SrcLoc) = 
+    let cache = s2 |> Set.ofSeq
+    let ret = s1 |> Array.filter(fun ch -> cache.Contains(ch))
+    match ret.Length with
+    | 0  -> raise(SemanticError(l, "The alphabet constraint defined for this type do not allow any character"))
+    | _  ->ret
 
-let getStringConstraintAlphabetUperRange (c:IA5StringConstraint) (l:SrcLoc) =
+let getStringConstraintAlphabetUperRange (c:IA5StringConstraint) (defaultCharSet: char array) (l:SrcLoc) =
+
+
+    let GetCharSetFromString (str:string) = str.ToCharArray() |> Seq.distinct |> Seq.toArray
+    let CharSetUnion(s1: char array) (s2:char array) = [s1;s2] |>Seq.concat |> Seq.distinct |> Seq.toArray
+    let GetCharSetFromMinMax a b minIsIn maxIsIn = 
+        let a1 = defaultCharSet |> Array.findIndex(fun ch -> ch = a)
+        let a2 = defaultCharSet |> Array.findIndex(fun ch -> ch = b)
+        let a1 = if minIsIn then a1 else a1+1
+        let a2 = if maxIsIn then a2 else a2-1
+        defaultCharSet.[a1..a2]
+
     let nextChar (c:System.Char) =
         System.Convert.ToChar(System.Convert.ToInt32(c)+1)
     let prevChar (c:System.Char) =
         System.Convert.ToChar(System.Convert.ToInt32(c)-1)
     
     foldStringTypeConstraint
-        (fun r1 r2 b s      -> uperUnion r1 r2, s)
-        (fun r1 r2 s        -> uperIntersection r1 r2 l, s)
-        (fun r s            -> Full, s)       
+        (fun r1 r2 b s      -> CharSetUnion r1 r2, s)
+        (fun r1 r2 s        -> IntersectArrays r1 r2 l, s)
+        (fun r s            -> defaultCharSet, s)       
         (fun r1 r2 s        -> r1, s)
-        (fun r s            -> Full, s)       
-        (fun r1 r2 s        -> Full, s)
-        (fun v rv s         -> Full,s)
+        (fun r s            -> defaultCharSet, s)       
+        (fun r1 r2 s        -> defaultCharSet, s)
+        (fun v rv s         -> defaultCharSet,s)
         
-        (fun r1 r2 b s      -> Full, s)
-        (fun r1 r2 s        -> Full, s)
-        (fun r s            -> Full, s)       
-        (fun r1 r2 s        -> Full, s)
-        (fun r s            -> Full, s)       
-        (fun r1 r2 s        -> Full, s)
-        (fun v rv s         -> Full,s)
-        (fun v1 v2  minIsIn maxIsIn s  ->Full, s)
-        (fun v1 minIsIn  s  -> Full ,s )
-        (fun v2 maxIsIn s   -> Full, s)
+        (fun r1 r2 b s      -> defaultCharSet, s)
+        (fun r1 r2 s        -> defaultCharSet, s)
+        (fun r s            -> defaultCharSet, s)       
+        (fun r1 r2 s        -> defaultCharSet, s)
+        (fun r s            -> defaultCharSet, s)       
+        (fun r1 r2 s        -> defaultCharSet, s)
+        (fun v rv s         -> defaultCharSet,s)
+        (fun v1 v2  minIsIn maxIsIn s  ->defaultCharSet, s)
+        (fun v1 minIsIn  s  -> defaultCharSet ,s )
+        (fun v2 maxIsIn s   -> defaultCharSet, s)
 
-        (fun r1 r2 b s      -> uperUnion r1 r2, s)
-        (fun r1 r2 s        -> uperIntersection r1 r2 l, s)
-        (fun r s            -> Full, s)       
+        (fun r1 r2 b s      -> CharSetUnion r1 r2, s)
+        (fun r1 r2 s        -> IntersectArrays r1 r2 l, s)
+        (fun r s            -> defaultCharSet, s)       
         (fun r1 r2 s        -> r1, s)
-        (fun r s            -> Full, s)       
-        (fun r1 r2 s        -> Full, s)
-        (fun v rv s         -> 
-            let charSet = v.ToCharArray() |> Seq.toList
-            let ret =
-                match charSet with
-                | []        -> emptyTypeError l
-                | x::xs     -> xs |> List.fold(fun st c -> uperUnion st (Concrete (c,c))) (Concrete (x,x))
-            ret, s)
-        (fun v1 v2  minIsIn maxIsIn s  ->
-            let val1 = if minIsIn then v1 else (nextChar v1)
-            let val2 = if maxIsIn then v2 else (prevChar v2)
-            Concrete(val1 , val2), s)
+        (fun r s            -> defaultCharSet, s)       
+        (fun r1 r2 s        -> defaultCharSet, s)
+        (fun v rv s         -> GetCharSetFromString v, s)
+        (fun v1 v2  minIsIn maxIsIn s  -> GetCharSetFromMinMax v1 v2 minIsIn maxIsIn, s)
         (fun v1 minIsIn  s      -> 
+            let v2 = defaultCharSet.[defaultCharSet.Length-1]
             let val1 = if minIsIn then v1 else (nextChar v1)
-            PosInf(val1) ,s )
+            GetCharSetFromMinMax v1 v2 minIsIn true ,s )
         (fun v2 maxIsIn s      -> 
-            let val2 = if maxIsIn then v2 else (prevChar v2)
-            NegInf(val2), s)
+            let v1 = defaultCharSet.[0]
+            GetCharSetFromMinMax v1 v2 true maxIsIn, s)
 
         c 
         0 |> fst
 
-let getSrtingAlphaUperRange (cons:IA5StringConstraint list) (l:SrcLoc) =
+let getSrtingAlphaUperRange (cons:IA5StringConstraint list) (defaultCharSet: char array) (l:SrcLoc) =
     let getConUperRange (c:IA5StringConstraint) (l:SrcLoc) =
-        getStringConstraintAlphabetUperRange c  l 
-    cons |> List.fold(fun s c -> uperIntersection s (getConUperRange c l) l) Full
+        getStringConstraintAlphabetUperRange c defaultCharSet l 
+    cons |> List.fold(fun s c -> IntersectArrays s (getConUperRange c l) l) defaultCharSet
+
+
+

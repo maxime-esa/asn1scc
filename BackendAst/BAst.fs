@@ -12,6 +12,8 @@ open FsUtils
 
 type Integer = {
     id                  : ReferenceToType
+    uperMaxSizeInBits   : int
+    uperMinSizeInBits   : int
     cons                : IntegerTypeConstraint list
     withcons            : IntegerTypeConstraint list
     uperRange           : uperRange<BigInteger>
@@ -25,6 +27,8 @@ with
 
 type Real = {
     id                  : ReferenceToType
+    uperMaxSizeInBits   : int
+    uperMinSizeInBits   : int
     cons                : RealTypeConstraint list
     withcons            : RealTypeConstraint list
     uperRange           : uperRange<double>
@@ -38,10 +42,13 @@ with
 
 type StringType = {
     id                  : ReferenceToType
+    uperMaxSizeInBits   : int
+    uperMinSizeInBits   : int
     cons                : IA5StringConstraint list
     withcons            : IA5StringConstraint list
-    sizeUperRange       : uperRange<UInt32>
-    charUperRange       : uperRange<char>
+    minSize             : int
+    maxSize             : int
+    charSet             : char array
     baseType            : StringType option
     Location            : SrcLoc   
 }
@@ -58,6 +65,8 @@ type EnumItem = {
 
 type Enumerated = {
     id                  : ReferenceToType
+    uperMaxSizeInBits   : int
+    uperMinSizeInBits   : int
     items               : EnumItem list
     userDefinedValues   : bool      //if true, the user has associated at least one item with a value
     cons                : EnumConstraint list
@@ -73,6 +82,8 @@ with
 
 type Boolean = {
     id                  : ReferenceToType
+    uperMaxSizeInBits   : int
+    uperMinSizeInBits   : int
     cons                : BoolConstraint list
     withcons            : BoolConstraint list
     baseType            : Boolean option
@@ -86,9 +97,12 @@ with
 
 type OctetString = {
     id                  : ReferenceToType
+    uperMaxSizeInBits   : int
+    uperMinSizeInBits   : int
     cons                : OctetStringConstraint list
     withcons            : OctetStringConstraint list
-    sizeUperRange       : uperRange<UInt32>
+    minSize             : int
+    maxSize             : int
     baseType            : OctetString option
     Location            : SrcLoc   
 }
@@ -99,15 +113,20 @@ with
 
 type NullType = {
     id                  : ReferenceToType
+    uperMaxSizeInBits   : int
+    uperMinSizeInBits   : int
     baseType            : NullType option
     Location            : SrcLoc   
 }
 
 type BitString = {
     id                  : ReferenceToType
+    uperMaxSizeInBits   : int
+    uperMinSizeInBits   : int
     cons                : BitStringConstraint list
     withcons            : BitStringConstraint list
-    sizeUperRange       : uperRange<UInt32>
+    minSize             : int
+    maxSize             : int
     baseType            : BitString option
     Location            : SrcLoc   
 }
@@ -124,10 +143,13 @@ type Asn1Optionality =
 
 type SequenceOf = {
     id                  : ReferenceToType
+    uperMaxSizeInBits   : int
+    uperMinSizeInBits   : int
     childType           : Asn1Type
     cons                : SequenceOfConstraint list
     withcons            : SequenceOfConstraint list
-    sizeUperRange       : uperRange<UInt32>
+    minSize             : int
+    maxSize             : int
     baseType            : SequenceOf option
     Location            : SrcLoc   
 }
@@ -145,6 +167,8 @@ and ChildInfo = {
 
 and Sequence = {
     id                  : ReferenceToType
+    uperMaxSizeInBits   : int
+    uperMinSizeInBits   : int
     children            : ChildInfo list
     cons                : SequenceConstraint list
     withcons            : SequenceConstraint list
@@ -158,6 +182,8 @@ with
 
 and Choice = {
     id                  : ReferenceToType
+    uperMaxSizeInBits   : int
+    uperMinSizeInBits   : int
     children            : ChildInfo list
     cons                : ChoiceConstraint list
     withcons            : ChoiceConstraint list
@@ -210,6 +236,33 @@ with
         | SequenceOf   t -> t.baseType |> Option.map SequenceOf  
         | Sequence     t -> t.baseType |> Option.map Sequence    
         | Choice       t -> t.baseType |> Option.map Choice      
+    member this.uperMaxSizeInBits =
+        match this with
+        | Integer      t -> t.uperMaxSizeInBits
+        | Real         t -> t.uperMaxSizeInBits
+        | IA5String    t -> t.uperMaxSizeInBits
+        | OctetString  t -> t.uperMaxSizeInBits
+        | NullType     t -> t.uperMaxSizeInBits
+        | BitString    t -> t.uperMaxSizeInBits
+        | Boolean      t -> t.uperMaxSizeInBits
+        | Enumerated   t -> t.uperMaxSizeInBits
+        | SequenceOf   t -> t.uperMaxSizeInBits
+        | Sequence     t -> t.uperMaxSizeInBits
+        | Choice       t -> t.uperMaxSizeInBits
+    member this.uperMinSizeInBits =
+        match this with
+        | Integer      t -> t.uperMinSizeInBits
+        | Real         t -> t.uperMinSizeInBits
+        | IA5String    t -> t.uperMinSizeInBits
+        | OctetString  t -> t.uperMinSizeInBits
+        | NullType     t -> t.uperMinSizeInBits
+        | BitString    t -> t.uperMinSizeInBits
+        | Boolean      t -> t.uperMinSizeInBits
+        | Enumerated   t -> t.uperMinSizeInBits
+        | SequenceOf   t -> t.uperMinSizeInBits
+        | Sequence     t -> t.uperMinSizeInBits
+        | Choice       t -> t.uperMinSizeInBits
+
     member this.asn1Name = 
         match this.id with
         | ReferenceToType((GenericFold2.MD _)::(GenericFold2.TA tasName)::[])   -> Some tasName

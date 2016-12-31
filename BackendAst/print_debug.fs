@@ -22,6 +22,7 @@ let printUperRange (u:uperRange<'a>) =
     | PosInf    a       -> sprintf "[%A .. MAX]" a        //(-inf, b]
     | Full              -> "[MIN .. MAX]"                 // (-inf, +inf)
 
+let printSizeMinMax a b = sprintf "[%d .. %d]" a b
 
 let printGenericConstraint printValue (c:GenericConstraint<'v>)  = 
     foldGenericConstraint
@@ -155,7 +156,7 @@ and PrintType (r:AstRoot) (t:Asn1Type) =
     |OctetString  x  -> ASN.Print_OctetString (cmb x  |> List.map (printCon printSizableConstraint (fun x -> x.ToString()) ) )
     |NullType _      -> ASN.Print_NullType []
     |IA5String x  -> 
-        ASN.Print_IA5String2 (printUperRange x.sizeUperRange) (printUperRange x.charUperRange) (cmb x |> List.map (printCon printAlphaConstraint (fun x -> x.ToString()) ) )
+        ASN.Print_IA5String2 (printSizeMinMax x.minSize x.maxSize) (x.charSet |> Seq.StrJoin "") (cmb x |> List.map (printCon printAlphaConstraint (fun x -> x.ToString()) ) )
     |Enumerated x  ->
         let items =
             x.items |> List.map(fun itm -> ASN.Print_Enumerated_child itm.name true (itm.Value.ToString() ))

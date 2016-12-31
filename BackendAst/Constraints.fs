@@ -142,6 +142,7 @@ type AstRootTemplate<'ASN1TYPE> = {
     typesMap : Map<ReferenceToType, 'ASN1TYPE>
     TypeAssignments : list<'ASN1TYPE>
     ValueAssignments : list<Asn1GenericValue>
+    integerSizeInBytes : int
 }
 
 

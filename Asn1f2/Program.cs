@@ -164,6 +164,7 @@ namespace Asn1f2
                 return 4;
             }
 
+
             if (!Directory.Exists(outDir))
             {
                 Console.Error.WriteLine("Output directory '{0}' does not exist", outDir);
@@ -222,7 +223,7 @@ namespace Asn1f2
             */
             var parameterized_ast = CreateAsn1AstFromAntlrTree.CreateAstRoot(asn1Files, encodings.ToArray(),
                     generateEqualFunctions, cmdArgs.GetOptionalArgument("typePrefix", ""), cmdArgs.HasArgument("oss"),
-                    astXmlFile, icdUperHtmlFileName, icdAcnHtmlFileName, mappingFunctionsModule);
+                    astXmlFile, icdUperHtmlFileName, icdAcnHtmlFileName, mappingFunctionsModule, int.Parse(ws));
 
             /*
              *  Removes parameterized types by resolving them. In the example above

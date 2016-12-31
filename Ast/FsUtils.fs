@@ -220,6 +220,11 @@ module List =
         |[],a::rest        -> false
         |_,[]              -> true
         |h1::big, h2::smal -> h1=h2 &&  StartsWith smal big 
+
+    let split func list =
+        let l1 = list |> List.filter func
+        let l2 = list |> List.filter (fun x -> not (func x))
+        (l1,l2)
     
     let Replace listToSearch listToReplace mainList =
         let rec GetSubList smallList bigList =

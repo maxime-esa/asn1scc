@@ -249,18 +249,6 @@ let foldAstRoot
     and loopType (us:'UserState) (s:UserDefinedTypeScope, t:Asn1Type) (witchCompsCons:Asn1Constraint list) =
         let conScope = visitConstraint []
         let withCompCons = (t.Constraints@witchCompsCons) |> List.choose(fun c -> match c with WithComponentConstraint _ -> Some c| WithComponentsConstraint _ -> Some c | _ -> None)
-        let baseTypeId = 
-            match t.Kind with
-            | ReferenceType (mdName,tasName, tabularized) when not (withCompCons.IsEmpty) -> 
-                None
-            | ReferenceType (mdName,tasName, tabularized) when withCompCons.IsEmpty -> 
-                Some (visitRefType mdName.Value tasName.Value)
-            | _ -> 
-                None
-        let numericStringCons =
-            match t.Kind with
-            | NumericString -> [RemoveNumericStringsAndFixEnums.numericStringDefaultConstraints()]
-            | _             -> []
 
         match t.Kind with
         | ReferenceType (mdName,tasName, tabularized) when not (withCompCons.IsEmpty) -> 
@@ -269,13 +257,13 @@ let foldAstRoot
             loopType us (s, oldBaseType) []
         | _     ->
             let newTypeKind, nus = loopTypeKind us s t.Kind  withCompCons
-            let newCons, (retScope, nus1) = (numericStringCons@t.Constraints) |> foldMap  (fun (ss, uds) c -> 
+            let newCons, (retScope, nus1) = t.Constraints |> foldMap  (fun (ss, uds) c -> 
                                                                                     let lc, uds2 = loopConstraint uds (s, newTypeKind,t) CheckContent (ss,c)
                                                                                     lc, (visitSilbingConstraint ss,uds2)) (conScope, nus)
             let fromWithComps, (_, nus2) = witchCompsCons |> foldMap  (fun (ss, uds) c -> 
                                                                             let lc, uds2 = loopConstraint uds (s, newTypeKind,t) CheckContent (ss,c)
                                                                             lc, (visitSilbingConstraint ss, uds2)) (retScope, nus1)
-            typeFunc nus2 s t newTypeKind baseTypeId (newCons,fromWithComps) 
+            typeFunc nus2 s t newTypeKind (newCons,fromWithComps) 
 
     and loopTypeKind (us:'UserState) (s:UserDefinedTypeScope) (asn1TypeKind:Asn1TypeKind)  (witchCompsCons:Asn1Constraint list) =
         match asn1TypeKind with

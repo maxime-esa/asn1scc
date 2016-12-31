@@ -27,6 +27,7 @@ type AstRoot = {
     IcdAcnHtmlFileName:string
     CheckWithOss:bool
     mappingFunctionsModule : string option
+    integerSizeInBytes : int            //currently only the value of 8 bytes (64 bits) is supported
 }
 and EnumRenamePolicy =
     | NoRenamePolicy
