@@ -270,15 +270,32 @@ namespace Asn1f2
             {
                 var bast0 = BAstConstruction.createValidationAst(Ast.ProgrammingLanguage.C, asn1Ast0);
                 print_debug.DoWork(bast0, outDir, ".txt");
-                //CAst.mapBastToCast0(bast0, acnAstUnresolved);
+                CAst.mapBastToCast(bast0, acnAstUnresolved);
                 return 0;
             }
+
+
+            /*
+             * The ASN.1 AST is enriched with information from ACN. In particular:
+             * - the Asn1Type.AcnProperties are populated (up to this point it was just an empty list)
+             * - creates types inserted in ACN (ChildInfo.AcnInsertedField = true). 
+             * - validates that acn properties that have a relative paths are valid (i.e. point to existing 
+             *   and compatibe types.
+             */
             var asn1Ast = UpdateAcnProperties.DoWork(asn1Ast0, acnAstUnresolved).Item1;
 
-            
+
             /*
-             * 
-             */ 
+             * Creates the "resolved" version of the ACN AST i.e.   AcnTypes.AcnAst -> AcnTypes.AcnAstResolved
+             * acn.Constants and acn.Parameters are copied as is from one AST to the other
+             * References are convered from AcnTypes.LongReference (the ones containing relative paths) to LongReferenceResolved (only absolute paths)
+             * By the way, LongReference and LongReferenceResolved are really bad names. They should be called RelativeLink and absolute links
+             * since they link two types 
+             *  -the decType (the ASN.1 type that is encoded/decode)
+             *  -the determinant that acts as some kind of determinant (e.g. size determinant, presence determinant etc)
+             *  -The kind of determinant is described by the property Kind : LongReferenceKind 
+             *  At this point the TmpTypes is empty (TmpTypes are during the Acn.RemoveVirtualPaths step)
+             */
             var acnAstResolved = Acn.Resolve.ResolveRelativePaths(acnAstUnresolved, asn1Ast);
             //PrintAsn1.DebugPrintAsn1Acn(asn1Ast, acnAstResolved, ".", ".1.asn1");
 
