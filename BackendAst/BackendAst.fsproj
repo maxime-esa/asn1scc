@@ -58,8 +58,8 @@
   <ItemGroup>
     <Compile Include="AssemblyInfo.fs" />
     <Compile Include="Constraints.fs" />
-    <Compile Include="uPER.fs" />
     <Compile Include="ConstraintsMapping.fs" />
+    <Compile Include="uPER.fs" />
     <Compile Include="BAst.fs" />
     <Compile Include="BAstConstruction.fs" />
     <Compile Include="CAst.fs" />

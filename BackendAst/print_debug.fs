@@ -22,6 +22,9 @@ let printUperRange (u:uperRange<'a>) =
     | PosInf    a       -> sprintf "[%A .. MAX]" a        //(-inf, b]
     | Full              -> "[MIN .. MAX]"                 // (-inf, +inf)
 
+let printCharSet (cs:char array) =
+    cs|> Seq.filter (fun c -> not (Char.IsControl c)) |> Seq.StrJoin "" 
+
 let printSizeMinMax a b = sprintf "[%d .. %d]" a b
 
 let printGenericConstraint printValue (c:GenericConstraint<'v>)  = 
@@ -110,31 +113,13 @@ and PrintAsn1GenericValue (r:AstRoot) (v:Asn1GenericValue) =
     |EnumValue(v)            -> ASN.Print_StringValue v.Value
     |BooleanValue(v)         -> ASN.Print_BooleanValue v.Value
     |BitStringValue(v)       -> ASN.Print_BitStringValue v.Value
-    |OctetStringValue(v)     -> ASN.Print_OctetStringValue (v.Value |> Seq.map(fun x -> x) |> Seq.toArray)
+    |OctetStringValue(v)     -> ASN.Print_OctetStringValue (v.Value )
     |SeqOfValue(v)           -> ASN.Print_SeqOfValue (v.Value |> Seq.map (fun v -> printReferenceToValue r CON v.id) |> Seq.toArray)
     |SeqValue(v)             -> ASN.Print_SeqValue (v.Value |> Seq.map(fun nv -> ASN.Print_SeqValue_Child nv.name (printReferenceToValue r CON nv.Value.id) ) |> Seq.toArray)
     |ChValue(v)              -> ASN.Print_ChValue v.Value.name (printReferenceToValue r CON v.Value.Value.id)
     |NullValue   _           -> ASN.Print_NullValue()
 
-(*
-and PrintConstraint (r:AstRoot) (c:Asn1Constraint) = 
-    match c with
-    | SingleValueContraint(v)       -> ASN.Print_SingleValueContraint (printReferenceToValue r CON v.id)
-    | RangeContraint(v1, v2, b1, b2)        -> ASN.Print_RangeContraint (printReferenceToValue r CON v1.id) (printReferenceToValue r CON v2.id) b1 b2
-    | RangeContraint_val_MAX(v, b1)     -> ASN.Print_RangeContraint_val_MAX (printReferenceToValue r CON v.id) b1
-    | RangeContraint_MIN_val(v, b2)     -> ASN.Print_RangeContraint_MIN_val (printReferenceToValue r CON v.id) b2  
-    | SizeContraint(c)              -> ASN.Print_SizeContraint (PrintConstraint r c)   
-    | AlphabetContraint(c)          -> ASN.Print_AlphabetContraint (PrintConstraint r c)   
-    | UnionConstraint(c1,c2,virtualCon)        -> 
-        match virtualCon with
-        | false -> ASN.Print_UnionConstraint (PrintConstraint r c1) (PrintConstraint r c2)   
-        | true  -> ""
-    | IntersectionConstraint(c1,c2) -> ASN.Print_IntersectionConstraint (PrintConstraint r c1) (PrintConstraint r c2)          
-    | AllExceptConstraint(c)        -> ASN.Print_AllExceptConstraint (PrintConstraint r c)      
-    | ExceptConstraint(c1,c2)       -> ASN.Print_ExceptConstraint (PrintConstraint r c1) (PrintConstraint r c2)                 
-    | RootConstraint(c)             -> ASN.Print_RootConstraint  (PrintConstraint r c)        
-    | RootConstraint2(c1,c2)        -> ASN.Print_RootConstraint2 (PrintConstraint r c1) (PrintConstraint r c2)
-*)
+
 
 and PrintType (r:AstRoot) (t:Asn1Type) =
     let inline cmb (t : ^T) =
@@ -152,11 +137,11 @@ and PrintType (r:AstRoot) (t:Asn1Type) =
     |Integer x       -> ASN.Print_Integer (printUperRange x.uperRange) ( cmb x  |> List.map (printCon printRangeConstraint (fun x -> x.ToString()) ) )
     |Real  x         -> ASN.Print_Real (cmb x |> List.map (printCon printRangeConstraint (fun x -> x.ToString()) ) )
     |Boolean x       -> ASN.Print_Boolean (cmb x |> List.map (printCon printGenericConstraint (fun x -> x.ToString()) ) )
-    |BitString x     -> ASN.Print_BitString (cmb x |> List.map (printCon printSizableConstraint (fun x -> x.ToString()) ) )
-    |OctetString  x  -> ASN.Print_OctetString (cmb x  |> List.map (printCon printSizableConstraint (fun x -> x.ToString()) ) )
+    |BitString x     -> ASN.Print_BitString (cmb x |> List.map (printCon printSizableConstraint (fun x -> ASN.Print_BitStringValue x.Value ) ) )
+    |OctetString  x  -> ASN.Print_OctetString (cmb x  |> List.map (printCon printSizableConstraint (fun x -> ASN.Print_OctetStringValue x.Value) ) )
     |NullType _      -> ASN.Print_NullType []
     |IA5String x  -> 
-        ASN.Print_IA5String2 (printSizeMinMax x.minSize x.maxSize) (x.charSet |> Seq.StrJoin "") (cmb x |> List.map (printCon printAlphaConstraint (fun x -> x.ToString()) ) )
+        ASN.Print_IA5String2 (printSizeMinMax x.minSize x.maxSize) (printCharSet x.charSet ) (cmb x |> List.map (printCon printAlphaConstraint (fun x -> x.ToString()) ) )
     |Enumerated x  ->
         let items =
             x.items |> List.map(fun itm -> ASN.Print_Enumerated_child itm.name true (itm.Value.ToString() ))
@@ -164,7 +149,7 @@ and PrintType (r:AstRoot) (t:Asn1Type) =
         ASN.Print_Enumerated items  cons
     |Choice x   ->
         let printChild (c:ChildInfo) = ASN.Print_Choice_child c.Name (printReferenceToType r CON c.chType.id)
-        let cons = cmb x |> List.map (printCon printGenericConstraint (fun (nm,rv) -> ASN.Print_ChValue nm (printReferenceToValue r CON rv)  ) ) 
+        let cons = cmb x |> List.map (printCon printGenericConstraint (fun chv -> ASN.Print_ChValue chv.Value.name (printReferenceToValue r CON chv.Value.Value.id)  ) ) 
         ASN.Print_Choice (x.children |> Seq.map printChild |> Seq.toArray) cons
     |Sequence x ->
         let printChild (c:ChildInfo) = 
@@ -176,10 +161,10 @@ and PrintType (r:AstRoot) (t:Asn1Type) =
                 | Some AlwaysPresent  -> true, None
                 | None                -> false, None
             ASN.Print_Sequence_child c.Name (printReferenceToType r CON c.chType.id) bIsOptionalOrDefault soDefValue
-        let cons = cmb x |> List.map (printCon printGenericConstraint (fun vals -> ASN.Print_SeqValue (vals |> List.map(fun (nm, v) -> ASN.Print_SeqValue_Child nm (printReferenceToValue r CON v) ) )  ) ) 
+        let cons = cmb x |> List.map (printCon printGenericConstraint (fun sqv -> ASN.Print_SeqValue (sqv.Value |> List.map(fun nmv -> ASN.Print_SeqValue_Child nmv.name (printReferenceToValue r CON nmv.Value.id) ) )  ) ) 
         ASN.Print_Sequence (x.children |> Seq.map printChild |> Seq.toArray) cons
     |SequenceOf x  -> 
-        let cons = cmb x |> List.map (printCon printSizableConstraint (fun vals -> ASN.Print_SeqOfValue (vals |> Seq.map (fun v -> printReferenceToValue r CON v) |> Seq.toArray) ) ) 
+        let cons = cmb x |> List.map (printCon printSizableConstraint (fun sqofv -> ASN.Print_SeqOfValue (sqofv.Value |> Seq.map (fun v -> printReferenceToValue r CON v.id) |> Seq.toArray) ) ) 
         ASN.Print_SequenceOf (printReferenceToType r CON x.childType.id) cons
 
 

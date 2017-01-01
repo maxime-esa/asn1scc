@@ -39,62 +39,62 @@ let foldBConstraint
 
 let getValueAsBigInteger (v:Asn1GenericValue) =
     match v with
-    |IntegerValue x -> x.Value, Some v.id
+    |IntegerValue x -> x.Value, x.litOrRef
     | _                  -> raise(BugErrorException "Value is not of expected type")
 
 let getValueAsDouble (v:Asn1GenericValue) =
     match v with
-    |RealValue x -> x.Value, Some v.id
+    |RealValue x -> x.Value, x.litOrRef
     | _                  -> raise(BugErrorException "Value is not of expected type")
 
 let posIntValGetter (v:Asn1GenericValue) =
     match v with
-    |IntegerValue x when x.Value >= 0I   -> uint32 x.Value, Some v.id
+    |IntegerValue x when x.Value >= 0I   -> uint32 x.Value, x.litOrRef
     | _                                 -> raise(BugErrorException "Value is not of expected type")
 
 let charGetter (v:Asn1GenericValue) =
     match v with
-    |StringValue vl    when vl.Value.Length>0    -> vl.Value.ToCharArray().[0], Some v.id
+    |StringValue vl    when vl.Value.Length>0    -> vl.Value.ToCharArray().[0], vl.litOrRef
     | _                                         -> raise(BugErrorException "Value is not of expected type")
 
 let strGetter (v:Asn1GenericValue) =
     match v with
-    |StringValue vl            -> vl.Value, Some v.id
+    |StringValue vl            -> vl.Value, vl.litOrRef
     | _                        -> raise(BugErrorException "Value is not of expected type")
 
 let octGetter (v:Asn1GenericValue) =
     match v with
-    |OctetStringValue vl            -> vl.Value, Some v.id
+    |OctetStringValue vl            -> vl, vl.litOrRef
     | _                             -> raise(BugErrorException "Value is not of expected type")
 
 let bitGetter (v:Asn1GenericValue) =
     match v with
-    |BitStringValue vl            -> vl.Value, Some v.id
+    |BitStringValue vl            -> vl, vl.litOrRef
     | _                             -> raise(BugErrorException "Value is not of expected type")
 
 let boolGetter (v:Asn1GenericValue) =
     match v with
-    |BooleanValue vl            -> vl.Value, Some v.id
+    |BooleanValue vl            -> vl.Value, vl.litOrRef
     | _                             -> raise(BugErrorException "Value is not of expected type")
 
 let enumGetter (v:Asn1GenericValue) =
     match v with
-    |EnumValue vl            -> vl.Value, Some v.id
+    |EnumValue vl            -> vl.Value, vl.litOrRef
     | _                             -> raise(BugErrorException "Value is not of expected type")
 
 let seqOfValueGetter (v:Asn1GenericValue) =
     match v with
-    |SeqOfValue vl            -> vl.Value |> List.map(fun x -> x.id), Some v.id
+    |SeqOfValue vl            -> vl, vl.litOrRef
     | _                             -> raise(BugErrorException "Value is not of expected type")
 
 let seqValueGetter (v:Asn1GenericValue) =
     match v with
-    |SeqValue vl            -> vl.Value |> List.map(fun nv -> nv.name, nv.Value.id), Some v.id
+    |SeqValue vl            -> vl, vl.litOrRef
     | _                             -> raise(BugErrorException "Value is not of expected type")
 
 let chValueGetter (v:Asn1GenericValue) =
     match v with
-    |ChValue vl           -> (vl.Value.name, vl.Value.Value.id), Some v.id
+    |ChValue vl           -> vl, vl.litOrRef
     | _                             -> raise(BugErrorException "Value is not of expected type")
 
 

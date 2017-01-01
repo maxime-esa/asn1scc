@@ -171,7 +171,7 @@ type GenericConstraint<'v> =
     | ExceptConstraint                  of GenericConstraint<'v>*GenericConstraint<'v>
     | RootConstraint                    of GenericConstraint<'v>
     | RootConstraint2                   of GenericConstraint<'v>*GenericConstraint<'v>
-    | SingleValueConstraint             of 'v*ReferenceToValue option
+    | SingleValueConstraint             of 'v*LiteralOrReference
 
 type RangeTypeConstraint<'v1,'v2>  = 
     | RangeUnionConstraint               of RangeTypeConstraint<'v1,'v2>*RangeTypeConstraint<'v1,'v2>*bool //left,righ, virtual constraint
@@ -180,10 +180,10 @@ type RangeTypeConstraint<'v1,'v2>  =
     | RangeExceptConstraint              of RangeTypeConstraint<'v1,'v2>*RangeTypeConstraint<'v1,'v2>
     | RangeRootConstraint                of RangeTypeConstraint<'v1,'v2>
     | RangeRootConstraint2               of RangeTypeConstraint<'v1,'v2>*RangeTypeConstraint<'v1,'v2>
-    | RangeSingleValueConstraint         of 'v2*ReferenceToValue option
-    | RangeContraint                     of ('v1*ReferenceToValue option) *('v1*ReferenceToValue  option)*bool*bool    //min, max, InclusiveMin(=true), InclusiveMax(=true)
-    | RangeContraint_val_MAX             of ('v1*ReferenceToValue option) *bool            //min, InclusiveMin(=true)
-    | RangeContraint_MIN_val             of ('v1*ReferenceToValue option) *bool            //max, InclusiveMax(=true)
+    | RangeSingleValueConstraint         of 'v2*LiteralOrReference
+    | RangeContraint                     of ('v1*LiteralOrReference) *('v1*LiteralOrReference)*bool*bool    //min, max, InclusiveMin(=true), InclusiveMax(=true)
+    | RangeContraint_val_MAX             of ('v1*LiteralOrReference) *bool            //min, InclusiveMin(=true)
+    | RangeContraint_MIN_val             of ('v1*LiteralOrReference) *bool            //max, InclusiveMax(=true)
 
 type IntegerTypeConstraint  = RangeTypeConstraint<BigInteger, BigInteger>
 type PosIntTypeConstraint   = RangeTypeConstraint<UInt32, UInt32>
@@ -199,7 +199,7 @@ type SizableTypeConstraint<'v>  =
     | SizeExceptConstraint              of SizableTypeConstraint<'v>*SizableTypeConstraint<'v>
     | SizeRootConstraint                of SizableTypeConstraint<'v>
     | SizeRootConstraint2               of SizableTypeConstraint<'v>*SizableTypeConstraint<'v>
-    | SizeSingleValueConstraint         of 'v*ReferenceToValue  option
+    | SizeSingleValueConstraint         of 'v*LiteralOrReference
     | SizeContraint                     of PosIntTypeConstraint               
 
 type IA5StringConstraint = 
@@ -209,19 +209,19 @@ type IA5StringConstraint =
     | StrExceptConstraint              of IA5StringConstraint*IA5StringConstraint
     | StrRootConstraint                of IA5StringConstraint
     | StrRootConstraint2               of IA5StringConstraint*IA5StringConstraint
-    | StrSingleValueConstraint         of string*ReferenceToValue option
+    | StrSingleValueConstraint         of string*LiteralOrReference
     | StrSizeContraint                 of PosIntTypeConstraint               
     | AlphabetContraint                of CharTypeConstraint           
 
-type OctetStringConstraint  =    SizableTypeConstraint<list<byte>>
-type BitStringConstraint    =    SizableTypeConstraint<string>
+type OctetStringConstraint  =    SizableTypeConstraint<OctetStringValue>
+type BitStringConstraint    =    SizableTypeConstraint<BitStringValue>
 type BoolConstraint         =    GenericConstraint<bool>
 type EnumConstraint         =    GenericConstraint<string>
 
 
-type SequenceOfConstraint   =     SizableTypeConstraint<list<ReferenceToValue>>
-type SequenceConstraint     =     GenericConstraint<list<string*ReferenceToValue>>
-type ChoiceConstraint       =     GenericConstraint<string*ReferenceToValue>
+type SequenceOfConstraint   =     SizableTypeConstraint<SeqOfValue>
+type SequenceConstraint     =     GenericConstraint<SeqValue>
+type ChoiceConstraint       =     GenericConstraint<ChValue>
 
 
 let foldGenericConstraint unionFunc intersectionFunc allExceptFunc exceptFunc rootFunc rootFunc2 singleValueFunc 

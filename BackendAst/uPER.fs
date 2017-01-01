@@ -93,6 +93,7 @@ let getSizeableTypeConstraintUperRange (c:SizableTypeConstraint<'v>) funcGetLeng
         (fun r s            -> Full, s)       
         (fun r1 r2 s        -> Full, s)
         (fun v rv s         -> Concrete (funcGetLength v,funcGetLength v),s)
+        
         (fun r1 r2 b s      -> uperUnion r1 r2, s)
         (fun r1 r2 s        -> uperIntersection r1 r2 l, s)
         (fun r s            -> Full, s)       
@@ -119,13 +120,13 @@ let getSizeableUperRange (cons:SizableTypeConstraint<'v> list) funcGetLength (l:
     cons |> List.fold(fun s c -> uperIntersection s (getConUperRange c l) l) Full
 
 let getOctetStringUperRange (cons:OctetStringConstraint list) (l:SrcLoc) =
-    getSizeableUperRange cons (fun x -> uint32 x.Length) l
+    getSizeableUperRange cons (fun x -> uint32 x.Value.Length) l
 
 let getBitStringUperRange (cons:BitStringConstraint list) (l:SrcLoc) =
-    getSizeableUperRange cons (fun x -> uint32 x.Length) l
+    getSizeableUperRange cons (fun x -> uint32 x.Value.Length) l
 
 let getSequenceOfUperRange (cons:SequenceOfConstraint list) (l:SrcLoc) =
-    getSizeableUperRange cons (fun x -> uint32 x.Length) l
+    getSizeableUperRange cons (fun x -> uint32 x.Value.Length) l
 
 
 let getStringConstraintSizeUperRange (c:IA5StringConstraint) (l:SrcLoc) =

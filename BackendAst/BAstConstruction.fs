@@ -107,8 +107,8 @@ let createChoiceChildInfo (st:State) s (ch:Ast.ChildInfo) (newType:Asn1Type) =
 
 let createType (s:State) (ts:GenericFold2.UserDefinedTypeScope) (oldType:Ast.Asn1Type) (newCons:((Asn1AnyConstraint) option ) list, fromWithComps:((Asn1AnyConstraint) option ) list)  (newKind:InterimTypeKind) integerSizeInBytes =
     let numericStringDefaultConstraint = 
-        let zeroToNine = Constraints.RangeContraint (('0',None), ('9',None),true,true)
-        let space      = Constraints.RangeSingleValueConstraint (" ", None)
+        let zeroToNine = Constraints.RangeContraint (('0',Literal), ('9',Literal),true,true)
+        let space      = Constraints.RangeSingleValueConstraint (" ", Literal)
         let numericCon = Constraints.AlphabetContraint (Constraints.RangeUnionConstraint (zeroToNine, space, true))
         numericCon
     let rec inheritedCons f1 f2 par = 
