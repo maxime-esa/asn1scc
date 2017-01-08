@@ -9,30 +9,47 @@ open Constraints
 open uPER2
 
 
-type AcnAsn1Type =
-    | AcnInteger
-    | AcnBoolean
+type IntParamType =
+    | Asn1Integer   of Asn1TypeName
+    | AcnInteger    
 
-type ParamMode =
-    | DecodeMode
-    | EncodeDecodeMode
+type BooleanParamType =
+    | Asn1Boolean   of Asn1TypeName
+    | AcnBoolean    
 
-type AcnTempType = {                // this type is not encoded decoded. It is declared locally at the tas level
-                                    // and it is used for passing values
-    modName     : string
-    tasName     : string
-    mame        : string
-    asn1Type    : AcnAsn1Type
+type StringParamType =
+    | Asn1String   of Asn1TypeName
+
+type EnumeratedParamType =
+    | Asn1Enumerated   of Asn1TypeName
+
+type ParameterTemplate<'T> = {
+    name        : string
+    prmType     : 'T
 }
 
-type AcnParameter = {
-    modName : string
-    tasName : string
-    name    : string
-    asn1Type: AcnAsn1Type
-    mode    : ParamMode
-    location : SrcLoc
+type IntParameter           = ParameterTemplate<IntParamType>
+type BooleanParameter       = ParameterTemplate<BooleanParamType>
+type StringParameter        = ParameterTemplate<StringParamType>
+type EnumeratedParameter    = ParameterTemplate<EnumeratedParamType>
+
+type GenericParameter = 
+    | IntParameter          of IntParameter
+    | BoolParameter         of BooleanParamType
+    | StringParameter       of StringParameter
+    | EnumeratedParameter   of EnumeratedParameter
+
+
+type DeterminantTypeTemplate<'ASN1TYPE, 'PRMTYPE> = 
+    | AcnIntroducedType   of 'ASN1TYPE
+    | AcnPrmType          of 'PRMTYPE
+
+
+type ArgumentTemplate<'DETTYPE> = {
+    prmName         : string
+    determinant     : 'DETTYPE
 }
+
 
 type Integer = {
     //bast inherrited properties
@@ -54,6 +71,35 @@ with
     member this.Cons     = this.cons
     member this.WithCons = this.withcons
     member this.AllCons  = this.cons@this.withcons
+
+
+
+type EnumAcnEncodingClass =
+    | EncodeIndexes     of     Acn.IntEncodingClass
+    | EncodeValues      of     Acn.IntEncodingClass 
+
+
+type Enumerated = {
+    id                  : ReferenceToType
+    uperMaxSizeInBits   : int
+    uperMinSizeInBits   : int
+    items               : BAst.EnumItem list
+    userDefinedValues   : bool      //if true, the user has associated at least one item with a value
+    cons                : EnumConstraint list
+    withcons            : EnumConstraint list
+    baseType            : Enumerated option
+    Location            : SrcLoc   
+
+    //cast new properties
+    acnMaxSizeInBits    : int
+    acnMinSizeInBits    : int
+    enumEncodingClass   : EnumAcnEncodingClass
+}
+with 
+    member this.Cons     = this.cons
+    member this.WithCons = this.withcons
+    member this.AllCons  = this.cons@this.withcons
+
 
 type Real = {
     //bast inherrited properties
@@ -77,14 +123,67 @@ with
     member this.AllCons  = this.cons@this.withcons
 
 
-type StringEncodingClassKind =
-    | Acn_Enc_String_Ascii_FixSize                                            //
-    | Acn_Enc_String_Ascii_Null_Teminated                   of byte           //null character
-    | Acn_Enc_String_Ascii_External_Field_Determinant       of AcnTypes.Point //external field
-    | Acn_Enc_String_Ascii_Internal_Field_Determinant                         // this case is like uPER except that the ASCII value (8 bits) of the character is encoded and also no fragmentation
-    | Acn_Enc_String_CharIndex_FixSize                      
-    | Acn_Enc_String_CharIndex_External_Field_Determinant   of AcnTypes.Point //external field
-    | Acn_Enc_String_CharIndex_Internal_Field_Determinant                     // this case is almost like uPER (except of fragmentation)
+type BolleanAcnEncodingClass = {
+    truePattern         : byte list
+    falsePattern        : byte list
+    patternSizeInBits   : int
+    encodingValueIsTrue : bool
+}
+
+type Boolean = {
+    id                  : ReferenceToType
+    uperMaxSizeInBits   : int
+    uperMinSizeInBits   : int
+    cons                : BoolConstraint list
+    withcons            : BoolConstraint list
+    baseType            : Boolean option
+    Location            : SrcLoc   
+
+    //cast new properties
+    acnMaxSizeInBits    : int
+    acnMinSizeInBits    : int
+    acnEncodingClass    : BolleanAcnEncodingClass
+}
+with 
+    member this.Cons     = this.cons
+    member this.WithCons = this.withcons
+    member this.AllCons  = this.cons@this.withcons
+
+
+
+type NullAcnEncodingClass = {
+    encodePattern       : byte list
+    patternSizeInBits   : int
+}
+
+type NullType = {
+    id                  : ReferenceToType
+    uperMaxSizeInBits   : int
+    uperMinSizeInBits   : int
+    baseType            : NullType option
+    Location            : SrcLoc   
+
+    //cast new properties
+    acnMaxSizeInBits    : int
+    acnMinSizeInBits    : int
+    acnEncodingClass    : NullAcnEncodingClass
+}
+
+
+
+type IntegerDeterminant = DeterminantTypeTemplate<Integer,IntParameter>
+type IntArgument = ArgumentTemplate<IntegerDeterminant>
+
+
+
+type StringAcnEncodingClass =
+    | Acn_Enc_String_Ascii_FixSize                          of int             //Fix size ASCII string with size int, the size is provided by maxSize which is equal with minSize
+    | Acn_Enc_String_Ascii_Null_Teminated                   of byte            //null character
+    | Acn_Enc_String_Ascii_External_Field_Determinant       of IntegerDeterminant //external field
+    | Acn_Enc_String_Ascii_Internal_Field_Determinant                          // this case is like uPER except that the ASCII value (8 bits) of the character is encoded and also no fragmentation
+    | Acn_Enc_String_CharIndex_FixSize                      of int
+    | Acn_Enc_String_CharIndex_External_Field_Determinant   of IntegerDeterminant //external field
+    | Acn_Enc_String_CharIndex_Internal_Field_Determinant                      // this case is almost like uPER (except of fragmentation)
 
 
 type StringType = {
@@ -103,57 +202,24 @@ type StringType = {
     //cast new properties
     acnMaxSizeInBits    : int
     acnMinSizeInBits    : int
+    acnEncodingClass    : StringAcnEncodingClass
+    ancParameters       : IntParameter list
+    acnArguments        : IntArgument list
 }
 with 
     member this.Cons     = this.cons
     member this.WithCons = this.withcons
     member this.AllCons  = this.cons@this.withcons
 
-type EnumItem = {
-    name        : string
-    Value       : BigInteger
-    comments    : string list
-}
 
-type Enumerated = {
-    id                  : ReferenceToType
-    uperMaxSizeInBits   : int
-    uperMinSizeInBits   : int
-    items               : EnumItem list
-    userDefinedValues   : bool      //if true, the user has associated at least one item with a value
-    cons                : EnumConstraint list
-    withcons            : EnumConstraint list
-    baseType            : Enumerated option
-    Location            : SrcLoc   
-
-    //cast new properties
-    acnMaxSizeInBits    : int
-    acnMinSizeInBits    : int
-}
-with 
-    member this.Cons     = this.cons
-    member this.WithCons = this.withcons
-    member this.AllCons  = this.cons@this.withcons
         
 
-type Boolean = {
-    id                  : ReferenceToType
-    uperMaxSizeInBits   : int
-    uperMinSizeInBits   : int
-    cons                : BoolConstraint list
-    withcons            : BoolConstraint list
-    baseType            : Boolean option
-    Location            : SrcLoc   
-
-    //cast new properties
-    acnMaxSizeInBits    : int
-    acnMinSizeInBits    : int
-}
-with 
-    member this.Cons     = this.cons
-    member this.WithCons = this.withcons
-    member this.AllCons  = this.cons@this.withcons
  
+
+type SizeableAcnEncodingClass =
+    | FixedSize         of int                                  // Fix size, size is equal to minSize which is equal to maxSize 
+    | AutoSize                                                  // like uPER but without fragmentation
+    | ExternalField     of IntegerDeterminant                                             
 
 type OctetString = {
     id                  : ReferenceToType
@@ -169,23 +235,16 @@ type OctetString = {
     //cast new properties
     acnMaxSizeInBits    : int
     acnMinSizeInBits    : int
+    acnEncodingClass    : SizeableAcnEncodingClass
+    ancParameters       : IntParameter list
+    acnArguments        : IntArgument list
 }
 with 
     member this.Cons     = this.cons
     member this.WithCons = this.withcons
     member this.AllCons = this.cons@this.withcons
 
-type NullType = {
-    id                  : ReferenceToType
-    uperMaxSizeInBits   : int
-    uperMinSizeInBits   : int
-    baseType            : NullType option
-    Location            : SrcLoc   
 
-    //cast new properties
-    acnMaxSizeInBits    : int
-    acnMinSizeInBits    : int
-}
 
 type BitString = {
     id                  : ReferenceToType
@@ -201,17 +260,30 @@ type BitString = {
     //cast new properties
     acnMaxSizeInBits    : int
     acnMinSizeInBits    : int
+    acnEncodingClass    : SizeableAcnEncodingClass
+    ancParameters       : IntParameter list
+    acnArguments        : IntArgument list
 }
 with 
     member this.Cons     = this.cons
     member this.WithCons = this.withcons
-    member this.AllCons = this.cons@this.withcons
+    member this.AllCons  = this.cons@this.withcons
 
-type Asn1Optionality = 
-    | AlwaysAbsent
-    | AlwaysPresent
-    | Optional  
-    | Default   of Asn1GenericValue
+type BooleanDeterminant = DeterminantTypeTemplate<Boolean,BooleanParameter>
+type BooleanArgument = ArgumentTemplate<BooleanDeterminant>
+
+type EnumeratedDeterminant = DeterminantTypeTemplate<Enumerated,EnumeratedParameter>
+type EnumeratedArgument = ArgumentTemplate<EnumeratedDeterminant>
+
+type StringDeterminant = DeterminantTypeTemplate<StringType,StringParameter>
+type StringArgument = ArgumentTemplate<StringDeterminant>
+
+
+type GenericArgument =
+    | IntArgument           of IntArgument
+    | BooleanArgument       of BooleanArgument
+    | EnumeratedArgument    of EnumeratedArgument
+    | StringArgument        of StringArgument
 
 type SequenceOf = {
     id                  : ReferenceToType
@@ -228,24 +300,46 @@ type SequenceOf = {
     //cast new properties
     acnMaxSizeInBits    : int
     acnMinSizeInBits    : int
+    acnEncodingClass    : SizeableAcnEncodingClass
+    ancParameters       : GenericParameter list
+    acnArguments        : GenericArgument list
 }
 with 
     member this.Cons     = this.cons
     member this.WithCons = this.withcons
     member this.AllCons = this.cons@this.withcons
 
-and ChildInfo = {
-    Name                :string
-    chType              :Asn1Type
-    Optionality         :Asn1Optionality option
-    Comments            :string list
+
+
+and OptionalalityEncodingClass = 
+    | OptionLikeUper
+    | OptionExtField    of BooleanDeterminant
+
+and Optional = {
+    defaultValue        : Asn1GenericValue
+    ancEncodingClass    : OptionalalityEncodingClass
 }
+
+and Asn1Optionality = 
+    | AlwaysAbsent
+    | AlwaysPresent
+    | Optional          of Optional
+
+
+and SeqChildInfo = {
+    name                :string
+    chType              :Asn1Type
+    optionality         :Asn1Optionality option
+    acnInsertetField    :bool
+    comments            :string list
+}
+
 
 and Sequence = {
     id                  : ReferenceToType
     uperMaxSizeInBits   : int
     uperMinSizeInBits   : int
-    children            : ChildInfo list
+    children            : SeqChildInfo list
     cons                : SequenceConstraint list
     withcons            : SequenceConstraint list
     baseType            : Sequence option
@@ -254,17 +348,39 @@ and Sequence = {
     //cast new properties
     acnMaxSizeInBits    : int
     acnMinSizeInBits    : int
+    ancParameters       : GenericParameter list
+    acnArguments        : GenericArgument list
 }
 with 
     member this.Cons     = this.cons
     member this.WithCons = this.withcons
     member this.AllCons = this.cons@this.withcons
 
+
+
+
+and ChoiceAcnEncClass =
+    | EmbededChoiceIndexLikeUper
+    | EnumDeterminant               of EnumeratedDeterminant
+    | PresentWhenOnChildren
+
+and ChoiceChildPresentCondition = 
+    | PresentWhenBool   of BooleanDeterminant 
+    | PresentWhenInt    of (IntegerDeterminant*BigInteger)
+    | PresentWhenString of (StringDeterminant*string)
+
+and ChChildInfo = {
+    name                :string
+    chType              :Asn1Type
+    presentConditions   :ChoiceChildPresentCondition list
+    comments            :string list
+}
+
 and Choice = {
     id                  : ReferenceToType
     uperMaxSizeInBits   : int
     uperMinSizeInBits   : int
-    children            : ChildInfo list
+    children            : ChChildInfo list
     cons                : ChoiceConstraint list
     withcons            : ChoiceConstraint list
     baseType            : Choice option
@@ -273,6 +389,9 @@ and Choice = {
     //cast new properties
     acnMaxSizeInBits    : int
     acnMinSizeInBits    : int
+    acnEncodingClass    : ChoiceAcnEncClass
+    ancParameters       : GenericParameter list
+    acnArguments        : GenericArgument list
 }
 with 
     member this.Cons     = this.cons
@@ -355,207 +474,6 @@ with
 
 
 
-(*
-type ReferenceToAcnParam    = string*string*string
-type ReferenceToAcnTempType = string*string*string
-
-type GenericReference       =
-    | RefToType             of GenericFold2.ScopeNode list
-    | RefToAcnParam         of string*string*string
-    | RefToAcnTempType      of string*string*string
-
-
-
-type AcnParameter = {
-    id : ReferenceToAcnParam
-    Asn1Type: AcnTypes.AcnAsn1Type
-    Mode    : AcnTypes.ParamMode
-}
-
-type AcnTempType = {
-    id : ReferenceToAcnTempType
-    Asn1Type: AcnTypes.AcnAsn1Type
-}
-
-type AcnLinkKind = AcnTypes.LongReferenceKind
-type AcnLink = {
-    decType      : GenericReference
-    determinant  : GenericReference
-    Kind : AcnLinkKind
-}
-
-type Asn1Optionality        = BAst.Asn1Optionality
-type AcnAligment            = AcnTypes.aligment
-type AcnBooleanEncoding     = AcnTypes.booleanEncoding
-type AcnNullEncodingPattern = AcnNullEncodingPattern of string
-type AcnEndianness          = AcnTypes.endianness
-
-
-
-type ChildInfo = {
-    Name                    : string;
-    refToType               : ReferenceToType;
-    Optionality             : Asn1Optionality option
-    AcnInsertedField        : bool
-    Comments                : string array
-}
-
-(*INTEGER*)
-
-type AcnIntEncoding         = 
-    | PosInt
-    | TwosComplement
-    | Ascii
-    | BCD
-type AcnIntSize =
-    | Fixed             of BigInteger
-    | NullTerminated    of byte      //termination character
-
-type UperIntRange           = Ast.uperRange<BigInteger>
-
-type IntegerType = {
-    uperRange               : UperIntRange
-    acnEndianness           : AcnEndianness
-    acnIntEncoding          : AcnIntEncoding option
-    acnIntSize              : AcnIntSize
-}
-
-(* REAL *)
-type AcnRealEncoding        = 
-    | IEEE754_32
-    | IEEE754_64
-type UperDblRange           = Ast.uperRange<double>
-type RealType = {
-    uperRange               : UperDblRange
-    acnEndianness           : AcnEndianness 
-    acnRealEncoding         : AcnRealEncoding option
-}
-
-
-(* ENUMERATED *)
-type EnumItem = {
-    name                    : string
-    asn1value               : BigInteger    // the value provided (or implied) in the ASN.1 grammar. This value is used in the type definition.
-    uperValue               : BigInteger    // the value encoded by uPER    - this is always the index of the enum item
-    acnValue                : BigInteger    // the value encoded by ACN. This value is calculated as follows:     
-                                            //    if acn attribute ENCODE_VALUES is NOT present then 
-                                            //        this the uPER value (i.e. index of the enum item
-                                            //    else 
-                                            //        if value is redefined in ACN the redefined values else the ASN.1 value
-    comments                : string list
-}
-
-type EnumeratedType = {
-    acnEndianness           : AcnEndianness
-    acnIntEncoding          : AcnIntEncoding
-    acnIntSize              : AcnIntSize
-    acnEncodeValues         : bool      //if true values are encoded, not indexes
-    items                   : EnumItem list
-
-    hasAsn1Values           : bool  //if hasAsn1Values=false then the ASN.1 defintion had no int values associated with the items. e.g. ENUMERATED {red,gren} and not ENUMERATED {red(10),gren(20)}
-}
-
-
-type Asn1TypeKind =
-    | Integer           of IntegerType
-    | Real              of RealType
-    | NullType          of AcnNullEncodingPattern     
-    | Boolean           of AcnBooleanEncoding
-    | Enumerated        of EnumeratedType
-    | IA5String
-    | OctetString 
-    | BitString
-    | SequenceOf        of ReferenceToType
-    | Sequence          of list<ChildInfo>
-    | Choice            of list<ChildInfo>
-
-
-type Asn1Constraint = BAst.Asn1Constraint
-
-
-type Asn1Type = {
-    asn1Name : string option
-    id : ReferenceToType
-    baseTypeId : ReferenceToType option     // base type
-    Kind:Asn1TypeKind
-    Constraints:list<Asn1Constraint>;
-    FromWithCompConstraints:list<Asn1Constraint>
-    acnAligment : AcnAligment option
-}
-
-type Asn1File = BAst.Asn1File
-type Asn1Value = BAst.Asn1Value
-
-type AstRoot = {
-    Files: list<Asn1File>
-    Encodings:list<Ast.Asn1Encoding>
-    GenerateEqualFunctions:bool
-    TypePrefix:string
-    AstXmlAbsFileName:string
-    IcdUperHtmlFileName:string
-    IcdAcnHtmlFileName:string
-    CheckWithOss:bool
-    mappingFunctionsModule : string option
-    valsMap : Map<ReferenceToValue, Asn1Value>
-    typesMap : Map<ReferenceToType, Asn1Type>
-    TypeAssignments : list<Asn1Type>
-    ValueAssignments : list<Asn1Value>
-}
-
-
-let mapBastToCast0 (r:BAst.AstRoot) (c:AcnTypes.AcnAst) : unit=
-    printfn "ASN1"
-    r.TypeAssignments |> List.map(fun s -> s.id.ToString()) |> Seq.iter (printfn "%s")
-    printfn "ACN TYPES"
-    c.Types|> List.map(fun s -> s.TypeID |> Seq.StrJoin ".") |> Seq.iter (printfn "%s")
-*)
-    
-    (*
-let createInteger (acnProps:AcnTypes.AcnProperty list) =
-    {
-        IntegerType.uperRange   = uperRange
-        acnEndianness           = Acn.GetEndianess acnProps
-        acnIntEncoding          = 
-            match Acn.GetEncodingProperty acnProps with
-            | None          -> None
-            | Some (AcnTypes.encoding.PosInt)   -> Some PosInt
-            | Some (AcnTypes.encoding.TwosComplement)   -> Some TwosComplement
-            | Some (AcnTypes.encoding.BCD)   -> Some BCD
-            | Some (AcnTypes.encoding.Ascii)   -> Some Ascii
-            | Some (AcnTypes.encoding.IEEE754_32)   -> Some Ascii
-            | Some (AcnTypes.encoding.IEEE754_64)   -> Some Ascii
-
-
-        acnIntSize              = acnIntSize
-    }
-    *)
-
-(*
-let mapBastToCast (r:BAst.AstRoot) (c:AcnTypes.AcnAst): AstRoot=
-    let acnMap = c.Types |> List.map(fun s -> s.TypeID |> Seq.StrJoin ".", s) |> Map.ofList
-    let mapType (t:BAst.Asn1Type) : Asn1Type =
-        let acnProps = 
-            match acnMap.TryFind (t.id.ToString()) with
-            | None  -> []
-            | Some acnT -> acnT.Properties
-        raise(Exception "")
-    let newTypes = r.TypeAssignments |> List.map mapType
-    {
-        AstRoot.Files = r.Files
-        Encodings = r.Encodings
-        GenerateEqualFunctions = r.GenerateEqualFunctions
-        TypePrefix = r.TypePrefix
-        AstXmlAbsFileName = r.AstXmlAbsFileName
-        IcdUperHtmlFileName = r.IcdUperHtmlFileName
-        IcdAcnHtmlFileName = r.IcdUperHtmlFileName
-        CheckWithOss = r.CheckWithOss
-        mappingFunctionsModule = r.mappingFunctionsModule
-        valsMap = r.valsMap
-        typesMap = newTypes |> List.map(fun x -> x.id, x) |> Map.ofList
-        TypeAssignments = newTypes
-        ValueAssignments = r.ValueAssignments
-    }    
-*)
 
 type AstRoot = AstRootTemplate<Asn1Type>
 

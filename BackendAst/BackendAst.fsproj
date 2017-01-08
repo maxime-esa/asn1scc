@@ -62,7 +62,9 @@
     <Compile Include="uPER.fs" />
     <Compile Include="BAst.fs" />
     <Compile Include="BAstConstruction.fs" />
+    <Compile Include="BAstFold.fs" />
     <Compile Include="CAst.fs" />
+    <Compile Include="CAstConstruction.fs" />
     <None Include="Script.fsx" />
     <Compile Include="BackendAst.fs" />
     <Compile Include="variable.fs" />

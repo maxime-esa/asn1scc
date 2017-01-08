@@ -294,7 +294,7 @@ namespace Asn1f2
              *  -the decType (the ASN.1 type that is encoded/decode)
              *  -the determinant that acts as some kind of determinant (e.g. size determinant, presence determinant etc)
              *  -The kind of determinant is described by the property Kind : LongReferenceKind 
-             *  At this point the TmpTypes is empty (TmpTypes are during the Acn.RemoveVirtualPaths step)
+             *  At this point the TmpTypes is empty (TmpTypes are created during the Acn.RemoveVirtualPaths step)
              */
             var acnAstResolved = Acn.Resolve.ResolveRelativePaths(acnAstUnresolved, asn1Ast);
             //PrintAsn1.DebugPrintAsn1Acn(asn1Ast, acnAstResolved, ".", ".1.asn1");
@@ -346,7 +346,74 @@ namespace Asn1f2
              */ 
             RemoveConstraintsFromRefTypes.CheckReferences(refTypesWithNoConstraints, acnAst2);
 
+            /*
+            What is a virtual path? The path x.y.z.q is virual if any of x,y or z is a referenced type.
+            Take for instance the following ASN.1 and ACN grammars
+            -- ASN1
+	        INT10 ::= INTEGER(1..10)
+	
+	        TAP3File::=SEQUENCE {
+                header  SEQUENCE {
+			        operatorID  IA5String(SIZE(1..10))
+		        },
+                calls   SEQUENCE (SIZE(1..10)) OF INTEGER (1..20)
+            }
+            -- ACN
+	        INT10[size 10, encoding pos-int]
 
+            TAP3File[] {
+                 header [] {
+			        operatorID [],
+			        nrCalls  INT10  [] 
+		         },  
+                 calls[size header.nrCalls]
+            }
+	
+            In this grammar, we want the number elements in the calls SEQUENCE OF to be determined
+            by a field in the header. This is accomplished by putting the size encoding property
+              [size header.nrCalls]
+
+            
+            The path  'header.nrCalls' is not virtual since header is not a referenced type but a SEQUENCE type.
+            Howevr, due to the ReplaceInnerTypes.DoWork transformation the grammar has been transformed as follows
+
+            --ASN.1
+	        INT10 ::= INTEGER(1..10)
+	        TAP3File-header ::= SEQUENCE {
+			        operatorID  IA5String(SIZE(1..10))
+		    }
+	        
+            TAP3File::=SEQUENCE {
+                header  TAP3File-header,
+                calls   SEQUENCE (SIZE(1..10)) OF INTEGER (1..20)
+            }
+
+            -- ACN
+	        INT10[size 10, encoding pos-int]
+
+            TAP3File-header [] {
+			    operatorID [],
+			    nrCalls  INT10  [] 
+		    }  
+            TAP3File[] {
+                header  [],
+                calls[size header.nrCalls]
+            }
+            Now the path 'header.nrCalls' IS virtual since header is referenced type.
+            The function Acn.RemoveVirtualPaths removes suchs paths. In this case the following trasnformation 
+            will take place
+            (1) The TAP3File will get a new TEMP type named nrCalls
+            (2) size property changes from 
+                [size header.nrCalls] to [size nrCalls] but now nrCalls
+                is the TEMP type introduced in step1
+            (2) The TAP3File-header type becomes parameterized and new parameter mode is EncodeDecode (i.e. used in both encoding/decoding)
+                
+                TAP3File-header <nrCalls0:INT10>[] {
+			        operatorID [],
+			        nrCalls  INT10  [] 
+		        },  
+
+            */
             var acnAst3 = Acn.RemoveVirtualPaths(refTypesWithNoConstraints, acnAst2);
             
             //last validation check, it may throw a SemanticException

@@ -100,10 +100,10 @@ type AcnType = {
 }
 and AcnTempType = {                // this type is not encoded decoded. It is declared locally at the tas level
                                     // and it is used for passing values
-    ModName : string
-    TasName : string
-    Name    : string
-    Asn1Type   : AcnAsn1Type
+    ModName     : string
+    TasName     : string
+    Name        : string
+    Asn1Type    : AcnAsn1Type
 }
 and AcnTypeImplMode =
     | RecordField                           // normal ASN.1 type
