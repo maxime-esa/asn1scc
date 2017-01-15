@@ -98,6 +98,7 @@ let createChildInfo (st:State) s (ch:Ast.ChildInfo) (newType:Asn1Type) (newOptio
         Optionality = newOptionality
         Comments = ch.Comments |> Seq.toList
         acnInsertetField    = false
+        Location = ch.Name.Location
 
     }, st
 
@@ -108,6 +109,7 @@ let createChoiceChildInfo (st:State) s (ch:Ast.ChildInfo) (newType:Asn1Type) =
         Optionality = None
         Comments = ch.Comments |> Seq.toList
         acnInsertetField    = false
+        Location = ch.Name.Location
     }, st
 
 

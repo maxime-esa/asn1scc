@@ -40,13 +40,27 @@ and ReferenceToType =
                 match path with
                 | (GenericFold2.MD mdName)::(GenericFold2.TA tasName)::[]   -> Some ({Asn1TypeName.moduName = mdName; tasName=tasName})
                 | _                                                         -> None
-
+        member this.BelongingTypeAssignment = 
+            match this with
+            | ReferenceToType path -> 
+                match path with
+                | (GenericFold2.MD mdName)::(GenericFold2.TA tasName)::_   -> Some ({Asn1TypeName.moduName = mdName; tasName=tasName})
+                | _                                                         -> None
         member this.AcnAbsPath =
             match this with
             | ReferenceToType path -> path |> List.map (fun i -> i.StrValue) 
         member this.getSeqOrChildId (childName:string) =
             match this with
             | ReferenceToType path -> ReferenceToType (path@[GenericFold2.CH childName])
+        member this.getParamId (paramName:string) =
+            match this with
+            | ReferenceToType ((GenericFold2.MD mdName)::(GenericFold2.TA tasName)::[]) -> ReferenceToType ((GenericFold2.MD mdName)::(GenericFold2.TA tasName)::[GenericFold2.PRM paramName])
+            | _                                                                         -> raise(BugErrorException "Cannot add parameter here. Only within TAS scope")
+        member this.getTempId (tmpTypeName:string) =
+            match this with
+            | ReferenceToType ((GenericFold2.MD mdName)::(GenericFold2.TA tasName)::[]) -> ReferenceToType ((GenericFold2.MD mdName)::(GenericFold2.TA tasName)::[GenericFold2.TMP tmpTypeName])
+            | _                                                                         -> raise(BugErrorException "Cannot add temp type here. Only within TAS scope")
+
         member this.appendLongChildId (childRelativePath:string list) =
             match this with
             | ReferenceToType path -> 

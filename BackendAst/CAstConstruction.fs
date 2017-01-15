@@ -3,51 +3,13 @@
 open CAst
 open FsUtils
 open Constraints
+open CAstAcnEncodingClasses
 
-
-type State = {
-    currentTypes : Asn1Type list
-}
 
 let mapBTypeToCType (r:BAst.AstRoot) (t:BAst.Asn1Type) (acn:AcnTypes.AcnAst) (acnTypes:Map<AcnTypes.AbsPath,AcnTypes.AcnType>) (initialSate:State) =
    
-    let createAnyParams (ts:BAst.TypeAssignmentInfo) =
-        acn.Parameters |> 
-        List.filter(fun p -> p.ModName = ts.modName && p.TasName = ts.tasName) |>
-        List.map(fun p -> 
-            match p.Asn1Type with
-            | AcnTypes.Integer      -> IntParameter {IntParameter.name = p.Name; prmType = AcnInteger}
-            | AcnTypes.Boolean      -> BoolParameter {BooleanParameter.name = p.Name; prmType = AcnBoolean}
-            | AcnTypes.NullType     -> raise(SemanticError(p.Location, "Invalid parameter type. Expecting INTEGER or BOOLEAN"))
-            | AcnTypes.RefTypeCon (md,ts)   ->
-                let asn1TypeName = {Asn1TypeName.moduName = md.Value; tasName = ts.Value}
-                match r.typesMap.TryFind asn1TypeName.id with 
-                | Some t -> 
-                    match t with
-                    | BAst.Integer       o -> IntParameter {IntParameter.name = p.Name; prmType = Asn1Integer asn1TypeName}
-                    | BAst.IA5String     o -> StringParameter {StringParameter.name = p.Name; prmType = Asn1String asn1TypeName}
-                    | BAst.Boolean       o -> BoolParameter {BooleanParameter.name = p.Name; prmType = Asn1Boolean asn1TypeName}
-                    | BAst.Enumerated    o -> EnumeratedParameter {EnumeratedParameter.name = p.Name; prmType = Asn1Enumerated asn1TypeName}
-                    | _          -> raise(SemanticError(p.Location, "Invalid parameter type. Expecting INTEGER or reference to INTEGER"))
-                | None   -> raise(SemanticError(p.Location, sprintf "Unknown reference '%s'.'%s'" md.Value ts.Value)))
-                
-
-    let createIntParams (ts:BAst.TypeAssignmentInfo) =
-        acn.Parameters |> 
-        List.filter(fun p -> p.ModName = ts.modName && p.TasName = ts.tasName) |>
-        List.map(fun p -> 
-            match p.Asn1Type with
-            | AcnTypes.Integer      -> {IntParameter.name = p.Name; prmType = AcnInteger}
-            | AcnTypes.Boolean      
-            | AcnTypes.NullType     -> raise(SemanticError(p.Location, "Invalid parameter type. Expecting INTEGER or reference to INTEGER"))
-            | AcnTypes.RefTypeCon (md,ts)   ->
-                let asn1TypeName = {Asn1TypeName.moduName = md.Value; tasName = ts.Value}
-                match r.typesMap.TryFind asn1TypeName.id with 
-                | Some t -> 
-                    match t with
-                    | BAst.Integer  o -> {IntParameter.name = p.Name; prmType = Asn1Integer asn1TypeName}
-                    | _          -> raise(SemanticError(p.Location, "Invalid parameter type. Expecting INTEGER or reference to INTEGER"))
-                | None   -> raise(SemanticError(p.Location, sprintf "Unknown reference '%s'.'%s'" md.Value ts.Value)))
+    let getAcnParams (tid:ReferenceToType) =
+        tid.BelongingTypeAssignment |> Option.map(fun ts -> r.acnParameters |> List.filter(fun x -> x.ModName = ts.moduName && x.TasName = ts.tasName)) |> Option.toList |> List.collect id
                 
     
     BAstFold.foldAsn1Type
@@ -55,69 +17,78 @@ let mapBTypeToCType (r:BAst.AstRoot) (t:BAst.Asn1Type) (acn:AcnTypes.AcnAst) (ac
         initialSate
 
         (fun o newBase us -> 
-            let encClass, acnMinSizeInBits, acnMaxSizeInBits = CAstAcnEncodingClasses.GetIntEncodingClass acn acnTypes o.Location o
-            {Integer.id = o.id; tasInfo = o.tasInfo; uperMaxSizeInBits= o.uperMaxSizeInBits; uperMinSizeInBits=o.uperMinSizeInBits; cons=o.cons; withcons = o.withcons; uperRange=o.uperRange; baseType = newBase; Location = o.Location; acnMaxSizeInBits = acnMaxSizeInBits; acnMinSizeInBits = acnMinSizeInBits; acnEncodingClass = encClass}, us)
+            let encClass, alignment, acnMinSizeInBits, acnMaxSizeInBits = GetIntEncodingClass acn acnTypes o.Location o
+            {Integer.id = o.id; tasInfo = o.tasInfo; uperMaxSizeInBits= o.uperMaxSizeInBits; uperMinSizeInBits=o.uperMinSizeInBits; cons=o.cons; withcons = o.withcons; uperRange=o.uperRange; baseType = newBase; Location = o.Location; acnMaxSizeInBits = acnMaxSizeInBits; acnMinSizeInBits = acnMinSizeInBits; acnEncodingClass = encClass; alignment = alignment}, us)
         Integer
 
         (fun o newBase us -> 
-            let encClass, acnMinSizeInBits, acnMaxSizeInBits = CAstAcnEncodingClasses.GetRealEncodingClass acn acnTypes o.Location o
-            {Real.id = o.id; tasInfo = o.tasInfo; uperMaxSizeInBits= o.uperMaxSizeInBits; uperMinSizeInBits=o.uperMinSizeInBits; cons=o.cons; withcons = o.withcons; uperRange=o.uperRange; baseType = newBase; Location = o.Location; acnMaxSizeInBits = acnMaxSizeInBits; acnMinSizeInBits = acnMinSizeInBits; acnEncodingClass = encClass}, us)
+            let encClass, alignment, acnMinSizeInBits, acnMaxSizeInBits = GetRealEncodingClass acn acnTypes o.Location o
+            {Real.id = o.id; tasInfo = o.tasInfo; uperMaxSizeInBits= o.uperMaxSizeInBits; uperMinSizeInBits=o.uperMinSizeInBits; cons=o.cons; withcons = o.withcons; uperRange=o.uperRange; baseType = newBase; Location = o.Location; acnMaxSizeInBits = acnMaxSizeInBits; acnMinSizeInBits = acnMinSizeInBits; acnEncodingClass = encClass; alignment= alignment}, us)
         Real
 
         (fun o newBase us -> 
-            let tasInfo = o.tasInfo |> Option.map (fun ts -> 
-                let acnParams = createIntParams ts 
-                {AcnTypeAssignmentInfo.modName=ts.modName; tasName = ts.tasName; ancParameters = acnParams})
-            let encClass, acnMinSizeInBits, acnMaxSizeInBits = CAstAcnEncodingClasses.GetStringEncodingClass acn acnTypes o.Location o tasInfo
-            {StringType.id = o.id; tasInfo = tasInfo; uperMaxSizeInBits= o.uperMaxSizeInBits; uperMinSizeInBits=o.uperMinSizeInBits; cons=o.cons; withcons = o.withcons; minSize = o.minSize; maxSize = o.maxSize; charSet = o.charSet; baseType = newBase; Location = o.Location; acnMaxSizeInBits = acnMaxSizeInBits; acnMinSizeInBits = acnMinSizeInBits; acnEncodingClass = encClass;acnArguments=[]}, us)
+            let acnParams = getAcnParams o.id
+            let encClass, alignment, acnMinSizeInBits, acnMaxSizeInBits, nus = GetStringEncodingClass acn acnTypes o.Location o acnParams us
+            {StringType.id = o.id; tasInfo = o.tasInfo; uperMaxSizeInBits= o.uperMaxSizeInBits; uperMinSizeInBits=o.uperMinSizeInBits; cons=o.cons; withcons = o.withcons; minSize = o.minSize; maxSize = o.maxSize; charSet = o.charSet; baseType = newBase; Location = o.Location; acnMaxSizeInBits = acnMaxSizeInBits; acnMinSizeInBits = acnMinSizeInBits; acnEncodingClass = encClass; alignment=alignment}, nus)
         IA5String
 
         (fun o newBase us -> 
-            let tasInfo = o.tasInfo |> Option.map (fun ts -> 
-                let acnParams = createIntParams ts 
-                {AcnTypeAssignmentInfo.modName=ts.modName; tasName = ts.tasName; ancParameters = acnParams})
-            {OctetString.id = o.id; tasInfo = tasInfo; uperMaxSizeInBits= o.uperMaxSizeInBits; uperMinSizeInBits=o.uperMinSizeInBits; cons=o.cons; withcons = o.withcons; minSize = o.minSize; maxSize = o.maxSize; baseType = newBase; Location = o.Location; acnMaxSizeInBits = 0; acnMinSizeInBits = 0; acnEncodingClass = AutoSize; acnArguments=[]}, us)
+            let acnParams = getAcnParams o.id
+            let encClass, alignment, acnMinSizeInBits, acnMaxSizeInBits, nus = GetOctetStringEncodingClass acn acnTypes o.Location o acnParams us
+            {OctetString.id = o.id; tasInfo = o.tasInfo; uperMaxSizeInBits= o.uperMaxSizeInBits; uperMinSizeInBits=o.uperMinSizeInBits; cons=o.cons; withcons = o.withcons; minSize = o.minSize; maxSize = o.maxSize; baseType = newBase; Location = o.Location; acnMaxSizeInBits = 0; acnMinSizeInBits = 0; acnEncodingClass = encClass; alignment=alignment}, nus)
         OctetString
 
-        (fun o newBase us -> {NullType.id = o.id;  tasInfo = o.tasInfo; uperMaxSizeInBits= o.uperMaxSizeInBits; uperMinSizeInBits=o.uperMinSizeInBits; baseType = newBase; Location = o.Location; acnMaxSizeInBits = 0; acnMinSizeInBits = 0; acnEncodingClass = {NullAcnEncodingClass.encodePattern=[];patternSizeInBits=0}}, us)
+        (fun o newBase us -> 
+            let encClass, alignment, acnMinSizeInBits, acnMaxSizeInBits = GetNullTypeEncodingClass acn acnTypes o.Location o
+            {NullType.id = o.id;  tasInfo = o.tasInfo; uperMaxSizeInBits= o.uperMaxSizeInBits; uperMinSizeInBits=o.uperMinSizeInBits; baseType = newBase; Location = o.Location; acnMaxSizeInBits = 0; acnMinSizeInBits = 0; acnEncodingClass = encClass; alignment = alignment}, us)
         NullType
 
         (fun o newBase us -> 
-            let tasInfo = o.tasInfo |> Option.map (fun ts -> 
-                let acnParams = createIntParams ts 
-                {AcnTypeAssignmentInfo.modName=ts.modName; tasName = ts.tasName; ancParameters = acnParams})
-            {BitString.id = o.id; tasInfo = tasInfo; uperMaxSizeInBits= o.uperMaxSizeInBits; uperMinSizeInBits=o.uperMinSizeInBits; cons=o.cons; withcons = o.withcons; minSize = o.minSize; maxSize = o.maxSize; baseType = newBase; Location = o.Location; acnMaxSizeInBits = 0; acnMinSizeInBits = 0; acnEncodingClass = AutoSize;acnArguments=[]}, us)
+            let acnParams = getAcnParams o.id
+            let encClass, alignment, acnMinSizeInBits, acnMaxSizeInBits, nus = GetBitStringEncodingClass acn acnTypes o.Location o acnParams us
+            {BitString.id = o.id; tasInfo = o.tasInfo; uperMaxSizeInBits= o.uperMaxSizeInBits; uperMinSizeInBits=o.uperMinSizeInBits; cons=o.cons; withcons = o.withcons; minSize = o.minSize; maxSize = o.maxSize; baseType = newBase; Location = o.Location; acnMaxSizeInBits = 0; acnMinSizeInBits = 0; acnEncodingClass = encClass; alignment = alignment}, nus)
         BitString
 
-        (fun o newBase us -> {Boolean.id = o.id;  tasInfo = o.tasInfo; uperMaxSizeInBits= o.uperMaxSizeInBits; uperMinSizeInBits=o.uperMinSizeInBits; cons=o.cons; withcons = o.withcons; baseType = newBase; Location = o.Location; acnMaxSizeInBits = 0; acnMinSizeInBits = 0; acnEncodingClass = {BolleanAcnEncodingClass.encodingValueIsTrue=true; patternSizeInBits=1; truePattern=[]; falsePattern=[]}}, us)
+        (fun o newBase us -> 
+            let encClass, alignment, acnMinSizeInBits, acnMaxSizeInBits = GetBooleanTypeEncodingClass acn acnTypes o.Location o
+            {Boolean.id = o.id;  tasInfo = o.tasInfo; uperMaxSizeInBits= o.uperMaxSizeInBits; uperMinSizeInBits=o.uperMinSizeInBits; cons=o.cons; withcons = o.withcons; baseType = newBase; Location = o.Location; acnMaxSizeInBits = 0; acnMinSizeInBits = 0; acnEncodingClass = encClass; alignment = alignment}, us)
         Boolean
 
-        (fun o newBase us -> {Enumerated.id = o.id;  tasInfo = o.tasInfo; uperMaxSizeInBits= o.uperMaxSizeInBits; uperMinSizeInBits=o.uperMinSizeInBits; userDefinedValues = o.userDefinedValues; items = o.items; cons=o.cons; withcons = o.withcons; baseType = newBase; Location = o.Location; acnMaxSizeInBits = 0; acnMinSizeInBits = 0; enumEncodingClass = (EncodeIndexes Acn.Integer_uPER)}, us)
+        (fun o newBase us -> 
+            let encClass, alignment, acnMinSizeInBits, acnMaxSizeInBits = GetEnumeratedEncodingClass acn acnTypes o.Location o
+            {Enumerated.id = o.id;  tasInfo = o.tasInfo; uperMaxSizeInBits= o.uperMaxSizeInBits; uperMinSizeInBits=o.uperMinSizeInBits; userDefinedValues = o.userDefinedValues; items = o.items; cons=o.cons; withcons = o.withcons; baseType = newBase; Location = o.Location; acnMaxSizeInBits = 0; acnMinSizeInBits = 0; enumEncodingClass = encClass; alignment = alignment}, us)
         Enumerated
 
         (fun childType o newBase us -> 
-            let tasInfo = o.tasInfo |> Option.map (fun ts -> 
-                let acnParams = createAnyParams ts 
-                {AcnTypeAssignmentInfo.modName=ts.modName; tasName = ts.tasName; ancParameters = acnParams})
-            {SequenceOf.id = o.id; tasInfo = tasInfo; childType = childType; uperMaxSizeInBits= o.uperMaxSizeInBits; uperMinSizeInBits=o.uperMinSizeInBits; cons=o.cons; withcons = o.withcons; minSize = o.minSize; maxSize = o.maxSize; baseType = newBase; Location = o.Location; acnMaxSizeInBits = 0; acnMinSizeInBits = 0; acnEncodingClass = AutoSize;acnArguments=[]}, us)
+            let acnParams = getAcnParams o.id
+            let encClass, alignment, acnMinSizeInBits, acnMaxSizeInBits, nus = GetSequenceOfEncodingClass acn acnTypes o.Location  o childType.acnMinSizeInBits childType.acnMaxSizeInBits acnParams us
+            {SequenceOf.id = o.id; tasInfo = o.tasInfo; childType = childType; uperMaxSizeInBits= o.uperMaxSizeInBits; uperMinSizeInBits=o.uperMinSizeInBits; cons=o.cons; withcons = o.withcons; minSize = o.minSize; maxSize = o.maxSize; baseType = newBase; Location = o.Location; acnMaxSizeInBits = 0; acnMinSizeInBits = 0; acnEncodingClass = encClass; alignment = alignment}, nus)
         SequenceOf
 
         //sequence
-        (fun o newChild us -> {SeqChildInfo.name = o.Name; chType = newChild; optionality = None; acnInsertetField = false; comments = o.Comments}, us)
+        (fun o newChild us -> 
+            let acnParams = getAcnParams newChild.id
+            let newOptionality, nus = GetSeqChildOptionality acn  acnTypes o.Location newChild o.Optionality (acnParams: BAst.AcnParameter list) (us:State)
+            {SeqChildInfo.name = o.Name; chType = newChild; optionality = newOptionality; acnInsertetField = o.acnInsertetField; comments = o.Comments}, nus)
         (fun children o newBase us -> 
-            let tasInfo = o.tasInfo |> Option.map (fun ts -> 
-                let acnParams = createAnyParams ts 
-                {AcnTypeAssignmentInfo.modName=ts.modName; tasName = ts.tasName; ancParameters = acnParams})
-            {Sequence.id = o.id; tasInfo = tasInfo; uperMaxSizeInBits= o.uperMaxSizeInBits; uperMinSizeInBits=o.uperMinSizeInBits; children = children; cons=o.cons; withcons = o.withcons; baseType = newBase; Location = o.Location; acnMaxSizeInBits = 0; acnMinSizeInBits = 0; acnArguments=[]}, us)
+            let acnProps = getAcnProps acnTypes o.id
+            let alignment, alignmentSize = GetAlignment acnProps
+            let bitMaskSize = seqAcnOptionalChildrenHandledLikeuPER children |> Seq.length
+            let reqChildren = children |> List.filter(fun c -> match c.optionality with Some (Optional _) -> false | _ -> true)
+            let acnMaxSizeInBits = alignmentSize + bitMaskSize + (children |> List.map(fun c -> c.chType.acnMaxSizeInBits) |> List.sum)
+            let acnMinSizeInBits = alignmentSize + bitMaskSize + (reqChildren |> List.map(fun c -> c.chType.acnMinSizeInBits) |> List.sum)
+            {Sequence.id = o.id; tasInfo = o.tasInfo; uperMaxSizeInBits= o.uperMaxSizeInBits; uperMinSizeInBits=o.uperMinSizeInBits; children = children; cons=o.cons; withcons = o.withcons; baseType = newBase; Location = o.Location; acnMaxSizeInBits = acnMaxSizeInBits; acnMinSizeInBits = 0; alignment=alignment}, us)
         Sequence
 
         //Choice
-        (fun o newChild us -> {ChChildInfo.name = o.Name; chType = newChild; comments = o.Comments; presentConditions = []}, us)
+        (fun o newChild us -> 
+            let acnParams = getAcnParams newChild.id
+            let presenseIsHandleByExtField, nus = getChildLinks acn  acnTypes o.Location newChild  acnParams us
+            {ChChildInfo.name = o.Name; chType = newChild; comments = o.Comments; presenseIsHandleByExtField=presenseIsHandleByExtField}, nus)
         (fun children o newBase us -> 
-            let tasInfo = o.tasInfo |> Option.map (fun ts -> 
-                let acnParams = createAnyParams ts 
-                {AcnTypeAssignmentInfo.modName=ts.modName; tasName = ts.tasName; ancParameters = acnParams})
-            {Choice.id = o.id; tasInfo = tasInfo; uperMaxSizeInBits= o.uperMaxSizeInBits; uperMinSizeInBits=o.uperMinSizeInBits; children = children; cons=o.cons; withcons = o.withcons; baseType = newBase; Location = o.Location; acnMaxSizeInBits = 0; acnMinSizeInBits = 0; acnArguments=[];acnEncodingClass = EmbededChoiceIndexLikeUper}, us)
+            let acnParams = getAcnParams o.id
+            let encClass, alignment, acnMinSizeInBits, acnMaxSizeInBits, nus = GetChoiceEncodingClass acn  acnTypes o.Location o children acnParams us
+            {Choice.id = o.id; tasInfo = o.tasInfo; uperMaxSizeInBits= o.uperMaxSizeInBits; uperMinSizeInBits=o.uperMinSizeInBits; children = children; cons=o.cons; withcons = o.withcons; baseType = newBase; Location = o.Location; acnMaxSizeInBits = acnMaxSizeInBits; acnMinSizeInBits = acnMinSizeInBits; acnEncodingClass = encClass; alignment = alignment}, us)
         Choice
     
 
@@ -125,7 +96,7 @@ let mapBTypeToCType (r:BAst.AstRoot) (t:BAst.Asn1Type) (acn:AcnTypes.AcnAst) (ac
 let foldMap = CloneTree.foldMap
 
 let mapBAstToCast (r:BAst.AstRoot) (acn:AcnTypes.AcnAst) : AstRoot=
-    let initialState = {State.currentTypes = []}
+    let initialState = {State.currentTypes = []; acnLinks = []}
     let acnTypes = acn.Types |> List.map(fun t -> t.TypeID, t) |> Map.ofList
     let newTypes,_ = 
         r.TypeAssignments |>

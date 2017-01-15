@@ -42,6 +42,8 @@ type ScopeNode =
     | TA of string      //TYPE ASSIGNMENT
     | VA of string      //VALUE ASSIGNMENT
     | CH of string      //SEQUENCE OF CHOICE CHILD
+    | PRM of string     // ACN parameter
+    | TMP of string     // ACN temp type
     | SQF               //SEQUENCE OF CHILD
     with
         member this.StrValue =
@@ -49,7 +51,9 @@ type ScopeNode =
             | MD strVal
             | TA strVal
             | VA strVal
-            | CH strVal     -> strVal
+            | PRM strVal
+            | CH strVal
+            | TMP strVal     -> strVal
             | SQF           -> "#"
         override this.ToString() = this.StrValue
 

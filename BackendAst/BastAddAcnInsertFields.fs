@@ -38,7 +38,7 @@ let mapBTypeToBType (r:BAst.AstRoot) (t:BAst.Asn1Type) (acn:AcnTypes.AcnAst) (ac
         SequenceOf
 
         //sequence
-        (fun o newChild us -> {ChildInfo.Name = o.Name; chType = newChild; Optionality = o.Optionality; acnInsertetField    = o.acnInsertetField; Comments = o.Comments}, us)
+        (fun o newChild us -> {ChildInfo.Name = o.Name; chType = newChild; Optionality = o.Optionality; acnInsertetField    = o.acnInsertetField; Comments = o.Comments; Location = o.Location}, us)
         (fun children o newBase us -> 
             let acnAbsPath = o.id.AcnAbsPath
             let acnChildren = acn.Types |> Seq.filter(fun x -> x.TypeID.Length-1=acnAbsPath.Length && (x.TypeID|>Seq.take acnAbsPath.Length|>Seq.toList)=acnAbsPath) |> Seq.toList
@@ -73,6 +73,7 @@ let mapBTypeToBType (r:BAst.AstRoot) (t:BAst.Asn1Type) (acn:AcnTypes.AcnAst) (ac
                                         acnInsertetField = true
                                         Optionality = None
                                         Comments = acnChild.Comments |> Seq.toList
+                                        Location = acnChild.Location
                                     }
 
                     } |>Seq.toList
@@ -81,7 +82,7 @@ let mapBTypeToBType (r:BAst.AstRoot) (t:BAst.Asn1Type) (acn:AcnTypes.AcnAst) (ac
         Sequence
 
         //Choice
-        (fun o newChild us -> {ChildInfo.Name = o.Name; chType = newChild; Optionality = o.Optionality; Comments = o.Comments; acnInsertetField=false}, us)
+        (fun o newChild us -> {ChildInfo.Name = o.Name; chType = newChild; Optionality = o.Optionality; Comments = o.Comments; acnInsertetField=false; Location = o.Location}, us)
         (fun children o newBase us -> {Choice.id = o.id; tasInfo = o.tasInfo;  uperMaxSizeInBits= o.uperMaxSizeInBits; uperMinSizeInBits=o.uperMinSizeInBits; children = children; cons=o.cons; withcons = o.withcons; baseType = newBase; Location = o.Location}, us)
         Choice
 

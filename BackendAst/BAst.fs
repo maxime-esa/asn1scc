@@ -186,6 +186,7 @@ and ChildInfo = {
     Optionality         :Asn1Optionality option
     Comments            :string list
     acnInsertetField    :bool
+    Location            : SrcLoc   
 }
 
 and Sequence = {
