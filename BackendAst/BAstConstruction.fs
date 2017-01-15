@@ -40,7 +40,7 @@ let smap = CloneTree.foldMap
 
 
 
-let createAstRoot (s:State) (sr:Ast.AstRoot) (dfiles: Asn1File list)  =
+let createAstRoot (s:State) (sr:Ast.AstRoot) (dfiles: Asn1File list)  (acn:AcnTypes.AcnAst) =
     {
         AstRoot.Files = dfiles 
         Encodings = sr.Encodings
@@ -62,6 +62,9 @@ let createAstRoot (s:State) (sr:Ast.AstRoot) (dfiles: Asn1File list)  =
             aa |> Seq.groupBy(fun (id,t) -> id) |> Seq.filter(fun (id, gr) -> gr |> (*Seq.distinct |>*) Seq.length > 1) |> Seq.iter (fun x -> printfn "%A" x)
             aa |> Map.ofList
         integerSizeInBytes = sr.integerSizeInBytes
+        acnConstants    = acn.Constants
+        acnParameters   = acn.Parameters |> List.map(fun p -> {ModName = p.ModName;TasName = p.TasName; Name = p.Name; Asn1Type = p.Asn1Type;Location=p.Location})
+
     }
 
 let createAsn1File (s:State) (r:Ast.AstRoot) (f:Ast.Asn1File) (newMods:Asn1Module list)  = 
@@ -94,6 +97,8 @@ let createChildInfo (st:State) s (ch:Ast.ChildInfo) (newType:Asn1Type) (newOptio
         chType = newType
         Optionality = newOptionality
         Comments = ch.Comments |> Seq.toList
+        acnInsertetField    = false
+
     }, st
 
 let createChoiceChildInfo (st:State) s (ch:Ast.ChildInfo) (newType:Asn1Type) = 
@@ -102,6 +107,7 @@ let createChoiceChildInfo (st:State) s (ch:Ast.ChildInfo) (newType:Asn1Type) =
         chType = newType
         Optionality = None
         Comments = ch.Comments |> Seq.toList
+        acnInsertetField    = false
     }, st
 
 
@@ -129,6 +135,8 @@ let createType (s:State) (ts:GenericFold2.UserDefinedTypeScope) (oldType:Ast.Asn
         | _ when a=b  && b<65536 -> a*internalSize                , b*internalSize
         | _ when a<>b && b<65536 -> a*internalSize + (lenSize a b), b*internalSize + (lenSize a b)
         | _                      -> a*internalSize + (lenSize a b), b*internalSize + (b / 65536 + 3) * 8
+    let newTypeId = ReferenceToType ts 
+    let tasInfo = newTypeId.Asn1TypeName |> Option.map(fun x -> {TypeAssignmentInfo.modName = x.moduName; tasName = x.tasName})
     let ret = 
         match newKind with
         | InterimInteger baseType -> 
@@ -143,13 +151,13 @@ let createType (s:State) (ts:GenericFold2.UserDefinedTypeScope) (oldType:Ast.Asn
                 | _   -> 
                     let mn,mx = getRequiredBitsForIntUperEncoding uperR
                     1 + mn, 1 + mx
-            Integer      {Integer.baseType = baseType; cons = cons; withcons = withcons; uperRange = uperR; Location=oldType.Location; id=ReferenceToType ts; uperMaxSizeInBits=uperMaxSizeInBits; uperMinSizeInBits=uperMinSizeInBits}
+            Integer      {Integer.baseType = baseType; cons = cons; withcons = withcons; uperRange = uperR; Location=oldType.Location; id=newTypeId; tasInfo= tasInfo; uperMaxSizeInBits=uperMaxSizeInBits; uperMinSizeInBits=uperMinSizeInBits}
         | InterimReal      baseType                  -> 
             let cons     = newCons       |> List.choose id |> List.map ConstraintsMapping.getRealTypeConstraint 
             let withcons = fromWithComps |> List.choose id |> List.map ConstraintsMapping.getRealTypeConstraint 
             let inhCons  = inheritedCons (fun (x:Real) -> x.cons) (fun x -> x.baseType) baseType
             let uperR    = getRealTypeConstraintUperRange (cons@inhCons) oldType.Location
-            Real         {Real.baseType = baseType; cons = cons; withcons = withcons; uperRange = uperR; Location=oldType.Location; id=ReferenceToType ts; uperMaxSizeInBits=(5+integerSizeInBytes)*8; uperMinSizeInBits=8}
+            Real         {Real.baseType = baseType; cons = cons; withcons = withcons; uperRange = uperR; Location=oldType.Location; id=newTypeId; tasInfo= tasInfo; uperMaxSizeInBits=(5+integerSizeInBytes)*8; uperMinSizeInBits=8}
         | InterimIA5String     baseType              -> 
             let defaultCharSet = [|for i in 0..127 -> System.Convert.ToChar(i) |]
             let cons     = newCons       |> List.choose id |> List.map ConstraintsMapping.getIA5StringConstraint
@@ -162,7 +170,7 @@ let createType (s:State) (ts:GenericFold2.UserDefinedTypeScope) (oldType:Ast.Asn
             let uperMinSizeInBits, uperMaxSizeInBits = getSizeableTypeSize minSize maxSize charSize
 
 
-            IA5String    {StringType.baseType=baseType; cons = cons; withcons = withcons; minSize=minSize; maxSize=maxSize; charSet=charSet; Location=oldType.Location; id=ReferenceToType ts; uperMaxSizeInBits=uperMaxSizeInBits; uperMinSizeInBits=uperMinSizeInBits}
+            IA5String    {StringType.baseType=baseType; cons = cons; withcons = withcons; minSize=minSize; maxSize=maxSize; charSet=charSet; Location=oldType.Location; id=newTypeId; tasInfo= tasInfo; uperMaxSizeInBits=uperMaxSizeInBits; uperMinSizeInBits=uperMinSizeInBits}
         | InterimNumericString baseType              -> 
             let defaultCharSet = [| ' ';'0';'1';'2';'3';'4';'5';'6';'7';'8';'9'|]
             let cons     = newCons       |> List.choose id |> List.map ConstraintsMapping.getIA5StringConstraint
@@ -175,7 +183,7 @@ let createType (s:State) (ts:GenericFold2.UserDefinedTypeScope) (oldType:Ast.Asn
             let charSize =  int (GetNumberOfBitsForNonNegativeInteger (BigInteger (charSet.Length-1)))
             let uperMinSizeInBits, uperMaxSizeInBits = getSizeableTypeSize minSize maxSize charSize
 
-            IA5String    {StringType.baseType=baseType; cons = cons; withcons = withcons; minSize=minSize; maxSize=maxSize; charSet=charSet; Location=oldType.Location; id=ReferenceToType ts; uperMaxSizeInBits=uperMaxSizeInBits; uperMinSizeInBits=uperMinSizeInBits}
+            IA5String    {StringType.baseType=baseType; cons = cons; withcons = withcons; minSize=minSize; maxSize=maxSize; charSet=charSet; Location=oldType.Location; id=newTypeId; tasInfo= tasInfo; uperMaxSizeInBits=uperMaxSizeInBits; uperMinSizeInBits=uperMinSizeInBits}
         | InterimOctetString   baseType              -> 
             let cons     = newCons       |> List.choose id |> List.map ConstraintsMapping.getOctetStringConstraint
             let withcons = fromWithComps |> List.choose id |> List.map ConstraintsMapping.getOctetStringConstraint
@@ -183,8 +191,8 @@ let createType (s:State) (ts:GenericFold2.UserDefinedTypeScope) (oldType:Ast.Asn
             let sizeUperRange = getOctetStringUperRange (cons@inhCons) oldType.Location
             let minSize, maxSize = getSizeMinAndMaxValue sizeUperRange
             let uperMinSizeInBits, uperMaxSizeInBits = getSizeableTypeSize minSize maxSize 8
-            OctetString  {OctetString.baseType=baseType; cons = cons; withcons = withcons; minSize=minSize; maxSize=maxSize; Location=oldType.Location; id=ReferenceToType ts; uperMaxSizeInBits=uperMaxSizeInBits; uperMinSizeInBits=uperMinSizeInBits}
-        | InterimNullType     baseType              -> NullType {NullType.baseType=baseType; Location=oldType.Location; id=ReferenceToType ts; uperMaxSizeInBits=0; uperMinSizeInBits=0}
+            OctetString  {OctetString.baseType=baseType; cons = cons; withcons = withcons; minSize=minSize; maxSize=maxSize; Location=oldType.Location; id=newTypeId; tasInfo= tasInfo; uperMaxSizeInBits=uperMaxSizeInBits; uperMinSizeInBits=uperMinSizeInBits}
+        | InterimNullType     baseType              -> NullType {NullType.baseType=baseType; Location=oldType.Location; id=newTypeId; tasInfo= tasInfo; uperMaxSizeInBits=0; uperMinSizeInBits=0}
         | InterimBitString    baseType               -> 
             let cons     = newCons       |> List.choose id |> List.map ConstraintsMapping.getBitStringConstraint 
             let withcons = fromWithComps |> List.choose id |> List.map ConstraintsMapping.getBitStringConstraint
@@ -192,16 +200,16 @@ let createType (s:State) (ts:GenericFold2.UserDefinedTypeScope) (oldType:Ast.Asn
             let sizeUperRange = getBitStringUperRange (cons@inhCons) oldType.Location
             let minSize, maxSize = getSizeMinAndMaxValue sizeUperRange
             let uperMinSizeInBits, uperMaxSizeInBits = getSizeableTypeSize minSize maxSize 1
-            BitString    {BitString.baseType=baseType; cons = cons; withcons = withcons; minSize=minSize; maxSize=maxSize; Location=oldType.Location; id=ReferenceToType ts; uperMaxSizeInBits=uperMaxSizeInBits; uperMinSizeInBits=uperMinSizeInBits}
+            BitString    {BitString.baseType=baseType; cons = cons; withcons = withcons; minSize=minSize; maxSize=maxSize; Location=oldType.Location; id=newTypeId; tasInfo= tasInfo; uperMaxSizeInBits=uperMaxSizeInBits; uperMinSizeInBits=uperMinSizeInBits}
         | InterimBoolean      baseType               -> 
             let cons     = newCons       |> List.choose id |> List.map ConstraintsMapping.getBoolConstraint
             let withcons = fromWithComps |> List.choose id |> List.map ConstraintsMapping.getBoolConstraint
-            Boolean    {Boolean.baseType=baseType; cons=cons; withcons = withcons; Location=oldType.Location; id=ReferenceToType ts; uperMaxSizeInBits=1; uperMinSizeInBits=1}
+            Boolean    {Boolean.baseType=baseType; cons=cons; withcons = withcons; Location=oldType.Location; id=newTypeId; tasInfo= tasInfo; uperMaxSizeInBits=1; uperMinSizeInBits=1}
         | InterimEnumerated   (baseType, items, userDefinedValues) -> 
             let cons     = newCons       |> List.choose id |> List.map ConstraintsMapping.getEnumConstraint
             let withcons = fromWithComps |> List.choose id |> List.map ConstraintsMapping.getEnumConstraint
             let uperSizeInBits = int32(GetNumberOfBitsForNonNegativeInteger(BigInteger((Seq.length items) - 1)))
-            Enumerated  {Enumerated.baseType=baseType; items=items;userDefinedValues=userDefinedValues; cons = cons; withcons = withcons;  Location=oldType.Location; id=ReferenceToType ts; uperMaxSizeInBits=uperSizeInBits; uperMinSizeInBits=uperSizeInBits}
+            Enumerated  {Enumerated.baseType=baseType; items=items;userDefinedValues=userDefinedValues; cons = cons; withcons = withcons;  Location=oldType.Location; id=newTypeId; tasInfo= tasInfo; uperMaxSizeInBits=uperSizeInBits; uperMinSizeInBits=uperSizeInBits}
         | InterimSequenceOf    (baseType,childType)        -> 
             let cons     = newCons       |> List.choose id |> List.map ConstraintsMapping.getSequenceOfConstraint
             let withcons = fromWithComps |> List.choose id |> List.map ConstraintsMapping.getSequenceOfConstraint
@@ -210,7 +218,7 @@ let createType (s:State) (ts:GenericFold2.UserDefinedTypeScope) (oldType:Ast.Asn
             let minSize, maxSize = getSizeMinAndMaxValue sizeUperRange
             let uperMinSizeInBits, _ = getSizeableTypeSize minSize maxSize childType.uperMinSizeInBits
             let _, uperMaxSizeInBits = getSizeableTypeSize minSize maxSize childType.uperMaxSizeInBits
-            SequenceOf  {SequenceOf.baseType=baseType; childType=childType; cons=cons; withcons = withcons; minSize=minSize; maxSize=maxSize; Location=oldType.Location; id=ReferenceToType ts; uperMaxSizeInBits=uperMaxSizeInBits; uperMinSizeInBits=uperMinSizeInBits}
+            SequenceOf  {SequenceOf.baseType=baseType; childType=childType; cons=cons; withcons = withcons; minSize=minSize; maxSize=maxSize; Location=oldType.Location; id=newTypeId; tasInfo= tasInfo; uperMaxSizeInBits=uperMaxSizeInBits; uperMinSizeInBits=uperMinSizeInBits}
         | InterimSequence      (baseType,children)             -> 
             let optionalChildren = children |> Seq.filter(fun c -> c.Optionality.IsSome)
             let bitMaskSize = Seq.length optionalChildren
@@ -218,14 +226,14 @@ let createType (s:State) (ts:GenericFold2.UserDefinedTypeScope) (oldType:Ast.Asn
             let minChildrenSize = children |> List.filter(fun x -> x.Optionality.IsNone) |> List.map(fun x -> x.chType.uperMinSizeInBits) |> Seq.sum
             let cons     = newCons       |> List.choose id |> List.map ConstraintsMapping.getSequenceConstraint 
             let withcons = fromWithComps |> List.choose id |> List.map ConstraintsMapping.getSequenceConstraint
-            Sequence    {Sequence.baseType = baseType; children=children; cons=cons; withcons = withcons;  Location=oldType.Location; id=ReferenceToType ts; uperMaxSizeInBits=bitMaskSize+maxChildrenSize; uperMinSizeInBits=bitMaskSize+minChildrenSize }
+            Sequence    {Sequence.baseType = baseType; children=children; cons=cons; withcons = withcons;  Location=oldType.Location; id=newTypeId; tasInfo= tasInfo; uperMaxSizeInBits=bitMaskSize+maxChildrenSize; uperMinSizeInBits=bitMaskSize+minChildrenSize }
         | InterimChoice        (baseType,children)             -> 
             let indexSize = int (GetNumberOfBitsForNonNegativeInteger(BigInteger(Seq.length children)))
             let minChildSize = children  |> List.map(fun x -> x.chType.uperMinSizeInBits) |> Seq.min
             let maxChildSize = children  |> List.map(fun x -> x.chType.uperMaxSizeInBits) |> Seq.max
             let cons     = newCons       |> List.choose id |> List.map ConstraintsMapping.getChoiceConstraint
             let withcons = fromWithComps |> List.choose id |> List.map ConstraintsMapping.getChoiceConstraint
-            Choice      {Choice.baseType = baseType; children=children; cons=cons; withcons = withcons; Location=oldType.Location; id=ReferenceToType ts; uperMaxSizeInBits=indexSize+maxChildSize; uperMinSizeInBits=indexSize+minChildSize }
+            Choice      {Choice.baseType = baseType; children=children; cons=cons; withcons = withcons; Location=oldType.Location; id=newTypeId; tasInfo= tasInfo; uperMaxSizeInBits=indexSize+maxChildSize; uperMinSizeInBits=indexSize+minChildSize }
 
     ret, {s with anonymousTypes = s.anonymousTypes@[ret]}
 
@@ -258,7 +266,7 @@ let Asn1typeToInterimType (t:Asn1Type) =
     | Choice       t     ->  InterimChoice      (t.baseType, t.children)
 
 
-let createValidationAst (lang:Ast.ProgrammingLanguage) (app:Ast.AstRoot)  =
+let createValidationAst (lang:Ast.ProgrammingLanguage) (app:Ast.AstRoot) (acn:AcnTypes.AcnAst) =
     let l_aux (asn1ValName: (StringLoc*StringLoc) option) = 
         match asn1ValName with
         | None          -> Literal
@@ -267,7 +275,7 @@ let createValidationAst (lang:Ast.ProgrammingLanguage) (app:Ast.AstRoot)  =
         v, {us with anonymousValues=us.anonymousValues@[v]}
     GenericFold2.foldAstRoot
         //1. rootFunc r files
-        createAstRoot
+        (fun s sr dfiles  -> createAstRoot s sr dfiles acn )
 
         //2. fileFunc r f modules
         createAsn1File

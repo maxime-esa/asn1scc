@@ -63,7 +63,9 @@
     <Compile Include="BAst.fs" />
     <Compile Include="BAstConstruction.fs" />
     <Compile Include="BAstFold.fs" />
+    <Compile Include="BastAddAcnInsertFields.fs" />
     <Compile Include="CAst.fs" />
+    <Compile Include="CAstAcnEncodingClasses.fs" />
     <Compile Include="CAstConstruction.fs" />
     <None Include="Script.fsx" />
     <Compile Include="BackendAst.fs" />
@@ -71,6 +73,7 @@
     <Compile Include="validate.fs" />
     <Compile Include="createDefinitions.fs" />
     <Compile Include="print_debug.fs" />
+    <Compile Include="BackendAstConstruct.fs" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\Ast\Ast.fsproj">

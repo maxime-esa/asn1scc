@@ -10,8 +10,14 @@ open FsUtils
 
 
 
+type TypeAssignmentInfo = {
+    modName : string
+    tasName : string
+}
+
 type Integer = {
     id                  : ReferenceToType
+    tasInfo             : TypeAssignmentInfo option
     uperMaxSizeInBits   : int
     uperMinSizeInBits   : int
     cons                : IntegerTypeConstraint list
@@ -24,9 +30,18 @@ with
     member this.Cons     = this.cons
     member this.WithCons = this.withcons
     member this.AllCons  = this.cons@this.withcons
+    member this.IsUnsigned =
+        match this.uperRange with
+        | Concrete  (a,b) when a >= 0I -> true      //[a, b]
+        | Concrete  _                  -> false
+        | NegInf    _                  -> false    //(-inf, b]
+        | PosInf   a when a >= 0I      -> true     //[a, +inf)
+        | PosInf  _                    -> false    //[a, +inf)
+        | Full    _                    -> false    // (-inf, +inf)
 
 type Real = {
     id                  : ReferenceToType
+    tasInfo             : TypeAssignmentInfo option
     uperMaxSizeInBits   : int
     uperMinSizeInBits   : int
     cons                : RealTypeConstraint list
@@ -42,6 +57,7 @@ with
 
 type StringType = {
     id                  : ReferenceToType
+    tasInfo             : TypeAssignmentInfo option
     uperMaxSizeInBits   : int
     uperMinSizeInBits   : int
     cons                : IA5StringConstraint list
@@ -65,6 +81,7 @@ type EnumItem = {
 
 type Enumerated = {
     id                  : ReferenceToType
+    tasInfo             : TypeAssignmentInfo option
     uperMaxSizeInBits   : int
     uperMinSizeInBits   : int
     items               : EnumItem list
@@ -82,6 +99,7 @@ with
 
 type Boolean = {
     id                  : ReferenceToType
+    tasInfo             : TypeAssignmentInfo option
     uperMaxSizeInBits   : int
     uperMinSizeInBits   : int
     cons                : BoolConstraint list
@@ -97,6 +115,7 @@ with
 
 type OctetString = {
     id                  : ReferenceToType
+    tasInfo             : TypeAssignmentInfo option
     uperMaxSizeInBits   : int
     uperMinSizeInBits   : int
     cons                : OctetStringConstraint list
@@ -113,6 +132,7 @@ with
 
 type NullType = {
     id                  : ReferenceToType
+    tasInfo             : TypeAssignmentInfo option
     uperMaxSizeInBits   : int
     uperMinSizeInBits   : int
     baseType            : NullType option
@@ -121,6 +141,7 @@ type NullType = {
 
 type BitString = {
     id                  : ReferenceToType
+    tasInfo             : TypeAssignmentInfo option
     uperMaxSizeInBits   : int
     uperMinSizeInBits   : int
     cons                : BitStringConstraint list
@@ -143,6 +164,7 @@ type Asn1Optionality =
 
 type SequenceOf = {
     id                  : ReferenceToType
+    tasInfo             : TypeAssignmentInfo option
     uperMaxSizeInBits   : int
     uperMinSizeInBits   : int
     childType           : Asn1Type
@@ -163,10 +185,12 @@ and ChildInfo = {
     chType              :Asn1Type
     Optionality         :Asn1Optionality option
     Comments            :string list
+    acnInsertetField    :bool
 }
 
 and Sequence = {
     id                  : ReferenceToType
+    tasInfo             : TypeAssignmentInfo option
     uperMaxSizeInBits   : int
     uperMinSizeInBits   : int
     children            : ChildInfo list
@@ -182,6 +206,7 @@ with
 
 and Choice = {
     id                  : ReferenceToType
+    tasInfo             : TypeAssignmentInfo option
     uperMaxSizeInBits   : int
     uperMinSizeInBits   : int
     children            : ChildInfo list
@@ -269,8 +294,15 @@ with
         | _                                                                     -> None
 
 
+type AcnParameter = {
+    ModName         : string
+    TasName         : string
+    Name            : string
+    Asn1Type        : AcnTypes.AcnAsn1Type
+    Location        : SrcLoc
+}
 
-type AstRoot = AstRootTemplate<Asn1Type>
+type AstRoot = AstRootTemplate<Asn1Type, AcnParameter>
 
 
 

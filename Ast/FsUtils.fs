@@ -270,6 +270,8 @@ let MinInt() = if WordSize()=64I then BigInteger(System.Int64.MinValue) else Big
 let GetNumberOfBitsForNonNegativeInteger(a:BigInteger) = 
     BigInteger( System.Math.Ceiling(BigInteger.Log(a+BigInteger(1),2.0)) )
 
+let GetNumberOfBitsForNonNegativeInt(a:int) = 
+    int (System.Math.Ceiling(BigInteger.Log(BigInteger(a)+1I,2.0)) )
 
 let toString x = (sprintf "%A" x).Split(' ').[0].Trim()
 

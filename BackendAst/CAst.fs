@@ -9,51 +9,77 @@ open Constraints
 open uPER2
 
 
+type IntEncodingClass =
+    |Integer_uPER
+    |PositiveInteger_ConstSize_8
+    |PositiveInteger_ConstSize_big_endian_16
+    |PositiveInteger_ConstSize_little_endian_16
+    |PositiveInteger_ConstSize_big_endian_32
+    |PositiveInteger_ConstSize_little_endian_32
+    |PositiveInteger_ConstSize_big_endian_64
+    |PositiveInteger_ConstSize_little_endian_64
+    |PositiveInteger_ConstSize of int
+    |TwosComplement_ConstSize_8
+    |TwosComplement_ConstSize_big_endian_16
+    |TwosComplement_ConstSize_little_endian_16
+    |TwosComplement_ConstSize_big_endian_32
+    |TwosComplement_ConstSize_little_endian_32
+    |TwosComplement_ConstSize_big_endian_64
+    |TwosComplement_ConstSize_little_endian_64
+    |TwosComplement_ConstSize of int
+    |ASCII_ConstSize of int
+    |ASCII_VarSize_NullTerminated of byte
+    |ASCII_UINT_ConstSize of int
+    |ASCII_UINT_VarSize_NullTerminated of byte
+    |BCD_ConstSize of int
+    |BCD_VarSize_NullTerminated of byte
+
+
 type IntParamType =
     | Asn1Integer   of Asn1TypeName
     | AcnInteger    
 
-type BooleanParamType =
+and BooleanParamType =
     | Asn1Boolean   of Asn1TypeName
     | AcnBoolean    
 
-type StringParamType =
+and StringParamType =
     | Asn1String   of Asn1TypeName
 
-type EnumeratedParamType =
+and EnumeratedParamType =
     | Asn1Enumerated   of Asn1TypeName
 
-type ParameterTemplate<'T> = {
+and ParameterTemplate<'T> = {
     name        : string
     prmType     : 'T
 }
 
-type IntParameter           = ParameterTemplate<IntParamType>
-type BooleanParameter       = ParameterTemplate<BooleanParamType>
-type StringParameter        = ParameterTemplate<StringParamType>
-type EnumeratedParameter    = ParameterTemplate<EnumeratedParamType>
+and IntParameter           = ParameterTemplate<IntParamType>
+and BooleanParameter       = ParameterTemplate<BooleanParamType>
+and StringParameter        = ParameterTemplate<StringParamType>
+and EnumeratedParameter    = ParameterTemplate<EnumeratedParamType>
 
-type GenericParameter = 
+and GenericParameter = 
     | IntParameter          of IntParameter
-    | BoolParameter         of BooleanParamType
+    | BoolParameter         of BooleanParameter
     | StringParameter       of StringParameter
     | EnumeratedParameter   of EnumeratedParameter
 
 
-type DeterminantTypeTemplate<'ASN1TYPE, 'PRMTYPE> = 
+and DeterminantTypeTemplate<'ASN1TYPE, 'PRMTYPE> = 
     | AcnIntroducedType   of 'ASN1TYPE
     | AcnPrmType          of 'PRMTYPE
 
 
-type ArgumentTemplate<'DETTYPE> = {
+and ArgumentTemplate<'DETTYPE> = {
     prmName         : string
     determinant     : 'DETTYPE
 }
 
-
-type Integer = {
+and Integer = {
     //bast inherrited properties
     id                  : ReferenceToType
+    tasInfo             : BAst.TypeAssignmentInfo option
     uperMaxSizeInBits   : int
     uperMinSizeInBits   : int
     cons                : IntegerTypeConstraint list
@@ -65,7 +91,7 @@ type Integer = {
     //cast new properties
     acnMaxSizeInBits    : int
     acnMinSizeInBits    : int
-    acnEncodingClass    : Acn.IntEncodingClass
+    acnEncodingClass    : IntEncodingClass
 }
 with 
     member this.Cons     = this.cons
@@ -74,13 +100,14 @@ with
 
 
 
-type EnumAcnEncodingClass =
+and EnumAcnEncodingClass =
     | EncodeIndexes     of     Acn.IntEncodingClass
     | EncodeValues      of     Acn.IntEncodingClass 
 
 
-type Enumerated = {
+and Enumerated = {
     id                  : ReferenceToType
+    tasInfo             : BAst.TypeAssignmentInfo option
     uperMaxSizeInBits   : int
     uperMinSizeInBits   : int
     items               : BAst.EnumItem list
@@ -101,9 +128,17 @@ with
     member this.AllCons  = this.cons@this.withcons
 
 
-type Real = {
+and RealEncodingClass =
+    | Real_uPER
+    | Real_IEEE754_32_big_endian
+    | Real_IEEE754_64_big_endian
+    | Real_IEEE754_32_little_endian
+    | Real_IEEE754_64_little_endian
+
+and Real = {
     //bast inherrited properties
     id                  : ReferenceToType
+    tasInfo             : BAst.TypeAssignmentInfo option
     uperMaxSizeInBits   : int
     uperMinSizeInBits   : int
     cons                : RealTypeConstraint list
@@ -115,7 +150,7 @@ type Real = {
     //cast new properties
     acnMaxSizeInBits    : int
     acnMinSizeInBits    : int
-    acnEncodingClass    : Acn.RealEncodingClass
+    acnEncodingClass    : RealEncodingClass
 }
 with 
     member this.Cons     = this.cons
@@ -123,15 +158,16 @@ with
     member this.AllCons  = this.cons@this.withcons
 
 
-type BolleanAcnEncodingClass = {
+and BolleanAcnEncodingClass = {
     truePattern         : byte list
     falsePattern        : byte list
     patternSizeInBits   : int
     encodingValueIsTrue : bool
 }
 
-type Boolean = {
+and Boolean = {
     id                  : ReferenceToType
+    tasInfo             : BAst.TypeAssignmentInfo option
     uperMaxSizeInBits   : int
     uperMinSizeInBits   : int
     cons                : BoolConstraint list
@@ -151,13 +187,14 @@ with
 
 
 
-type NullAcnEncodingClass = {
+and NullAcnEncodingClass = {
     encodePattern       : byte list
     patternSizeInBits   : int
 }
 
-type NullType = {
+and NullType = {
     id                  : ReferenceToType
+    tasInfo             : BAst.TypeAssignmentInfo option
     uperMaxSizeInBits   : int
     uperMinSizeInBits   : int
     baseType            : NullType option
@@ -171,24 +208,31 @@ type NullType = {
 
 
 
-type IntegerDeterminant = DeterminantTypeTemplate<Integer,IntParameter>
-type IntArgument = ArgumentTemplate<IntegerDeterminant>
+and IntegerDeterminant = DeterminantTypeTemplate<ReferenceToType,IntParameter>
+and IntArgument = ArgumentTemplate<IntegerDeterminant>
 
 
 
-type StringAcnEncodingClass =
-    | Acn_Enc_String_Ascii_FixSize                          of int             //Fix size ASCII string with size int, the size is provided by maxSize which is equal with minSize
-    | Acn_Enc_String_Ascii_Null_Teminated                   of byte            //null character
-    | Acn_Enc_String_Ascii_External_Field_Determinant       of IntegerDeterminant //external field
-    | Acn_Enc_String_Ascii_Internal_Field_Determinant                          // this case is like uPER except that the ASCII value (8 bits) of the character is encoded and also no fragmentation
-    | Acn_Enc_String_CharIndex_FixSize                      of int
-    | Acn_Enc_String_CharIndex_External_Field_Determinant   of IntegerDeterminant //external field
-    | Acn_Enc_String_CharIndex_Internal_Field_Determinant                      // this case is almost like uPER (except of fragmentation)
+and StringAcnEncodingClass =
+    | Acn_Enc_String_Ascii_FixSize                          of size:int                     //int = the size of the fixed ascii string
+    | Acn_Enc_String_Ascii_Null_Teminated                   of byte                         //byte = the null character
+    | Acn_Enc_String_Ascii_External_Field_Determinant       of IntegerDeterminant           //external field
+    | Acn_Enc_String_Ascii_Internal_Field_Determinant       of lengDeterminantSize:int      //int = size in bits of legth determinant. This case is like uPER except that the ASCII value (8 bits) of the character is encoded and also no fragmentation     
+    | Acn_Enc_String_CharIndex_FixSize                      of size:int                     //int = the size of the fixed string
+    | Acn_Enc_String_CharIndex_External_Field_Determinant   of IntegerDeterminant     //external field
+    | Acn_Enc_String_CharIndex_Internal_Field_Determinant   of lengDeterminantSize:int      //int = size in bits of legth determinant : this case is almost like uPER (except of fragmentation)
 
 
-type StringType = {
+and AcnTypeAssignmentInfo<'paramType> = {
+    modName : string
+    tasName : string
+    ancParameters       : 'paramType list
+}
+
+and StringType = {
     //bast inherrited properties
     id                  : ReferenceToType
+    tasInfo             : AcnTypeAssignmentInfo<IntParameter> option
     uperMaxSizeInBits   : int
     uperMinSizeInBits   : int
     cons                : IA5StringConstraint list
@@ -203,7 +247,6 @@ type StringType = {
     acnMaxSizeInBits    : int
     acnMinSizeInBits    : int
     acnEncodingClass    : StringAcnEncodingClass
-    ancParameters       : IntParameter list
     acnArguments        : IntArgument list
 }
 with 
@@ -223,6 +266,7 @@ type SizeableAcnEncodingClass =
 
 type OctetString = {
     id                  : ReferenceToType
+    tasInfo             : AcnTypeAssignmentInfo<IntParameter> option
     uperMaxSizeInBits   : int
     uperMinSizeInBits   : int
     cons                : OctetStringConstraint list
@@ -236,7 +280,6 @@ type OctetString = {
     acnMaxSizeInBits    : int
     acnMinSizeInBits    : int
     acnEncodingClass    : SizeableAcnEncodingClass
-    ancParameters       : IntParameter list
     acnArguments        : IntArgument list
 }
 with 
@@ -248,6 +291,7 @@ with
 
 type BitString = {
     id                  : ReferenceToType
+    tasInfo             : AcnTypeAssignmentInfo<IntParameter> option
     uperMaxSizeInBits   : int
     uperMinSizeInBits   : int
     cons                : BitStringConstraint list
@@ -261,7 +305,6 @@ type BitString = {
     acnMaxSizeInBits    : int
     acnMinSizeInBits    : int
     acnEncodingClass    : SizeableAcnEncodingClass
-    ancParameters       : IntParameter list
     acnArguments        : IntArgument list
 }
 with 
@@ -287,6 +330,7 @@ type GenericArgument =
 
 type SequenceOf = {
     id                  : ReferenceToType
+    tasInfo             : AcnTypeAssignmentInfo<GenericParameter> option
     uperMaxSizeInBits   : int
     uperMinSizeInBits   : int
     childType           : Asn1Type
@@ -301,7 +345,6 @@ type SequenceOf = {
     acnMaxSizeInBits    : int
     acnMinSizeInBits    : int
     acnEncodingClass    : SizeableAcnEncodingClass
-    ancParameters       : GenericParameter list
     acnArguments        : GenericArgument list
 }
 with 
@@ -337,6 +380,7 @@ and SeqChildInfo = {
 
 and Sequence = {
     id                  : ReferenceToType
+    tasInfo             : AcnTypeAssignmentInfo<GenericParameter> option
     uperMaxSizeInBits   : int
     uperMinSizeInBits   : int
     children            : SeqChildInfo list
@@ -348,7 +392,6 @@ and Sequence = {
     //cast new properties
     acnMaxSizeInBits    : int
     acnMinSizeInBits    : int
-    ancParameters       : GenericParameter list
     acnArguments        : GenericArgument list
 }
 with 
@@ -378,6 +421,7 @@ and ChChildInfo = {
 
 and Choice = {
     id                  : ReferenceToType
+    tasInfo             : AcnTypeAssignmentInfo<GenericParameter> option
     uperMaxSizeInBits   : int
     uperMinSizeInBits   : int
     children            : ChChildInfo list
@@ -390,7 +434,6 @@ and Choice = {
     acnMaxSizeInBits    : int
     acnMinSizeInBits    : int
     acnEncodingClass    : ChoiceAcnEncClass
-    ancParameters       : GenericParameter list
     acnArguments        : GenericArgument list
 }
 with 
@@ -475,7 +518,7 @@ with
 
 
 
-type AstRoot = AstRootTemplate<Asn1Type>
+type AstRoot = AstRootTemplate<Asn1Type, BAst.AcnParameter>
 
 
 let mapBastToCast (r:BAst.AstRoot) (c:AcnTypes.AcnAst): AstRoot=
@@ -502,4 +545,6 @@ let mapBastToCast (r:BAst.AstRoot) (c:AcnTypes.AcnAst): AstRoot=
         TypeAssignments = newTypes
         ValueAssignments = r.ValueAssignments
         integerSizeInBytes = r.integerSizeInBytes
+        acnParameters = r.acnParameters
+        acnConstants = r.acnConstants
     }    

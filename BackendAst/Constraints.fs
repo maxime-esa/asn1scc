@@ -10,15 +10,19 @@ type Asn1TypeName = {
     moduName    : string
     tasName     : string
 }
+with
+    member this.id = 
+        ReferenceToType((GenericFold2.MD this.moduName)::(GenericFold2.TA this.tasName)::[])
+    
 
-type Asn1ValueName = {
+and Asn1ValueName = {
     moduName    : string
     vasName     : string
 }
 
 
 
-type ReferenceToType = 
+and ReferenceToType = 
     | ReferenceToType of GenericFold2.ScopeNode list
     with
         override this.ToString() =
@@ -30,6 +34,42 @@ type ReferenceToType =
                 match path with
                 | (GenericFold2.MD modName)::_    -> modName
                 | _                               -> raise(BugErrorException "Did not find module at the begining of the scope path")
+        member this.Asn1TypeName = 
+            match this with
+            | ReferenceToType path -> 
+                match path with
+                | (GenericFold2.MD mdName)::(GenericFold2.TA tasName)::[]   -> Some ({Asn1TypeName.moduName = mdName; tasName=tasName})
+                | _                                                         -> None
+
+        member this.AcnAbsPath =
+            match this with
+            | ReferenceToType path -> path |> List.map (fun i -> i.StrValue) 
+        member this.getSeqOrChildId (childName:string) =
+            match this with
+            | ReferenceToType path -> ReferenceToType (path@[GenericFold2.CH childName])
+        member this.appendLongChildId (childRelativePath:string list) =
+            match this with
+            | ReferenceToType path -> 
+                let newTail = 
+                    childRelativePath |> 
+                    List.map(fun s ->
+                        match s with
+                        | "#"   -> GenericFold2.SQF
+                        | _     -> GenericFold2.CH s)
+                ReferenceToType (path@newTail)
+        member this.beginsWith (md:string) (ts:string)= 
+            match this with
+            | ReferenceToType((GenericFold2.MD mdName)::(GenericFold2.TA tasName)::[])   -> mdName = md && tasName = ts
+            | _                                                                          -> false
+        member this.parentTypeId =
+            match this with
+            | ReferenceToType path -> 
+                let pathPar = path |> List.rev |> List.tail |> List.rev
+                match pathPar with
+                | [] 
+                | _::[]     -> None
+                | _         -> Some (ReferenceToType pathPar)
+            
             
 type ReferenceToValue = 
     | ReferenceToValue of (GenericFold2.ScopeNode list)*(GenericFold2.VarScopNode list)
@@ -127,8 +167,7 @@ with
         | NullValue        v    -> v.refToType
 
 
-
-type AstRootTemplate<'ASN1TYPE> = {
+type AstRootTemplate<'ASN1TYPE, 'ACNPARAM> = {
     Files: list<Asn1File>
     Encodings:list<Ast.Asn1Encoding>
     GenerateEqualFunctions:bool
@@ -143,6 +182,8 @@ type AstRootTemplate<'ASN1TYPE> = {
     TypeAssignments : list<'ASN1TYPE>
     ValueAssignments : list<Asn1GenericValue>
     integerSizeInBytes : int
+    acnConstants    : AcnTypes.AcnConstant list
+    acnParameters   : 'ACNPARAM list
 }
 
 
