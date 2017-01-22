@@ -22,14 +22,13 @@ PACKAGE BODY adaasn1rtl IS
    ERR_UNSUPPORTED_ENCODING    :CONSTANT INTEGER:= 1001;  --  Returned when the uPER encoding for REALs is not binary encoding
 
 
-
    FUNCTION Asn1Real_Equal(Left, Right: in Asn1Real) RETURN Boolean
    IS
-       ret : boolean;
+       ret : Boolean;
    BEGIN
        IF Left = Right THEN
            ret := true;
-       elsif Left = 0.0 THEN
+       ELSIF Left = 0.0 THEN
            ret := Right = 0.0;
        ELSE
            ret := ABS((Left - Right) / Left) < 0.00001;
@@ -39,23 +38,13 @@ PACKAGE BODY adaasn1rtl IS
 
 
    FUNCTION Asn1Boolean_Equal(Left, Right: in Boolean) RETURN Boolean
-   IS
-   BEGIN
-       RETURN Left = Right;
-   END Asn1Boolean_Equal;
-
+   IS (Left = Right);
 
    FUNCTION Asn1Int_Equal(Left, Right: in Asn1Int) RETURN Boolean
-   IS
-   BEGIN
-       RETURN Left = Right;
-   END Asn1Int_Equal;
+   IS (Left = Right);
 
    FUNCTION Asn1NullType_Equal(Left, Right: in Asn1NullType) RETURN Boolean
-   IS
-   BEGIN
-       RETURN True;
-   END Asn1NullType_Equal;
+   IS (TRUE);
 
    FUNCTION getStringSize(str:String) RETURN Integer
    IS
@@ -1366,6 +1355,7 @@ PACKAGE BODY adaasn1rtl IS
 
     PROCEDURE Acn_Dec_Int_PositiveInteger_ConstSize_little_endian_16(S : in BitArray; K : in out DECODE_PARAMS; IntVal:OUT Asn1Int; adjustVal:IN Asn1Int; minVal:IN Asn1Int; maxVal:IN Asn1Int; Result:OUT ASN1_RESULT)
     IS
+        PRAGMA Unreferenced(adjustVal);
 	tmp : OctetArray2:=OctetArray2'(others=>0);
         I   : INTEGER;
         ret : Asn1Int;
@@ -1400,6 +1390,7 @@ PACKAGE BODY adaasn1rtl IS
 
     PROCEDURE Acn_Dec_Int_PositiveInteger_ConstSize_little_endian_32(S : in BitArray; K : in out DECODE_PARAMS; IntVal:OUT Asn1Int; adjustVal:IN Asn1Int; minVal:IN Asn1Int; maxVal:IN Asn1Int; Result:OUT ASN1_RESULT)
     IS
+        PRAGMA Unreferenced(adjustVal);
 	tmp : OctetArray4:=OctetArray4'(others=>0);
         I   : INTEGER;
         ret : Asn1Int;
@@ -1434,6 +1425,7 @@ PACKAGE BODY adaasn1rtl IS
 
     PROCEDURE Acn_Dec_Int_PositiveInteger_ConstSize_little_endian_64(S : in BitArray; K : in out DECODE_PARAMS; IntVal:OUT Asn1Int; adjustVal:IN Asn1Int; minVal:IN Asn1Int; maxVal:IN Asn1Int; Result:OUT ASN1_RESULT)
     IS
+        PRAGMA Unreferenced(adjustVal);
 	tmp : OctetArray8:=OctetArray8'(others=>0);
         I   : INTEGER;
         ret : Asn1Int;
@@ -1807,7 +1799,7 @@ PACKAGE BODY adaasn1rtl IS
 
     PROCEDURE Acn_Dec_Int_BCD_ConstSize (S : in BitArray; K : in out DECODE_PARAMS; IntVal:OUT Asn1Int; minVal:IN Asn1Int; maxVal:IN Asn1Int; nNibbles:IN Integer; Result:OUT ASN1_RESULT)
     IS
-        digit:Interfaces.Unsigned_8;
+        digit:Asn1Byte;
         I : Integer;
         max_aux : CONSTANT Asn1Int := Asn1Int'Last/10 - 9;
     BEGIN
@@ -1820,7 +1812,7 @@ PACKAGE BODY adaasn1rtl IS
         --#        K.K = K~.K + (nNibbles-I)*4;
             BitStream_ReadNibble(S, K, digit, Result.Success);
 
-            Result.Success := Result.Success AND (digit>=0 AND digit<=9) AND intVal>=0 AND intVal <=max_aux;
+            Result.Success := Result.Success AND digit<=9 AND intVal>=0 AND intVal <=max_aux;
             IF Result.Success THEN
                 intVal := intVal*10;
                 intVal := intVal + Asn1Int(digit);
@@ -1843,7 +1835,7 @@ PACKAGE BODY adaasn1rtl IS
 
     PROCEDURE Acn_Dec_Int_BCD_VarSize_NullTerminated(S : in BitArray; K : in out DECODE_PARAMS; IntVal:OUT Asn1Int; minVal:IN Asn1Int; maxVal:IN Asn1Int; Result:OUT ASN1_RESULT)
     IS
-        digit:Interfaces.Unsigned_8;
+        digit:Asn1Byte;
         I : Integer;
         max_aux : CONSTANT Asn1Int := Asn1Int'Last/10 - 9;
         stopDigitFound : BOOLEAN :=FALSE;
@@ -1857,7 +1849,7 @@ PACKAGE BODY adaasn1rtl IS
         --#        K.K = K~.K + I*4;
             BitStream_ReadNibble(S, K, digit, Result.Success);
 
-            Result.Success := Result.Success AND ((digit>=0 AND digit<=9) OR digit=16#F#) AND intVal>=0 AND intVal <=max_aux;
+            Result.Success := Result.Success AND (digit<=9 OR digit=16#F#) AND intVal>=0 AND intVal <=max_aux;
             stopDigitFound := digit=16#F#;
             IF Result.Success AND (NOT stopDigitFound) THEN
                 intVal := intVal*10;
@@ -1902,7 +1894,7 @@ PACKAGE BODY adaasn1rtl IS
 
     PROCEDURE Acn_Dec_Int_ASCII_ConstSize (S : in BitArray; K : in out DECODE_PARAMS; IntVal:OUT Asn1Int; minVal:IN Asn1Int; maxVal:IN Asn1Int; nChars:IN Integer; Result:OUT ASN1_RESULT)
     IS
-        digit:Interfaces.Unsigned_8;
+        digit: Asn1Byte;
         Ch   : Character;
 
         I : Integer;
@@ -1929,7 +1921,7 @@ PACKAGE BODY adaasn1rtl IS
                 ch := Character'Val(digit);
                 digit := Character'Pos(ch) - Character'Pos('0');
 
-                Result.Success := Result.Success AND (digit>=0 AND digit<=9) AND intVal>=0 AND intVal <=max_aux;
+                Result.Success := Result.Success AND digit<=9 AND intVal>=0 AND intVal <=max_aux;
                 IF Result.Success THEN
                     intVal := intVal*10;
                     intVal := intVal + Asn1Int(digit);
@@ -2330,6 +2322,8 @@ PACKAGE BODY adaasn1rtl IS
     ---# post K.K = K~.K ;
     IS
     	--# hide Acn_Dec_NullType;
+        PRAGMA Unreferenced(S);
+        PRAGMA Unreferenced(K);
     BEGIN
     	decValue:=0;
         Result := ASN1_RESULT'(Success => True,ErrorCode => 0);
@@ -2508,7 +2502,7 @@ PACKAGE BODY adaasn1rtl IS
      IS
          I:Integer:=strVal'First;
          charIndex:Integer;
-         asn1Max:Integer := charSet'Last - 1;
+         asn1Max:CONSTANT Integer := charSet'Last - 1;
      BEGIN
 	 Result := ASN1_RESULT'(Success   => TRUE,ErrorCode => ERR_INSUFFICIENT_DATA);
          WHILE I<=strVal'Last - 1 and Result.Success LOOP
@@ -2543,7 +2537,7 @@ PACKAGE BODY adaasn1rtl IS
     IS
          I:Integer:=strVal'First;
          charIndex:Integer;
-         asn1Max:Integer := charSet'Last - 1;
+         asn1Max:CONSTANT Integer := charSet'Last - 1;
     BEGIN
         Result := ASN1_RESULT'(Success   => TRUE,ErrorCode => ERR_INSUFFICIENT_DATA);
 
