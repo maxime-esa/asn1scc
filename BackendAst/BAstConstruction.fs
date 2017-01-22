@@ -62,8 +62,6 @@ let createAstRoot (s:State) (sr:Ast.AstRoot) (dfiles: Asn1File list)  (acn:AcnTy
             aa |> Seq.groupBy(fun (id,t) -> id) |> Seq.filter(fun (id, gr) -> gr |> (*Seq.distinct |>*) Seq.length > 1) |> Seq.iter (fun x -> printfn "%A" x)
             aa |> Map.ofList
         integerSizeInBytes = sr.integerSizeInBytes
-        acnConstants    = acn.Constants
-        acnParameters   = acn.Parameters |> List.map(fun p -> {ModName = p.ModName;TasName = p.TasName; Name = p.Name; Asn1Type = p.Asn1Type;Location=p.Location})
 
     }
 

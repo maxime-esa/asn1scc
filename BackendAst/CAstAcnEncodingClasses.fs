@@ -9,11 +9,8 @@ open FsUtils
 
 type State = {
     currentTypes : Asn1Type list
-    acnLinks     : AcnLink  list
 }
 
-let addLinkToState (s:State) link =
-    {s with acnLinks = link::s.acnLinks}
 
 
 
@@ -237,7 +234,7 @@ type PrivateSizeableEncodingClass =
     | PrivateExternalField 
     | PrivateNullTerminated of byte
 
-let getPrivateSizeableEncodingClass (acnTypes:Map<AcnTypes.AbsPath,AcnTypes.AcnType>) (acn:AcnTypes.AcnAst)  (id:ReferenceToType) (acnParams: BAst.AcnParameter list) (us:State)=
+let getPrivateSizeableEncodingClass (acnTypes:Map<AcnTypes.AbsPath,AcnTypes.AcnType>) (acn:AcnTypes.AcnAst)  (id:ReferenceToType) (acnParams: AcnParameter list) (us:State)=
     let acnProps = getAcnProps acnTypes id
     match acnProps |> List.choose(fun x -> match x with AcnTypes.SizeProperty(a) -> Some a | _ -> None ) with     
     | hd::_ -> 
@@ -246,30 +243,10 @@ let getPrivateSizeableEncodingClass (acnTypes:Map<AcnTypes.AbsPath,AcnTypes.AcnT
         | AcnTypes.sizeProperty.NullTerminated b    -> PrivateNullTerminated b, us
     | []    -> 
         match acn.References |> Seq.tryFind(fun x -> x.TypeID = id.AcnAbsPath && x.Kind = AcnTypes.SizeDeterminant) with
-        | Some(r)       ->  
-            let determinantId  =
-                let parentId = id.parentTypeId
-                let determinantId childRelPath = 
-                    let determinantId = parentId |> Option.map (fun x -> x.appendLongChildId childRelPath)
-                    match determinantId with
-                    | None                  -> raise(SemanticError (r.Location, sprintf "Invalid Reference '%s'" (r.LongRef.ToString()) ))
-                    | Some determinantId    -> (AcnType,determinantId)
-                match r.LongRef with
-                | []            -> raise(SemanticError (r.Location,"Invalid Reference (empty path)" ))
-                | fldName::[]   ->
-                    match acnParams |> Seq.tryFind(fun p -> p.Name = fldName) with
-                    | Some p    -> 
-                        match id.BelongingTypeAssignment with
-                        | Some tasId    -> (AcnParameter, tasId.id.getParamId p.Name)
-                        | None          -> raise(SemanticError (r.Location,"Invalid type id" ))
-                    | None      -> determinantId r.LongRef
-                | _             -> determinantId r.LongRef
-            let newLink = {AcnLink.decType = id; determinant = determinantId; linkType = SizeDeterminant}
-            let newState = addLinkToState us newLink
-            PrivateExternalField, newState 
+        | Some(r)       ->  PrivateExternalField, us 
         | None          ->  PrivateAutoSize, us
 
-let GetStringEncodingClass (acn:AcnTypes.AcnAst)  (acnTypes:Map<AcnTypes.AbsPath,AcnTypes.AcnType>) errLoc (a:BAst.StringType) (acnParams: BAst.AcnParameter list) (us:State) =
+let GetStringEncodingClass (acn:AcnTypes.AcnAst)  (acnTypes:Map<AcnTypes.AbsPath,AcnTypes.AcnType>) errLoc (a:BAst.StringType) (acnParams: AcnParameter list) (us:State) =
     let asn1Min, asn1Max = a.minSize, a.maxSize
     let acnProps = getAcnProps acnTypes a.id
     let alignment, alignmentSize = GetAlignment acnProps
@@ -330,7 +307,7 @@ let GetStringEncodingClass (acn:AcnTypes.AcnAst)  (acnTypes:Map<AcnTypes.AbsPath
 ╚══════╝╚══════╝ ╚══▀▀═╝  ╚═════╝ ╚══════╝╚═╝  ╚═══╝ ╚═════╝╚══════╝     ╚═════╝ ╚═╝          ╚═════╝  ╚═════╝   ╚═╝   ╚══════╝   ╚═╝╚═╝    ╚═════╝ ╚═╝   ╚═╝       ╚══════╝   ╚═╝   ╚═╝  ╚═╝╚═╝╚═╝  ╚═══╝ ╚═════╝ 
 *)
 
-let GetOctetBitSeqofEncodingClass (acn:AcnTypes.AcnAst)  (acnTypes:Map<AcnTypes.AbsPath,AcnTypes.AcnType>) errLoc (id:ReferenceToType) asn1Min asn1Max internalMinSize internalMaxSize (acnParams: BAst.AcnParameter list) (us:State) =
+let GetOctetBitSeqofEncodingClass (acn:AcnTypes.AcnAst)  (acnTypes:Map<AcnTypes.AbsPath,AcnTypes.AcnType>) errLoc (id:ReferenceToType) asn1Min asn1Max internalMinSize internalMaxSize (acnParams: AcnParameter list) (us:State) =
     let acnProps = getAcnProps acnTypes id
     let bAsn1FixedSize = asn1Min = asn1Max
     let alignment, alignmentSize = GetAlignment acnProps
@@ -352,13 +329,13 @@ let GetOctetBitSeqofEncodingClass (acn:AcnTypes.AcnAst)  (acnTypes:Map<AcnTypes.
         | ExternalField     -> asn1Min*internalMinSize, asn1Max*internalMaxSize
     encClass, alignment, minSize+alignmentSize, maxSize+alignmentSize, fs
 
-let GetOctetStringEncodingClass (acn:AcnTypes.AcnAst)  (acnTypes:Map<AcnTypes.AbsPath,AcnTypes.AcnType>) errLoc (a:BAst.OctetString) (acnParams: BAst.AcnParameter list) (us:State) =
+let GetOctetStringEncodingClass (acn:AcnTypes.AcnAst)  (acnTypes:Map<AcnTypes.AbsPath,AcnTypes.AcnType>) errLoc (a:BAst.OctetString) (acnParams: AcnParameter list) (us:State) =
     GetOctetBitSeqofEncodingClass acn  acnTypes errLoc a.id  a.minSize a.maxSize 8 8 acnParams us
 
-let GetBitStringEncodingClass (acn:AcnTypes.AcnAst)  (acnTypes:Map<AcnTypes.AbsPath,AcnTypes.AcnType>) errLoc (a:BAst.BitString) (acnParams: BAst.AcnParameter list) (us:State) =
+let GetBitStringEncodingClass (acn:AcnTypes.AcnAst)  (acnTypes:Map<AcnTypes.AbsPath,AcnTypes.AcnType>) errLoc (a:BAst.BitString) (acnParams: AcnParameter list) (us:State) =
     GetOctetBitSeqofEncodingClass acn  acnTypes errLoc a.id  a.minSize a.maxSize 1 1 acnParams us
 
-let GetSequenceOfEncodingClass (acn:AcnTypes.AcnAst)  (acnTypes:Map<AcnTypes.AbsPath,AcnTypes.AcnType>) errLoc (a:BAst.SequenceOf) internalMinSize internalMaxSize (acnParams: BAst.AcnParameter list) (us:State) =
+let GetSequenceOfEncodingClass (acn:AcnTypes.AcnAst)  (acnTypes:Map<AcnTypes.AbsPath,AcnTypes.AcnType>) errLoc (a:BAst.SequenceOf) internalMinSize internalMaxSize (acnParams: AcnParameter list) (us:State) =
     GetOctetBitSeqofEncodingClass acn  acnTypes errLoc a.id  a.minSize a.maxSize internalMinSize internalMaxSize acnParams us
 
 (*
@@ -370,7 +347,7 @@ let GetSequenceOfEncodingClass (acn:AcnTypes.AcnAst)  (acnTypes:Map<AcnTypes.Abs
 ╚══════╝╚══════╝ ╚══▀▀═╝  ╚═════╝ ╚══════╝╚═╝  ╚═══╝ ╚═════╝╚══════╝     ╚═════╝╚═╝  ╚═╝╚═╝╚══════╝╚═════╝ 
 *)
 
-let GetSeqChildOptionality (acn:AcnTypes.AcnAst)  (acnTypes:Map<AcnTypes.AbsPath,AcnTypes.AcnType>) errLoc (chType: Asn1Type) (oldOptionality:BAst.Asn1Optionality option) (acnParams: BAst.AcnParameter list) (us:State) =
+let GetSeqChildOptionality (acn:AcnTypes.AcnAst)  (acnTypes:Map<AcnTypes.AbsPath,AcnTypes.AcnType>) errLoc (chType: Asn1Type) (oldOptionality:BAst.Asn1Optionality option) (acnParams: AcnParameter list) (us:State) =
     let defValue =
         match oldOptionality with
         | Some(BAst.Default v)      -> Some v
@@ -384,27 +361,7 @@ let GetSeqChildOptionality (acn:AcnTypes.AcnAst)  (acnTypes:Map<AcnTypes.AbsPath
     | Some(BAst.Default _)      ->
         match acn.References |> Seq.tryFind(fun x -> x.TypeID = chType.id.AcnAbsPath && x.Kind = AcnTypes.PresenceBool) with
         | None          -> Some (Optional {Optional.defaultValue = defValue; ancEncodingClass = OptionLikeUper}), us
-        | Some(r)       -> 
-            let determinantId  =
-                let determinantId childRelPath = 
-                    let parentId = chType.id.parentTypeId
-                    let determinantId = parentId |> Option.map (fun x -> x.appendLongChildId childRelPath)
-                    match determinantId with
-                    | None                  -> raise(SemanticError (r.Location, sprintf "Invalid Reference '%s'" (r.LongRef.ToString()) ))
-                    | Some determinantId    -> (AcnType,determinantId)
-                match r.LongRef with
-                | []            -> raise(SemanticError (r.Location,"Invalid Reference (empty path)" ))
-                | fldName::[]   ->
-                    match acnParams |> Seq.tryFind(fun p -> p.Name = fldName) with
-                    | Some p    -> 
-                        match chType.id.BelongingTypeAssignment with
-                        | Some tasId    -> (AcnParameter, tasId.id.getParamId p.Name)
-                        | None          -> raise(SemanticError (r.Location,"Invalid type id" ))
-                    | None      -> determinantId r.LongRef
-                | _             -> determinantId r.LongRef
-            let newLink = {AcnLink.decType = chType.id; determinant = determinantId; linkType = PresenceBool}
-            let newState = addLinkToState us newLink
-            Some (Optional {Optional.defaultValue = defValue; ancEncodingClass = OptionExtField}), newState 
+        | Some(r)       -> Some (Optional {Optional.defaultValue = defValue; ancEncodingClass = OptionExtField}), us 
     
 (*
  ██████╗██╗  ██╗ ██████╗ ██╗ ██████╗███████╗     ██████╗██╗  ██╗██╗██╗     ██████╗ 
@@ -414,47 +371,23 @@ let GetSeqChildOptionality (acn:AcnTypes.AcnAst)  (acnTypes:Map<AcnTypes.AbsPath
 ╚██████╗██║  ██║╚██████╔╝██║╚██████╗███████╗    ╚██████╗██║  ██║██║███████╗██████╔╝
  ╚═════╝╚═╝  ╚═╝ ╚═════╝ ╚═╝ ╚═════╝╚══════╝     ╚═════╝╚═╝  ╚═╝╚═╝╚══════╝╚═════╝ 
 *)
-let getChildLinks (acn:AcnTypes.AcnAst)  (acnTypes:Map<AcnTypes.AbsPath,AcnTypes.AcnType>) errLoc (chType: Asn1Type)  (acnParams: BAst.AcnParameter list) (us:State) =
-    let determinantId  (r:AcnTypes.LongReference) =
-        let determinantId childRelPath = 
-            let parentId = chType.id.parentTypeId
-            let determinantId = parentId |> Option.map (fun x -> x.appendLongChildId childRelPath)
-            match determinantId with
-            | None                  -> raise(SemanticError (r.Location, sprintf "Invalid Reference '%s'" (r.LongRef.ToString()) ))
-            | Some determinantId    -> (AcnType,determinantId)
-        match r.LongRef with
-        | []            -> raise(SemanticError (r.Location,"Invalid Reference (empty path)" ))
-        | fldName::[]   ->
-            match acnParams |> Seq.tryFind(fun p -> p.Name = fldName) with
-            | Some p    -> 
-                match chType.id.BelongingTypeAssignment with
-                | Some tasId    -> (AcnParameter, tasId.id.getParamId p.Name)
-                | None          -> raise(SemanticError (r.Location,"Invalid type id" ))
-            | None      -> determinantId r.LongRef
-        | _             -> determinantId r.LongRef
+let getChildLinks (acn:AcnTypes.AcnAst)  (acnTypes:Map<AcnTypes.AbsPath,AcnTypes.AcnType>) errLoc (chType: Asn1Type)  (acnParams: AcnParameter list) (us:State) =
 
     let newLinks = 
         acn.References |> 
         List.filter(fun x -> x.TypeID = chType.id.AcnAbsPath) |>
-        List.choose(fun r -> 
+        List.filter(fun r -> 
             match r.Kind with
-            | AcnTypes.SizeDeterminant      -> None
-            | AcnTypes.RefTypeArgument _    -> None
-            | AcnTypes.ChoiceDeteterminant  -> None
-            | AcnTypes.PresenceBool         ->
-                let newLink = {AcnLink.decType = chType.id; determinant = determinantId r; linkType = PresenceBool}
-                Some newLink
-            | AcnTypes.PresenceInt intVal   -> 
-                let newLink = {AcnLink.decType = chType.id; determinant = determinantId r; linkType = PresenceInt (AcnTypes.EvaluateConstant acn.Constants intVal)}
-                Some newLink
-            | AcnTypes.PresenceStr strVal   -> 
-                let newLink = {AcnLink.decType = chType.id; determinant = determinantId r; linkType = PresenceStr strVal}
-                Some newLink
-        )
+            | AcnTypes.SizeDeterminant      -> false
+            | AcnTypes.RefTypeArgument _    -> false
+            | AcnTypes.ChoiceDeteterminant  -> false
+            | AcnTypes.PresenceBool         -> true
+            | AcnTypes.PresenceInt intVal   -> true
+            | AcnTypes.PresenceStr strVal   -> true)
     let presenseIsHandleByExtField = not newLinks.IsEmpty
-    presenseIsHandleByExtField , {us with acnLinks = newLinks@us.acnLinks}    
+    presenseIsHandleByExtField , us
 
-let GetChoiceEncodingClass (acn:AcnTypes.AcnAst)  (acnTypes:Map<AcnTypes.AbsPath,AcnTypes.AcnType>) errLoc (a:BAst.Choice) (children:ChChildInfo list) (acnParams: BAst.AcnParameter list) (us:State) =
+let GetChoiceEncodingClass (acn:AcnTypes.AcnAst)  (acnTypes:Map<AcnTypes.AbsPath,AcnTypes.AcnType>) errLoc (a:BAst.Choice) (children:ChChildInfo list) (acnParams: AcnParameter list) (us:State) =
     let acnProps = getAcnProps acnTypes a.id
     let alignment, alignmentSize = GetAlignment acnProps
     let encClass, nus, indexSize = 
@@ -463,26 +396,7 @@ let GetChoiceEncodingClass (acn:AcnTypes.AcnAst)  (acnTypes:Map<AcnTypes.AbsPath
             match children |> Seq.exists(fun c -> c.presenseIsHandleByExtField) with 
             | true  -> raise(SemanticError(errLoc, "ACN property 'determinant' can not be applied when children have their own presense conditions"))
             | false -> ()
-            let determinantId  =
-                let parentId = a.id.parentTypeId
-                let determinantId childRelPath = 
-                    let determinantId = parentId |> Option.map (fun x -> x.appendLongChildId childRelPath)
-                    match determinantId with
-                    | None                  -> raise(SemanticError (r.Location, sprintf "Invalid Reference '%s'" (r.LongRef.ToString()) ))
-                    | Some determinantId    -> (AcnType,determinantId)
-                match r.LongRef with
-                | []            -> raise(SemanticError (r.Location,"Invalid Reference (empty path)" ))
-                | fldName::[]   ->
-                    match acnParams |> Seq.tryFind(fun p -> p.Name = fldName) with
-                    | Some p    -> 
-                        match a.id.BelongingTypeAssignment with
-                        | Some tasId    -> (AcnParameter, tasId.id.getParamId p.Name)
-                        | None          -> raise(SemanticError (r.Location,"Invalid type id" ))
-                    | None      -> determinantId r.LongRef
-                | _             -> determinantId r.LongRef
-            let newLink = {AcnLink.decType = a.id; determinant = determinantId; linkType = ChoiceDeteterminant}
-            let newState = addLinkToState us newLink
-            EnumDeterminant, newState, 0
+            EnumDeterminant, us, 0
         | None  -> 
             match children |> Seq.exists(fun c -> c.presenseIsHandleByExtField) with 
             | true  -> PresentWhenOnChildren, us, 0

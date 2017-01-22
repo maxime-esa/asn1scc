@@ -116,6 +116,4 @@ let doWork (r:BAst.AstRoot) (acn:AcnTypes.AcnAst) : AstRoot=
         TypeAssignments = newTypes
         ValueAssignments = r.ValueAssignments
         integerSizeInBytes = r.integerSizeInBytes
-        acnParameters = r.acnParameters
-        acnConstants = r.acnConstants
     }

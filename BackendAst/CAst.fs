@@ -62,15 +62,22 @@ with
     member this.Cons     = this.cons
     member this.WithCons = this.withcons
     member this.AllCons  = this.cons@this.withcons
+    member this.IsUnsigned =
+        match this.uperRange with
+        | Concrete (a,b) when a >= 0I   -> true
+        | Concrete (a,b)                -> false
+        | NegInf   _                    -> false
+        | PosInf (a)     when a >= 0I   -> true
+        | PosInf (a)                    -> false
+        | Full                          -> false
 
 
-
-and EnumAcnEncodingClass =
+type EnumAcnEncodingClass =
     | EncodeIndexes     of     IntEncodingClass
     | EncodeValues      of     IntEncodingClass 
 
 
-and Enumerated = {
+type Enumerated = {
     id                  : ReferenceToType
     tasInfo             : BAst.TypeAssignmentInfo option
     uperMaxSizeInBits   : int
@@ -94,14 +101,14 @@ with
     member this.AllCons  = this.cons@this.withcons
 
 
-and RealEncodingClass =
+type RealEncodingClass =
     | Real_uPER
     | Real_IEEE754_32_big_endian
     | Real_IEEE754_64_big_endian
     | Real_IEEE754_32_little_endian
     | Real_IEEE754_64_little_endian
 
-and Real = {
+type Real = {
     //bast inherrited properties
     id                  : ReferenceToType
     tasInfo             : BAst.TypeAssignmentInfo option
@@ -125,14 +132,14 @@ with
     member this.AllCons  = this.cons@this.withcons
 
 
-and BolleanAcnEncodingClass = {
+type BolleanAcnEncodingClass = {
     truePattern         : byte list
     falsePattern        : byte list
     patternSizeInBits   : int
     encodingValueIsTrue : bool
 }
 
-and Boolean = {
+type Boolean = {
     id                  : ReferenceToType
     tasInfo             : BAst.TypeAssignmentInfo option
     uperMaxSizeInBits   : int
@@ -155,12 +162,12 @@ with
 
 
 
-and NullAcnEncodingClass = {
+type NullAcnEncodingClass = {
     byteMask            : byte list
     patternSizeInBits   : int
 }
 
-and NullType = {
+type NullType = {
     id                  : ReferenceToType
     tasInfo             : BAst.TypeAssignmentInfo option
     uperMaxSizeInBits   : int
@@ -180,18 +187,18 @@ and NullType = {
 
 
 
-and StringAcnEncodingClass =
-    | Acn_Enc_String_Ascii_FixSize                          of int                     //int = the size of the fixed ascii string
+type StringAcnEncodingClass =
+    | Acn_Enc_String_Ascii_FixSize                          of int                      //int = the size of the fixed ascii string
     | Acn_Enc_String_Ascii_Null_Teminated                   of byte                     //byte = the null character
-    | Acn_Enc_String_Ascii_External_Field_Determinant                                   //external field
+    | Acn_Enc_String_Ascii_External_Field_Determinant                                   //the determinant is exists withinh acnLinks
     | Acn_Enc_String_Ascii_Internal_Field_Determinant       of int                      //int = size in bits of legth determinant. This case is like uPER except that the ASCII value (8 bits) of the character is encoded and also no fragmentation     
-    | Acn_Enc_String_CharIndex_FixSize                      of int                     //int = the size of the fixed string
+    | Acn_Enc_String_CharIndex_FixSize                      of int                      //int = the size of the fixed string
     | Acn_Enc_String_CharIndex_External_Field_Determinant                               //external field
     | Acn_Enc_String_CharIndex_Internal_Field_Determinant   of int                      //int = size in bits of legth determinant : this case is almost like uPER (except of fragmentation)
 
 
 
-and StringType = {
+type StringType = {
     //bast inherrited properties
     id                  : ReferenceToType
     tasInfo             : BAst.TypeAssignmentInfo option
@@ -512,44 +519,38 @@ type AcnLinkKind =
     | PresenceStr of string
     | ChoiceDeteterminant                           // points to Enumerated type acting as CHOICE determinant.
 
-type AcnDeterminantType =
-    | AcnType
-    | AcnParameter
-
 type AcnLink = {
-    decType     : ReferenceToType
-    determinant : AcnDeterminantType*ReferenceToType
+    decType     : Asn1Type
+    determinant : ReferenceToType
     linkType    : AcnLinkKind
 }
 
+type AcnParameter = {
+    ModName         : string
+    TasName         : string
+    Name            : string
+    Asn1Type        : AcnTypes.AcnAsn1Type
+    Location        : SrcLoc
+}
 
-type AstRoot = AstRootTemplate<Asn1Type, BAst.AcnParameter>
 
-
-let mapBastToCast (r:BAst.AstRoot) (c:AcnTypes.AcnAst): AstRoot=
-    let acnMap = c.Types |> List.map(fun s -> s.TypeID |> Seq.StrJoin ".", s) |> Map.ofList
-    let mapType (t:BAst.Asn1Type) : Asn1Type =
-        let acnProps = 
-            match acnMap.TryFind (t.id.ToString()) with
-            | None  -> []
-            | Some acnT -> acnT.Properties
-        raise(Exception "")
-    let newTypes = r.TypeAssignments |> List.map mapType
-    {
-        AstRoot.Files = r.Files
-        Encodings = r.Encodings
-        GenerateEqualFunctions = r.GenerateEqualFunctions
-        TypePrefix = r.TypePrefix
-        AstXmlAbsFileName = r.AstXmlAbsFileName
-        IcdUperHtmlFileName = r.IcdUperHtmlFileName
-        IcdAcnHtmlFileName = r.IcdUperHtmlFileName
-        CheckWithOss = r.CheckWithOss
-        mappingFunctionsModule = r.mappingFunctionsModule
-        valsMap = r.valsMap
-        typesMap = newTypes |> List.map(fun x -> x.id, x) |> Map.ofList
-        TypeAssignments = newTypes
-        ValueAssignments = r.ValueAssignments
-        integerSizeInBytes = r.integerSizeInBytes
-        acnParameters = r.acnParameters
-        acnConstants = r.acnConstants
-    }    
+//type AstRoot = AstRootTemplate<Asn1Type, BAst.AcnParameter>
+type AstRoot = {
+    Files: list<Asn1File>
+    Encodings:list<Ast.Asn1Encoding>
+    GenerateEqualFunctions:bool
+    TypePrefix:string
+    AstXmlAbsFileName:string
+    IcdUperHtmlFileName:string
+    IcdAcnHtmlFileName:string
+    CheckWithOss:bool
+    mappingFunctionsModule : string option
+    valsMap : Map<ReferenceToValue, Asn1GenericValue>
+    typesMap : Map<ReferenceToType, Asn1Type>
+    TypeAssignments : list<Asn1Type>
+    ValueAssignments : list<Asn1GenericValue>
+    integerSizeInBytes : int
+    acnConstants    : AcnTypes.AcnConstant list
+    acnParameters   : AcnParameter list
+    acnLinks        : AcnLink list
+}

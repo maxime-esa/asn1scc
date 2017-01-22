@@ -6,10 +6,10 @@ open Constraints
 open CAstAcnEncodingClasses
 
 
-let mapBTypeToCType (r:BAst.AstRoot) (t:BAst.Asn1Type) (acn:AcnTypes.AcnAst) (acnTypes:Map<AcnTypes.AbsPath,AcnTypes.AcnType>) (initialSate:State) =
+let mapBTypeToCType (r:BAst.AstRoot) (t:BAst.Asn1Type) (acn:AcnTypes.AcnAst) (acnTypes:Map<AcnTypes.AbsPath,AcnTypes.AcnType>) (acnParameters: AcnParameter list) (initialSate:State) =
    
     let getAcnParams (tid:ReferenceToType) =
-        tid.BelongingTypeAssignment |> Option.map(fun ts -> r.acnParameters |> List.filter(fun x -> x.ModName = ts.moduName && x.TasName = ts.tasName)) |> Option.toList |> List.collect id
+        tid.BelongingTypeAssignment |> Option.map(fun ts -> acnParameters |> List.filter(fun x -> x.ModName = ts.moduName && x.TasName = ts.tasName)) |> Option.toList |> List.collect id
                 
     
     BAstFold.foldAsn1Type
@@ -68,7 +68,7 @@ let mapBTypeToCType (r:BAst.AstRoot) (t:BAst.Asn1Type) (acn:AcnTypes.AcnAst) (ac
         //sequence
         (fun o newChild us -> 
             let acnParams = getAcnParams newChild.id
-            let newOptionality, nus = GetSeqChildOptionality acn  acnTypes o.Location newChild o.Optionality (acnParams: BAst.AcnParameter list) (us:State)
+            let newOptionality, nus = GetSeqChildOptionality acn  acnTypes o.Location newChild o.Optionality (acnParams: AcnParameter list) (us:State)
             {SeqChildInfo.name = o.Name; chType = newChild; optionality = newOptionality; acnInsertetField = o.acnInsertetField; comments = o.Comments}, nus)
         (fun children o newBase us -> 
             let acnProps = getAcnProps acnTypes o.id
@@ -96,14 +96,54 @@ let mapBTypeToCType (r:BAst.AstRoot) (t:BAst.Asn1Type) (acn:AcnTypes.AcnAst) (ac
 let foldMap = CloneTree.foldMap
 
 let mapBAstToCast (r:BAst.AstRoot) (acn:AcnTypes.AcnAst) : AstRoot=
-    let initialState = {State.currentTypes = []; acnLinks = []}
+    let initialState = {State.currentTypes = []}
+    let acnConstants    = acn.Constants
+    let acnParameters   = acn.Parameters |> List.map(fun p -> {ModName = p.ModName;TasName = p.TasName; Name = p.Name; Asn1Type = p.Asn1Type;Location=p.Location})
     let acnTypes = acn.Types |> List.map(fun t -> t.TypeID, t) |> Map.ofList
-    let newTypes,_ = 
+    let newTypeAssignments, finalState = 
         r.TypeAssignments |>
         foldMap (fun cs t ->
-            let newType, newState = mapBTypeToCType r t acn acnTypes cs
+            let newType, newState = mapBTypeToCType r t acn acnTypes acnParameters cs
             newType, {newState with currentTypes = newState.currentTypes@[newType]}
         ) initialState  
+    let newTypes = finalState.currentTypes
+    let newTypesMap = newTypes |> List.map(fun t -> t.id, t) |> Map.ofList
+    let acnLinks    = 
+        acn.References |>
+        List.map(fun l ->
+            let decTypeId = ReferenceToType.createFromAcnAbsPath l.TypeID
+            let acnParams = acnParameters |> List.filter(fun x -> x.ModName = l.TypeID.Head && x.TasName = l.TypeID.Tail.Head)
+            let decType = 
+                match newTypesMap.TryFind decTypeId with
+                | Some t -> t
+                | None   -> raise(SemanticError (l.Location, sprintf "Invalid Reference '%s'" (l.TypeID.ToString()) ))
+                
+            let determinantId  =
+                let parentId = decTypeId.parentTypeId
+                let determinantId childRelPath = 
+                    let determinantId = parentId |> Option.map (fun x -> x.appendLongChildId childRelPath)
+                    match determinantId with
+                    | None                  -> raise(SemanticError (l.Location, sprintf "Invalid Reference '%s'" (l.LongRef.ToString()) ))
+                    | Some determinantId    -> determinantId
+                match l.LongRef with
+                | []            -> raise(SemanticError (l.Location,"Invalid Reference (empty path)" ))
+                | fldName::[]   ->
+                    match acnParams |> Seq.tryFind(fun p -> p.Name = fldName) with
+                    | Some p    -> 
+                        match decTypeId.BelongingTypeAssignment with
+                        | Some tasId    -> tasId.id.getParamId p.Name
+                        | None          -> raise(SemanticError (l.Location,"Invalid type id" ))
+                    | None      -> determinantId l.LongRef
+                | _             -> determinantId l.LongRef
+
+            match l.Kind with
+            | AcnTypes.RefTypeArgument prmName   -> {AcnLink.decType = decType; determinant = determinantId ; linkType = RefTypeArgument  prmName}
+            | AcnTypes.SizeDeterminant           -> {AcnLink.decType = decType; determinant = determinantId ; linkType = SizeDeterminant}
+            | AcnTypes.PresenceBool              -> {AcnLink.decType = decType; determinant = determinantId ; linkType = PresenceBool}
+            | AcnTypes.PresenceInt intCon        -> {AcnLink.decType = decType; determinant = determinantId ; linkType = PresenceInt  (AcnTypes.EvaluateConstant acnConstants intCon)}
+            | AcnTypes.PresenceStr strCon        -> {AcnLink.decType = decType; determinant = determinantId ; linkType = PresenceStr  strCon}
+            | AcnTypes.ChoiceDeteterminant       -> {AcnLink.decType = decType; determinant = determinantId ; linkType = ChoiceDeteterminant})
+
     {
         AstRoot.Files = r.Files
         Encodings = r.Encodings
@@ -115,11 +155,12 @@ let mapBAstToCast (r:BAst.AstRoot) (acn:AcnTypes.AcnAst) : AstRoot=
         CheckWithOss = r.CheckWithOss
         mappingFunctionsModule = r.mappingFunctionsModule
         valsMap  = r.valsMap
-        typesMap = newTypes |> List.map(fun t -> t.id, t) |> Map.ofList
-        TypeAssignments = newTypes
+        typesMap = newTypesMap
+        TypeAssignments = newTypeAssignments
         ValueAssignments = r.ValueAssignments
         integerSizeInBytes = r.integerSizeInBytes
-        acnParameters = r.acnParameters
-        acnConstants = r.acnConstants
+        acnParameters = acnParameters
+        acnConstants = acnConstants
+        acnLinks = acnLinks
     }
 

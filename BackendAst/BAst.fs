@@ -295,15 +295,8 @@ with
         | _                                                                     -> None
 
 
-type AcnParameter = {
-    ModName         : string
-    TasName         : string
-    Name            : string
-    Asn1Type        : AcnTypes.AcnAsn1Type
-    Location        : SrcLoc
-}
 
-type AstRoot = AstRootTemplate<Asn1Type, AcnParameter>
+type AstRoot = AstRootTemplate<Asn1Type>
 
 
 

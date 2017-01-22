@@ -268,9 +268,10 @@ namespace Asn1f2
              */
             if (bast)
             {
-                var bast0 = BAstConstruction.createValidationAst(Ast.ProgrammingLanguage.C, asn1Ast0, acnAstUnresolved);
-                print_debug.DoWork(bast0, outDir, ".txt");
-                CAst.mapBastToCast(bast0, acnAstUnresolved);
+                //var bast0 = BAstConstruction.createValidationAst(Ast.ProgrammingLanguage.C, asn1Ast0, acnAstUnresolved);
+                //print_debug.DoWork(bast0, outDir, ".txt");
+                //CAst.mapBastToCast(bast0, acnAstUnresolved);
+                BackendAstConstruct.DoWork(Ast.ProgrammingLanguage.C, asn1Ast0, acnAstUnresolved, outDir);
                 return 0;
             }
 
@@ -375,7 +376,7 @@ namespace Asn1f2
 
             
             The path  'header.nrCalls' is not virtual since header is not a referenced type but a SEQUENCE type.
-            Howevr, due to the ReplaceInnerTypes.DoWork transformation the grammar has been transformed as follows
+            However, due to the ReplaceInnerTypes.DoWork transformation the grammar has been transformed as follows
 
             --ASN.1
 	        INT10 ::= INTEGER(1..10)
@@ -399,7 +400,7 @@ namespace Asn1f2
                 header  [],
                 calls[size header.nrCalls]
             }
-            Now the path 'header.nrCalls' IS virtual since header is referenced type.
+            Now the path 'header.nrCalls' IS virtual since header is a referenced type.
             The function Acn.RemoveVirtualPaths removes suchs paths. In this case the following trasnformation 
             will take place
             (1) The TAP3File will get a new TEMP type named nrCalls

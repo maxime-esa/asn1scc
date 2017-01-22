@@ -84,6 +84,8 @@
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
     <Compile Include="xer.gen.fs" />
+    <Compile Include="dast_equal.gen.fs" />
+    <None Include="dast_equal.stg" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\Ast\Ast.fsproj">
@@ -107,7 +109,7 @@
       </PropertyGroup>
     </Otherwise>
   </Choose>
-    <Choose>
+  <Choose>
     <When Condition="$(OS) == 'Unix'">
       <PropertyGroup>
         <MonoCallPrefix> mono </MonoCallPrefix>
@@ -115,7 +117,7 @@
     </When>
     <Otherwise>
       <PropertyGroup>
-        <MonoCallPrefix/>
+        <MonoCallPrefix />
       </PropertyGroup>
     </Otherwise>
   </Choose>

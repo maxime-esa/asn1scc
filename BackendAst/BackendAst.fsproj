@@ -67,6 +67,9 @@
     <Compile Include="CAst.fs" />
     <Compile Include="CAstAcnEncodingClasses.fs" />
     <Compile Include="CAstConstruction.fs" />
+    <Compile Include="CAstFold.fs" />
+    <Compile Include="DAst.fs" />
+    <Compile Include="DAstConstruction.fs" />
     <None Include="Script.fsx" />
     <Compile Include="BackendAst.fs" />
     <Compile Include="variable.fs" />
@@ -79,6 +82,11 @@
     <ProjectReference Include="..\Ast\Ast.fsproj">
       <Name>Ast</Name>
       <Project>{3b67372a-65c7-439e-849f-ce1a1d2fcc69}</Project>
+      <Private>True</Private>
+    </ProjectReference>
+    <ProjectReference Include="..\Backend.c.ST\Backend.c.ST.fsproj">
+      <Name>Backend.c.ST</Name>
+      <Project>{821be302-634c-465e-9f9a-19ddca139c9f}</Project>
       <Private>True</Private>
     </ProjectReference>
     <ProjectReference Include="..\Backend2.ST\Backend2.ST.fsproj">

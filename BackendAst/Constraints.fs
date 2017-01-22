@@ -83,6 +83,13 @@ and ReferenceToType =
                 | [] 
                 | _::[]     -> None
                 | _         -> Some (ReferenceToType pathPar)
+        member this.SeqeuenceOfLevel =
+            match this with
+            | ReferenceToType path -> path |> List.filter(fun n -> match n with GenericFold2.SQF -> true | _ -> false) |> Seq.length
+        static member createFromAcnAbsPath (absPath : AcnTypes.AbsPath) =
+            let tas = ReferenceToType((GenericFold2.MD absPath.Head)::(GenericFold2.TA absPath.Tail.Head)::[])
+            tas.appendLongChildId(absPath.Tail.Tail)
+            
             
             
 type ReferenceToValue = 
@@ -181,7 +188,7 @@ with
         | NullValue        v    -> v.refToType
 
 
-type AstRootTemplate<'ASN1TYPE, 'ACNPARAM> = {
+type AstRootTemplate<'ASN1TYPE> = {
     Files: list<Asn1File>
     Encodings:list<Ast.Asn1Encoding>
     GenerateEqualFunctions:bool
@@ -196,8 +203,6 @@ type AstRootTemplate<'ASN1TYPE, 'ACNPARAM> = {
     TypeAssignments : list<'ASN1TYPE>
     ValueAssignments : list<Asn1GenericValue>
     integerSizeInBytes : int
-    acnConstants    : AcnTypes.AcnConstant list
-    acnParameters   : 'ACNPARAM list
 }
 
 
