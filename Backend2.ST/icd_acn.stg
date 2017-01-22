@@ -345,8 +345,8 @@ table
 
 table td
 {
-    border-left: 1px solid grey;
-    border-top: 1px solid grey;
+    border-left: 1px solid gray;
+    border-top: 1px solid gray;
     padding-top: 2pt;
     padding-bottom: 2pt;
     padding-left: 3pt;
@@ -367,7 +367,7 @@ table td:first-child
 {
     font-size: 14pt;
     color: white;
-    background-color: grey;
+    background-color: gray;
     white-space: nowrap;
 }
 
