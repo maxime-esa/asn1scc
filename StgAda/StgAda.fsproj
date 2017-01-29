@@ -54,41 +54,41 @@
     <Compile Include="AssemblyInfo.fs" />
     <None Include="Script.fsx" />
     <Content Include="backends.xml" />
-    <None Include="acn.stg">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
-    <Compile Include="acn.stg.fs" />
-    <None Include="body.stg">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
-    <Compile Include="body.stg.fs" />
-    <None Include="equal.stg">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
-    <Compile Include="equal.stg.fs" />
-    <None Include="init.stg">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
-    <Compile Include="init.stg.fs" />
-    <None Include="isvalid.stg">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
-    <Compile Include="isvalid.stg.fs" />
     <None Include="spec.stg">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
-    <Compile Include="spec.stg.fs" />
+    <None Include="body.stg">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Include="init.stg">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Include="equal.stg">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Include="isvalid.stg">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
     <None Include="uper.stg">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
-    <Compile Include="uper.stg.fs" />
-    <None Include="variables.stg">
+    <None Include="acn.stg">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
-    <Compile Include="variables.stg.fs" />
     <None Include="xer.stg">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
+    <None Include="variables.stg">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <Compile Include="acn.stg.fs" />
+    <Compile Include="body.stg.fs" />
+    <Compile Include="equal.stg.fs" />
+    <Compile Include="init.stg.fs" />
+    <Compile Include="isvalid.stg.fs" />
+    <Compile Include="spec.stg.fs" />
+    <Compile Include="uper.stg.fs" />
+    <Compile Include="variables.stg.fs" />
     <Compile Include="xer.stg.fs" />
   </ItemGroup>
   <ItemGroup>

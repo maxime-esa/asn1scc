@@ -70,6 +70,7 @@
     <Compile Include="CAstFold.fs" />
     <Compile Include="DAst.fs" />
     <Compile Include="DastFold.fs" />
+    <Compile Include="DAstEqual.fs" />
     <Compile Include="DAstProgramUnit.fs" />
     <Compile Include="DAstConstruction.fs" />
     <Compile Include="GenerateFiles.fs" />

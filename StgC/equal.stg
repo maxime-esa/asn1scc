@@ -23,10 +23,12 @@ flag <sFuncName>(const <sTypeDefName> val1, const <sTypeDefName> val2)
 }
 >>
 
-PrintEqualSequence(sFuncName, sTypeDefName, sContent) ::= <<
+PrintEqualComposite(sFuncName, sTypeDefName, sContent, arrsLocalVars) ::= <<
 flag <sFuncName>(const <sTypeDefName>* pVal1, const <sTypeDefName>* pVal2)
 {
 	flag ret=TRUE;
+    <arrsLocalVars; separator="\n">
+
     <sContent>
 	return ret;
 }

@@ -19,10 +19,33 @@ with
         match this with
         |C      -> "c"
         |Ada    -> "adb"
+    member this.AssignOperator =
+        match this with
+        |C      -> "="
+        |Ada    -> ":="
+    member this.ArrayAccess idx =
+        match this with
+        |C      -> "[" + idx + "]"
+        |Ada    -> "(" + idx + ")"
 
 type ExpOrStatement =
     | Expression 
     | Statement  
+
+type LocalVariable =
+    | SequenceOfIndex of int*int option        //i index, initialValue
+with
+    member this.VarName =
+        match this with
+        | SequenceOfIndex (i,_)   -> sprintf "i%d" i
+    member this.GetDeclaration (l:ProgrammingLanguage) =
+        match l, this with
+        | C,    SequenceOfIndex (i,None)         -> sprintf "int i%d;" i
+        | C,    SequenceOfIndex (i,Some iv)      -> sprintf "int i%d=%d;" i iv
+        | Ada,  SequenceOfIndex (i,None)         -> sprintf "i%d:Integer;" i
+        | Ada,  SequenceOfIndex (i,Some iv)      -> sprintf "i%d:Integer:=%d;" i iv
+
+         //Emit_local_variable_SQF_Index(nI, bHasInitalValue)::="I<nI>:Integer<if(bHasInitalValue)>:=1<endif>;"
 
 type Integer = {
     //bast inherrited properties
@@ -47,7 +70,7 @@ type Integer = {
     typeDefinitionBody  : string                      // for C it will be Asn1SInt or Asn1UInt
     isEqualFuncName     : string option               // the name of the equal function. Valid only for TASes)
     isEqualFunc         : string option               // the body of the equal function
-    isEqualBodyExp      : string -> string -> string option  // a function that takes twos string and generates the equal expression (i.e. a1==a2 for integers)
+    isEqualBodyExp      : string -> string -> (string*(LocalVariable list)) option  // a function that takes twos string and generates the equal expression (i.e. a1==a2 for integers)
     
     isValidFuncName     : string option               // it has value only for TASes and only if isValidBody has value
     isValidBody         : (string -> string) option   // 
@@ -86,7 +109,7 @@ type Enumerated = {
     typeDefinitionBody  : string                      // for C it will be Asn1SInt or Asn1UInt
     isEqualFuncName     : string option               // the name of the equal function. Valid only for TASes)
     isEqualFunc         : string option               
-    isEqualBodyExp      : string -> string -> string option  // for c it will be the c_src.isEqual_Integer stg macro
+    isEqualBodyExp      : string -> string -> (string*(LocalVariable list)) option  // for c it will be the c_src.isEqual_Integer stg macro
     isValidFuncName     : string option               // it has value only for TASes and only if isValidBody has value
     isValidBody         : (string -> string) option   // 
     encodeFuncName      : string option               // has value only for top level asn1 types (i.e. TypeAssignments (TAS))
@@ -122,7 +145,7 @@ type Real = {
     typeDefinitionBody  : string                      // for C it will be Asn1SInt or Asn1UInt
     isEqualFuncName     : string option               // the name of the equal function. Valid only for TASes)
     isEqualFunc         : string option               
-    isEqualBodyExp      : string -> string -> string option  // for c it will be the c_src.isEqual_Integer stg macro
+    isEqualBodyExp      : string -> string -> (string*(LocalVariable list)) option  // for c it will be the c_src.isEqual_Integer stg macro
     isValidFuncName     : string option               // it has value only for TASes and only if isValidBody has value
     isValidBody         : (string -> string) option   // 
     encodeFuncName      : string option               // has value only for top level asn1 types (i.e. TypeAssignments (TAS))
@@ -157,7 +180,7 @@ type Boolean = {
     typeDefinitionBody  : string                      // for C it will be Asn1SInt or Asn1UInt
     isEqualFuncName     : string option               // the name of the equal function. Valid only for TASes)
     isEqualFunc         : string option               
-    isEqualBodyExp      : string -> string -> string option  // for c it will be the c_src.isEqual_Integer stg macro
+    isEqualBodyExp      : string -> string -> (string*(LocalVariable list)) option  // for c it will be the c_src.isEqual_Integer stg macro
     isValidFuncName     : string option               // it has value only for TASes and only if isValidBody has value
     isValidBody         : (string -> string) option   // 
     encodeFuncName      : string option               // has value only for top level asn1 types (i.e. TypeAssignments (TAS))
@@ -190,7 +213,7 @@ type NullType = {
     typeDefinitionBody  : string                      // for C it will be Asn1SInt or Asn1UInt
     isEqualFuncName     : string option               // the name of the equal function. Valid only for TASes)
     isEqualFunc         : string option               
-    isEqualBodyExp      : string -> string -> string option  // for c it will be the c_src.isEqual_Integer stg macro
+    isEqualBodyExp      : string -> string -> (string*(LocalVariable list)) option  // for c it will be the c_src.isEqual_Integer stg macro
     isValidFuncName     : string option               // it has value only for TASes and only if isValidBody has value
     isValidBody         : (string -> string) option   // 
     encodeFuncName      : string option               // has value only for top level asn1 types (i.e. TypeAssignments (TAS))
@@ -226,7 +249,7 @@ type StringType = {
     typeDefinitionBody  : string                      // for C it will be Asn1SInt or Asn1UInt
     isEqualFuncName     : string option               // the name of the equal function. Valid only for TASes)
     isEqualFunc         : string option               
-    isEqualBodyExp      : string -> string -> string option  // for c it will be the c_src.isEqual_Integer stg macro
+    isEqualBodyExp      : string -> string -> (string*(LocalVariable list)) option  // for c it will be the c_src.isEqual_Integer stg macro
     isValidFuncName     : string option               // it has value only for TASes and only if isValidBody has value
     isValidBody         : (string -> string) option   // 
     encodeFuncName      : string option               // has value only for top level asn1 types (i.e. TypeAssignments (TAS))
@@ -263,7 +286,7 @@ type OctetString = {
     typeDefinitionBody  : string                      // for C it will be Asn1SInt or Asn1UInt
     isEqualFuncName     : string option               // the name of the equal function. Valid only for TASes)
     isEqualFunc         : string option               
-    isEqualBodyStats    : string -> string -> string  option// for c it will be the c_src.isEqual_Integer stg macro
+    isEqualBodyStats    : string -> string -> (string*(LocalVariable list))  option// for c it will be the c_src.isEqual_Integer stg macro
     isValidFuncName     : string option               // it has value only for TASes and only if isValidBody has value
     isValidBody         : (string -> string) option   // 
     encodeFuncName      : string option               // has value only for top level asn1 types (i.e. TypeAssignments (TAS))
@@ -302,7 +325,7 @@ type BitString = {
     typeDefinitionBody  : string                      // for C it will be Asn1SInt or Asn1UInt
     isEqualFuncName     : string option               // the name of the equal function. Valid only for TASes)
     isEqualFunc         : string option               
-    isEqualBodyStats    : string -> string -> string  option// for c it will be the c_src.isEqual_Integer stg macro
+    isEqualBodyStats    : string -> string -> (string*(LocalVariable list))  option// for c it will be the c_src.isEqual_Integer stg macro
     isValidFuncName     : string option               // it has value only for TASes and only if isValidBody has value
     isValidBody         : (string -> string) option   // 
     encodeFuncName      : string option               // has value only for top level asn1 types (i.e. TypeAssignments (TAS))
@@ -341,7 +364,7 @@ type SequenceOf = {
     typeDefinitionBody  : string                      // for C it will be Asn1SInt or Asn1UInt
     isEqualFuncName     : string option               // the name of the equal function. Valid only for TASes)
     isEqualFunc         : string option               
-    isEqualBodyStats    : string -> string -> string  option// for c it will be the c_src.isEqual_Integer stg macro
+    isEqualBodyStats    : string -> string -> (string*(LocalVariable list))  option// for c it will be the c_src.isEqual_Integer stg macro
     isValidFuncName     : string option               // it has value only for TASes and only if isValidBody has value
     isValidBody         : (string -> string) option   // 
     encodeFuncName      : string option               // has value only for top level asn1 types (i.e. TypeAssignments (TAS))
@@ -366,7 +389,7 @@ and SeqChildInfo = {
     //DAst properties
     c_name              : string
     typeDefinitionBody  : string option //only the non acn children have typeDefinitions                       
-    isEqualBodyStats    : string -> string -> string -> string  // for c it will be the c_src.isEqual_Integer stg macro
+    isEqualBodyStats    : string -> string -> string -> string*(LocalVariable list)  // 
 }
 
 
@@ -391,7 +414,7 @@ and Sequence = {
     typeDefinitionBody  : string                      // for C it will be Asn1SInt or Asn1UInt
     isEqualFuncName     : string option               // the name of the equal function. Valid only for TASes)
     isEqualFunc         : string option               
-    isEqualBodyStats    : string -> string -> string option  // for c it will be the c_src.isEqual_Integer stg macro
+    isEqualBodyStats    : string -> string -> (string*(LocalVariable list)) option  // for c it will be the c_src.isEqual_Integer stg macro
     isValidFuncName     : string option               // it has value only for TASes and only if isValidBody has value
     isValidBody         : (string -> string) option   // 
     encodeFuncName      : string option               // has value only for top level asn1 types (i.e. TypeAssignments (TAS))
@@ -437,7 +460,7 @@ and Choice = {
     typeDefinitionBody  : string                      // for C it will be Asn1SInt or Asn1UInt
     isEqualFuncName     : string option               // the name of the equal function. Valid only for TASes)
     isEqualFunc         : string option               
-    isEqualBodyStats    : string -> string -> string  option// for c it will be the c_src.isEqual_Integer stg macro
+    isEqualBodyStats    : string -> string -> (string*(LocalVariable list))  option// for c it will be the c_src.isEqual_Integer stg macro
     isValidFuncName     : string option               // it has value only for TASes and only if isValidBody has value
     isValidBody         : (string -> string) option   // 
     encodeFuncName      : string option               // has value only for top level asn1 types (i.e. TypeAssignments (TAS))
@@ -654,6 +677,7 @@ type ProgramUnit = {
     valueAssignments        : Asn1GenericValue list
     importedProgramUnits    : string list
 }
+
 
 
 type AstRoot = {
