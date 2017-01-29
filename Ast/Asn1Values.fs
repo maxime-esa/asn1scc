@@ -53,7 +53,7 @@ let rec GetDefaultValueByType (maxSize:BigInteger option) (t:Asn1Type) (m:Asn1Mo
     | Boolean                   ->getVal (BooleanValue (loc false))
     | Enumerated(items)         ->
         match items |> Seq.tryFind (fun itm -> 
-            let checkCon c = CheckAsn1.IsValueAllowed c (getVal (RefValue (m.Name, itm.Name) )) true r
+            let checkCon c = CheckAsn1.IsValueAllowed c (getVal (RefValue (m.Name, itm.Name) )) true None r
             t.Constraints |> List.fold(fun state cn -> state && (checkCon cn)) true) with
         | Some itm -> getVal (RefValue (m.Name, itm.Name))
         | None     -> 

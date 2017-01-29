@@ -242,7 +242,7 @@ namespace Asn1f2
              * MySeq ::= {a INTEGER, a REAL}
              * is OK for ANTLR but of course not OK for ASN.1
              */
-            CheckAsn1.CheckFiles(asn1Ast0);
+            CheckAsn1.CheckFiles(asn1Ast0, 0);
 
             if (astXmlFile != "")
             {
@@ -362,7 +362,7 @@ namespace Asn1f2
             /*
              * Semantic validation
              */ 
-            CheckAsn1.CheckFiles(refTypesWithNoConstraints_asn1_acn.Item1);
+            CheckAsn1.CheckFiles(refTypesWithNoConstraints_asn1_acn.Item1, 1);
 
             var refTypesWithNoConstraints = refTypesWithNoConstraints_asn1_acn.Item1;
             var acnAst2 = refTypesWithNoConstraints_asn1_acn.Item2;

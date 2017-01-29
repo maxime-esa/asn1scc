@@ -131,7 +131,11 @@ let rec CompareAsn1Value (v1:Asn1Value) (v2:Asn1Value) ast =
     | _, RefValue(modName,vasName)                  -> CompareAsn1Value v1 (GetBaseValue modName vasName ast)  ast
     | _                                             -> raise (BugErrorException(""))
 
-let rec IsValueAllowed (c:Asn1Constraint) (v:Asn1Value) (isOfEnumType:bool) (ast:AstRoot) =
+type TYPE_BIT_OR_OCT_STR =
+    | TP_OCT_STR
+    | TP_BIT_STR
+
+let rec IsValueAllowed (c:Asn1Constraint) (v:Asn1Value) (isOfEnumType:bool) (bitOrOctSrt:TYPE_BIT_OR_OCT_STR option) (ast:AstRoot) =
     let CreateDummyValueByKind valKind  = 
         {
             Asn1Value.Kind = valKind
@@ -157,10 +161,18 @@ let rec IsValueAllowed (c:Asn1Constraint) (v:Asn1Value) (isOfEnumType:bool) (ast
     | SizeContraint(sc)                 -> 
         let rec IsSizeContraintOK (v:Asn1Value) (sc:Asn1Constraint) =
             match v.Kind with
-            | StringValue(s)                
-            | BitStringValue(s)             -> IsValueAllowed sc (CreateDummyValueByKind (IntegerValue(IntLoc.ByValue (BigInteger s.Value.Length))) ) isOfEnumType ast
-            | OctetStringValue(a)           -> IsValueAllowed sc (CreateDummyValueByKind (IntegerValue(IntLoc.ByValue (BigInteger a.Length))) ) isOfEnumType ast
-            | SeqOfValue(a)                 -> IsValueAllowed sc (CreateDummyValueByKind (IntegerValue(IntLoc.ByValue (BigInteger (Seq.length a)))) ) isOfEnumType ast
+            | StringValue(s)                -> IsValueAllowed sc (CreateDummyValueByKind (IntegerValue(IntLoc.ByValue (BigInteger s.Value.Length))) ) isOfEnumType bitOrOctSrt ast
+            | BitStringValue(s)             -> 
+                match bitOrOctSrt with
+                | Some TP_BIT_STR   -> IsValueAllowed sc (CreateDummyValueByKind (IntegerValue(IntLoc.ByValue (BigInteger s.Value.Length))) ) isOfEnumType bitOrOctSrt ast
+                | Some TP_OCT_STR   when s.Value.Length%8 = 0 -> IsValueAllowed sc (CreateDummyValueByKind (IntegerValue(IntLoc.ByValue (BigInteger (s.Value.Length/8)))) ) isOfEnumType bitOrOctSrt ast
+                | _              -> false
+            | OctetStringValue(a)           -> 
+                match bitOrOctSrt with
+                | Some TP_BIT_STR   -> IsValueAllowed sc (CreateDummyValueByKind (IntegerValue(IntLoc.ByValue (BigInteger (a.Length*8)))) ) isOfEnumType bitOrOctSrt ast
+                | Some TP_OCT_STR   -> IsValueAllowed sc (CreateDummyValueByKind (IntegerValue(IntLoc.ByValue (BigInteger (a.Length*1)))) ) isOfEnumType bitOrOctSrt ast
+                | None              -> false
+            | SeqOfValue(a)                 -> IsValueAllowed sc (CreateDummyValueByKind (IntegerValue(IntLoc.ByValue (BigInteger (Seq.length a)))) ) isOfEnumType bitOrOctSrt ast
             | RefValue(modName,vasName)                  -> IsSizeContraintOK (GetBaseValue modName vasName ast) sc
             | _                             -> raise (BugErrorException(""))
         IsSizeContraintOK v sc
@@ -168,24 +180,24 @@ let rec IsValueAllowed (c:Asn1Constraint) (v:Asn1Value) (isOfEnumType:bool) (ast
         let rec IsAlphabetConstraintOK (v:Asn1Value) (ac:Asn1Constraint) =
             match v.Kind with
             | StringValue(s)    -> 
-                s.Value.ToCharArray() |> Seq.forall(fun c -> IsValueAllowed ac (CreateDummyValueByKind (StringValue(StringLoc.ByValue (c.ToString())) )) isOfEnumType ast)
+                s.Value.ToCharArray() |> Seq.forall(fun c -> IsValueAllowed ac (CreateDummyValueByKind (StringValue(StringLoc.ByValue (c.ToString())) )) isOfEnumType bitOrOctSrt ast)
             | RefValue(modName,vasName)      -> IsAlphabetConstraintOK (GetBaseValue modName vasName ast) ac
             | _                             -> raise (BugErrorException(""))
         IsAlphabetConstraintOK v ac 
-    | UnionConstraint(c1,c2,_)            -> IsValueAllowed c1 v isOfEnumType ast || IsValueAllowed c2 v isOfEnumType ast
-    | IntersectionConstraint(c1,c2)     -> IsValueAllowed c1 v isOfEnumType ast && IsValueAllowed c2 v isOfEnumType ast
-    | AllExceptConstraint(c1)           -> not (IsValueAllowed c1 v isOfEnumType ast)
-    | ExceptConstraint(c1,c2)           -> IsValueAllowed c1 v isOfEnumType ast && not(IsValueAllowed c2 v isOfEnumType ast)
-    | RootConstraint(c1)                -> IsValueAllowed c1 v isOfEnumType ast
-    | RootConstraint2(c1,c2)            -> IsValueAllowed c1 v isOfEnumType ast || IsValueAllowed c2 v isOfEnumType ast
+    | UnionConstraint(c1,c2,_)            -> IsValueAllowed c1 v isOfEnumType bitOrOctSrt ast || IsValueAllowed c2 v isOfEnumType bitOrOctSrt ast
+    | IntersectionConstraint(c1,c2)     -> IsValueAllowed c1 v isOfEnumType bitOrOctSrt ast && IsValueAllowed c2 v isOfEnumType bitOrOctSrt ast
+    | AllExceptConstraint(c1)           -> not (IsValueAllowed c1 v isOfEnumType bitOrOctSrt ast)
+    | ExceptConstraint(c1,c2)           -> IsValueAllowed c1 v isOfEnumType bitOrOctSrt ast && not(IsValueAllowed c2 v isOfEnumType bitOrOctSrt ast)
+    | RootConstraint(c1)                -> IsValueAllowed c1 v isOfEnumType bitOrOctSrt ast
+    | RootConstraint2(c1,c2)            -> IsValueAllowed c1 v isOfEnumType bitOrOctSrt ast || IsValueAllowed c2 v isOfEnumType bitOrOctSrt ast
     | TypeInclusionConstraint(modName,tasName)   ->
         let otherType = GetBaseTypeByName modName tasName ast
-        otherType.Constraints |> Seq.forall(fun c -> IsValueAllowed c v isOfEnumType ast)
+        otherType.Constraints |> Seq.forall(fun c -> IsValueAllowed c v isOfEnumType bitOrOctSrt ast)
     | WithComponentConstraint(innerCon)       ->
         let rec IsWithComponentConstraintOK (v:Asn1Value) (innerCon:Asn1Constraint) =
             match v.Kind with
             | SeqOfValue(innerValues) ->
-                innerValues |> Seq.forall(fun iv -> IsValueAllowed innerCon iv isOfEnumType ast)
+                innerValues |> Seq.forall(fun iv -> IsValueAllowed innerCon iv isOfEnumType bitOrOctSrt ast)
             | RefValue(modName,vasName)      -> IsWithComponentConstraintOK (GetBaseValue modName vasName ast) innerCon
             | _                             -> raise (BugErrorException(""))
         IsWithComponentConstraintOK v innerCon
@@ -197,14 +209,14 @@ let rec IsValueAllowed (c:Asn1Constraint) (v:Asn1Value) (isOfEnumType:bool) (ast
                     let ch = children |> Seq.tryFind(fun (nm, chV) -> nm=nc.Name )
                     match nc.Mark, ch, nc.Contraint with
                     | NoMark, None, _                       -> true
-                    | NoMark, Some(_,chv), Some(ic)         -> IsValueAllowed ic chv isOfEnumType ast
+                    | NoMark, Some(_,chv), Some(ic)         -> IsValueAllowed ic chv isOfEnumType bitOrOctSrt ast
                     | NoMark, Some(_,chv), None             -> true
                     | MarkPresent, None, _                  -> false
                     | MarkPresent, Some(_,chv), None        -> true
-                    | MarkPresent, Some(_,chv), Some(ic)    -> IsValueAllowed ic chv isOfEnumType ast
+                    | MarkPresent, Some(_,chv), Some(ic)    -> IsValueAllowed ic chv isOfEnumType bitOrOctSrt ast
                     | MarkAbsent, None, _                   -> true
                     | MarkAbsent, Some(_), _                -> false
-                    | MarkOptional, Some(_,chv), Some(ic)    -> IsValueAllowed ic chv isOfEnumType ast
+                    | MarkOptional, Some(_,chv), Some(ic)    -> IsValueAllowed ic chv isOfEnumType bitOrOctSrt ast
                     | MarkOptional, Some(_,chv), None        -> true
                     | MarkOptional, None, None               -> true
                     | MarkOptional, None, Some(_)            -> false
@@ -216,7 +228,7 @@ let rec IsValueAllowed (c:Asn1Constraint) (v:Asn1Value) (isOfEnumType:bool) (ast
                 | Some(rnc) ->
                     match rnc.Mark, rnc.Contraint with
                     | MarkAbsent, _     -> false
-                    | _,  Some(ic)      -> IsValueAllowed ic inVal isOfEnumType ast  
+                    | _,  Some(ic)      -> IsValueAllowed ic inVal isOfEnumType bitOrOctSrt ast  
                     | _,  None          -> true
             | RefValue(modName,vasName)      -> IsWithComponentsConstraintOK (GetBaseValue modName vasName ast) 
             | _                             -> raise (BugErrorException(""))
@@ -230,9 +242,31 @@ let rec CheckIfVariableViolatesTypeConstraints (t:Asn1Type) (v:Asn1Value) ast =
         CheckIfVariableViolatesTypeConstraints baseType v ast
     |RefValue(modName,vasName), Enumerated(items)   -> 
         let bIsEnumItem = items |> Seq.exists(fun x -> x.Name.Value = vasName.Value)
-        t.Constraints |> Seq.forall(fun c -> IsValueAllowed c v bIsEnumItem ast )
+        t.Constraints |> Seq.forall(fun c -> IsValueAllowed c v bIsEnumItem None ast )
     | _                         -> 
-        t.Constraints |> Seq.forall(fun c -> IsValueAllowed c v false ast )
+        let bitOrOctSrt =
+            match (Ast.GetActualType t  ast).Kind with
+            | OctetString       -> Some TP_OCT_STR
+            | BitString         -> Some TP_BIT_STR
+            | _                 -> None
+        let ret = t.Constraints |> Seq.forall(fun c -> IsValueAllowed c v false bitOrOctSrt ast )
+        match v.Kind, t.Kind with
+        |   SeqOfValue chvs, SequenceOf ch     -> ret && (chvs |> Seq.forall(fun cv -> CheckIfVariableViolatesTypeConstraints ch cv ast))
+        |   SeqValue   chvs, Sequence chldn    -> 
+            let chRet =
+                chvs |> 
+                Seq.forall(fun (cn,cv) -> 
+                    match chldn |> Seq.tryFind(fun c -> c.Name.Value = cn.Value) with
+                    | Some ch -> CheckIfVariableViolatesTypeConstraints ch.Type cv ast
+                    | None    -> false)
+            ret && chRet
+        |   ChValue    (nm,chv), Choice chldn  -> 
+            let chRet =
+                match chldn |> Seq.tryFind(fun c -> c.Name.Value = nm.Value) with
+                | Some ch -> CheckIfVariableViolatesTypeConstraints ch.Type chv ast
+                | None    -> false
+            ret && chRet
+        | _                     -> ret 
 
 let rec getEnumeratedAllowedEnumerations ast (m:Asn1Module) (t:Asn1Type) =
     match t.Kind with
@@ -243,7 +277,7 @@ let rec getEnumeratedAllowedEnumerations ast (m:Asn1Module) (t:Asn1Type) =
             items |>
             List.choose(fun itm -> 
                 let v = {Asn1Value.Location = itm.Name.Location; Kind = RefValue(m.Name, itm.Name)} 
-                match t.Constraints |> Seq.forall(fun c -> IsValueAllowed c v true ast ) with
+                match t.Constraints |> Seq.forall(fun c -> IsValueAllowed c v true None ast ) with
                 | true -> Some itm
                 | false-> None)
     | _                         -> raise (BugErrorException("getEnumItemTypeAllowedEnums can be called only for Enumerated types"))
@@ -420,7 +454,7 @@ let rec CheckType(t:Asn1Type) (m:Asn1Module) ast =
         CheckNamedItem  children 
         children |> Seq.filter(fun x -> x._value.IsSome) |> Seq.map(fun c -> {IntLoc.Value=GetValueAsInt c._value.Value ast; Location=c._value.Value.Location}) |> CheckForDuplicates 
         match children |> Seq.tryFind (fun itm -> 
-            let checkCon c = IsValueAllowed c (getVal (RefValue (m.Name, itm.Name) )) true ast
+            let checkCon c = IsValueAllowed c (getVal (RefValue (m.Name, itm.Name) )) true None ast
             t.Constraints |> List.fold(fun state cn -> state && (checkCon cn)) true) with
         | Some itm -> ()
         | None     -> raise(SemanticError(t.Location, "The constraints defined for this type do not allow any value"))
@@ -446,7 +480,7 @@ let rec CheckType(t:Asn1Type) (m:Asn1Module) ast =
 
 
 /// semantically check module
-let CheckModule (m:Asn1Module) ast=
+let CheckModule (m:Asn1Module) ast (pass :int)=
     //check for duplicate type assignments
     let typeAssNames = m.TypeAssignments |> List.map(fun t -> t.Name) 
     typeAssNames |> CheckForDuplicates 
@@ -477,7 +511,8 @@ let CheckModule (m:Asn1Module) ast=
     // Check Values
     m.ValueAssignments |> Seq.iter(fun vas -> CheckValueType vas.Type vas.Value ast)
 
-    m.ValueAssignments |> Seq.iter(fun vas -> 
+    if (pass = 0) then
+        m.ValueAssignments |> Seq.iter(fun vas -> 
                                     let fname = System.IO.Path.GetFileName vas.Name.Location.srcFilename
                                     if not(CheckIfVariableViolatesTypeConstraints vas.Type vas.Value ast) 
                                         then System.Console.Error.WriteLine("Warning: Value {0} defined in File:{1}, Line:{2} does not conform to its type constraints.", vas.Name.Value, fname, vas.Name.Location.srcLine))
@@ -508,12 +543,12 @@ let CheckModule (m:Asn1Module) ast=
     
     
 
-let CheckFiles( ast:AstRoot) =
+let CheckFiles( ast:AstRoot) (pass :int) =
     let modules = ast.Files |> Seq.collect(fun f -> f.Modules ) 
     // check for multiple module definitions
     modules |> Seq.map(fun m-> m.Name) |> CheckForDuplicates 
     // check each file
-    modules |> Seq.iter (fun x -> CheckModule x ast)
+    modules |> Seq.iter (fun x -> CheckModule x ast pass)
     
 
 

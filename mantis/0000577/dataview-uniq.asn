@@ -1,0 +1,46 @@
+TASTE-BasicTypes DEFINITIONS ::=
+BEGIN
+
+-- Set of TASTE predefined basic types
+
+T-Int32 ::=  INTEGER (-2147483648 .. 2147483647)
+
+T-UInt32 ::= INTEGER (0 .. 4294967295)
+
+T-Int8 ::= INTEGER (-128 .. 127)
+
+T-UInt8 ::= INTEGER (0 .. 255)
+
+T-Boolean ::= BOOLEAN
+
+END
+
+DataView DEFINITIONS AUTOMATIC TAGS ::= BEGIN
+
+Display-T ::= OCTET STRING (SIZE (5..255))
+
+Action-T ::= CHOICE 
+{
+    --display INTEGER (0..255),
+    display Display-T,
+    other-action INTEGER (0..1),
+    housekeeping Destination-T
+}
+
+Destination-T ::= ENUMERATED { displayer(0), other-dest(1) }
+
+TC-T ::= SEQUENCE 
+{
+    destination Destination-T,
+    action Action-T
+}
+
+TM-T ::= Display-T
+
+HK-T ::= SEQUENCE {
+    value-to-plot INTEGER (0..16535),
+    destination Destination-T
+}
+myString TC-T ::= {destination displayer, action other-action: 5}
+END
+
