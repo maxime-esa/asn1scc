@@ -69,7 +69,10 @@
     <Compile Include="CAstConstruction.fs" />
     <Compile Include="CAstFold.fs" />
     <Compile Include="DAst.fs" />
+    <Compile Include="DastFold.fs" />
+    <Compile Include="DAstProgramUnit.fs" />
     <Compile Include="DAstConstruction.fs" />
+    <Compile Include="GenerateFiles.fs" />
     <None Include="Script.fsx" />
     <Compile Include="BackendAst.fs" />
     <Compile Include="variable.fs" />

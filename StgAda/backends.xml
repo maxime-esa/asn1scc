@@ -1,0 +1,59 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Settings>
+  <run mode="single">
+    <input>spec.stg</input>
+    <output>spec.stg.fs</output>
+    <modName>a_header</modName>
+	<lang>Ada</lang>
+  </run>
+  <run mode="single">
+    <input>body.stg</input>
+    <output>body.stg.fs</output>
+    <modName>a_body</modName>
+	<lang>Ada</lang>
+  </run>
+  <run mode="single">
+    <input>variables.stg</input>
+    <output>variables.stg.fs</output>
+    <modName>a_variables</modName>
+	<lang>Ada</lang>
+  </run>
+
+  <run mode="single">
+    <input>equal.stg</input>
+    <output>equal.stg.fs</output>
+    <modName>a_equal</modName>
+	<lang>Ada</lang>
+  </run>
+  <run mode="single">
+    <input>isvalid.stg</input>
+    <output>isvalid.stg.fs</output>
+    <modName>a_isvalid</modName>
+	<lang>Ada</lang>
+  </run>
+  <run mode="single">
+    <input>init.stg</input>
+    <output>init.stg.fs</output>
+    <modName>a_init</modName>
+	<lang>Ada</lang>
+  </run>
+  <run mode="single">
+    <input>uper.stg</input>
+    <output>uper.stg.fs</output>
+    <modName>a_uper</modName>
+	<lang>Ada</lang>
+  </run>
+  <run mode="single">
+    <input>acn.stg</input>
+    <output>acn.stg.fs</output>
+    <modName>a_acn</modName>
+	<lang>Ada</lang>
+  </run>
+  <run mode="single">
+    <input>xer.stg</input>
+    <output>xer.stg.fs</output>
+    <modName>a_xer</modName>
+	<lang>Ada</lang>
+  </run>
+
+</Settings>

@@ -116,6 +116,8 @@ type Asn1File = {
     Tokens: IToken array
     Modules : list<Asn1Module>
 }
+with
+    member this.FileNameWithoutExtension = System.IO.Path.GetFileNameWithoutExtension this.FileName
 
 
 type LiteralOrReference =

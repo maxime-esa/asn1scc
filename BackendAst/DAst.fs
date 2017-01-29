@@ -10,6 +10,15 @@ open uPER2
 type ProgrammingLanguage =
     |C
     |Ada
+with
+    member this.SpecExtention =
+        match this with
+        |C      -> "h"
+        |Ada    -> "ads"
+    member this.BodyExtention =
+        match this with
+        |C      -> "c"
+        |Ada    -> "adb"
 
 type ExpOrStatement =
     | Expression 
@@ -37,10 +46,12 @@ type Integer = {
     typeDefinitionName  : string option               // has value only for top level asn1 types (i.e. TypeAssignments (TAS))
     typeDefinitionBody  : string                      // for C it will be Asn1SInt or Asn1UInt
     isEqualFuncName     : string option               // the name of the equal function. Valid only for TASes)
-    isEqualFunc         : string option               
-    isEqualBodyExp      : string -> string -> string option  // for c it will be the c_src.isEqual_Integer stg macro
+    isEqualFunc         : string option               // the body of the equal function
+    isEqualBodyExp      : string -> string -> string option  // a function that takes twos string and generates the equal expression (i.e. a1==a2 for integers)
+    
     isValidFuncName     : string option               // it has value only for TASes and only if isValidBody has value
     isValidBody         : (string -> string) option   // 
+    
     encodeFuncName      : string option               // has value only for top level asn1 types (i.e. TypeAssignments (TAS))
     encodeFuncBody      : string -> string            // an stg macro according the acnEncodingClass
     decodeFuncName      : string option               // has value only for top level asn1 types (i.e. TypeAssignments (TAS))
@@ -635,24 +646,33 @@ with
         | _                                                                     -> None
 
 
+type ProgramUnit = {
+    name    : string
+    specFileName            : string
+    bodyFileName            : string
+    sortedTypeAssignments   : Asn1Type list
+    valueAssignments        : Asn1GenericValue list
+    importedProgramUnits    : string list
+}
 
 
 type AstRoot = {
-    Files: list<Asn1File>
-    Encodings:list<Ast.Asn1Encoding>
-    GenerateEqualFunctions:bool
-    TypePrefix:string
-    AstXmlAbsFileName:string
-    IcdUperHtmlFileName:string
-    IcdAcnHtmlFileName:string
-    CheckWithOss:bool
-    mappingFunctionsModule : string option
-    valsMap : Map<ReferenceToValue, Asn1GenericValue>
-    typesMap : Map<ReferenceToType, Asn1Type>
-    TypeAssignments : list<Asn1Type>
-    ValueAssignments : list<Asn1GenericValue>
-    integerSizeInBytes : int
-    acnConstants    : AcnTypes.AcnConstant list
-    acnParameters   : CAst.AcnParameter list
-    acnLinks        : CAst.AcnLink list
+    Files                   : Asn1File list
+    Encodings               : Ast.Asn1Encoding list
+    GenerateEqualFunctions  : bool
+    TypePrefix              : string
+    AstXmlAbsFileName       : string
+    IcdUperHtmlFileName     : string
+    IcdAcnHtmlFileName      : string
+    CheckWithOss            : bool
+    mappingFunctionsModule  : string option
+    valsMap                 : Map<ReferenceToValue, Asn1GenericValue>
+    typesMap                : Map<ReferenceToType, Asn1Type>
+    TypeAssignments         : Asn1Type list
+    ValueAssignments        : Asn1GenericValue list
+    programUnits            : ProgramUnit list
+    integerSizeInBytes      : int
+    acnConstants            : AcnTypes.AcnConstant list
+    acnParameters           : CAst.AcnParameter list
+    acnLinks                : CAst.AcnLink list
 }

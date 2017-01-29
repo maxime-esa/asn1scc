@@ -51,10 +51,14 @@ let createInteger (r:CAst.AstRoot) (l:ProgrammingLanguage) (o:CAst.Integer)  (ne
                         | None     -> None
                     | Ada   -> None
                 typeDefinitionBody  = 
-                    match l with
-                    | C    when o.IsUnsigned -> ch.Declare_Integer ()
-                    | C                      -> ch.Declare_PosInteger_min_max 0I 0I
-                    | Ada                    -> ss.Declare_Integer ()
+                    match newBase with 
+                    | Some baseType when baseType.typeDefinitionName.IsSome
+                                    -> baseType.typeDefinitionName.Value
+                    | _    ->
+                        match l with
+                        | C    when o.IsUnsigned -> ch.Declare_PosInteger_min_max  0I 0I
+                        | C                      -> ch.Declare_Integer ()
+                        | Ada                    -> ss.Declare_Integer ()
                 isEqualFuncName     = isEqualFuncName
                 isEqualBodyExp      = isEqualBody
                 isValidFuncName     = None
@@ -316,7 +320,7 @@ let DoWork (r:CAst.AstRoot) (l:ProgrammingLanguage) =
         ) initialState  
     let newTypes = finalState.currentTypes
     let newTypesMap = newTypes |> List.map(fun t -> t.id, t) |> Map.ofList
-
+    let programUnits = DAstProgramUnit.createProgramUnits r.Files newTypesMap newTypeAssignments r.ValueAssignments l
     {
         AstRoot.Files = r.Files
         Encodings = r.Encodings
@@ -335,30 +339,8 @@ let DoWork (r:CAst.AstRoot) (l:ProgrammingLanguage) =
         acnParameters = r.acnParameters
         acnConstants = r.acnConstants
         acnLinks = r.acnLinks
+        programUnits= programUnits
     }
 
 
-let printDAst (r:DAst.AstRoot) (l:ProgrammingLanguage) outDir =
-    r.Files |>
-    List.collect(fun f -> f.Modules) |>
-    List.iter(fun m ->
-        let tases = 
-            r.TypeAssignments |> 
-            List.choose(fun t -> 
-                match  t.tasInfo with 
-                | Some tas when tas.modName = m.Name -> Some t
-                | _                 -> None)
-        //header file
-        let typeDefs = tases |> List.choose(fun t -> t.getTypeDefinition l)
-        let defintionsContntent = typeDefs |> Seq.StrJoin "\n"
-        let fileName = Path.Combine(outDir, "test.h")
-        File.WriteAllText(fileName, defintionsContntent.Replace("\r",""))
-        //sourse file
-        let eqFuncs = tases |> List.choose(fun t -> t.isEqualFunc)
-        let eqContntent = eqFuncs |> Seq.StrJoin "\n"
-        let fileName = Path.Combine(outDir, "test.c")
-        File.WriteAllText(fileName, eqContntent.Replace("\r",""))
-
-
-    )
 

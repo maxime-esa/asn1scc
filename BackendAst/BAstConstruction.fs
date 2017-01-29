@@ -51,7 +51,7 @@ let createAstRoot (s:State) (sr:Ast.AstRoot) (dfiles: Asn1File list)  (acn:AcnTy
         IcdAcnHtmlFileName = sr.IcdAcnHtmlFileName
         CheckWithOss = sr.CheckWithOss
         mappingFunctionsModule = sr.mappingFunctionsModule
-        TypeAssignments = s.anonymousTypes 
+        TypeAssignments = s.anonymousTypes |> List.filter (fun x -> x.asn1Name.IsSome)
         ValueAssignments = s.anonymousValues 
         valsMap = 
             let aa = s.anonymousValues |> List.map(fun v -> v.id, v) 
