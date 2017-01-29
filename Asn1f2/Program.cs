@@ -271,7 +271,34 @@ namespace Asn1f2
                 //var bast0 = BAstConstruction.createValidationAst(Ast.ProgrammingLanguage.C, asn1Ast0, acnAstUnresolved);
                 //print_debug.DoWork(bast0, outDir, ".txt");
                 //CAst.mapBastToCast(bast0, acnAstUnresolved);
-                BackendAstConstruct.DoWork(Ast.ProgrammingLanguage.C, asn1Ast0, acnAstUnresolved, outDir);
+
+                if (cmdArgs.HasArgument("c"))
+                {
+                    WriteTextFile(Path.Combine(outDir, "asn1crt.c"), Resource1.asn1crt);
+                    WriteTextFile(Path.Combine(outDir, "asn1crt.h"), Resource1.asn1crt1);
+                    WriteTextFile(Path.Combine(outDir, "acn.c"), Resource1.Acn);
+                    WriteTextFile(Path.Combine(outDir, "real.c"), Resource1.real);
+                    if (encodings.Contains(ParameterizedAsn1Ast.Asn1Encoding.BER))
+                    {
+                        WriteTextFile(Path.Combine(outDir, "ber.c"), Resource1.ber);
+                    }
+                    if (encodings.Contains(ParameterizedAsn1Ast.Asn1Encoding.XER))
+                    {
+                        WriteTextFile(Path.Combine(outDir, "xer.c"), Resource1.xer);
+                    }
+
+                    BackendAstConstruct.DoWork(Ast.ProgrammingLanguage.C, asn1Ast0, acnAstUnresolved, outDir);
+                } else if (cmdArgs.HasArgument("Ada"))
+                {
+                    WriteTextFile(Path.Combine(outDir, spark_body.GetRTLName() + ".adb"), Resource1.adaasn1rtl_adb);
+                    WriteTextFile(Path.Combine(outDir, spark_body.GetRTLName() + ".ads"), Resource1.adaasn1rtl_ads);
+                    WriteTextFile(Path.Combine(outDir, "IgnoredExaminerWarnings.wrn"), Resource1.IgnoredExaminerWarnings);
+                    WriteTextFile(Path.Combine(outDir, "gnat.cfg"), Resource1.gnat);
+                    WriteTextFile(Path.Combine(outDir, "runSpark.sh"), Resource1.run);
+                    WriteTextFile(Path.Combine(outDir, "GPS_project.gpr"), Resource1.GPS_project);
+                    BackendAstConstruct.DoWork(Ast.ProgrammingLanguage.Ada, asn1Ast0, acnAstUnresolved, outDir);
+                }
+
                 return 0;
             }
 

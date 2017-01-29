@@ -1,4 +1,4 @@
-module c_acn
+module acn_c
 open System
 open System.Numerics
 open Ast

@@ -3,56 +3,56 @@
   <run mode="single">
     <input>header.stg</input>
     <output>header.stg.fs</output>
-    <modName>c_header</modName>
+    <modName>header_c</modName>
 	<lang>c</lang>
   </run>
   <run mode="single">
     <input>body.stg</input>
     <output>body.stg.fs</output>
-    <modName>c_body</modName>
+    <modName>body_c</modName>
 	<lang>c</lang>
   </run>
   <run mode="single">
     <input>variables.stg</input>
     <output>variables.stg.fs</output>
-    <modName>c_variables</modName>
+    <modName>variables_c</modName>
 	<lang>c</lang>
   </run>
 
   <run mode="single">
     <input>equal.stg</input>
     <output>equal.stg.fs</output>
-    <modName>c_equal</modName>
+    <modName>equal_c</modName>
 	<lang>c</lang>
   </run>
   <run mode="single">
     <input>isvalid.stg</input>
     <output>isvalid.stg.fs</output>
-    <modName>c_isvalid</modName>
+    <modName>isvalid_c</modName>
 	<lang>c</lang>
   </run>
   <run mode="single">
     <input>init.stg</input>
     <output>init.stg.fs</output>
-    <modName>c_init</modName>
+    <modName>init_c</modName>
 	<lang>c</lang>
   </run>
   <run mode="single">
     <input>uper.stg</input>
     <output>uper.stg.fs</output>
-    <modName>c_uper</modName>
+    <modName>uper_c</modName>
 	<lang>c</lang>
   </run>
   <run mode="single">
     <input>acn.stg</input>
     <output>acn.stg.fs</output>
-    <modName>c_acn</modName>
+    <modName>acn_c</modName>
 	<lang>c</lang>
   </run>
   <run mode="single">
     <input>xer.stg</input>
     <output>xer.stg.fs</output>
-    <modName>c_xer</modName>
+    <modName>xer_c</modName>
 	<lang>c</lang>
   </run>
 

@@ -1,4 +1,4 @@
-module c_isvalid
+module isvalid_c
 open System
 open System.Numerics
 open Ast

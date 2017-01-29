@@ -47,7 +47,7 @@ let createInteger (r:CAst.AstRoot) (l:ProgrammingLanguage) (o:CAst.Integer)  (ne
                     match l with
                     | C     -> 
                         match isEqualBody "val1" "val2" with
-                        | Some bd -> typeDefinitionName |> Option.map(fun typeDefName -> deq.PrintEqualPrimitive isEqualFuncName.Value typeDefName bd)
+                        | Some bd -> typeDefinitionName |> Option.map(fun typeDefName -> equal_c.PrintEqualPrimitive isEqualFuncName.Value typeDefName bd)
                         | None     -> None
                     | Ada   -> None
                 typeDefinitionBody  = 
@@ -56,9 +56,9 @@ let createInteger (r:CAst.AstRoot) (l:ProgrammingLanguage) (o:CAst.Integer)  (ne
                                     -> baseType.typeDefinitionName.Value
                     | _    ->
                         match l with
-                        | C    when o.IsUnsigned -> ch.Declare_PosInteger_min_max  0I 0I
-                        | C                      -> ch.Declare_Integer ()
-                        | Ada                    -> ss.Declare_Integer ()
+                        | C    when o.IsUnsigned -> header_c.Declare_Integer ()
+                        | C                      -> header_c.Declare_Integer ()
+                        | Ada                    -> header_a.Declare_Integer ()
                 isEqualFuncName     = isEqualFuncName
                 isEqualBodyExp      = isEqualBody
                 isValidFuncName     = None
@@ -112,7 +112,7 @@ let createSequenceOf (r:CAst.AstRoot) (l:ProgrammingLanguage) (childType:Asn1Typ
         if (o.minSize = o.maxSize && soInnerStatement.IsNone) then
             None
         else
-            Some (deq.isEqual_SequenceOf v1 v2 childAccess i (o.minSize = o.maxSize) (BigInteger o.minSize) soInnerStatement)
+            Some (equal_c.isEqual_SequenceOf v1 v2 childAccess i (o.minSize = o.maxSize) (BigInteger o.minSize) soInnerStatement)
 
     let ret : SequenceOf = 
             {
@@ -135,14 +135,14 @@ let createSequenceOf (r:CAst.AstRoot) (l:ProgrammingLanguage) (childType:Asn1Typ
                     let typeDefinitionArrayPostfix = match childType.typeDefinitionArrayPostfix with None -> "" | Some x -> x
 
                     match l with
-                    | C                      -> ch.Declare_SequenceOf (o.minSize = o.maxSize) childType.typeDefinitionBody (BigInteger o.maxSize) typeDefinitionArrayPostfix
+                    | C                      -> header_c.Declare_SequenceOf (o.minSize = o.maxSize) childType.typeDefinitionBody (BigInteger o.maxSize) typeDefinitionArrayPostfix
                     | Ada                    -> ""
                 childType           = childType
                 isEqualFunc         =
                     match l with
                     | C     -> 
                         match isEqualBody "pVal1" "pVal2" "->" with
-                        | Some bd -> typeDefinitionName |> Option.map(fun typeDefName -> deq.PrintEqualSequence isEqualFuncName.Value typeDefName bd)
+                        | Some bd -> typeDefinitionName |> Option.map(fun typeDefName -> equal_c.PrintEqualSequence isEqualFuncName.Value typeDefName bd)
                         | None     -> None
                     | Ada   -> None
                 isEqualFuncName     = isEqualFuncName
@@ -170,7 +170,7 @@ let createSequenceChild (r:CAst.AstRoot) (l:ProgrammingLanguage)  (o:CAst.SeqChi
                     | Some exp  -> Some (sprintf "ret = (%s);" exp)
                     | None      -> None
                 | Statement,  func   -> func (v1 + childAccess + c_name) (v2 + childAccess + c_name)
-            deq.isEqual_Sequence_child v1  v2  childAccess o.optionality.IsSome c_name sInnerStatement
+            equal_c.isEqual_Sequence_child v1  v2  childAccess o.optionality.IsSome c_name sInnerStatement
 
         | Ada       -> sprintf "%s = %s" v1 v2
     {
@@ -185,7 +185,7 @@ let createSequenceChild (r:CAst.AstRoot) (l:ProgrammingLanguage)  (o:CAst.SeqChi
             | false ->
                 let typeDefinitionArrayPostfix = match newChild.typeDefinitionArrayPostfix with None -> "" | Some x -> x
                 match l with
-                | C                      -> Some (ch.PrintSeq_ChoiceChild newChild.typeDefinitionBody c_name typeDefinitionArrayPostfix)
+                | C                      -> Some (header_c.PrintSeq_ChoiceChild newChild.typeDefinitionBody c_name typeDefinitionArrayPostfix)
                 | Ada                    -> None
             | true                       -> None
         isEqualBodyStats = isEqualBody
@@ -199,7 +199,7 @@ let createSequence (r:CAst.AstRoot) (l:ProgrammingLanguage) (children:SeqChildIn
             let content = c.isEqualBodyStats v1 v2 childAccess
             match sNestedContent with
             | None  -> content
-            | Some c-> deq.JoinItems content sNestedContent 
+            | Some c-> equal_c.JoinItems content sNestedContent 
         let rec printChildren children = 
             match children with
             |[]     -> None
@@ -229,7 +229,7 @@ let createSequence (r:CAst.AstRoot) (l:ProgrammingLanguage) (children:SeqChildIn
                     let childrenBodies = children |> List.choose(fun c -> c.typeDefinitionBody)
                     let optChildNames  = children |> List.choose(fun c -> match c.optionality with Some _ -> Some c.name | None -> None)
                     match l with
-                    | C                      -> ch.Declare_Sequence childrenBodies optChildNames
+                    | C                      -> header_c.Declare_Sequence childrenBodies optChildNames
                     | Ada                    -> ""
                 isEqualFuncName     = isEqualFuncName
                 isEqualFunc         =
@@ -238,7 +238,7 @@ let createSequence (r:CAst.AstRoot) (l:ProgrammingLanguage) (children:SeqChildIn
                         match isEqualBody "pVal1" "pVal2" "->" with
                         | None  -> None
                         | Some bodyEqual ->
-                            typeDefinitionName |> Option.map(fun typeDefName -> deq.PrintEqualSequence isEqualFuncName.Value typeDefName bodyEqual)
+                            typeDefinitionName |> Option.map(fun typeDefName -> equal_c.PrintEqualSequence isEqualFuncName.Value typeDefName bodyEqual)
                     | Ada   -> None
 
                 isEqualBodyStats     = (fun v1 v2 -> isEqualBody v1 v2 ".")

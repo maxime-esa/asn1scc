@@ -1,4 +1,4 @@
-module c_variables
+module variables_c
 open System
 open System.Numerics
 open Ast

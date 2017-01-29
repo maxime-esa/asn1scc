@@ -1,4 +1,4 @@
-module c_uper
+module uper_c
 open System
 open System.Numerics
 open Ast

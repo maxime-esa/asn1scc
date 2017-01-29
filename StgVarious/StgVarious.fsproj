@@ -5,15 +5,15 @@
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
     <SchemaVersion>2.0</SchemaVersion>
-    <ProjectGuid>2f960476-565f-4282-90b3-606dbac5eff2</ProjectGuid>
+    <ProjectGuid>44920b63-4f4d-40e2-a652-66ea7ebd5e80</ProjectGuid>
     <OutputType>Library</OutputType>
-    <RootNamespace>BackendAst</RootNamespace>
-    <AssemblyName>BackendAst</AssemblyName>
+    <RootNamespace>StgVarious</RootNamespace>
+    <AssemblyName>StgVarious</AssemblyName>
     <TargetFrameworkVersion>v4.0</TargetFrameworkVersion>
     <TargetFSharpCoreVersion>4.3.0.0</TargetFSharpCoreVersion>
     <AutoGenerateBindingRedirects>true</AutoGenerateBindingRedirects>
-    <Name>BackendAst</Name>
-    <TargetFrameworkProfile>Client</TargetFrameworkProfile>
+    <Name>StgVarious</Name>
+    <TargetFrameworkProfile />
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
     <DebugSymbols>true</DebugSymbols>
@@ -23,7 +23,7 @@
     <OutputPath>bin\Debug\</OutputPath>
     <DefineConstants>DEBUG;TRACE</DefineConstants>
     <WarningLevel>3</WarningLevel>
-    <DocumentationFile>bin\Debug\BackendAst.XML</DocumentationFile>
+    <DocumentationFile>bin\Debug\StgVarious.XML</DocumentationFile>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
     <DebugType>pdbonly</DebugType>
@@ -32,24 +32,12 @@
     <OutputPath>bin\Release\</OutputPath>
     <DefineConstants>TRACE</DefineConstants>
     <WarningLevel>3</WarningLevel>
-    <DocumentationFile>bin\Release\BackendAst.XML</DocumentationFile>
+    <DocumentationFile>bin\Release\StgVarious.XML</DocumentationFile>
   </PropertyGroup>
   <ItemGroup>
-    <Reference Include="antlr.runtime">
-      <HintPath>..\Antlr\antlr313\antlr.runtime.dll</HintPath>
-    </Reference>
-    <Reference Include="Antlr3.Runtime">
-      <HintPath>..\Antlr\antlr313\Antlr3.Runtime.dll</HintPath>
-    </Reference>
-    <Reference Include="Antlr3.Utility">
-      <HintPath>..\Antlr\antlr313\Antlr3.Utility.dll</HintPath>
-    </Reference>
     <Reference Include="mscorlib" />
     <Reference Include="FSharp.Core, Version=$(TargetFSharpCoreVersion), Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a">
       <Private>True</Private>
-    </Reference>
-    <Reference Include="StringTemplate">
-      <HintPath>..\Antlr\antlr313\StringTemplate.dll</HintPath>
     </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />
@@ -57,29 +45,12 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="AssemblyInfo.fs" />
-    <Compile Include="Constraints.fs" />
-    <Compile Include="ConstraintsMapping.fs" />
-    <Compile Include="uPER.fs" />
-    <Compile Include="BAst.fs" />
-    <Compile Include="BAstConstruction.fs" />
-    <Compile Include="BAstFold.fs" />
-    <Compile Include="BastAddAcnInsertFields.fs" />
-    <Compile Include="CAst.fs" />
-    <Compile Include="CAstAcnEncodingClasses.fs" />
-    <Compile Include="CAstConstruction.fs" />
-    <Compile Include="CAstFold.fs" />
-    <Compile Include="DAst.fs" />
-    <Compile Include="DastFold.fs" />
-    <Compile Include="DAstProgramUnit.fs" />
-    <Compile Include="DAstConstruction.fs" />
-    <Compile Include="GenerateFiles.fs" />
+    <Compile Include="Library1.fs" />
     <None Include="Script.fsx" />
-    <Compile Include="BackendAst.fs" />
-    <Compile Include="variable.fs" />
-    <Compile Include="validate.fs" />
-    <Compile Include="createDefinitions.fs" />
-    <Compile Include="print_debug.fs" />
-    <Compile Include="BackendAstConstruct.fs" />
+    <None Include="ACN.stg" />
+    <Compile Include="ACN.stg.fs" />
+    <None Include="ASN.stg" />
+    <Compile Include="ASN.stg.fs" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\Ast\Ast.fsproj">
@@ -87,19 +58,9 @@
       <Project>{3b67372a-65c7-439e-849f-ce1a1d2fcc69}</Project>
       <Private>True</Private>
     </ProjectReference>
-    <ProjectReference Include="..\StgAda\StgAda.fsproj">
-      <Name>StgAda</Name>
-      <Project>{18b04aee-c300-4139-a2de-c3519cc24e94}</Project>
-      <Private>True</Private>
-    </ProjectReference>
-    <ProjectReference Include="..\StgC\StgC.fsproj">
-      <Name>StgC</Name>
-      <Project>{a35cb9d7-70b4-41e3-bba8-7f8263aa3498}</Project>
-      <Private>True</Private>
-    </ProjectReference>
-    <ProjectReference Include="..\StgVarious\StgVarious.fsproj">
-      <Name>StgVarious</Name>
-      <Project>{44920b63-4f4d-40e2-a652-66ea7ebd5e80}</Project>
+    <ProjectReference Include="..\ST\ST.fsproj">
+      <Name>ST</Name>
+      <Project>{94495d92-b615-4745-b26b-a5ec73a6a462}</Project>
       <Private>True</Private>
     </ProjectReference>
   </ItemGroup>
@@ -119,6 +80,11 @@
     </Otherwise>
   </Choose>
   <Import Project="$(FSharpTargetsPath)" />
+  <PropertyGroup>
+    <PreBuildEvent>
+      $(MonoCallPrefix) $(ProjectDir)..\parseStg2\bin\Debug\parseStg2.exe $(ProjectDir)backends.xml
+</PreBuildEvent>
+  </PropertyGroup>
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
        Other similar extension points exist, see Microsoft.Common.targets.
   <Target Name="BeforeBuild">

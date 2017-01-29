@@ -13,7 +13,10 @@ let printUnit (r:DAst.AstRoot) (l:ProgrammingLanguage) outDir (programUnit:Progr
     
     //header file
     let typeDefs = tases |> List.choose(fun t -> t.getTypeDefinition l)
-    let defintionsContntent = typeDefs |> Seq.StrJoin "\n"
+    let defintionsContntent = ""
+    //    match l with
+     //   | C -> c_
+
     let fileName = Path.Combine(outDir, programUnit.specFileName)
     File.WriteAllText(fileName, defintionsContntent.Replace("\r",""))
         

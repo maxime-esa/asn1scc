@@ -50,6 +50,8 @@ Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "StgAda", "StgAda\StgAda.fsp
 EndProject
 Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "StgC", "StgC\StgC.fsproj", "{A35CB9D7-70B4-41E3-BBA8-7F8263AA3498}"
 EndProject
+Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "StgVarious", "StgVarious\StgVarious.fsproj", "{44920B63-4F4D-40E2-A652-66EA7EBD5E80}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -244,6 +246,22 @@ Global
 		{A35CB9D7-70B4-41E3-BBA8-7F8263AA3498}.Release|Win32.Build.0 = Release|Any CPU
 		{A35CB9D7-70B4-41E3-BBA8-7F8263AA3498}.Release|x86.ActiveCfg = Release|Any CPU
 		{A35CB9D7-70B4-41E3-BBA8-7F8263AA3498}.Release|x86.Build.0 = Release|Any CPU
+		{44920B63-4F4D-40E2-A652-66EA7EBD5E80}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{44920B63-4F4D-40E2-A652-66EA7EBD5E80}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{44920B63-4F4D-40E2-A652-66EA7EBD5E80}.Debug|Mixed Platforms.ActiveCfg = Debug|Any CPU
+		{44920B63-4F4D-40E2-A652-66EA7EBD5E80}.Debug|Mixed Platforms.Build.0 = Debug|Any CPU
+		{44920B63-4F4D-40E2-A652-66EA7EBD5E80}.Debug|Win32.ActiveCfg = Debug|Any CPU
+		{44920B63-4F4D-40E2-A652-66EA7EBD5E80}.Debug|Win32.Build.0 = Debug|Any CPU
+		{44920B63-4F4D-40E2-A652-66EA7EBD5E80}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{44920B63-4F4D-40E2-A652-66EA7EBD5E80}.Debug|x86.Build.0 = Debug|Any CPU
+		{44920B63-4F4D-40E2-A652-66EA7EBD5E80}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{44920B63-4F4D-40E2-A652-66EA7EBD5E80}.Release|Any CPU.Build.0 = Release|Any CPU
+		{44920B63-4F4D-40E2-A652-66EA7EBD5E80}.Release|Mixed Platforms.ActiveCfg = Release|Any CPU
+		{44920B63-4F4D-40E2-A652-66EA7EBD5E80}.Release|Mixed Platforms.Build.0 = Release|Any CPU
+		{44920B63-4F4D-40E2-A652-66EA7EBD5E80}.Release|Win32.ActiveCfg = Release|Any CPU
+		{44920B63-4F4D-40E2-A652-66EA7EBD5E80}.Release|Win32.Build.0 = Release|Any CPU
+		{44920B63-4F4D-40E2-A652-66EA7EBD5E80}.Release|x86.ActiveCfg = Release|Any CPU
+		{44920B63-4F4D-40E2-A652-66EA7EBD5E80}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

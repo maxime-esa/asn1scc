@@ -68,7 +68,6 @@
     <Compile Include="XER.fs" />
     <Compile Include="c_body.fs" />
     <Compile Include="automatic_test_cases.fs" />
-    <Compile Include="GenerateHeaderFile.fs" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\Ast\Ast.fsproj">
@@ -82,11 +81,6 @@
     <ProjectReference Include="..\Backend2\Backend2.fsproj">
       <Name>Backend2</Name>
       <Project>{000896AE-1E52-4120-8394-0E5E07A8F194}</Project>
-    </ProjectReference>
-    <ProjectReference Include="..\BackendAst\BackendAst.fsproj">
-      <Name>BackendAst</Name>
-      <Project>{2f960476-565f-4282-90b3-606dbac5eff2}</Project>
-      <Private>True</Private>
     </ProjectReference>
   </ItemGroup>
   <Choose>

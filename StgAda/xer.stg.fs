@@ -1,4 +1,4 @@
-module a_xer
+module xer_a
 open System
 open System.Numerics
 open Ast

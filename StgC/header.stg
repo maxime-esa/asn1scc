@@ -33,82 +33,14 @@ extern "C" {
 #endif
 
 #endif
-
 >>
 
-EnumUtilDefine(sItemName) ::= "#define ENUM_<sItemName>	<sItemName>"
-
-EnumInnerUtilDefine(sTasName, sItemName) ::= "#define ENUM_<sItemName>	<sTasName>::<sItemName>"
-
-ChoiceUtilDefine(sTasName, sChildNamePresent) ::= "#define CHOICE_<sChildNamePresent>	<sTasName>::<sChildNamePresent>"
-
-PrintValueAssignment(sTypeDecl, sName) ::= "extern const <sTypeDecl> <sName>;"
-
-PrintTypeAssignment(sTypeDecl, sArrayPostfix, sName, nMaxBitsInPER, nMaxBytesInPER, nMaxBitsInACN, nMaxBytesInACN, nMaxBytesInXER, sStar, bGenEqual, arrsErrorCodes) ::= <<
-
-typedef <sTypeDecl> <sName><sArrayPostfix>;
-
-#define <sName>_REQUIRED_BYTES_FOR_ENCODING       <nMaxBytesInPER> 
-#define <sName>_REQUIRED_BITS_FOR_ENCODING        <nMaxBitsInPER>
-#define <sName>_REQUIRED_BYTES_FOR_ACN_ENCODING   <nMaxBytesInACN> 
-#define <sName>_REQUIRED_BITS_FOR_ACN_ENCODING    <nMaxBitsInACN>
-#define <sName>_REQUIRED_BYTES_FOR_XER_ENCODING   <nMaxBytesInXER>
-
-void <sName>_Initialize(<sName><sStar> pVal);
-flag <sName>_IsConstraintValid(const <sName><sStar> val, int* pErrCode);
-<if(bGenEqual)>
-flag <sName>_Equal(const <sName><sStar> val1, const <sName><sStar> val2);
-
-<endif>
-
-<arrsErrorCodes;separator="\n">
->>
-
-PrintPrototypes(arrsEncPrototypes) ::= <<
-<arrsEncPrototypes: {pr|<pr>}; separator="\n">
->>
-
-
-PrintErrorCode(sErrorName, nErrCode, sComment) ::= <<
-#ifndef <sErrorName> 
-#define <sErrorName>		<nErrCode>  /*<sComment>*/
-#endif
->>
-
-
-UPER_encPrototypes(sName, sStar) ::= <<
-flag <sName>_Encode(const <sName><sStar> val, BitStream* pBitStrm, int* pErrCode, flag bCheckConstraints);
-flag <sName>_Decode(<sName><sStar> pVal, BitStream* pBitStrm, int* pErrCode);
->>
-
-XER_encPrototypes(sName, sStar) ::= <<
-flag <sName>_XER_Encode(const <sName><sStar> val, ByteStream* pByteStrm, int* pErrCode, flag bCheckConstraints);
-flag <sName>_XER_Decode(<sName><sStar> pVal, ByteStream* pByteStrm, int* pErrCode);
->>
-
-BER_encPrototypes(sName, sStar) ::= <<
-flag <sName>_BER_Encode(const <sName><sStar> val, ByteStream* pByteStrm, int* pErrCode, flag bCheckConstraints);
-flag <sName>_BER_Decode(<sName><sStar> pVal, ByteStream* pByteStrm, int* pErrCode);
->>
-
-
-PrintAcnParameter(sTypeDecl, bEncOut, sName) ::= "<sTypeDecl><if(bEncOut)>*<endif> <sName>"
-
-
-
-ACN_encPrototypes(sName, sStar, arrsEncodingParams, arrsDecodingParams) ::= <<
-flag <sName>_ACN_Encode(const <sName><sStar> val, BitStream* pBitStrm, int* pErrCode, flag bCheckConstraints<if(arrsEncodingParams)>, <arrsEncodingParams:{param|<param>}; separator=", "><endif>);
-flag <sName>_ACN_Decode(<sName><sStar> pVal, BitStream* pBitStrm, int* pErrCode<if(arrsDecodingParams)>, <arrsDecodingParams:{param|<param>}; separator=", "><endif>);
->>
-
-
+/*
+C TYPES 
+*/
 
 Declare_Integer() ::="asn1SccSint"
-Declare_Integer_min_max(nMin, nMax) ::="asn1SccSint"
-Declare_PosInteger_min_max(nMin, nMax) ::="asn1SccUint"
-Declare_Integer_posInf(nMin) ::="asn1SccSint"
-Declare_PosInteger_posInf(nMin) ::="asn1SccUint"
-Declare_Integer_negInf(nMax) ::="asn1SccSint"
+Declare_PosInteger() ::="asn1SccUint"
 
 Declare_Boolean() ::= "flag"
 
@@ -183,6 +115,4 @@ struct {<if(!bIsFixedSize)>
     <sTypeDecl> arr[<nLength>]<sArrayPostfix>;
 }
 >>
-
-
 

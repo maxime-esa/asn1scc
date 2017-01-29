@@ -1,4 +1,4 @@
-module a_body
+module body_a
 open System
 open System.Numerics
 open Ast

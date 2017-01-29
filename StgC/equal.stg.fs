@@ -1,4 +1,4 @@
-module c_equal
+module equal_c
 open System
 open System.Numerics
 open Ast

@@ -3,56 +3,56 @@
   <run mode="single">
     <input>spec.stg</input>
     <output>spec.stg.fs</output>
-    <modName>a_header</modName>
+    <modName>header_a</modName>
 	<lang>Ada</lang>
   </run>
   <run mode="single">
     <input>body.stg</input>
     <output>body.stg.fs</output>
-    <modName>a_body</modName>
+    <modName>body_a</modName>
 	<lang>Ada</lang>
   </run>
   <run mode="single">
     <input>variables.stg</input>
     <output>variables.stg.fs</output>
-    <modName>a_variables</modName>
+    <modName>variables_a</modName>
 	<lang>Ada</lang>
   </run>
 
   <run mode="single">
     <input>equal.stg</input>
     <output>equal.stg.fs</output>
-    <modName>a_equal</modName>
+    <modName>equal_a</modName>
 	<lang>Ada</lang>
   </run>
   <run mode="single">
     <input>isvalid.stg</input>
     <output>isvalid.stg.fs</output>
-    <modName>a_isvalid</modName>
+    <modName>isvalid_a</modName>
 	<lang>Ada</lang>
   </run>
   <run mode="single">
     <input>init.stg</input>
     <output>init.stg.fs</output>
-    <modName>a_init</modName>
+    <modName>init_a</modName>
 	<lang>Ada</lang>
   </run>
   <run mode="single">
     <input>uper.stg</input>
     <output>uper.stg.fs</output>
-    <modName>a_uper</modName>
+    <modName>uper_a</modName>
 	<lang>Ada</lang>
   </run>
   <run mode="single">
     <input>acn.stg</input>
     <output>acn.stg.fs</output>
-    <modName>a_acn</modName>
+    <modName>acn_a</modName>
 	<lang>Ada</lang>
   </run>
   <run mode="single">
     <input>xer.stg</input>
     <output>xer.stg.fs</output>
-    <modName>a_xer</modName>
+    <modName>xer_a</modName>
 	<lang>Ada</lang>
   </run>
 

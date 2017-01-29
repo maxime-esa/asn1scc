@@ -1,0 +1,16 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Settings>
+  <run mode="single">
+    <input>ASN.stg</input>
+    <output>ASN.stg.fs</output>
+    <modName>stg_asn1</modName>
+	<lang>ASN1</lang>
+  </run>
+  <run mode="single">
+    <input>ACN.stg</input>
+    <output>ACN.stg.fs</output>
+    <modName>stg_acn</modName>
+	<lang>ACN</lang>
+  </run>
+
+</Settings>

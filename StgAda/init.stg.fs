@@ -1,4 +1,4 @@
-module a_init
+module init_a
 open System
 open System.Numerics
 open Ast
