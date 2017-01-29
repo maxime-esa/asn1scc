@@ -686,7 +686,7 @@ if (ret) {
 /* SEQUENCE END */
 
 loopFixedItem (i, fixedSize,  sInternalItem)::= /*nogen*/<<	
-for(<i>=0; (<i> \< <fixedSize>) && ret; <i>++) 
+for(<i>=0; (<i> \< (int)<fixedSize>) && ret; <i>++) 
 {
 	<sInternalItem>
 }
