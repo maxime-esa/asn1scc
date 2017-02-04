@@ -78,7 +78,6 @@ let isEqualBodySequenceChild   (l:BAst.ProgrammingLanguage) (o:CAst.SeqChildInfo
 
 let isEqualBodySequence  (l:BAst.ProgrammingLanguage) (children:SeqChildInfo list) (childAccess: string) (v1:string) (v2:string)  = 
     let printChild (content:string, lvars:LocalVariable list) (sNestedContent:string option) = 
-        //let content, lvars = c.isEqualBodyStats childAccess v1 v2 
         match sNestedContent with
         | None  -> content, lvars
         | Some c-> equal_c.JoinItems content sNestedContent, lvars
@@ -97,4 +96,38 @@ let isEqualBodySequence  (l:BAst.ProgrammingLanguage) (children:SeqChildInfo lis
     printChildren childrenConent
 
 
+
+
+let isEqualBodyChoiceChild   (l:BAst.ProgrammingLanguage) (o:CAst.ChChildInfo) (newChild:Asn1Type) (childAccess: string) (v1:string) (v2:string)  = 
+    let c_name = ToC o.name
+    let sInnerStatement = 
+        match newChild.isEqualBody with
+        | Expression, func  ->  
+            match func (v1 + childAccess + c_name) (v2 + childAccess + c_name) with
+            | Some (exp, lvars)  -> Some (sprintf "ret %s (%s);" l.AssignOperator exp, lvars)
+            | None      -> None
+        | Statement,  func   -> func (v1 + childAccess + c_name) (v2 + childAccess + c_name)
+
+    match l with
+    | BAst.C         -> 
+        match sInnerStatement with
+        | None                              -> None
+        | Some (sInnerStatement, lvars)     -> Some (equal_c.isEqual_Choice_Child o.presentWhenName sInnerStatement, lvars)
+    | BAst.Ada       ->
+        match sInnerStatement with
+        | None                              -> None
+        | Some (sInnerStatement, lvars)     -> Some (equal_c.isEqual_Choice_Child o.presentWhenName sInnerStatement, lvars)
+
+let isEqualBodyChoice  (l:BAst.ProgrammingLanguage) (children:ChChildInfo list) (childAccess: string) (v1:string) (v2:string)  = 
+    let childrenConent,lvars =   
+        children |> 
+        List.map(fun c -> 
+            match c.isEqualBodyStats "." (v1+childAccess+"u") (v2+childAccess+"u") with
+            | Some a -> a
+            | None   -> sprintf "ret %s TRUE;" l.AssignOperator ,[])  |>
+        List.unzip
+    let lvars = lvars |> List.collect id
+    match l with
+    |BAst.C   -> Some(equal_c.isEqual_Choice v1 v2 childAccess childrenConent, lvars)
+    |BAst.Ada -> Some(equal_c.isEqual_Choice v1 v2 childAccess childrenConent, lvars)
 

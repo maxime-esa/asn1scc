@@ -416,6 +416,12 @@ and ChChildInfo = {
     chType              :Asn1Type
     comments            :string list
     presenseIsHandleByExtField :bool
+    presentWhenName     :string     // the name of the corresponding enum that indicates that specific child is present
+    
+    //DAst properties
+    c_name              : string
+    typeDefinitionBody  : string 
+    isEqualBodyStats    : string -> string -> string -> (string*(LocalVariable list)) option  // 
 }
 
 and Choice = {
@@ -428,6 +434,7 @@ and Choice = {
     withcons            : ChoiceConstraint list
     baseType            : Choice option
     Location            : SrcLoc   
+    choiceIDForNone     : string
 
     //cast new properties
     acnMaxSizeInBits    : int

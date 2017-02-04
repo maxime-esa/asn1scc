@@ -450,7 +450,6 @@ let createSequenceOf (r:CAst.AstRoot) (l:BAst.ProgrammingLanguage) (childType:As
 
 let createSequenceChild (r:CAst.AstRoot) (l:BAst.ProgrammingLanguage)  (o:CAst.SeqChildInfo)  (newChild:Asn1Type) (us:State) : (SeqChildInfo*State) =
     let c_name = ToC o.name
-    
     {
         SeqChildInfo.name   = o.name
         chType              = newChild
@@ -521,15 +520,74 @@ let createSequence (r:CAst.AstRoot) (l:BAst.ProgrammingLanguage) (children:SeqCh
 
 
 let createChoiceChild (r:CAst.AstRoot) (l:BAst.ProgrammingLanguage)  (o:CAst.ChChildInfo)  (newChild:Asn1Type) (us:State) : (ChChildInfo*State) =
+    let c_name = ToC o.name
     {
         ChChildInfo.name   = o.name
         chType              = newChild
         comments            = o.comments
         presenseIsHandleByExtField = o.presenseIsHandleByExtField
+        c_name              = c_name
+        presentWhenName     = o.presentWhenName
+
+        typeDefinitionBody  = 
+                let typeDefinitionArrayPostfix = match newChild.typeDefinitionArrayPostfix with None -> "" | Some x -> x
+                match l with
+                | BAst.C                      -> header_c.PrintSeq_ChoiceChild newChild.typeDefinitionBody c_name typeDefinitionArrayPostfix
+                | BAst.Ada                    -> header_c.PrintSeq_ChoiceChild newChild.typeDefinitionBody c_name typeDefinitionArrayPostfix
+        isEqualBodyStats = DAstEqual.isEqualBodyChoiceChild l o newChild
     }, us
 
 let createChoice (r:CAst.AstRoot) (l:BAst.ProgrammingLanguage) (children:ChChildInfo list) (o:CAst.Choice)  (newBase:Choice option) (us:State) : (Choice*State) =
-    raise(Exception "Not Implemented yet")
+    let typeDefinitionName  = getTypeDefinitionName r l o.tasInfo
+    let isEqualFuncName     = getEqualFuncName r l o.tasInfo
+    let isEqualBody   = DAstEqual.isEqualBodyChoice l children
+            
+
+    let ret : Choice= 
+            {
+                Choice.id         = o.id
+                tasInfo             = o.tasInfo
+                uperMaxSizeInBits   = o.uperMaxSizeInBits
+                uperMinSizeInBits   = o.uperMinSizeInBits
+                children            = children
+                cons                = o.cons
+                withcons            = o.withcons
+                baseType            = newBase
+                Location            = o.Location  
+                choiceIDForNone     = o.choiceIDForNone
+                acnMaxSizeInBits    = o.acnMaxSizeInBits
+                acnMinSizeInBits    = o.acnMinSizeInBits
+                acnEncodingClass    = o.acnEncodingClass
+                alignment           = o.alignment
+
+                typeDefinitionName  = typeDefinitionName
+                typeDefinitionBody  = 
+                    let chEnms = children |> List.map(fun c -> c.presentWhenName)
+                    let childrenBodies = children |> List.map(fun c -> c.typeDefinitionBody)
+                    match l with
+                    | BAst.C                      -> header_c.Declare_Choice o.choiceIDForNone chEnms childrenBodies 
+                    | BAst.Ada                    -> header_c.Declare_Choice o.choiceIDForNone chEnms childrenBodies 
+                isEqualFuncName     = isEqualFuncName
+                isEqualFunc         =
+                    match l with
+                    | BAst.C     -> 
+                        match isEqualBody "->" "pVal1" "pVal2"  with
+                        | None  -> None
+                        | Some (bodyEqual, lvars) ->
+                            let lvars = lvars |> List.map(fun (lv:LocalVariable) -> lv.GetDeclaration l) |> Seq.distinct
+                            typeDefinitionName |> Option.map(fun typeDefName -> equal_c.PrintEqualComposite isEqualFuncName.Value typeDefName bodyEqual lvars)
+                    | BAst.Ada   -> None
+
+                isEqualBodyStats     = (fun v1 v2 -> isEqualBody "." v1 v2 )
+                isValidFuncName     = None
+                isValidBody         = None
+                encodeFuncName      = None
+                encodeFuncBody      = fun x -> x
+                decodeFuncName      = None
+                decodeFuncBody      = fun x -> x
+
+            }
+    ret, us
 
 
 let mapCTypeToDType (r:CAst.AstRoot) (l:BAst.ProgrammingLanguage) (t:CAst.Asn1Type)  (initialSate:State) =

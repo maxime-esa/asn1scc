@@ -84,11 +84,13 @@ let mapBTypeToCType (r:BAst.AstRoot) (t:BAst.Asn1Type) (acn:AcnTypes.AcnAst) (ac
         (fun o newChild us -> 
             let acnParams = getAcnParams newChild.id
             let presenseIsHandleByExtField, nus = getChildLinks acn  acnTypes o.Location newChild  acnParams us
-            {ChChildInfo.name = o.Name; chType = newChild; comments = o.Comments; presenseIsHandleByExtField=presenseIsHandleByExtField}, nus)
+            {ChChildInfo.name = o.Name; chType = newChild; comments = o.Comments; presenseIsHandleByExtField=presenseIsHandleByExtField; presentWhenName = (ToC o.Name) + "_PRESENT"}, nus)
         (fun children o newBase us -> 
             let acnParams = getAcnParams o.id
             let encClass, alignment, acnMinSizeInBits, acnMaxSizeInBits, nus = GetChoiceEncodingClass acn  acnTypes o.Location o children acnParams us
-            {Choice.id = o.id; tasInfo = o.tasInfo; uperMaxSizeInBits= o.uperMaxSizeInBits; uperMinSizeInBits=o.uperMinSizeInBits; children = children; cons=o.cons; withcons = o.withcons; baseType = newBase; Location = o.Location; acnMaxSizeInBits = acnMaxSizeInBits; acnMinSizeInBits = acnMinSizeInBits; acnEncodingClass = encClass; alignment = alignment}, us)
+            let choiceIDForNone =  ToC (o.id.AcnAbsPath.Tail.StrJoin("_").Replace("#","elem")) + "_NONE"
+
+            {Choice.id = o.id; tasInfo = o.tasInfo; uperMaxSizeInBits= o.uperMaxSizeInBits; uperMinSizeInBits=o.uperMinSizeInBits; children = children; cons=o.cons; withcons = o.withcons; baseType = newBase; Location = o.Location; choiceIDForNone = choiceIDForNone; acnMaxSizeInBits = acnMaxSizeInBits; acnMinSizeInBits = acnMinSizeInBits; acnEncodingClass = encClass; alignment = alignment}, us)
         Choice
     
 

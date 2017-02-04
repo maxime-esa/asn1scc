@@ -55,13 +55,13 @@ let isEqual_OctetString (p1:string) (p2:string) (bIsFixedSize:bool) (nFixedSize:
     ST.lang <- Ast.ProgrammingLanguage.C
     ST.call "equal" "isEqual_OctetString" [("p1",p1 :>Object);("p2",p2 :>Object);("bIsFixedSize",bIsFixedSize :>Object);("nFixedSize",nFixedSize :>Object)]
 
-let isEqual_Choice_Child (sCid:string) (sInnerType:string) =
+let isEqual_Choice_Child (sCid:string) (sInnerStatement:string) =
     ST.lang <- Ast.ProgrammingLanguage.C
-    ST.call "equal" "isEqual_Choice_Child" [("sCid",(if sCid = null then null else ST.StrHelper sCid:>Object) );("sInnerType",(if sInnerType = null then null else ST.StrHelper sInnerType:>Object) )]
+    ST.call "equal" "isEqual_Choice_Child" [("sCid",(if sCid = null then null else ST.StrHelper sCid:>Object) );("sInnerStatement",(if sInnerStatement = null then null else ST.StrHelper sInnerStatement:>Object) )]
 
-let isEqual_Choice (p1:string) (p2:string) (arrsChildren:seq<string>) =
+let isEqual_Choice (p1:string) (p2:string) (sAccess:string) (arrsChildren:seq<string>) =
     ST.lang <- Ast.ProgrammingLanguage.C
-    ST.call "equal" "isEqual_Choice" [("p1",p1 :>Object);("p2",p2 :>Object);("arrsChildren",(arrsChildren|>Seq.map (fun s ->  if s = null then null else (ST.StrHelper s):>Object) |> Seq.toArray) :>Object)]
+    ST.call "equal" "isEqual_Choice" [("p1",p1 :>Object);("p2",p2 :>Object);("sAccess",(if sAccess = null then null else ST.StrHelper sAccess:>Object) );("arrsChildren",(arrsChildren|>Seq.map (fun s ->  if s = null then null else (ST.StrHelper s):>Object) |> Seq.toArray) :>Object)]
 
 let isEqual_Sequence_child (p1:string) (p2:string) (sAcc:string) (bIsOptional:bool) (sChName:string) (soInnerStatement:string option) =
     ST.lang <- Ast.ProgrammingLanguage.C

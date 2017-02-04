@@ -80,20 +80,20 @@ memcmp(<p1>arr, <p2>arr, <nFixedSize>) ==0
 <endif>	
 >>
 
-isEqual_Choice_Child(sCid, sInnerType) ::= <<
+isEqual_Choice_Child(sCid, sInnerStatement) ::= <<
 case <sCid>:
-	<sInnerType>
+	<sInnerStatement>
 	break;
 >>
 
-isEqual_Choice(p1,p2, arrsChildren) ::= <<
-ret = (<p1>kind == <p2>kind);
+isEqual_Choice(p1,p2, sAccess, arrsChildren) ::= <<
+ret = (<p1><sAccess>kind == <p2><sAccess>kind);
 if (ret) {
-	switch(<p1>kind) 
+	switch(<p1><sAccess>kind) 
 	{
 	<arrsChildren: {ch|<ch>}; separator="\n">
 	default:
-		ret = FALSE;    //COVERAGE_IGNORE
+		ret = FALSE;    /*COVERAGE_IGNORE*/
 	}
 }
 >>

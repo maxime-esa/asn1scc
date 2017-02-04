@@ -369,10 +369,12 @@ and ChoiceAcnEncClass =
 
 and ChChildInfo = {
     name                :string
+    presentWhenName     :string     // the name of the corresponding enum that indicates that specific child is present
     chType              :Asn1Type
     comments            :string list
     presenseIsHandleByExtField :bool
 }
+
 
 and Choice = {
     id                  : ReferenceToType
@@ -384,7 +386,7 @@ and Choice = {
     withcons            : ChoiceConstraint list
     baseType            : Choice option
     Location            : SrcLoc   
-
+    choiceIDForNone     : string
     //cast new properties
     acnMaxSizeInBits    : int
     acnMinSizeInBits    : int
