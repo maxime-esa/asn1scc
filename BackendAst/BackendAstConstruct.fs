@@ -3,9 +3,9 @@
 let DoWork (lang:Ast.ProgrammingLanguage) (app:Ast.AstRoot) (acn:AcnTypes.AcnAst) outdir =
     let l =
         match lang with
-        | Ast.ProgrammingLanguage.C     -> DAst.C
+        | Ast.ProgrammingLanguage.C     -> BAst.C
         | Ast.ProgrammingLanguage.Ada   
-        | Ast.ProgrammingLanguage.Spark -> DAst.Ada
+        | Ast.ProgrammingLanguage.Spark -> BAst.Ada
         | _                             -> raise(System.Exception "Unsupported programming language")
     
     let bast = BAstConstruction.createValidationAst lang app acn

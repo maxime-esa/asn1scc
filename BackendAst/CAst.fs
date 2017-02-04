@@ -283,6 +283,7 @@ with
     member this.Cons     = this.cons
     member this.WithCons = this.withcons
     member this.AllCons  = this.cons@this.withcons
+    member this.MaxOctets = int (ceil ((double this.maxSize)/8.0))
 
 
 type SequenceOf = {

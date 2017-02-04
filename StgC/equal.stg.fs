@@ -11,6 +11,10 @@ let PrintEqualPrimitive (sFuncName:string) (sTypeDefName:string) (sContent:strin
     ST.lang <- Ast.ProgrammingLanguage.C
     ST.call "equal" "PrintEqualPrimitive" [("sFuncName",(if sFuncName = null then null else ST.StrHelper sFuncName:>Object) );("sTypeDefName",(if sTypeDefName = null then null else ST.StrHelper sTypeDefName:>Object) );("sContent",(if sContent = null then null else ST.StrHelper sContent:>Object) )]
 
+let PrintEqualOctBit (sFuncName:string) (sTypeDefName:string) (sContent:string) =
+    ST.lang <- Ast.ProgrammingLanguage.C
+    ST.call "equal" "PrintEqualOctBit" [("sFuncName",(if sFuncName = null then null else ST.StrHelper sFuncName:>Object) );("sTypeDefName",(if sTypeDefName = null then null else ST.StrHelper sTypeDefName:>Object) );("sContent",(if sContent = null then null else ST.StrHelper sContent:>Object) )]
+
 let PrintEqualComposite (sFuncName:string) (sTypeDefName:string) (sContent:string) (arrsLocalVars:seq<string>) =
     ST.lang <- Ast.ProgrammingLanguage.C
     ST.call "equal" "PrintEqualComposite" [("sFuncName",(if sFuncName = null then null else ST.StrHelper sFuncName:>Object) );("sTypeDefName",(if sTypeDefName = null then null else ST.StrHelper sTypeDefName:>Object) );("sContent",(if sContent = null then null else ST.StrHelper sContent:>Object) );("arrsLocalVars",(arrsLocalVars|>Seq.map (fun s ->  if s = null then null else (ST.StrHelper s):>Object) |> Seq.toArray) :>Object)]

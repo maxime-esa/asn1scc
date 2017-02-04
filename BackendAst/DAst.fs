@@ -7,26 +7,6 @@ open FsUtils
 open Constraints
 open uPER2
 
-type ProgrammingLanguage =
-    |C
-    |Ada
-with
-    member this.SpecExtention =
-        match this with
-        |C      -> "h"
-        |Ada    -> "ads"
-    member this.BodyExtention =
-        match this with
-        |C      -> "c"
-        |Ada    -> "adb"
-    member this.AssignOperator =
-        match this with
-        |C      -> "="
-        |Ada    -> ":="
-    member this.ArrayAccess idx =
-        match this with
-        |C      -> "[" + idx + "]"
-        |Ada    -> "(" + idx + ")"
 
 type ExpOrStatement =
     | Expression 
@@ -38,12 +18,12 @@ with
     member this.VarName =
         match this with
         | SequenceOfIndex (i,_)   -> sprintf "i%d" i
-    member this.GetDeclaration (l:ProgrammingLanguage) =
+    member this.GetDeclaration (l:BAst.ProgrammingLanguage) =
         match l, this with
-        | C,    SequenceOfIndex (i,None)         -> sprintf "int i%d;" i
-        | C,    SequenceOfIndex (i,Some iv)      -> sprintf "int i%d=%d;" i iv
-        | Ada,  SequenceOfIndex (i,None)         -> sprintf "i%d:Integer;" i
-        | Ada,  SequenceOfIndex (i,Some iv)      -> sprintf "i%d:Integer:=%d;" i iv
+        | BAst.C,    SequenceOfIndex (i,None)         -> sprintf "int i%d;" i
+        | BAst.C,    SequenceOfIndex (i,Some iv)      -> sprintf "int i%d=%d;" i iv
+        | BAst.Ada,  SequenceOfIndex (i,None)         -> sprintf "i%d:Integer;" i
+        | BAst.Ada,  SequenceOfIndex (i,Some iv)      -> sprintf "i%d:Integer:=%d;" i iv
 
          //Emit_local_variable_SQF_Index(nI, bHasInitalValue)::="I<nI>:Integer<if(bHasInitalValue)>:=1<endif>;"
 
@@ -286,8 +266,8 @@ type OctetString = {
     typeDefinitionBody  : string                      // for C it will be Asn1SInt or Asn1UInt
     isEqualFuncName     : string option               // the name of the equal function. Valid only for TASes)
     isEqualFunc         : string option               
-    isEqualBodyStats    : string -> string -> (string*(LocalVariable list))  option// for c it will be the c_src.isEqual_Integer stg macro
     isValidFuncName     : string option               // it has value only for TASes and only if isValidBody has value
+    isEqualBodyExp      : string -> string -> (string*(LocalVariable list))  option// for c it will be the c_src.isEqual_Integer stg macro
     isValidBody         : (string -> string) option   // 
     encodeFuncName      : string option               // has value only for top level asn1 types (i.e. TypeAssignments (TAS))
     encodeFuncBody      : string -> string            // an stg macro according the acnEncodingClass
@@ -325,7 +305,7 @@ type BitString = {
     typeDefinitionBody  : string                      // for C it will be Asn1SInt or Asn1UInt
     isEqualFuncName     : string option               // the name of the equal function. Valid only for TASes)
     isEqualFunc         : string option               
-    isEqualBodyStats    : string -> string -> (string*(LocalVariable list))  option// for c it will be the c_src.isEqual_Integer stg macro
+    isEqualBodyExp      : string -> string -> (string*(LocalVariable list))  option// for c it will be the c_src.isEqual_Integer stg macro
     isValidFuncName     : string option               // it has value only for TASes and only if isValidBody has value
     isValidBody         : (string -> string) option   // 
     encodeFuncName      : string option               // has value only for top level asn1 types (i.e. TypeAssignments (TAS))
@@ -389,7 +369,7 @@ and SeqChildInfo = {
     //DAst properties
     c_name              : string
     typeDefinitionBody  : string option //only the non acn children have typeDefinitions                       
-    isEqualBodyStats    : string -> string -> string -> string*(LocalVariable list)  // 
+    isEqualBodyStats    : string -> string -> string -> (string*(LocalVariable list)) option  // 
 }
 
 
@@ -573,9 +553,9 @@ with
         | Integer      t -> Expression, t.isEqualBodyExp
         | Real         t -> Expression, t.isEqualBodyExp
         | IA5String    t -> Expression, t.isEqualBodyExp
-        | OctetString  t -> Statement, t.isEqualBodyStats
+        | OctetString  t -> Expression, t.isEqualBodyExp
         | NullType     t -> Expression, t.isEqualBodyExp
-        | BitString    t -> Statement, t.isEqualBodyStats 
+        | BitString    t -> Expression, t.isEqualBodyExp 
         | Boolean      t -> Expression, t.isEqualBodyExp
         | Enumerated   t -> Expression, t.isEqualBodyExp
         | SequenceOf   t -> Statement, t.isEqualBodyStats
@@ -623,15 +603,15 @@ with
         | SequenceOf   t -> t.typeDefinitionBody
         | Sequence     t -> t.typeDefinitionBody
         | Choice       t -> t.typeDefinitionBody
-    member this.getTypeDefinition (l:ProgrammingLanguage)=
+    member this.getTypeDefinition (l:BAst.ProgrammingLanguage)=
         match this.typeDefinitionName with
         | None  -> None
         | Some typeDefinitionName   ->
             match l with
-            | C ->  
+            | BAst.C ->  
                 let typeDefinitionArrayPostfix = match this.typeDefinitionArrayPostfix with None -> "" | Some x -> x
                 Some (sprintf "typedef %s %s%s;" this.typeDefinitionBody typeDefinitionName typeDefinitionArrayPostfix)
-            | Ada   ->
+            | BAst.Ada   ->
                 let typeDefinitionArrayPostfix = match this.typeDefinitionArrayPostfix with None -> "" | Some x -> x
                 Some(sprintf "typedef %s %s%s;" this.typeDefinitionBody typeDefinitionName typeDefinitionArrayPostfix)
 

@@ -8,17 +8,31 @@ open Constraints
 open DAst
 
 
-let isEqualBodyPrimitive (l:ProgrammingLanguage) v1 v2 =
+let isEqualBodyPrimitive (l:BAst.ProgrammingLanguage) v1 v2 =
     match l with
-    | C         -> Some (sprintf "%s == %s" v1 v2  , [])
-    | Ada       -> Some (sprintf "%s = %s" v1 v2   , [])
+    | BAst.C         -> Some (sprintf "%s == %s" v1 v2  , [])
+    | BAst.Ada       -> Some (sprintf "%s = %s" v1 v2   , [])
 
-let isEqualBodyString (l:ProgrammingLanguage) v1 v2 =
+let isEqualBodyString (l:BAst.ProgrammingLanguage) v1 v2 =
     match l with
-    | C         -> Some (sprintf "strcmp(%s, %s) == 0" v1 v2  , [])
-    | Ada       -> Some (sprintf "%s = %s" v1 v2   , [])
+    | BAst.C         -> Some (sprintf "strcmp(%s, %s) == 0" v1 v2  , [])
+    | BAst.Ada       -> Some (sprintf "%s = %s" v1 v2   , [])
 
-let isEqualBodySequenceOf  (childType:Asn1Type) (o:CAst.SequenceOf)  (l:ProgrammingLanguage) (childAccess: string) v1 v2  =
+let isEqualBodyOctetString (l:BAst.ProgrammingLanguage) sMin sMax (childAccess: string) v1 v2 =
+    let v1 = sprintf "%s%s" v1 childAccess
+    let v2 = sprintf "%s%s" v2 childAccess
+    match l with
+    | BAst.C         -> Some (equal_c.isEqual_OctetString v1 v2 (sMin = sMax) sMax, [])
+    | BAst.Ada       -> Some (equal_c.isEqual_OctetString v1 v2 (sMin = sMax) sMax, [])
+
+let isEqualBodyBitString (l:BAst.ProgrammingLanguage) sMin sMax (childAccess: string) v1 v2 =
+    let v1 = sprintf "%s%s" v1 childAccess
+    let v2 = sprintf "%s%s" v2 childAccess
+    match l with
+    | BAst.C         -> Some (equal_c.isEqual_BitString v1 v2 (sMin = sMax) sMax, [])
+    | BAst.Ada       -> Some (equal_c.isEqual_BitString v1 v2 (sMin = sMax) sMax, [])
+
+let isEqualBodySequenceOf  (childType:Asn1Type) (o:CAst.SequenceOf)  (l:BAst.ProgrammingLanguage) (childAccess: string) v1 v2  =
     let getInnerStatement i = 
         let childAccesPath v = v + childAccess + "arr" + (l.ArrayAccess i) //"[" + i + "]"
         match childType.isEqualBody with
@@ -39,7 +53,7 @@ let isEqualBodySequenceOf  (childType:Asn1Type) (o:CAst.SequenceOf)  (l:Programm
 
     
 
-let isEqualBodySequenceChild   (l:ProgrammingLanguage) (o:CAst.SeqChildInfo) (newChild:Asn1Type) (childAccess: string) (v1:string) (v2:string)  = 
+let isEqualBodySequenceChild   (l:BAst.ProgrammingLanguage) (o:CAst.SeqChildInfo) (newChild:Asn1Type) (childAccess: string) (v1:string) (v2:string)  = 
     let c_name = ToC o.name
     let sInnerStatement = 
         match newChild.isEqualBody with
@@ -50,19 +64,21 @@ let isEqualBodySequenceChild   (l:ProgrammingLanguage) (o:CAst.SeqChildInfo) (ne
         | Statement,  func   -> func (v1 + childAccess + c_name) (v2 + childAccess + c_name)
 
     match l with
-    | C         -> 
+    | BAst.C         -> 
         match sInnerStatement with
-        | None                           -> equal_c.isEqual_Sequence_child v1  v2  childAccess o.optionality.IsSome c_name None, []
-        | Some (sInnerStatement, lvars)  -> equal_c.isEqual_Sequence_child v1  v2  childAccess o.optionality.IsSome c_name (Some sInnerStatement), lvars
-    | Ada       ->
+        | None  when  o.optionality.IsSome  -> Some (equal_c.isEqual_Sequence_child v1  v2  childAccess o.optionality.IsSome c_name None, [])
+        | None                              -> None
+        | Some (sInnerStatement, lvars)     -> Some (equal_c.isEqual_Sequence_child v1  v2  childAccess o.optionality.IsSome c_name (Some sInnerStatement), lvars)
+    | BAst.Ada       ->
         match sInnerStatement with
-        | None                           -> equal_c.isEqual_Sequence_child v1  v2  childAccess o.optionality.IsSome c_name None, []
-        | Some (sInnerStatement, lvars)  -> equal_c.isEqual_Sequence_child v1  v2  childAccess o.optionality.IsSome c_name (Some sInnerStatement), lvars
+        | None  when  o.optionality.IsSome  -> Some (equal_c.isEqual_Sequence_child v1  v2  childAccess o.optionality.IsSome c_name None, [])
+        | None                              -> None
+        | Some (sInnerStatement, lvars)     -> Some (equal_c.isEqual_Sequence_child v1  v2  childAccess o.optionality.IsSome c_name (Some sInnerStatement), lvars)
 
 
-let isEqualBodySequence  (l:ProgrammingLanguage) (children:SeqChildInfo list) (childAccess: string) (v1:string) (v2:string)  = 
-    let printChild (c:SeqChildInfo) (sNestedContent:string option) = 
-        let content, lvars = c.isEqualBodyStats childAccess v1 v2 
+let isEqualBodySequence  (l:BAst.ProgrammingLanguage) (children:SeqChildInfo list) (childAccess: string) (v1:string) (v2:string)  = 
+    let printChild (content:string, lvars:LocalVariable list) (sNestedContent:string option) = 
+        //let content, lvars = c.isEqualBodyStats childAccess v1 v2 
         match sNestedContent with
         | None  -> content, lvars
         | Some c-> equal_c.JoinItems content sNestedContent, lvars
@@ -77,8 +93,8 @@ let isEqualBodySequence  (l:ProgrammingLanguage) (children:SeqChildInfo list) (c
                 let content, lv = printChild x  (Some childrenCont)
                 Some (content, lv@lvars)
         
-        
-    printChildren (children |> List.filter(fun c -> not c.acnInsertetField))
+    let childrenConent =   children |> List.filter(fun c -> not c.acnInsertetField) |> List.choose(fun c -> c.isEqualBodyStats childAccess v1 v2 )  
+    printChildren childrenConent
 
 
 

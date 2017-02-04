@@ -54,7 +54,8 @@ Declare_NullType() ::= "NullType"
 
 
 Declare_BitString(bIsFixeSize, nMaxOctets, nMaxBits) ::= <<
-struct {<if(!bIsFixeSize)>
+struct {
+<if(!bIsFixeSize)>
     int nCount; /*Number of bits in the array. Max value is : <nMaxBits> */
 
 <endif>    
@@ -63,7 +64,8 @@ struct {<if(!bIsFixeSize)>
 >>
 
 Declare_OctetString(bIsFixeSize, nMaxOctets) ::= <<
-struct {<if(!bIsFixeSize)>
+struct {
+<if(!bIsFixeSize)>
     int nCount; 
 
 <endif>    

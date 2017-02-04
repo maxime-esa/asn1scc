@@ -8,7 +8,7 @@ open Constraints
 open DAst
 
 
-let printUnit (r:DAst.AstRoot) (l:ProgrammingLanguage) outDir (pu:ProgramUnit) =
+let printUnit (r:DAst.AstRoot) (l:BAst.ProgrammingLanguage) outDir (pu:ProgramUnit) =
     let tases = pu.sortedTypeAssignments
     
     //header file
@@ -17,10 +17,10 @@ let printUnit (r:DAst.AstRoot) (l:ProgrammingLanguage) outDir (pu:ProgramUnit) =
     let arrsPrototypes = []
     let defintionsContntent =
         match l with
-        | C     -> 
+        | BAst.C     -> 
             let arrsUtilityDefines = []
             header_c.PrintHeaderFile pu.name.U1 pu.importedProgramUnits typeDefs arrsValues arrsPrototypes arrsUtilityDefines
-        | Ada   -> 
+        | BAst.Ada   -> 
             let arrsPrivateChoices = []
             header_a.PrintPackageSpec pu.name pu.importedProgramUnits typeDefs arrsValues arrsPrivateChoices
 
@@ -32,16 +32,16 @@ let printUnit (r:DAst.AstRoot) (l:ProgrammingLanguage) outDir (pu:ProgramUnit) =
         tases |> List.map(fun t -> 
             let eqFunc = t.isEqualFunc
             match l with
-            | C     ->  body_c.printTass eqFunc
-            | Ada   ->  body_a.printTass eqFunc
+            | BAst.C     ->  body_c.printTass eqFunc
+            | BAst.Ada   ->  body_a.printTass eqFunc
         )
     let eqContntent = 
         match l with
-        | C     ->
+        | BAst.C     ->
             let arrsUnnamedVariables = []
             let arrsValueAssignments = []
             body_c.printSourceFile pu.name arrsUnnamedVariables arrsValueAssignments arrsTypeAssignments
-        | Ada   ->
+        | BAst.Ada   ->
             let arrsNegativeReals = []
             let arrsBoolPatterns = []
             let arrsChoiceValueAssignments = []
@@ -49,7 +49,7 @@ let printUnit (r:DAst.AstRoot) (l:ProgrammingLanguage) outDir (pu:ProgramUnit) =
     let fileName = Path.Combine(outDir, pu.bodyFileName)
     File.WriteAllText(fileName, eqContntent.Replace("\r",""))
 
-let printDAst (r:DAst.AstRoot) (l:ProgrammingLanguage) outDir =
+let printDAst (r:DAst.AstRoot) (l:BAst.ProgrammingLanguage) outDir =
     r.programUnits |> Seq.iter (printUnit r l outDir)
 
 

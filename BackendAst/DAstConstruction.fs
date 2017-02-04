@@ -7,20 +7,19 @@ open FsUtils
 open Constraints
 open DAst
 
-
 type State = {
     curSeqOfLevel : int
     currentTypes  : Asn1Type list
 
 }
 
-let getTypeDefinitionName (r:CAst.AstRoot) (l:ProgrammingLanguage) (tasInfo:BAst.TypeAssignmentInfo option) =
+let getTypeDefinitionName (r:CAst.AstRoot) (l:BAst.ProgrammingLanguage) (tasInfo:BAst.TypeAssignmentInfo option) =
     tasInfo |> Option.map (fun x -> ToC2(r.TypePrefix + x.tasName))
 
-let getEqualFuncName (r:CAst.AstRoot) (l:ProgrammingLanguage) (tasInfo:BAst.TypeAssignmentInfo option) =
+let getEqualFuncName (r:CAst.AstRoot) (l:BAst.ProgrammingLanguage) (tasInfo:BAst.TypeAssignmentInfo option) =
     tasInfo |> Option.map (fun x -> ToC2(r.TypePrefix + x.tasName + "_Equal"))
 
-let createInteger (r:CAst.AstRoot) (l:ProgrammingLanguage) (o:CAst.Integer)  (newBase:Integer option) (us:State) =
+let createInteger (r:CAst.AstRoot) (l:BAst.ProgrammingLanguage) (o:CAst.Integer)  (newBase:Integer option) (us:State) =
     let typeDefinitionName = getTypeDefinitionName r l o.tasInfo
     let isEqualBody = (DAstEqual.isEqualBodyPrimitive l)
     let isEqualFuncName     = getEqualFuncName r l o.tasInfo
@@ -42,20 +41,20 @@ let createInteger (r:CAst.AstRoot) (l:ProgrammingLanguage) (o:CAst.Integer)  (ne
                 typeDefinitionName  = typeDefinitionName
                 isEqualFunc         =
                     match l with
-                    | C     -> 
+                    | BAst.C     -> 
                         match isEqualBody "val1" "val2" with
                         | Some (bd,_) -> typeDefinitionName |> Option.map(fun typeDefName -> equal_c.PrintEqualPrimitive isEqualFuncName.Value typeDefName bd)
                         | None     -> None
-                    | Ada   -> None
+                    | BAst.Ada   -> None
                 typeDefinitionBody  = 
                     match newBase with 
                     | Some baseType when baseType.typeDefinitionName.IsSome
                                     -> baseType.typeDefinitionName.Value
                     | _    ->
                         match l with
-                        | C    when o.IsUnsigned -> header_c.Declare_Integer ()
-                        | C                      -> header_c.Declare_Integer ()
-                        | Ada                    -> header_a.Declare_Integer ()
+                        | BAst.C    when o.IsUnsigned -> header_c.Declare_Integer ()
+                        | BAst.C                      -> header_c.Declare_Integer ()
+                        | BAst.Ada                    -> header_a.Declare_Integer ()
                 isEqualFuncName     = isEqualFuncName
                 isEqualBodyExp      = isEqualBody
                 isValidFuncName     = None
@@ -68,13 +67,13 @@ let createInteger (r:CAst.AstRoot) (l:ProgrammingLanguage) (o:CAst.Integer)  (ne
             }
     ret, us
 
-let createReal (r:CAst.AstRoot) (l:ProgrammingLanguage) (o:CAst.Real)  (newBase:Real option) (us:State) : (Real*State) =
+let createReal (r:CAst.AstRoot) (l:BAst.ProgrammingLanguage) (o:CAst.Real)  (newBase:Real option) (us:State) : (Real*State) =
     let typeDefinitionName = getTypeDefinitionName r l o.tasInfo
     let isEqualBody = (DAstEqual.isEqualBodyPrimitive l)
     let isEqualFuncName     = getEqualFuncName r l o.tasInfo
     let ret = 
             {
-                Real.id          = o.id
+                Real.id             = o.id
                 tasInfo             = o.tasInfo
                 uperMaxSizeInBits   = o.uperMaxSizeInBits
                 uperMinSizeInBits   = o.uperMinSizeInBits
@@ -90,19 +89,19 @@ let createReal (r:CAst.AstRoot) (l:ProgrammingLanguage) (o:CAst.Real)  (newBase:
                 typeDefinitionName  = typeDefinitionName
                 isEqualFunc         =
                     match l with
-                    | C     -> 
+                    | BAst.C     -> 
                         match isEqualBody "val1" "val2" with
                         | Some (bd,_) -> typeDefinitionName |> Option.map(fun typeDefName -> equal_c.PrintEqualPrimitive isEqualFuncName.Value typeDefName bd)
                         | None     -> None
-                    | Ada   -> None
+                    | BAst.Ada   -> None
                 typeDefinitionBody  = 
                     match newBase with 
                     | Some baseType when baseType.typeDefinitionName.IsSome
                                     -> baseType.typeDefinitionName.Value
                     | _    ->
                         match l with
-                        | C                      -> header_c.Declare_Real ()
-                        | Ada                    -> header_a.Declare_REAL ()
+                        |BAst.C                      -> header_c.Declare_Real ()
+                        |BAst.Ada                    -> header_a.Declare_REAL ()
                 isEqualFuncName     = isEqualFuncName
                 isEqualBodyExp      = isEqualBody
                 isValidFuncName     = None
@@ -114,15 +113,14 @@ let createReal (r:CAst.AstRoot) (l:ProgrammingLanguage) (o:CAst.Real)  (newBase:
             }
     ret, us
 
-let createString (r:CAst.AstRoot) (l:ProgrammingLanguage) (o:CAst.StringType)  (newBase:StringType option) (us:State) : (StringType*State) =
+let createString (r:CAst.AstRoot) (l:BAst.ProgrammingLanguage) (o:CAst.StringType)  (newBase:StringType option) (us:State) : (StringType*State) =
     let typeDefinitionName = getTypeDefinitionName r l o.tasInfo
     let isEqualBody = DAstEqual.isEqualBodyString l
     let isEqualFuncName     = getEqualFuncName r l o.tasInfo
-    let typeDefinitionArrayPostfix = sprintf "[%d]" o.maxSize
-        
+    let typeDefinitionArrayPostfix = sprintf "[%d]" (o.maxSize+1)
     let ret : StringType= 
             {
-                StringType.id          = o.id
+                StringType.id       = o.id
                 tasInfo             = o.tasInfo
                 uperMaxSizeInBits   = o.uperMaxSizeInBits
                 uperMinSizeInBits   = o.uperMinSizeInBits
@@ -140,19 +138,19 @@ let createString (r:CAst.AstRoot) (l:ProgrammingLanguage) (o:CAst.StringType)  (
                 typeDefinitionName  = typeDefinitionName
                 isEqualFunc         =
                     match l with
-                    | C     -> 
+                    | BAst.C     -> 
                         match isEqualBody "val1" "val2" with
                         | Some (bd,_) -> typeDefinitionName |> Option.map(fun typeDefName -> equal_c.PrintEqualPrimitive isEqualFuncName.Value typeDefName bd)
                         | None     -> None
-                    | Ada   -> None
+                    | BAst.Ada   -> None
                 typeDefinitionBody  = 
                     match newBase with 
                     | Some baseType when baseType.typeDefinitionName.IsSome  -> baseType.typeDefinitionName.Value
                     | _    ->
                         match l with
-                        | C                      -> 
+                        | BAst.C                      -> 
                                 header_c.Declare_IA5String ()
-                        | Ada                    -> "????"//header_a.IA5STRING_OF_tas_decl ()
+                        | BAst.Ada                    -> "????"//header_a.IA5STRING_OF_tas_decl ()
                 typeDefinitionArrayPostfix = typeDefinitionArrayPostfix
                 isEqualFuncName     = isEqualFuncName
                 isEqualBodyExp      = isEqualBody
@@ -165,23 +163,242 @@ let createString (r:CAst.AstRoot) (l:ProgrammingLanguage) (o:CAst.StringType)  (
             }
     ret, us
 
-let createOctet (r:CAst.AstRoot) (l:ProgrammingLanguage) (o:CAst.OctetString)  (newBase:OctetString option) (us:State) : (OctetString*State) =
-    raise(Exception "Not Implemented yet")
+let createOctet (r:CAst.AstRoot) (l:BAst.ProgrammingLanguage) (o:CAst.OctetString)  (newBase:OctetString option) (us:State) : (OctetString*State) =
+    let typeDefinitionName = getTypeDefinitionName r l o.tasInfo
+    let isEqualBody = DAstEqual.isEqualBodyOctetString l (BigInteger o.minSize) (BigInteger o.maxSize)
+    let isEqualFuncName     = getEqualFuncName r l o.tasInfo
+    let typeDefinitionArrayPostfix = sprintf "[%d]" o.maxSize
+    let ret : OctetString= 
+            {
+                OctetString.id       = o.id
+                tasInfo             = o.tasInfo
+                uperMaxSizeInBits   = o.uperMaxSizeInBits
+                uperMinSizeInBits   = o.uperMinSizeInBits
+                cons                = o.cons
+                withcons            = o.withcons
+                minSize             = o.minSize; 
+                maxSize             = o.maxSize;
+                baseType            = newBase
+                Location            = o.Location  
+                acnMaxSizeInBits    = o.acnMaxSizeInBits
+                acnMinSizeInBits    = o.acnMinSizeInBits
+                alignment           = o.alignment
+                acnEncodingClass    = o.acnEncodingClass
+                typeDefinitionName  = typeDefinitionName
+                typeDefinitionBody  = 
+                    match newBase with 
+                    | Some baseType when baseType.typeDefinitionName.IsSome  -> baseType.typeDefinitionName.Value
+                    | _    ->
+                        match l with
+                        | BAst.C                      -> 
+                                header_c.Declare_OctetString (o.minSize=o.maxSize) (BigInteger o.maxSize)
+                        | BAst.Ada                    -> "????"//header_a.IA5STRING_OF_tas_decl ()
+                isEqualFunc         =
+                    match l with
+                    | BAst.C     -> 
+                        match isEqualBody "->" "pVal1" "pVal2" with
+                        | Some (bd, _) -> 
+                            typeDefinitionName |> Option.map(fun typeDefName -> equal_c.PrintEqualOctBit isEqualFuncName.Value typeDefName bd)
+                        | None     -> None
+                    | BAst.Ada   -> None
+                isEqualFuncName     = isEqualFuncName
+                isEqualBodyExp    = isEqualBody "."
+                isValidFuncName     = None
+                isValidBody         = None
+                encodeFuncName      = None
+                encodeFuncBody      = fun x -> x
+                decodeFuncName      = None
+                decodeFuncBody      = fun x -> x
+            }
+    ret, us
 
-let createBitString (r:CAst.AstRoot) (l:ProgrammingLanguage) (o:CAst.BitString)  (newBase:BitString option) (us:State) : (BitString*State) =
-    raise(Exception "Not Implemented yet")
+let createBitString (r:CAst.AstRoot) (l:BAst.ProgrammingLanguage) (o:CAst.BitString)  (newBase:BitString option) (us:State) : (BitString*State) =
+    let typeDefinitionName = getTypeDefinitionName r l o.tasInfo
+    let isEqualBody = DAstEqual.isEqualBodyBitString l (BigInteger o.minSize) (BigInteger o.maxSize)
+    let isEqualFuncName     = getEqualFuncName r l o.tasInfo
+    let typeDefinitionArrayPostfix = sprintf "[%d]" o.maxSize
+    let ret : BitString= 
+            {
+                BitString.id       = o.id
+                tasInfo             = o.tasInfo
+                uperMaxSizeInBits   = o.uperMaxSizeInBits
+                uperMinSizeInBits   = o.uperMinSizeInBits
+                cons                = o.cons
+                withcons            = o.withcons
+                minSize             = o.minSize; 
+                maxSize             = o.maxSize;
+                baseType            = newBase
+                Location            = o.Location  
+                acnMaxSizeInBits    = o.acnMaxSizeInBits
+                acnMinSizeInBits    = o.acnMinSizeInBits
+                alignment           = o.alignment
+                acnEncodingClass    = o.acnEncodingClass
+                typeDefinitionName  = typeDefinitionName
+                typeDefinitionBody  = 
+                    match newBase with 
+                    | Some baseType when baseType.typeDefinitionName.IsSome  -> baseType.typeDefinitionName.Value
+                    | _    ->
+                        match l with
+                        | BAst.C                      -> 
+                                header_c.Declare_BitString (o.minSize=o.maxSize) (BigInteger o.MaxOctets) (BigInteger o.maxSize)
+                        | BAst.Ada                    -> "????"//header_a.IA5STRING_OF_tas_decl ()
+                isEqualFunc         =
+                    match l with
+                    | BAst.C     -> 
+                        match isEqualBody "->" "pVal1" "pVal2" with
+                        | Some (bd, _) -> 
+                            typeDefinitionName |> Option.map(fun typeDefName -> equal_c.PrintEqualOctBit isEqualFuncName.Value typeDefName bd)
+                        | None     -> None
+                    | BAst.Ada   -> None
+                isEqualFuncName     = isEqualFuncName
+                isEqualBodyExp    = isEqualBody "."
+                isValidFuncName     = None
+                isValidBody         = None
+                encodeFuncName      = None
+                encodeFuncBody      = fun x -> x
+                decodeFuncName      = None
+                decodeFuncBody      = fun x -> x
+            }
+    ret, us
 
-let createNullType (r:CAst.AstRoot) (l:ProgrammingLanguage) (o:CAst.NullType)  (newBase:NullType option) (us:State) : (NullType*State) =
-    raise(Exception "Not Implemented yet")
+let createNullType (r:CAst.AstRoot) (l:BAst.ProgrammingLanguage) (o:CAst.NullType)  (newBase:NullType option) (us:State) : (NullType*State) =
+    let typeDefinitionName = getTypeDefinitionName r l o.tasInfo
+    let isEqualBody = fun  v1 v2 -> None
+    let isEqualFuncName     = getEqualFuncName r l o.tasInfo
+    let ret : NullType= 
+            {
+                NullType.id          = o.id
+                tasInfo             = o.tasInfo
+                uperMaxSizeInBits   = o.uperMaxSizeInBits
+                uperMinSizeInBits   = o.uperMinSizeInBits
+                baseType            = newBase
+                Location            = o.Location  
+                acnMaxSizeInBits    = o.acnMaxSizeInBits
+                acnMinSizeInBits    = o.acnMinSizeInBits
+                alignment           = o.alignment
+                acnEncodingClass    = o.acnEncodingClass
+                typeDefinitionName  = typeDefinitionName
+                isEqualFunc         = None
+                typeDefinitionBody  = 
+                    match newBase with 
+                    | Some baseType when baseType.typeDefinitionName.IsSome
+                                    -> baseType.typeDefinitionName.Value
+                    | _    ->
+                        match l with
+                        | BAst.C                      -> header_c.Declare_NullType ()
+                        | BAst.Ada                    -> header_a.Declare_NULL ()
+                isEqualFuncName     = isEqualFuncName
+                isEqualBodyExp      = isEqualBody
+                isValidFuncName     = None
+                isValidBody         = None
+                encodeFuncName      = None
+                encodeFuncBody      = fun x -> x
+                decodeFuncName      = None
+                decodeFuncBody      = fun x -> x
 
-let createBoolean (r:CAst.AstRoot) (l:ProgrammingLanguage) (o:CAst.Boolean)  (newBase:Boolean option) (us:State) : (Boolean*State) =
-    raise(Exception "Not Implemented yet")
+            }
+    ret, us
+let createBoolean (r:CAst.AstRoot) (l:BAst.ProgrammingLanguage) (o:CAst.Boolean)  (newBase:Boolean option) (us:State) : (Boolean*State) =
+    let typeDefinitionName = getTypeDefinitionName r l o.tasInfo
+    let isEqualBody = (DAstEqual.isEqualBodyPrimitive l)
+    let isEqualFuncName     = getEqualFuncName r l o.tasInfo
+    let ret : Boolean= 
+            {
+                Boolean.id          = o.id
+                tasInfo             = o.tasInfo
+                uperMaxSizeInBits   = o.uperMaxSizeInBits
+                uperMinSizeInBits   = o.uperMinSizeInBits
+                cons                = o.cons
+                withcons            = o.withcons
+                baseType            = newBase
+                Location            = o.Location  
+                acnMaxSizeInBits    = o.acnMaxSizeInBits
+                acnMinSizeInBits    = o.acnMinSizeInBits
+                alignment           = o.alignment
+                acnEncodingClass    = o.acnEncodingClass
+                typeDefinitionName  = typeDefinitionName
+                isEqualFunc         =
+                    match l with
+                    | BAst.C     -> 
+                        match isEqualBody "val1" "val2" with
+                        | Some (bd,_) -> typeDefinitionName |> Option.map(fun typeDefName -> equal_c.PrintEqualPrimitive isEqualFuncName.Value typeDefName bd)
+                        | None     -> None
+                    | BAst.Ada   -> None
+                typeDefinitionBody  = 
+                    match newBase with 
+                    | Some baseType when baseType.typeDefinitionName.IsSome
+                                    -> baseType.typeDefinitionName.Value
+                    | _    ->
+                        match l with
+                        | BAst.C                      -> header_c.Declare_Boolean ()
+                        | BAst.Ada                    -> header_a.Declare_BOOLEAN ()
+                isEqualFuncName     = isEqualFuncName
+                isEqualBodyExp      = isEqualBody
+                isValidFuncName     = None
+                isValidBody         = None
+                encodeFuncName      = None
+                encodeFuncBody      = fun x -> x
+                decodeFuncName      = None
+                decodeFuncBody      = fun x -> x
 
-let createEnumerated (r:CAst.AstRoot) (l:ProgrammingLanguage) (o:CAst.Enumerated)  (newBase:Enumerated option) (us:State) : (Enumerated*State) =
-    raise(Exception "Not Implemented yet")
+            }
+    ret, us
+
+let createEnumerated (r:CAst.AstRoot) (l:BAst.ProgrammingLanguage) (o:CAst.Enumerated)  (newBase:Enumerated option) (us:State) : (Enumerated*State) =
+    let typeDefinitionName = getTypeDefinitionName r l o.tasInfo
+    let isEqualBody = (DAstEqual.isEqualBodyPrimitive l)
+    let isEqualFuncName     = getEqualFuncName r l o.tasInfo
+    let items = 
+        match o.userDefinedValues with
+        | true  -> o.items |> List.map( fun i -> header_c.PrintNamedItem (i.getBackendName l) i.Value)
+        | false ->o.items |> List.map( fun i -> i.getBackendName l)
+
+    let ret : Enumerated= 
+            {
+                Enumerated.id          = o.id
+                tasInfo             = o.tasInfo
+                uperMaxSizeInBits   = o.uperMaxSizeInBits
+                uperMinSizeInBits   = o.uperMinSizeInBits
+                items               = o.items
+                userDefinedValues   = o.userDefinedValues
+                cons                = o.cons
+                withcons            = o.withcons
+                baseType            = newBase
+                Location            = o.Location  
+                acnMaxSizeInBits    = o.acnMaxSizeInBits
+                acnMinSizeInBits    = o.acnMinSizeInBits
+                alignment           = o.alignment
+                enumEncodingClass    = o.enumEncodingClass
+                typeDefinitionName  = typeDefinitionName
+                isEqualFunc         =
+                    match l with
+                    | BAst.C     -> 
+                        match isEqualBody "val1" "val2" with
+                        | Some (bd,_) -> typeDefinitionName |> Option.map(fun typeDefName -> equal_c.PrintEqualPrimitive isEqualFuncName.Value typeDefName bd)
+                        | None     -> None
+                    | BAst.Ada   -> None
+                typeDefinitionBody  = 
+                    match newBase with 
+                    | Some baseType when baseType.typeDefinitionName.IsSome
+                                    -> baseType.typeDefinitionName.Value
+                    | _    ->
+                        match l with
+                        | BAst.C                      -> header_c.Declare_Enumerated items
+                        | BAst.Ada                    -> header_a.Declare_Integer ()
+                isEqualFuncName     = isEqualFuncName
+                isEqualBodyExp      = isEqualBody
+                isValidFuncName     = None
+                isValidBody         = None
+                encodeFuncName      = None
+                encodeFuncBody      = fun x -> x
+                decodeFuncName      = None
+                decodeFuncBody      = fun x -> x
+
+            }
+    ret, us
 
 
-let createSequenceOf (r:CAst.AstRoot) (l:ProgrammingLanguage) (childType:Asn1Type) (o:CAst.SequenceOf)  (newBase:SequenceOf option) (us:State) : (SequenceOf*State) =
+let createSequenceOf (r:CAst.AstRoot) (l:BAst.ProgrammingLanguage) (childType:Asn1Type) (o:CAst.SequenceOf)  (newBase:SequenceOf option) (us:State) : (SequenceOf*State) =
     let typeDefinitionName = getTypeDefinitionName r l o.tasInfo
     let isEqualFuncName     = getEqualFuncName r l o.tasInfo
     let isEqualBody   = DAstEqual.isEqualBodySequenceOf childType o l
@@ -206,18 +423,18 @@ let createSequenceOf (r:CAst.AstRoot) (l:ProgrammingLanguage) (childType:Asn1Typ
                     let typeDefinitionArrayPostfix = match childType.typeDefinitionArrayPostfix with None -> "" | Some x -> x
 
                     match l with
-                    | C                      -> header_c.Declare_SequenceOf (o.minSize = o.maxSize) childType.typeDefinitionBody (BigInteger o.maxSize) typeDefinitionArrayPostfix
-                    | Ada                    -> ""
+                    | BAst.C                      -> header_c.Declare_SequenceOf (o.minSize = o.maxSize) childType.typeDefinitionBody (BigInteger o.maxSize) typeDefinitionArrayPostfix
+                    | BAst.Ada                    -> ""
                 childType           = childType
                 isEqualFunc         =
                     match l with
-                    | C     -> 
+                    | BAst.C     -> 
                         match isEqualBody "->" "pVal1" "pVal2"  with
                         | Some (bd, lvars) -> 
                             let lvars = lvars |> List.map(fun lv -> lv.GetDeclaration l) |> Seq.distinct
                             typeDefinitionName |> Option.map(fun typeDefName -> equal_c.PrintEqualComposite isEqualFuncName.Value typeDefName bd lvars)
                         | None     -> None
-                    | Ada   -> None
+                    | BAst.Ada   -> None
                 isEqualFuncName     = isEqualFuncName
                 isEqualBodyStats    = (fun v1 v2 -> isEqualBody "." v1 v2 )
                 isValidFuncName     = None
@@ -231,7 +448,7 @@ let createSequenceOf (r:CAst.AstRoot) (l:ProgrammingLanguage) (childType:Asn1Typ
     ret, us
 
 
-let createSequenceChild (r:CAst.AstRoot) (l:ProgrammingLanguage)  (o:CAst.SeqChildInfo)  (newChild:Asn1Type) (us:State) : (SeqChildInfo*State) =
+let createSequenceChild (r:CAst.AstRoot) (l:BAst.ProgrammingLanguage)  (o:CAst.SeqChildInfo)  (newChild:Asn1Type) (us:State) : (SeqChildInfo*State) =
     let c_name = ToC o.name
     
     {
@@ -246,13 +463,13 @@ let createSequenceChild (r:CAst.AstRoot) (l:ProgrammingLanguage)  (o:CAst.SeqChi
             | false ->
                 let typeDefinitionArrayPostfix = match newChild.typeDefinitionArrayPostfix with None -> "" | Some x -> x
                 match l with
-                | C                      -> Some (header_c.PrintSeq_ChoiceChild newChild.typeDefinitionBody c_name typeDefinitionArrayPostfix)
-                | Ada                    -> None
+                | BAst.C                      -> Some (header_c.PrintSeq_ChoiceChild newChild.typeDefinitionBody c_name typeDefinitionArrayPostfix)
+                | BAst.Ada                    -> None
             | true                       -> None
         isEqualBodyStats = DAstEqual.isEqualBodySequenceChild l o newChild
     }, us
 
-let createSequence (r:CAst.AstRoot) (l:ProgrammingLanguage) (children:SeqChildInfo list) (o:CAst.Sequence)  (newBase:Sequence option) (us:State) : (Sequence*State) =
+let createSequence (r:CAst.AstRoot) (l:BAst.ProgrammingLanguage) (children:SeqChildInfo list) (o:CAst.Sequence)  (newBase:Sequence option) (us:State) : (Sequence*State) =
     let typeDefinitionName  = getTypeDefinitionName r l o.tasInfo
     let isEqualFuncName     = getEqualFuncName r l o.tasInfo
     let isEqualBody   = DAstEqual.isEqualBodySequence l children
@@ -278,18 +495,18 @@ let createSequence (r:CAst.AstRoot) (l:ProgrammingLanguage) (children:SeqChildIn
                     let childrenBodies = children |> List.choose(fun c -> c.typeDefinitionBody)
                     let optChildNames  = children |> List.choose(fun c -> match c.optionality with Some _ -> Some c.name | None -> None)
                     match l with
-                    | C                      -> header_c.Declare_Sequence childrenBodies optChildNames
-                    | Ada                    -> ""
+                    | BAst.C                      -> header_c.Declare_Sequence childrenBodies optChildNames
+                    | BAst.Ada                    -> ""
                 isEqualFuncName     = isEqualFuncName
                 isEqualFunc         =
                     match l with
-                    | C     -> 
+                    | BAst.C     -> 
                         match isEqualBody "->" "pVal1" "pVal2"  with
                         | None  -> None
                         | Some (bodyEqual, lvars) ->
                             let lvars = lvars |> List.map(fun lv -> lv.GetDeclaration l) |> Seq.distinct
                             typeDefinitionName |> Option.map(fun typeDefName -> equal_c.PrintEqualComposite isEqualFuncName.Value typeDefName bodyEqual lvars)
-                    | Ada   -> None
+                    | BAst.Ada   -> None
 
                 isEqualBodyStats     = (fun v1 v2 -> isEqualBody "." v1 v2 )
                 isValidFuncName     = None
@@ -303,7 +520,7 @@ let createSequence (r:CAst.AstRoot) (l:ProgrammingLanguage) (children:SeqChildIn
     ret, us
 
 
-let createChoiceChild (r:CAst.AstRoot) (l:ProgrammingLanguage)  (o:CAst.ChChildInfo)  (newChild:Asn1Type) (us:State) : (ChChildInfo*State) =
+let createChoiceChild (r:CAst.AstRoot) (l:BAst.ProgrammingLanguage)  (o:CAst.ChChildInfo)  (newChild:Asn1Type) (us:State) : (ChChildInfo*State) =
     {
         ChChildInfo.name   = o.name
         chType              = newChild
@@ -311,11 +528,11 @@ let createChoiceChild (r:CAst.AstRoot) (l:ProgrammingLanguage)  (o:CAst.ChChildI
         presenseIsHandleByExtField = o.presenseIsHandleByExtField
     }, us
 
-let createChoice (r:CAst.AstRoot) (l:ProgrammingLanguage) (children:ChChildInfo list) (o:CAst.Choice)  (newBase:Choice option) (us:State) : (Choice*State) =
+let createChoice (r:CAst.AstRoot) (l:BAst.ProgrammingLanguage) (children:ChChildInfo list) (o:CAst.Choice)  (newBase:Choice option) (us:State) : (Choice*State) =
     raise(Exception "Not Implemented yet")
 
 
-let mapCTypeToDType (r:CAst.AstRoot) (l:ProgrammingLanguage) (t:CAst.Asn1Type)  (initialSate:State) =
+let mapCTypeToDType (r:CAst.AstRoot) (l:BAst.ProgrammingLanguage) (t:CAst.Asn1Type)  (initialSate:State) =
    
     CAstFold.foldAsn1Type
         t
@@ -360,7 +577,7 @@ let mapCTypeToDType (r:CAst.AstRoot) (l:ProgrammingLanguage) (t:CAst.Asn1Type)  
 
 let foldMap = CloneTree.foldMap
 
-let DoWork (r:CAst.AstRoot) (l:ProgrammingLanguage) =
+let DoWork (r:CAst.AstRoot) (l:BAst.ProgrammingLanguage) =
     let initialState = {State.currentTypes = []; curSeqOfLevel=0}
     let newTypeAssignments, finalState = 
         r.TypeAssignments |>

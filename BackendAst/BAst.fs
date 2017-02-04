@@ -8,6 +8,26 @@ open Constraints
 open uPER2
 open FsUtils
 
+type ProgrammingLanguage =
+    |C
+    |Ada
+with
+    member this.SpecExtention =
+        match this with
+        |C      -> "h"
+        |Ada    -> "ads"
+    member this.BodyExtention =
+        match this with
+        |C      -> "c"
+        |Ada    -> "adb"
+    member this.AssignOperator =
+        match this with
+        |C      -> "="
+        |Ada    -> ":="
+    member this.ArrayAccess idx =
+        match this with
+        |C      -> "[" + idx + "]"
+        |Ada    -> "(" + idx + ")"
 
 
 type TypeAssignmentInfo = {
@@ -78,6 +98,11 @@ type EnumItem = {
     Value       : BigInteger
     comments    : string list
 }
+with
+    member this.getBackendName l = 
+        match l with
+        | C         -> ToC this.name
+        | Ada       -> ToC this.name
 
 type Enumerated = {
     id                  : ReferenceToType

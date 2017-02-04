@@ -23,6 +23,14 @@ flag <sFuncName>(const <sTypeDefName> val1, const <sTypeDefName> val2)
 }
 >>
 
+PrintEqualOctBit(sFuncName, sTypeDefName, sContent) ::= <<
+flag <sFuncName>(const <sTypeDefName>* pVal1, const <sTypeDefName>* pVal2)
+{
+	return <sContent>;
+}
+>>
+
+
 PrintEqualComposite(sFuncName, sTypeDefName, sContent, arrsLocalVars) ::= <<
 flag <sFuncName>(const <sTypeDefName>* pVal1, const <sTypeDefName>* pVal2)
 {
@@ -53,23 +61,22 @@ isEqual_NullType() ::= "ret = TRUE;"
 
 isEqual_BitString(p1,p2,bIsFixedSize, nFixedSize) ::= <<
 <if(!bIsFixedSize)>
-ret = ((<p1>nCount == <p2>nCount) && (memcmp(<p1>arr, <p2>arr, <p1>nCount/8) == 0));
-ret = ret && (<p1>nCount % 8 > 0 ? (<p1>arr[<p1>nCount/8] \>> (8-<p1>nCount % 8) == <p2>arr[<p1>nCount/8]\>>(8-<p1>nCount % 8) ) : TRUE);
+    (<p1>nCount == <p2>nCount) && 
+    (memcmp(<p1>arr, <p2>arr, <p1>nCount/8) == 0) && 
+    (<p1>nCount % 8 > 0 ? (<p1>arr[<p1>nCount/8] \>> (8-<p1>nCount % 8) == <p2>arr[<p1>nCount/8]\>>(8-<p1>nCount % 8) ) : TRUE)
 
 <else>
-ret = memcmp(<p1>arr, <p2>arr, <nFixedSize>/8) == 0;
-ret = ret && ((<nFixedSize> % 8) >0 ? (<p1>arr[<nFixedSize>/8]\>>(8-<nFixedSize> % 8) == <p2>arr[<nFixedSize>/8]\>>(8-<nFixedSize> % 8) ) : TRUE);
+    (memcmp(<p1>arr, <p2>arr, <nFixedSize>/8) == 0) &&
+    ((<nFixedSize> % 8) >0 ? (<p1>arr[<nFixedSize>/8]\>>(8-<nFixedSize> % 8) == <p2>arr[<nFixedSize>/8]\>>(8-<nFixedSize> % 8) ) : TRUE)
 
 <endif>
 >>
 
-isEqual_OctetString(p1,p2,bIsFixedSize, nFixedSize) ::= <<
+isEqual_OctetString(p1,p2, bIsFixedSize, nFixedSize) ::= <<
 <if(!bIsFixedSize)>
-ret = ((<p1>nCount == <p2>nCount) && (memcmp(<p1>arr, <p2>arr, <p1>nCount) ==0));
-
+(<p1>nCount == <p2>nCount) && (memcmp(<p1>arr, <p2>arr, <p1>nCount) ==0)
 <else>
-ret = (memcmp(<p1>arr, <p2>arr, <nFixedSize>) ==0);
-
+memcmp(<p1>arr, <p2>arr, <nFixedSize>) ==0
 <endif>	
 >>
 
