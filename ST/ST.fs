@@ -139,15 +139,15 @@ let get_group  fileName =
         cache.[fileName]
     else
         let applicationFolder = Path.GetDirectoryName(System.Reflection.Assembly.GetAssembly(typedefof<dummy>).Location);
-        let devFolder = match runsUnderMono() with
-                        | true  -> @"/mnt/camelot/prj/DataModeling/ASN1_FSHARP/Backend2.ST"
-                        | false -> @"C:\prj\DataModeling\ASN1_FSHARP\Backend2.ST\"
+        let devFolders = match runsUnderMono() with
+                         | true  -> [@"/mnt/camelot/prj/DataModeling/ASN1_FSHARP/Backend2.ST"]
+                         | false -> [@"C:\prj\GitHub\asn1scc\StgC"; @"C:\prj\GitHub\asn1scc\StgAda"; @"C:\prj\GitHub\asn1scc\Backend.c.ST"; @"C:\prj\GitHub\asn1scc\Backend2.ST"]
         let custFolder =
             match Path.GetDirectoryName fileName with
             | ""    -> []
             | _     -> [Path.GetFullPath(Path.Combine(System.IO.Directory.GetCurrentDirectory(), Path.GetDirectoryName fileName))] 
-        let stgFoldres = match Directory.Exists devFolder with
-                         | true  -> custFolder @ [ applicationFolder; devFolder; (System.IO.Directory.GetCurrentDirectory ()) ]   |> Seq.toArray
+        let stgFoldres = match devFolders |> Seq.forall(fun devFolder -> Directory.Exists devFolder) with
+                         | true  -> devFolders @ custFolder @ [ applicationFolder; (System.IO.Directory.GetCurrentDirectory ()) ]   |> Seq.toArray
                          | false -> custFolder @ [ applicationFolder; (System.IO.Directory.GetCurrentDirectory ()) ]  |> Seq.toArray
         let grpLoader = CommonGroupLoader(StringTemplateGroup.DEFAULT_ERROR_LISTENER, stgFoldres)
                         

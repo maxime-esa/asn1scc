@@ -1,57 +1,57 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Settings>
   <run mode="single">
-    <input>header.stg</input>
-    <output>header.stg.fs</output>
+    <input>header_c.stg</input>
+    <output>header_c.stg.fs</output>
     <modName>header_c</modName>
 	<lang>c</lang>
   </run>
   <run mode="single">
-    <input>body.stg</input>
-    <output>body.stg.fs</output>
+    <input>body_c.stg</input>
+    <output>body_c.stg.fs</output>
     <modName>body_c</modName>
 	<lang>c</lang>
   </run>
   <run mode="single">
-    <input>variables.stg</input>
-    <output>variables.stg.fs</output>
+    <input>variables_c.stg</input>
+    <output>variables_c.stg.fs</output>
     <modName>variables_c</modName>
 	<lang>c</lang>
   </run>
 
   <run mode="single">
-    <input>equal.stg</input>
-    <output>equal.stg.fs</output>
+    <input>equal_c.stg</input>
+    <output>equal_c.stg.fs</output>
     <modName>equal_c</modName>
 	<lang>c</lang>
   </run>
   <run mode="single">
-    <input>isvalid.stg</input>
-    <output>isvalid.stg.fs</output>
+    <input>isvalid_c.stg</input>
+    <output>isvalid_c.stg.fs</output>
     <modName>isvalid_c</modName>
 	<lang>c</lang>
   </run>
   <run mode="single">
-    <input>init.stg</input>
-    <output>init.stg.fs</output>
+    <input>init_c.stg</input>
+    <output>init_c.stg.fs</output>
     <modName>init_c</modName>
 	<lang>c</lang>
   </run>
   <run mode="single">
-    <input>uper.stg</input>
-    <output>uper.stg.fs</output>
+    <input>uper_c.stg</input>
+    <output>uper_c.stg.fs</output>
     <modName>uper_c</modName>
 	<lang>c</lang>
   </run>
   <run mode="single">
-    <input>acn.stg</input>
-    <output>acn.stg.fs</output>
+    <input>acn_c.stg</input>
+    <output>acn_c.stg.fs</output>
     <modName>acn_c</modName>
 	<lang>c</lang>
   </run>
   <run mode="single">
-    <input>xer.stg</input>
-    <output>xer.stg.fs</output>
+    <input>xer_c.stg</input>
+    <output>xer_c.stg.fs</output>
     <modName>xer_c</modName>
 	<lang>c</lang>
   </run>

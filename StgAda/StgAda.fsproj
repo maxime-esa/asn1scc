@@ -54,42 +54,42 @@
     <Compile Include="AssemblyInfo.fs" />
     <None Include="Script.fsx" />
     <Content Include="backends.xml" />
-    <None Include="spec.stg">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    <None Include="spec_a.stg">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
-    <None Include="body.stg">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    <None Include="body_a.stg">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
-    <None Include="init.stg">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    <None Include="init_a.stg">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
-    <None Include="equal.stg">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    <None Include="equal_a.stg">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
-    <None Include="isvalid.stg">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    <None Include="isvalid_a.stg">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
-    <None Include="uper.stg">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    <None Include="uper_a.stg">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
-    <None Include="acn.stg">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    <None Include="acn_a.stg">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
-    <None Include="xer.stg">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    <None Include="xer_a.stg">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
-    <None Include="variables.stg">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    <None Include="variables_a.stg">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
-    <Compile Include="acn.stg.fs" />
-    <Compile Include="body.stg.fs" />
-    <Compile Include="equal.stg.fs" />
-    <Compile Include="init.stg.fs" />
-    <Compile Include="isvalid.stg.fs" />
-    <Compile Include="spec.stg.fs" />
-    <Compile Include="uper.stg.fs" />
-    <Compile Include="variables.stg.fs" />
-    <Compile Include="xer.stg.fs" />
+    <Compile Include="acn_a.stg.fs" />
+    <Compile Include="body_a.stg.fs" />
+    <Compile Include="equal_a.stg.fs" />
+    <Compile Include="init_a.stg.fs" />
+    <Compile Include="isvalid_a.stg.fs" />
+    <Compile Include="spec_a.stg.fs" />
+    <Compile Include="uper_a.stg.fs" />
+    <Compile Include="variables_a.stg.fs" />
+    <Compile Include="xer_a.stg.fs" />
   </ItemGroup>
   <ItemGroup>
     <Reference Include="mscorlib" />
