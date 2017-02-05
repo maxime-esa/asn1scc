@@ -136,6 +136,7 @@
       </PropertyGroup>
     </Otherwise>
   </Choose>
+  <Import Project="$(FSharpTargetsPath)" />
   <PropertyGroup>
     <PreBuildEvent>
       $(MonoCallPrefix) $(ProjectDir)..\parseStg2\bin\Debug\parseStg2.exe $(ProjectDir)backends.xml
