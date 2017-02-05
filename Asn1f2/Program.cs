@@ -297,6 +297,8 @@ namespace Asn1f2
                     WriteTextFile(Path.Combine(outDir, "runSpark.sh"), Resource1.run);
                     WriteTextFile(Path.Combine(outDir, "GPS_project.gpr"), Resource1.GPS_project);
                     BackendAstConstruct.DoWork(Ast.ProgrammingLanguage.Ada, asn1Ast0, acnAstUnresolved, outDir);
+                    System.IO.Directory.CreateDirectory(Path.Combine(outDir, "examiner"));
+                    System.IO.Directory.CreateDirectory(Path.Combine(outDir, "bin"));
                 }
 
                 return 0;

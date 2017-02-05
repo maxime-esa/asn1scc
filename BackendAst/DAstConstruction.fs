@@ -2,10 +2,11 @@
 open System
 open System.Numerics
 open System.IO
-
+open DAstTypeDefinition
 open FsUtils
 open Constraints
 open DAst
+open uPER2
 
 type State = {
     curSeqOfLevel : int
@@ -38,6 +39,7 @@ let createInteger (r:CAst.AstRoot) (l:BAst.ProgrammingLanguage) (o:CAst.Integer)
                 acnMinSizeInBits    = o.acnMinSizeInBits
                 alignment           = o.alignment
                 acnEncodingClass    = o.acnEncodingClass
+                typeDefinition      = createIntegerTypeDefinition r l o  (newBase |> Option.map(fun x -> x.typeDefinition)) ds
                 typeDefinitionName  = typeDefinitionName
                 isEqualFunc         =
                     match l with
@@ -54,7 +56,13 @@ let createInteger (r:CAst.AstRoot) (l:BAst.ProgrammingLanguage) (o:CAst.Integer)
                         match l with
                         | BAst.C    when o.IsUnsigned -> header_c.Declare_Integer ()
                         | BAst.C                      -> header_c.Declare_Integer ()
-                        | BAst.Ada                    -> header_a.Declare_Integer ()
+                        | BAst.Ada                    -> 
+                            match o.uperRange with
+                            | Concrete(a,b)    ->   header_a.Declare_Integer_min_max a b
+                            | NegInf (a)       ->   header_a.Declare_Integer_negInf a
+                            | PosInf (a)       ->   header_a.Declare_Integer_posInf a
+                            | Full             ->   header_a.Declare_Integer ()    
+
                 isEqualFuncName     = isEqualFuncName
                 isEqualBodyExp      = isEqualBody
                 isValidFuncName     = None
@@ -86,6 +94,7 @@ let createReal (r:CAst.AstRoot) (l:BAst.ProgrammingLanguage) (o:CAst.Real)  (new
                 acnMinSizeInBits    = o.acnMinSizeInBits
                 alignment           = o.alignment
                 acnEncodingClass    = o.acnEncodingClass
+                typeDefinition      = createRealTypeDefinition r l o  (newBase |> Option.map(fun x -> x.typeDefinition)) ds
                 typeDefinitionName  = typeDefinitionName
                 isEqualFunc         =
                     match l with
@@ -135,6 +144,7 @@ let createString (r:CAst.AstRoot) (l:BAst.ProgrammingLanguage) (o:CAst.StringTyp
                 acnMinSizeInBits    = o.acnMinSizeInBits
                 alignment           = o.alignment
                 acnEncodingClass    = o.acnEncodingClass
+                typeDefinition      = createStringTypeDefinition r l o  (newBase |> Option.map(fun x -> x.typeDefinition)) ds
                 typeDefinitionName  = typeDefinitionName
                 isEqualFunc         =
                     match l with
@@ -184,6 +194,7 @@ let createOctet (r:CAst.AstRoot) (l:BAst.ProgrammingLanguage) (o:CAst.OctetStrin
                 acnMinSizeInBits    = o.acnMinSizeInBits
                 alignment           = o.alignment
                 acnEncodingClass    = o.acnEncodingClass
+                typeDefinition      = createOctetTypeDefinition r l o  (newBase |> Option.map(fun x -> x.typeDefinition)) ds
                 typeDefinitionName  = typeDefinitionName
                 typeDefinitionBody  = 
                     match newBase with 
@@ -233,6 +244,7 @@ let createBitString (r:CAst.AstRoot) (l:BAst.ProgrammingLanguage) (o:CAst.BitStr
                 acnMinSizeInBits    = o.acnMinSizeInBits
                 alignment           = o.alignment
                 acnEncodingClass    = o.acnEncodingClass
+                typeDefinition      = createBitStringTypeDefinition r l o  (newBase |> Option.map(fun x -> x.typeDefinition)) ds
                 typeDefinitionName  = typeDefinitionName
                 typeDefinitionBody  = 
                     match newBase with 
@@ -279,6 +291,7 @@ let createNullType (r:CAst.AstRoot) (l:BAst.ProgrammingLanguage) (o:CAst.NullTyp
                 acnEncodingClass    = o.acnEncodingClass
                 typeDefinitionName  = typeDefinitionName
                 isEqualFunc         = None
+                typeDefinition      = createNullTypeDefinition r l o  (newBase |> Option.map(fun x -> x.typeDefinition)) ds
                 typeDefinitionBody  = 
                     match newBase with 
                     | Some baseType when baseType.typeDefinitionName.IsSome
@@ -316,6 +329,7 @@ let createBoolean (r:CAst.AstRoot) (l:BAst.ProgrammingLanguage) (o:CAst.Boolean)
                 acnMinSizeInBits    = o.acnMinSizeInBits
                 alignment           = o.alignment
                 acnEncodingClass    = o.acnEncodingClass
+                typeDefinition      = createBooleanTypeDefinition r l o  (newBase |> Option.map(fun x -> x.typeDefinition)) ds
                 typeDefinitionName  = typeDefinitionName
                 isEqualFunc         =
                     match l with
@@ -370,6 +384,7 @@ let createEnumerated (r:CAst.AstRoot) (l:BAst.ProgrammingLanguage) (o:CAst.Enume
                 alignment           = o.alignment
                 enumEncodingClass    = o.enumEncodingClass
                 typeDefinitionName  = typeDefinitionName
+                typeDefinition      = createEnumeratedTypeDefinition r l o  (newBase |> Option.map(fun x -> x.typeDefinition)) ds
                 isEqualFunc         =
                     match l with
                     | BAst.C     -> 
@@ -418,6 +433,7 @@ let createSequenceOf (r:CAst.AstRoot) (l:BAst.ProgrammingLanguage) (childType:As
                 acnMinSizeInBits    = o.acnMinSizeInBits
                 alignment           = o.alignment
                 acnEncodingClass    = o.acnEncodingClass
+                typeDefinition      = createSequenceOfTypeDefinition r l o  (newBase |> Option.map(fun x -> x.typeDefinition)) childType.typeDefinition ds
                 typeDefinitionName  = typeDefinitionName
                 typeDefinitionBody  = 
                     let typeDefinitionArrayPostfix = match childType.typeDefinitionArrayPostfix with None -> "" | Some x -> x
@@ -457,6 +473,7 @@ let createSequenceChild (r:CAst.AstRoot) (l:BAst.ProgrammingLanguage)  (o:CAst.S
         acnInsertetField    = o.acnInsertetField
         comments            = o.comments
         c_name              = c_name
+        externalDefinition  = None
         typeDefinitionBody  = 
             match o.acnInsertetField with
             | false ->
@@ -489,6 +506,8 @@ let createSequence (r:CAst.AstRoot) (l:BAst.ProgrammingLanguage) (children:SeqCh
                 acnMinSizeInBits    = o.acnMinSizeInBits
                 alignment           = o.alignment
 
+                typeDefinition      = 
+                    createSequenceTypeDefinition r l o  (newBase |> Option.map(fun x -> x.typeDefinition)) children ds
                 typeDefinitionName  = typeDefinitionName
                 typeDefinitionBody  = 
                     let childrenBodies = children |> List.choose(fun c -> c.typeDefinitionBody)
@@ -560,6 +579,8 @@ let createChoice (r:CAst.AstRoot) (l:BAst.ProgrammingLanguage) (children:ChChild
                 acnEncodingClass    = o.acnEncodingClass
                 alignment           = o.alignment
 
+                typeDefinition      = 
+                    createChoiceTypeDefinition r l o  (newBase |> Option.map(fun x -> x.typeDefinition)) children ds
                 typeDefinitionName  = typeDefinitionName
                 typeDefinitionBody  = 
                     let chEnms = children |> List.map(fun c -> c.presentWhenName)

@@ -55,5 +55,11 @@
     <modName>xer_a</modName>
 	<lang>Ada</lang>
   </run>
+  <run mode="single">
+    <input>aux_a.stg</input>
+    <output>aux_a.stg.fs</output>
+    <modName>aux_a</modName>
+	<lang>Ada</lang>
+  </run>
 
 </Settings>

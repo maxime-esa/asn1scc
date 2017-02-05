@@ -49,7 +49,6 @@
       </PropertyGroup>
     </Otherwise>
   </Choose>
-  <Import Project="$(FSharpTargetsPath)" />
   <ItemGroup>
     <Compile Include="AssemblyInfo.fs" />
     <None Include="Script.fsx" />
@@ -81,6 +80,7 @@
     <None Include="variables_a.stg">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
+    <None Include="aux_a.stg" />
     <Compile Include="acn_a.stg.fs" />
     <Compile Include="body_a.stg.fs" />
     <Compile Include="equal_a.stg.fs" />
@@ -90,6 +90,7 @@
     <Compile Include="uper_a.stg.fs" />
     <Compile Include="variables_a.stg.fs" />
     <Compile Include="xer_a.stg.fs" />
+    <Compile Include="aux_a.stg.fs" />
   </ItemGroup>
   <ItemGroup>
     <Reference Include="mscorlib" />

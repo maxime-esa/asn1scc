@@ -12,7 +12,8 @@ let printUnit (r:DAst.AstRoot) (l:BAst.ProgrammingLanguage) outDir (pu:ProgramUn
     let tases = pu.sortedTypeAssignments
     
     //header file
-    let typeDefs = tases |> List.choose(fun t -> t.getTypeDefinition l)
+    //let typeDefs = tases |> List.choose(fun t -> t.getTypeDefinition l)
+    let typeDefs = tases |> List.map(fun t -> t.typeDefinition.completeDefinition)
     let arrsValues = []
     let arrsPrototypes = []
     let defintionsContntent =
@@ -45,11 +46,37 @@ let printUnit (r:DAst.AstRoot) (l:BAst.ProgrammingLanguage) outDir (pu:ProgramUn
             let arrsNegativeReals = []
             let arrsBoolPatterns = []
             let arrsChoiceValueAssignments = []
-            body_a.PrintPackageBody pu.name  pu.importedProgramUnits arrsNegativeReals arrsBoolPatterns arrsTypeAssignments arrsChoiceValueAssignments
+            let rtl = [body_a.rtlModuleName()]
+            body_a.PrintPackageBody pu.name  (rtl@pu.importedProgramUnits) arrsNegativeReals arrsBoolPatterns arrsTypeAssignments arrsChoiceValueAssignments
     let fileName = Path.Combine(outDir, pu.bodyFileName)
     File.WriteAllText(fileName, eqContntent.Replace("\r",""))
 
+
+let CreateAdaIndexFile (r:AstRoot) bGenTestCases outDir =
+    let mods = r.programUnits |> Seq.map(fun x -> (ToC x.name).ToLower()) |>Seq.toList
+    //let mds = match bGenTestCases with
+    //            | true  -> mods @ (modules |> Seq.filter(fun x -> ModuleHasAutoCodecs x r) |> Seq.map(fun x -> (ToC x.Name.Value+"_auto_encs_decs").ToLower() ) |>Seq.toList)
+    //            | false -> mods
+    let mds = mods
+    let fullPath = (System.IO.Path.GetFullPath outDir) + System.String(System.IO.Path.DirectorySeparatorChar,1)
+    let lines = (header_a.rtlModuleName())::mds |> List.map(fun x -> aux_a.PrintLineInIndexFile x fullPath)
+    let content = match bGenTestCases with
+                    | true    -> aux_a.PrintIndexFile ("mainprogram    main_program  is in MainProgram.adb"::lines)
+                    | false   -> aux_a.PrintIndexFile lines
+    let outFileName = Path.Combine(outDir, "spark.idx")
+    File.WriteAllText(outFileName, content.Replace("\r",""))
+
+let CreateAdaMain (r:AstRoot) bGenTestCases outDir =
+    let content = aux_a.PrintMain (r.programUnits |> List.map(fun x -> (ToC x.name).ToLower()) )
+    let outFileName = Path.Combine(outDir, "mainprogram.adb")
+    File.WriteAllText(outFileName, content.Replace("\r",""))
+
 let printDAst (r:DAst.AstRoot) (l:BAst.ProgrammingLanguage) outDir =
     r.programUnits |> Seq.iter (printUnit r l outDir)
-
+    //print extra such make files etc
+    match l with
+    | BAst.C    -> ()
+    | BAst.Ada  -> 
+        CreateAdaMain r false outDir
+        CreateAdaIndexFile r false outDir
 

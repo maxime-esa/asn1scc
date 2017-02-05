@@ -333,7 +333,6 @@ Declare_Integer() ::="<rtlModuleName()>.Asn1Int"
 Declare_Integer_min_max(nMin, nMax) ::="<rtlModuleName()>.Asn1Int range <nMin>..<nMax>"
 Declare_Integer_posInf(nMin) ::="<rtlModuleName()>.Asn1Int range <nMin>..<rtlModuleName()>.Asn1Int'Last"
 Declare_Integer_negInf(nMax) ::="<rtlModuleName()>.Asn1Int range <rtlModuleName()>.Asn1Int'First..<nMax>"
-Declare_Integer_Empty() ::= "<rtlModuleName()>.Asn1Int WARNING this type has constraints that do not allow any values"
 
 
 Declare_BOOLEAN() ::= "<rtlModuleName()>.Asn1Boolean"

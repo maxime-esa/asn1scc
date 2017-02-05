@@ -7,7 +7,6 @@ open FsUtils
 open Constraints
 open uPER2
 
-
 type ExpOrStatement =
     | Expression 
     | Statement  
@@ -26,6 +25,58 @@ with
         | BAst.Ada,  SequenceOfIndex (i,Some iv)      -> sprintf "i%d:Integer:=%d;" i iv
 
          //Emit_local_variable_SQF_Index(nI, bHasInitalValue)::="I<nI>:Integer<if(bHasInitalValue)>:=1<endif>;"
+
+type TypeOrSubsType =
+    | TYPE
+    | SUBTYPE
+
+type TypeDefinitionCommon = {
+    // the name of the type C or Ada type. Defives from ASN.1 Type Assignment name.
+    // Eg. for MyInt4 ::= INTEGER(0..15|20|25)
+    // name will be MyInt4 
+    name                : string            
+
+    // used only in Ada backend. 
+    typeOrSubsType      : TypeOrSubsType    
+
+    //In above example, in C the typeDefinitionBody is : asn1SccSint
+    //              in Ada                          is : adaasn1rtl.Asn1Int range 0..25
+    // for a complext type e.g. sequence 
+    // in C   is the struct { ... fields ...}
+    // in Ada is the IS RECORD ... fields ... END RECORD
+    // Ada does not allow nested type defintions. Therefore when called with NESTED_DEFINITION_SCOPE (i.e. from a SEQUENCE) the name of the type is returned
+    typeDefinitionBody  : string            
+
+    // Used only for Strings and is the size of the string (plus one for the null terminated character)
+    // It is usefull only in C due to the fact that the size of the array is not part of the type definition body but follows the the type name
+    // i.e. for the ASN.1 type   STRCAPS   ::= IA5String (SIZE(1..100)) (FROM ("A".."Z"))	
+    // the C definition is : typedef char STRCAPS[101];
+    // If the definition was typedef char[101] STRCAPS; (which is the case for all other languages Ada, C#, Java etc) then we wouldn't need it
+    arraySize           : int option      
+    
+    // the complete definition of the type
+    // e.g. C : typedef asn1SccSint MyInt4;
+    // and Ada: SUBTYPE MyInt4 IS adaasn1rtl.Asn1Int range 0..25;    
+    completeDefinition  : string  
+
+    // Ada does not allow nested type definitions.
+    // Therefore The following type MySeq { a INTEGER, innerSeq SEQUENCE {b REAL}}
+    // must be declared as if it was defined MySeq_innerSeq SEQUENCE {b REAL} MySeq { a INTEGER, innerSeq MySeq_innerSeq}
+    typeDefinitionBodyWithinSeq : string
+
+    
+    completeDefinitionWithinSeq : string option
+}
+
+
+
+
+
+type TypeDefinitionSequence = {
+    childrenDefinitions         : string list
+    common                      : TypeDefinitionCommon
+}
+
 
 type Integer = {
     //bast inherrited properties
@@ -46,6 +97,7 @@ type Integer = {
     acnEncodingClass    : CAst.IntEncodingClass
 
     //DAst properties
+    typeDefinition      : TypeDefinitionCommon
     typeDefinitionName  : string option               // has value only for top level asn1 types (i.e. TypeAssignments (TAS))
     typeDefinitionBody  : string                      // for C it will be Asn1SInt or Asn1UInt
     isEqualFuncName     : string option               // the name of the equal function. Valid only for TASes)
@@ -85,6 +137,7 @@ type Enumerated = {
     enumEncodingClass   : CAst.EnumAcnEncodingClass
 
     //DAst properties
+    typeDefinition      : TypeDefinitionCommon
     typeDefinitionName  : string option               // has value only for top level asn1 types (i.e. TypeAssignments (TAS))
     typeDefinitionBody  : string                      // for C it will be Asn1SInt or Asn1UInt
     isEqualFuncName     : string option               // the name of the equal function. Valid only for TASes)
@@ -121,6 +174,7 @@ type Real = {
     acnEncodingClass    : CAst.RealEncodingClass
 
     //DAst properties
+    typeDefinition      : TypeDefinitionCommon
     typeDefinitionName  : string option               // has value only for top level asn1 types (i.e. TypeAssignments (TAS))
     typeDefinitionBody  : string                      // for C it will be Asn1SInt or Asn1UInt
     isEqualFuncName     : string option               // the name of the equal function. Valid only for TASes)
@@ -156,6 +210,7 @@ type Boolean = {
     acnEncodingClass    : CAst.BolleanAcnEncodingClass
 
     //DAst properties
+    typeDefinition      : TypeDefinitionCommon
     typeDefinitionName  : string option               // has value only for top level asn1 types (i.e. TypeAssignments (TAS))
     typeDefinitionBody  : string                      // for C it will be Asn1SInt or Asn1UInt
     isEqualFuncName     : string option               // the name of the equal function. Valid only for TASes)
@@ -189,6 +244,7 @@ type NullType = {
     acnEncodingClass    : CAst.NullAcnEncodingClass
 
     //DAst properties
+    typeDefinition      : TypeDefinitionCommon
     typeDefinitionName  : string option               // has value only for top level asn1 types (i.e. TypeAssignments (TAS))
     typeDefinitionBody  : string                      // for C it will be Asn1SInt or Asn1UInt
     isEqualFuncName     : string option               // the name of the equal function. Valid only for TASes)
@@ -224,6 +280,7 @@ type StringType = {
     acnEncodingClass    : CAst.StringAcnEncodingClass
 
     //DAst properties
+    typeDefinition      : TypeDefinitionCommon
     typeDefinitionName  : string option               // has value only for top level asn1 types (i.e. TypeAssignments (TAS))
     typeDefinitionArrayPostfix : string
     typeDefinitionBody  : string                      // for C it will be Asn1SInt or Asn1UInt
@@ -262,6 +319,7 @@ type OctetString = {
     acnEncodingClass    : CAst.SizeableAcnEncodingClass
 
     //DAst properties
+    typeDefinition      : TypeDefinitionCommon
     typeDefinitionName  : string option               // has value only for top level asn1 types (i.e. TypeAssignments (TAS))
     typeDefinitionBody  : string                      // for C it will be Asn1SInt or Asn1UInt
     isEqualFuncName     : string option               // the name of the equal function. Valid only for TASes)
@@ -301,6 +359,7 @@ type BitString = {
     //acnArguments        : IntArgument list
 
     //DAst properties
+    typeDefinition      : TypeDefinitionCommon
     typeDefinitionName  : string option               // has value only for top level asn1 types (i.e. TypeAssignments (TAS))
     typeDefinitionBody  : string                      // for C it will be Asn1SInt or Asn1UInt
     isEqualFuncName     : string option               // the name of the equal function. Valid only for TASes)
@@ -340,6 +399,7 @@ type SequenceOf = {
     //acnArguments        : GenericArgument list
 
     //DAst properties
+    typeDefinition      : TypeDefinitionCommon
     typeDefinitionName  : string option               // has value only for top level asn1 types (i.e. TypeAssignments (TAS))
     typeDefinitionBody  : string                      // for C it will be Asn1SInt or Asn1UInt
     isEqualFuncName     : string option               // the name of the equal function. Valid only for TASes)
@@ -368,6 +428,7 @@ and SeqChildInfo = {
 
     //DAst properties
     c_name              : string
+    externalDefinition  : string option //this is case where the child is defined by itself (Ada)
     typeDefinitionBody  : string option //only the non acn children have typeDefinitions                       
     isEqualBodyStats    : string -> string -> string -> (string*(LocalVariable list)) option  // 
 }
@@ -390,6 +451,7 @@ and Sequence = {
     alignment           : CAst.AcnAligment option
 
     //DAst properties
+    typeDefinition      : TypeDefinitionCommon
     typeDefinitionName  : string option               // has value only for top level asn1 types (i.e. TypeAssignments (TAS))
     typeDefinitionBody  : string                      // for C it will be Asn1SInt or Asn1UInt
     isEqualFuncName     : string option               // the name of the equal function. Valid only for TASes)
@@ -443,6 +505,7 @@ and Choice = {
     alignment           : CAst.AcnAligment option
 
     //DAst properties
+    typeDefinition      : TypeDefinitionCommon
     typeDefinitionName  : string option               // has value only for top level asn1 types (i.e. TypeAssignments (TAS))
     typeDefinitionBody  : string                      // for C it will be Asn1SInt or Asn1UInt
     isEqualFuncName     : string option               // the name of the equal function. Valid only for TASes)
@@ -582,6 +645,19 @@ with
         | Sequence     t -> t.isEqualFunc
         | Choice       t -> t.isEqualFunc
 
+    member this.typeDefinition =
+        match this with
+        | Integer      t -> t.typeDefinition
+        | Real         t -> t.typeDefinition
+        | IA5String    t -> t.typeDefinition
+        | OctetString  t -> t.typeDefinition
+        | NullType     t -> t.typeDefinition
+        | BitString    t -> t.typeDefinition
+        | Boolean      t -> t.typeDefinition
+        | Enumerated   t -> t.typeDefinition
+        | SequenceOf   t -> t.typeDefinition
+        | Sequence     t -> t.typeDefinition
+        | Choice       t -> t.typeDefinition
     member this.typeDefinitionName =
         match this with
         | Integer      t -> t.typeDefinitionName
@@ -687,3 +763,4 @@ type AstRoot = {
     acnParameters           : CAst.AcnParameter list
     acnLinks                : CAst.AcnLink list
 }
+

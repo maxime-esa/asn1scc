@@ -39,6 +39,14 @@ extern "C" {
 C TYPES 
 */
 
+
+Define_Type(sTypeDefinitionBody, sTypeDefinitionName, noArrLength, arrsChildldrenDefintions) ::= <<
+<arrsChildldrenDefintions; separator= "\n">
+
+typedef <sTypeDefinitionBody> <sTypeDefinitionName><if(noArrLength)>[<noArrLength>]<endif>;
+>>
+
+
 Declare_Integer() ::="asn1SccSint"
 Declare_PosInteger() ::="asn1SccUint"
 
