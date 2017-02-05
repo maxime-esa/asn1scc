@@ -17,7 +17,7 @@ let getTypeDefinitionName (r:CAst.AstRoot) (l:BAst.ProgrammingLanguage) (id : Re
 let getCompleteDefinition l (typeOrSubsType:TypeOrSubsType) typeDefinitionBody typeDefinitionName (arraySize: int option) (childldrenCompleteDefintions:string list) =
     match l with
     | BAst.C ->  
-        header_c.Define_Type typeDefinitionBody typeDefinitionName (arraySize |> Option.map BigInteger) childldrenCompleteDefintions
+        header_c.Define_Type typeDefinitionBody typeDefinitionName (arraySize |> Option.map(fun x -> BigInteger x)) childldrenCompleteDefintions
     | BAst.Ada   ->
         sprintf "%A %s %s;" typeOrSubsType typeDefinitionName typeDefinitionBody  
 
