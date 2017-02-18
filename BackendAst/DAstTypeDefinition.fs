@@ -7,7 +7,10 @@ open Constraints
 open uPER2
 open DAst
 
-let createInnerTypes = false
+let createInnerTypes (l:BAst.ProgrammingLanguage) = 
+    match l with
+    | BAst.Ada  -> true
+    | BAst.C    -> false
 
 
 let getTypeDefinitionName (r:CAst.AstRoot) (l:BAst.ProgrammingLanguage) (id : ReferenceToType) =
@@ -197,23 +200,23 @@ let createEnumeratedTypeDefinition (r:CAst.AstRoot) (l:BAst.ProgrammingLanguage)
 let createSequenceOfTypeDefinition (r:CAst.AstRoot) (l:BAst.ProgrammingLanguage) (o:CAst.SequenceOf)  (baseDefinition:TypeDefinitionCommon option) (childDefinition:TypeDefinitionCommon) (us:State) =
     let typeDefinitionName = getTypeDefinitionName r l o.id
     let typeDefinitionBody                       =
-                    match baseDefinition with 
-                    | Some baseType     -> baseType.name
-                    | _    ->
-                        match l with
-                        | BAst.C                      -> 
-                            let typeDefinitionArrayPostfix = 
-                                match childDefinition.arraySize with 
-                                | None -> "" 
-                                | Some x -> sprintf "[%d]" x
-                            match createInnerTypes with
-                            | true  ->
-                                header_c.Declare_SequenceOf (o.minSize = o.maxSize) childDefinition.typeDefinitionBody (BigInteger o.maxSize) typeDefinitionArrayPostfix
-                            | false ->
-                                header_c.Declare_SequenceOf (o.minSize = o.maxSize) childDefinition.typeDefinitionBodyWithinSeq (BigInteger o.maxSize) typeDefinitionArrayPostfix
-                        | BAst.Ada                    -> ""
+        match baseDefinition with 
+        | Some baseType     -> baseType.name
+        | _    ->
+            match l with
+            | BAst.C                      -> 
+                let typeDefinitionArrayPostfix = 
+                    match childDefinition.arraySize with 
+                    | None -> "" 
+                    | Some x -> sprintf "[%d]" x
+                match createInnerTypes l with
+                | true  ->
+                    header_c.Declare_SequenceOf (o.minSize = o.maxSize) childDefinition.typeDefinitionBody (BigInteger o.maxSize) typeDefinitionArrayPostfix
+                | false ->
+                    header_c.Declare_SequenceOf (o.minSize = o.maxSize) childDefinition.typeDefinitionBodyWithinSeq (BigInteger o.maxSize) typeDefinitionArrayPostfix
+            | BAst.Ada                    -> ""
     let childldrenCompleteDefintions =
-        match createInnerTypes with
+        match createInnerTypes l with
         | true  -> []
         | false -> childDefinition.completeDefinitionWithinSeq |> Option.toList
         
@@ -238,7 +241,7 @@ let createSequenceTypeDefinition (r:CAst.AstRoot) (l:BAst.ProgrammingLanguage) (
             let typeDefinitionArrayPostfix = match o.chType.typeDefinition.arraySize with None -> "" | Some x -> (sprintf "[%d]" x)
             match l with
             | BAst.C                      -> 
-                match createInnerTypes with
+                match createInnerTypes l with
                 | true  -> Some (header_c.PrintSeq_ChoiceChild o.chType.typeDefinition.typeDefinitionBody o.c_name typeDefinitionArrayPostfix)
                 | false -> Some (header_c.PrintSeq_ChoiceChild o.chType.typeDefinition.typeDefinitionBodyWithinSeq o.c_name typeDefinitionArrayPostfix)
             | BAst.Ada                    -> None
@@ -255,7 +258,7 @@ let createSequenceTypeDefinition (r:CAst.AstRoot) (l:BAst.ProgrammingLanguage) (
                         | BAst.C                      -> header_c.Declare_Sequence childrenBodies optChildNames
                         | BAst.Ada                    -> ""
     let childldrenCompleteDefintions =
-        match createInnerTypes with
+        match createInnerTypes l with
         | true  -> []
         | false -> (children |> List.choose (fun c -> c.chType.typeDefinition.completeDefinitionWithinSeq))
 
@@ -279,7 +282,7 @@ let createChoiceTypeDefinition (r:CAst.AstRoot) (l:BAst.ProgrammingLanguage) (o:
         let typeDefinitionArrayPostfix = match o.chType.typeDefinition.arraySize with None -> "" | Some x -> (sprintf "[%d]" x)
         match l with
         | BAst.C                      -> 
-                match createInnerTypes with
+                match createInnerTypes l with
                 | true  -> header_c.PrintSeq_ChoiceChild o.chType.typeDefinition.typeDefinitionBody o.c_name typeDefinitionArrayPostfix
                 | false -> header_c.PrintSeq_ChoiceChild o.chType.typeDefinition.typeDefinitionBodyWithinSeq o.c_name typeDefinitionArrayPostfix
         | BAst.Ada                    -> header_c.PrintSeq_ChoiceChild o.chType.typeDefinition.typeDefinitionBody o.c_name typeDefinitionArrayPostfix
@@ -295,7 +298,7 @@ let createChoiceTypeDefinition (r:CAst.AstRoot) (l:BAst.ProgrammingLanguage) (o:
                         | BAst.C                      -> header_c.Declare_Choice o.choiceIDForNone chEnms childrenBodies 
                         | BAst.Ada                    -> header_c.Declare_Choice o.choiceIDForNone chEnms childrenBodies 
     let childldrenCompleteDefintions =
-        match createInnerTypes with
+        match createInnerTypes l with
         | true  -> []
         | false -> (children |> List.choose (fun c -> c.chType.typeDefinition.completeDefinitionWithinSeq))
     let completeDefinition = getCompleteDefinition l SUBTYPE typeDefinitionBody typeDefinitionName None childldrenCompleteDefintions
