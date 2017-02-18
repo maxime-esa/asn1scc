@@ -126,3 +126,10 @@ struct {<if(!bIsFixedSize)>
 }
 >>
 
+
+
+Define_TAS(sTypeDefinition, soEqualFunc) ::= <<
+<sTypeDefinition>
+
+<soEqualFunc>
+>>

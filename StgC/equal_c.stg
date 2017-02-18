@@ -16,6 +16,14 @@ if (ret) {
  E Q U A L      F U N C T I O N S
 *****************************************************************************************
 */
+PrintEqualDefintionPrimitive(sFuncName, sTypeDefName) ::= <<
+flag <sFuncName>(const <sTypeDefName> val1, const <sTypeDefName> val2);
+>>
+
+PrintEqualDefintionComposite(sFuncName, sTypeDefName) ::= <<
+flag <sFuncName>(const <sTypeDefName>* pVal1, const <sTypeDefName>* pVal2);
+>>
+
 PrintEqualPrimitive(sFuncName, sTypeDefName, sContent) ::= <<
 flag <sFuncName>(const <sTypeDefName> val1, const <sTypeDefName> val2)
 {

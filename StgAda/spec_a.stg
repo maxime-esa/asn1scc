@@ -63,6 +63,27 @@ END <sPackageName>;
 >>
 
 
+Define_Type(sTypeOrSubsType, sTypeDefinitionName, sTypeDefinitionBody, arrsChildldrenDefintions) ::= <<
+<arrsChildldrenDefintions; separator= "\n">
+
+<sTypeOrSubsType> <sTypeDefinitionName> is <sTypeDefinitionBody>;
+>>
+
+
+
+
+Define_TAS(sTypeDefinition, soEqualFunc) ::= <<
+<sTypeDefinition>
+
+<soEqualFunc>
+>>
+
+
+
+
+
+
+
 
 PrintValueAssignment(sVasName, sTypeDecl, sValue) ::= <<
 <sVasName> : CONSTANT <sTypeDecl>:= <sValue>;

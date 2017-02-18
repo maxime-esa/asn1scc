@@ -11,7 +11,7 @@
 
 
 
-//defined in asn1crt.c
+/*defined in asn1crt.c*/
 int GetLengthInBytesOfSInt(asn1SccSint v);
 
 static flag ByteStream_PutByte(ByteStream* pStrm, byte v)
@@ -324,10 +324,10 @@ flag BerEncodeReal(ByteStream* pByteStrm, BerTag tag, double value, int *pErrCod
     if (!BerEncodeTag(pByteStrm, tag, pErrCode)) 
         return FALSE;
     
-    //if (!ByteStream_PutByte(pByteStrm, length)) {
-    //  *pErrCode = ERR_INSUFFICIENT_DATA;
-    //  return FALSE;
-    //}
+    /*if (!ByteStream_PutByte(pByteStrm, length)) {
+      *pErrCode = ERR_INSUFFICIENT_DATA;
+      return FALSE;
+    }*/
     
     for(i=0; i<length; i++) {
         if (!ByteStream_PutByte(pByteStrm, buf[i])) {
@@ -341,16 +341,16 @@ flag BerEncodeReal(ByteStream* pByteStrm, BerTag tag, double value, int *pErrCod
 }
 
 flag BerDecodeReal(ByteStream* pByteStrm, BerTag tag, double *value, int *pErrCode) {
-//  int length=0;
-//  byte buf[100];
+/*  int length=0;
+    byte buf[100];*/
     BitStream tmp;
-//  int i;
+/*  int i;*/
 
     if (!BerDecodeTag(pByteStrm, tag, pErrCode)) 
         return FALSE;
     
-    //if (!BerDecodeLength(pByteStrm, &length, pErrCode))
-    //  return FALSE;
+    /*if (!BerDecodeLength(pByteStrm, &length, pErrCode))
+        return FALSE;*/
 
     BitStream_AttachBuffer(&tmp, &pByteStrm->buf[pByteStrm->currentByte], pByteStrm->count - pByteStrm->currentByte);
 

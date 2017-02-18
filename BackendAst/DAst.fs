@@ -62,21 +62,35 @@ type TypeDefinitionCommon = {
     // Ada does not allow nested type definitions.
     // Therefore The following type MySeq { a INTEGER, innerSeq SEQUENCE {b REAL}}
     // must be declared as if it was defined MySeq_innerSeq SEQUENCE {b REAL} MySeq { a INTEGER, innerSeq MySeq_innerSeq}
+    // in this case it will be : MySeq_innerSeq 
     typeDefinitionBodyWithinSeq : string
 
-    
+    //the complete deffinition of inner complex types that must be declared
+    //before this type
     completeDefinitionWithinSeq : string option
 }
 
+type IsEqualBody =
+    | EqualBodyExpression       of (string -> string -> (string*(LocalVariable list)) option)
+    | EqualBodyStatementList    of (string -> string -> (string*(LocalVariable list)) option)
 
-
-
-
-type TypeDefinitionSequence = {
-    childrenDefinitions         : string list
-    common                      : TypeDefinitionCommon
+type EqualFunction = {
+    isEqualFuncName     : string option               // the name of the equal function. Valid only for TASes)
+    isEqualFunc         : string option               // the body of the equal function
+    isEqualFuncDef      : string option
+    isEqualBody         : IsEqualBody                 // a function that  returns an expression or a statement list
 }
+(*
+with 
+    member this.getEqualFuncDefintion (typeDefinition:TypeDefinitionCommon) (l:BAst.ProgrammingLanguage) =
+        match this.isEqualFuncName with
+        | Some isEqualFuncName  ->
+            match l with
+            | BAst.Ada  -> Some(equal_a.PrintEqualDefintion isEqualFuncName typeDefinition.name )
+            | BAst.C    -> Some(equal_c.PrintEqualDefintion isEqualFuncName typeDefinition.name )
+        | None          -> None
 
+        *)
 
 type Integer = {
     //bast inherrited properties
@@ -98,11 +112,7 @@ type Integer = {
 
     //DAst properties
     typeDefinition      : TypeDefinitionCommon
-    typeDefinitionName  : string option               // has value only for top level asn1 types (i.e. TypeAssignments (TAS))
-    typeDefinitionBody  : string                      // for C it will be Asn1SInt or Asn1UInt
-    isEqualFuncName     : string option               // the name of the equal function. Valid only for TASes)
-    isEqualFunc         : string option               // the body of the equal function
-    isEqualBodyExp      : string -> string -> (string*(LocalVariable list)) option  // a function that takes twos string and generates the equal expression (i.e. a1==a2 for integers)
+    equalFunction       : EqualFunction
     
     isValidFuncName     : string option               // it has value only for TASes and only if isValidBody has value
     isValidBody         : (string -> string) option   // 
@@ -138,11 +148,8 @@ type Enumerated = {
 
     //DAst properties
     typeDefinition      : TypeDefinitionCommon
-    typeDefinitionName  : string option               // has value only for top level asn1 types (i.e. TypeAssignments (TAS))
-    typeDefinitionBody  : string                      // for C it will be Asn1SInt or Asn1UInt
-    isEqualFuncName     : string option               // the name of the equal function. Valid only for TASes)
-    isEqualFunc         : string option               
-    isEqualBodyExp      : string -> string -> (string*(LocalVariable list)) option  // for c it will be the c_src.isEqual_Integer stg macro
+    equalFunction       : EqualFunction
+
     isValidFuncName     : string option               // it has value only for TASes and only if isValidBody has value
     isValidBody         : (string -> string) option   // 
     encodeFuncName      : string option               // has value only for top level asn1 types (i.e. TypeAssignments (TAS))
@@ -175,11 +182,8 @@ type Real = {
 
     //DAst properties
     typeDefinition      : TypeDefinitionCommon
-    typeDefinitionName  : string option               // has value only for top level asn1 types (i.e. TypeAssignments (TAS))
-    typeDefinitionBody  : string                      // for C it will be Asn1SInt or Asn1UInt
-    isEqualFuncName     : string option               // the name of the equal function. Valid only for TASes)
-    isEqualFunc         : string option               
-    isEqualBodyExp      : string -> string -> (string*(LocalVariable list)) option  // for c it will be the c_src.isEqual_Integer stg macro
+    equalFunction       : EqualFunction
+
     isValidFuncName     : string option               // it has value only for TASes and only if isValidBody has value
     isValidBody         : (string -> string) option   // 
     encodeFuncName      : string option               // has value only for top level asn1 types (i.e. TypeAssignments (TAS))
@@ -211,11 +215,8 @@ type Boolean = {
 
     //DAst properties
     typeDefinition      : TypeDefinitionCommon
-    typeDefinitionName  : string option               // has value only for top level asn1 types (i.e. TypeAssignments (TAS))
-    typeDefinitionBody  : string                      // for C it will be Asn1SInt or Asn1UInt
-    isEqualFuncName     : string option               // the name of the equal function. Valid only for TASes)
-    isEqualFunc         : string option               
-    isEqualBodyExp      : string -> string -> (string*(LocalVariable list)) option  // for c it will be the c_src.isEqual_Integer stg macro
+    equalFunction       : EqualFunction
+
     isValidFuncName     : string option               // it has value only for TASes and only if isValidBody has value
     isValidBody         : (string -> string) option   // 
     encodeFuncName      : string option               // has value only for top level asn1 types (i.e. TypeAssignments (TAS))
@@ -245,11 +246,8 @@ type NullType = {
 
     //DAst properties
     typeDefinition      : TypeDefinitionCommon
-    typeDefinitionName  : string option               // has value only for top level asn1 types (i.e. TypeAssignments (TAS))
-    typeDefinitionBody  : string                      // for C it will be Asn1SInt or Asn1UInt
-    isEqualFuncName     : string option               // the name of the equal function. Valid only for TASes)
-    isEqualFunc         : string option               
-    isEqualBodyExp      : string -> string -> (string*(LocalVariable list)) option  // for c it will be the c_src.isEqual_Integer stg macro
+    equalFunction       : EqualFunction
+
     isValidFuncName     : string option               // it has value only for TASes and only if isValidBody has value
     isValidBody         : (string -> string) option   // 
     encodeFuncName      : string option               // has value only for top level asn1 types (i.e. TypeAssignments (TAS))
@@ -281,12 +279,8 @@ type StringType = {
 
     //DAst properties
     typeDefinition      : TypeDefinitionCommon
-    typeDefinitionName  : string option               // has value only for top level asn1 types (i.e. TypeAssignments (TAS))
-    typeDefinitionArrayPostfix : string
-    typeDefinitionBody  : string                      // for C it will be Asn1SInt or Asn1UInt
-    isEqualFuncName     : string option               // the name of the equal function. Valid only for TASes)
-    isEqualFunc         : string option               
-    isEqualBodyExp      : string -> string -> (string*(LocalVariable list)) option  // for c it will be the c_src.isEqual_Integer stg macro
+    equalFunction       : EqualFunction
+
     isValidFuncName     : string option               // it has value only for TASes and only if isValidBody has value
     isValidBody         : (string -> string) option   // 
     encodeFuncName      : string option               // has value only for top level asn1 types (i.e. TypeAssignments (TAS))
@@ -320,12 +314,9 @@ type OctetString = {
 
     //DAst properties
     typeDefinition      : TypeDefinitionCommon
-    typeDefinitionName  : string option               // has value only for top level asn1 types (i.e. TypeAssignments (TAS))
-    typeDefinitionBody  : string                      // for C it will be Asn1SInt or Asn1UInt
-    isEqualFuncName     : string option               // the name of the equal function. Valid only for TASes)
-    isEqualFunc         : string option               
+    equalFunction       : EqualFunction
+
     isValidFuncName     : string option               // it has value only for TASes and only if isValidBody has value
-    isEqualBodyExp      : string -> string -> (string*(LocalVariable list))  option// for c it will be the c_src.isEqual_Integer stg macro
     isValidBody         : (string -> string) option   // 
     encodeFuncName      : string option               // has value only for top level asn1 types (i.e. TypeAssignments (TAS))
     encodeFuncBody      : string -> string            // an stg macro according the acnEncodingClass
@@ -360,11 +351,8 @@ type BitString = {
 
     //DAst properties
     typeDefinition      : TypeDefinitionCommon
-    typeDefinitionName  : string option               // has value only for top level asn1 types (i.e. TypeAssignments (TAS))
-    typeDefinitionBody  : string                      // for C it will be Asn1SInt or Asn1UInt
-    isEqualFuncName     : string option               // the name of the equal function. Valid only for TASes)
-    isEqualFunc         : string option               
-    isEqualBodyExp      : string -> string -> (string*(LocalVariable list))  option// for c it will be the c_src.isEqual_Integer stg macro
+    equalFunction       : EqualFunction
+
     isValidFuncName     : string option               // it has value only for TASes and only if isValidBody has value
     isValidBody         : (string -> string) option   // 
     encodeFuncName      : string option               // has value only for top level asn1 types (i.e. TypeAssignments (TAS))
@@ -400,11 +388,8 @@ type SequenceOf = {
 
     //DAst properties
     typeDefinition      : TypeDefinitionCommon
-    typeDefinitionName  : string option               // has value only for top level asn1 types (i.e. TypeAssignments (TAS))
-    typeDefinitionBody  : string                      // for C it will be Asn1SInt or Asn1UInt
-    isEqualFuncName     : string option               // the name of the equal function. Valid only for TASes)
-    isEqualFunc         : string option               
-    isEqualBodyStats    : string -> string -> (string*(LocalVariable list))  option// for c it will be the c_src.isEqual_Integer stg macro
+    equalFunction       : EqualFunction
+
     isValidFuncName     : string option               // it has value only for TASes and only if isValidBody has value
     isValidBody         : (string -> string) option   // 
     encodeFuncName      : string option               // has value only for top level asn1 types (i.e. TypeAssignments (TAS))
@@ -428,8 +413,6 @@ and SeqChildInfo = {
 
     //DAst properties
     c_name              : string
-    externalDefinition  : string option //this is case where the child is defined by itself (Ada)
-    typeDefinitionBody  : string option //only the non acn children have typeDefinitions                       
     isEqualBodyStats    : string -> string -> string -> (string*(LocalVariable list)) option  // 
 }
 
@@ -452,11 +435,8 @@ and Sequence = {
 
     //DAst properties
     typeDefinition      : TypeDefinitionCommon
-    typeDefinitionName  : string option               // has value only for top level asn1 types (i.e. TypeAssignments (TAS))
-    typeDefinitionBody  : string                      // for C it will be Asn1SInt or Asn1UInt
-    isEqualFuncName     : string option               // the name of the equal function. Valid only for TASes)
-    isEqualFunc         : string option               
-    isEqualBodyStats    : string -> string -> (string*(LocalVariable list)) option  // for c it will be the c_src.isEqual_Integer stg macro
+    equalFunction       : EqualFunction
+
     isValidFuncName     : string option               // it has value only for TASes and only if isValidBody has value
     isValidBody         : (string -> string) option   // 
     encodeFuncName      : string option               // has value only for top level asn1 types (i.e. TypeAssignments (TAS))
@@ -482,7 +462,6 @@ and ChChildInfo = {
     
     //DAst properties
     c_name              : string
-    typeDefinitionBody  : string 
     isEqualBodyStats    : string -> string -> string -> (string*(LocalVariable list)) option  // 
 }
 
@@ -506,11 +485,8 @@ and Choice = {
 
     //DAst properties
     typeDefinition      : TypeDefinitionCommon
-    typeDefinitionName  : string option               // has value only for top level asn1 types (i.e. TypeAssignments (TAS))
-    typeDefinitionBody  : string                      // for C it will be Asn1SInt or Asn1UInt
-    isEqualFuncName     : string option               // the name of the equal function. Valid only for TASes)
-    isEqualFunc         : string option               
-    isEqualBodyStats    : string -> string -> (string*(LocalVariable list))  option// for c it will be the c_src.isEqual_Integer stg macro
+    equalFunction       : EqualFunction
+
     isValidFuncName     : string option               // it has value only for TASes and only if isValidBody has value
     isValidBody         : (string -> string) option   // 
     encodeFuncName      : string option               // has value only for top level asn1 types (i.e. TypeAssignments (TAS))
@@ -618,32 +594,20 @@ with
         | Sequence     t -> t.acnMaxSizeInBits
         | Choice       t -> t.acnMaxSizeInBits
 
-    member this.isEqualBody =
+
+    member this.equalFunction =
         match this with
-        | Integer      t -> Expression, t.isEqualBodyExp
-        | Real         t -> Expression, t.isEqualBodyExp
-        | IA5String    t -> Expression, t.isEqualBodyExp
-        | OctetString  t -> Expression, t.isEqualBodyExp
-        | NullType     t -> Expression, t.isEqualBodyExp
-        | BitString    t -> Expression, t.isEqualBodyExp 
-        | Boolean      t -> Expression, t.isEqualBodyExp
-        | Enumerated   t -> Expression, t.isEqualBodyExp
-        | SequenceOf   t -> Statement, t.isEqualBodyStats
-        | Sequence     t -> Statement, t.isEqualBodyStats
-        | Choice       t -> Statement, t.isEqualBodyStats 
-    member this.isEqualFunc =
-        match this with
-        | Integer      t -> t.isEqualFunc
-        | Real         t -> t.isEqualFunc
-        | IA5String    t -> t.isEqualFunc
-        | OctetString  t -> t.isEqualFunc
-        | NullType     t -> t.isEqualFunc
-        | BitString    t -> t.isEqualFunc
-        | Boolean      t -> t.isEqualFunc
-        | Enumerated   t -> t.isEqualFunc
-        | SequenceOf   t -> t.isEqualFunc
-        | Sequence     t -> t.isEqualFunc
-        | Choice       t -> t.isEqualFunc
+        | Integer      t -> t.equalFunction
+        | Real         t -> t.equalFunction
+        | IA5String    t -> t.equalFunction
+        | OctetString  t -> t.equalFunction
+        | NullType     t -> t.equalFunction
+        | BitString    t -> t.equalFunction
+        | Boolean      t -> t.equalFunction
+        | Enumerated   t -> t.equalFunction
+        | SequenceOf   t -> t.equalFunction
+        | Sequence     t -> t.equalFunction
+        | Choice       t -> t.equalFunction
 
     member this.typeDefinition =
         match this with
@@ -658,59 +622,6 @@ with
         | SequenceOf   t -> t.typeDefinition
         | Sequence     t -> t.typeDefinition
         | Choice       t -> t.typeDefinition
-    member this.typeDefinitionName =
-        match this with
-        | Integer      t -> t.typeDefinitionName
-        | Real         t -> t.typeDefinitionName
-        | IA5String    t -> t.typeDefinitionName
-        | OctetString  t -> t.typeDefinitionName
-        | NullType     t -> t.typeDefinitionName
-        | BitString    t -> t.typeDefinitionName
-        | Boolean      t -> t.typeDefinitionName
-        | Enumerated   t -> t.typeDefinitionName
-        | SequenceOf   t -> t.typeDefinitionName
-        | Sequence     t -> t.typeDefinitionName
-        | Choice       t -> t.typeDefinitionName
-
-
-    member this.typeDefinitionBody =
-        match this with
-        | Integer      t -> t.typeDefinitionBody
-        | Real         t -> t.typeDefinitionBody
-        | IA5String    t -> t.typeDefinitionBody
-        | OctetString  t -> t.typeDefinitionBody
-        | NullType     t -> t.typeDefinitionBody
-        | BitString    t -> t.typeDefinitionBody
-        | Boolean      t -> t.typeDefinitionBody
-        | Enumerated   t -> t.typeDefinitionBody
-        | SequenceOf   t -> t.typeDefinitionBody
-        | Sequence     t -> t.typeDefinitionBody
-        | Choice       t -> t.typeDefinitionBody
-    member this.getTypeDefinition (l:BAst.ProgrammingLanguage)=
-        match this.typeDefinitionName with
-        | None  -> None
-        | Some typeDefinitionName   ->
-            match l with
-            | BAst.C ->  
-                let typeDefinitionArrayPostfix = match this.typeDefinitionArrayPostfix with None -> "" | Some x -> x
-                Some (sprintf "typedef %s %s%s;" this.typeDefinitionBody typeDefinitionName typeDefinitionArrayPostfix)
-            | BAst.Ada   ->
-                let typeDefinitionArrayPostfix = match this.typeDefinitionArrayPostfix with None -> "" | Some x -> x
-                Some(sprintf "typedef %s %s%s;" this.typeDefinitionBody typeDefinitionName typeDefinitionArrayPostfix)
-
-    member this.typeDefinitionArrayPostfix =
-        match this with
-        | Integer      t -> None
-        | Real         t -> None
-        | OctetString  t -> None
-        | NullType     t -> None
-        | BitString    t -> None
-        | Boolean      t -> None
-        | Enumerated   t -> None
-        | SequenceOf   t -> None
-        | Sequence     t -> None
-        | Choice       t -> None
-        | IA5String    t -> Some(t.typeDefinitionArrayPostfix)
     member this.tasInfo =
         match this with
         | Integer      t -> t.tasInfo

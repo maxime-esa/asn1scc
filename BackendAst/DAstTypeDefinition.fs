@@ -9,8 +9,8 @@ open DAst
 
 let createInnerTypes (l:BAst.ProgrammingLanguage) = 
     match l with
-    | BAst.Ada  -> true
-    | BAst.C    -> false
+    | BAst.Ada  -> false
+    | BAst.C    -> true
 
 
 let getTypeDefinitionName (r:CAst.AstRoot) (l:BAst.ProgrammingLanguage) (id : ReferenceToType) =
@@ -22,7 +22,8 @@ let getCompleteDefinition l (typeOrSubsType:TypeOrSubsType) typeDefinitionBody t
     | BAst.C ->  
         header_c.Define_Type typeDefinitionBody typeDefinitionName (arraySize |> Option.map(fun x -> BigInteger x)) childldrenCompleteDefintions
     | BAst.Ada   ->
-        sprintf "%A %s %s;" typeOrSubsType typeDefinitionName typeDefinitionBody  
+        let typeOrSubsType = sprintf "%A" typeOrSubsType 
+        header_a.Define_Type typeOrSubsType typeDefinitionName typeDefinitionBody  childldrenCompleteDefintions
 
 
 type State = {
@@ -105,7 +106,7 @@ let createStringTypeDefinition (r:CAst.AstRoot) (l:BAst.ProgrammingLanguage) (o:
                     | _    ->
                         match l with
                         | BAst.C                      -> header_c.Declare_IA5String ()
-                        | BAst.Ada                    -> "????"//header_a.IA5STRING_OF_tas_decl ()
+                        | BAst.Ada                    -> header_a.IA5STRING_OF_tas_decl typeDefinitionName (BigInteger o.minSize) (BigInteger o.maxSize) (BigInteger (o.maxSize + 1)) (o.charSet |> Array.map(fun c -> (BigInteger (int c))))
     {
         TypeDefinitionCommon.name                = typeDefinitionName
         typeOrSubsType                           = SUBTYPE

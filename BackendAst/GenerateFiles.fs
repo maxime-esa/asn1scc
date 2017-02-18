@@ -13,7 +13,15 @@ let printUnit (r:DAst.AstRoot) (l:BAst.ProgrammingLanguage) outDir (pu:ProgramUn
     
     //header file
     //let typeDefs = tases |> List.choose(fun t -> t.getTypeDefinition l)
-    let typeDefs = tases |> List.map(fun t -> t.typeDefinition.completeDefinition)
+    let typeDefs = 
+        tases |> 
+        List.map(fun t -> 
+            let type_defintion = t.typeDefinition.completeDefinition
+            let equal_def      = t.equalFunction.isEqualFuncDef
+            match l with
+            |BAst.C     -> header_c.Define_TAS type_defintion equal_def
+            |BAst.Ada   -> header_a.Define_TAS type_defintion equal_def
+        )
     let arrsValues = []
     let arrsPrototypes = []
     let defintionsContntent =
@@ -31,7 +39,7 @@ let printUnit (r:DAst.AstRoot) (l:BAst.ProgrammingLanguage) outDir (pu:ProgramUn
     //sourse file
     let arrsTypeAssignments = 
         tases |> List.map(fun t -> 
-            let eqFunc = t.isEqualFunc
+            let eqFunc = t.equalFunction.isEqualFunc
             match l with
             | BAst.C     ->  body_c.printTass eqFunc
             | BAst.Ada   ->  body_a.printTass eqFunc

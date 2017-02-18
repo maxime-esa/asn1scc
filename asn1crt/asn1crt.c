@@ -396,7 +396,7 @@ void BitStream_EncodeNonNegativeIntegerNeg(BitStream* pBitStrm, asn1SccUint v, f
         asn1SccUint32 lo = (asn1SccUint32)v;
         BitStream_EncodeNonNegativeInteger32Neg(pBitStrm, hi, negate);
 
-        //bug !!!!
+        /*bug !!!!*/
         if (negate)
             lo = ~lo;
         nBits = GetNumberOfBitsForNonNegativeInteger(lo);
@@ -486,7 +486,7 @@ static int GetLengthSIntHelper(asn1SccUint v)
     return ret+4;
 }
 
-int GetLengthInBytesOfSInt(asn1SccSint v); // prototype to disable warnings
+int GetLengthInBytesOfSInt(asn1SccSint v); /* prototype to disable warnings*/
 int GetLengthInBytesOfSInt(asn1SccSint v)
 {
     if (v >= 0)
@@ -820,7 +820,7 @@ flag BitStream_DecodeReal(BitStream* pBitStrm, double* v)
 flag DecodeRealAsBinaryEncoding(BitStream* pBitStrm, int length, byte header, double* v)
 {
     int sign=1;
-    //int base=2;
+    /*int base=2;*/
     int F;
     unsigned factor=1;
     int expLen;
@@ -832,11 +832,11 @@ flag DecodeRealAsBinaryEncoding(BitStream* pBitStrm, int length, byte header, do
     if (header & 0x40)
         sign = -1;
     if (header & 0x10) {
-        //base = 8;
+        /*base = 8;*/
         expFactor = 3;
     }
     else if (header & 0x20) {
-        //base = 16;
+        /*base = 16;*/
         expFactor = 4;
     }
 
@@ -868,7 +868,7 @@ flag DecodeRealAsBinaryEncoding(BitStream* pBitStrm, int length, byte header, do
     }
 
 
-//  *v = N*factor * pow(base,exp);
+/*  *v = N*factor * pow(base,exp);*/
     *v = GetDoubleByMantissaAndExp(N*factor, expFactor*exponent);
 
     if (sign<0)

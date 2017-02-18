@@ -2,6 +2,19 @@ group a_equals;
 
 
 
+PrintEqualDefintion(sFuncName, sTypeDefName) ::= <<
+function <sFuncName>(val1, val2: in <sTypeDefName>) return Boolean;
+>>
+
+PrintEqualPrimitive(sFuncName, sTypeDefName, sContent) ::= <<
+function <sFuncName>(val1, val2: in <sTypeDefName>) 
+    return Boolean is
+begin
+    return <sContent>;
+end <sFuncName>;
+>>
+
+
 
 CHOICE_setters_body_child(sTasName, sName, sType, sNamePresent) ::= <<
 FUNCTION <sTasName>_<sName>_get(val:<sTasName>) RETURN <sType>
@@ -156,9 +169,3 @@ begin
 >>
 
 
-PrintTypeAssignment_Equal(sName, sBody, arrsLocalVariables) ::= <<
-function <sName>_Equal(val1, val2: in <sName>) return Boolean
-is
-<sBody>
-end <sName>_Equal;
->>
