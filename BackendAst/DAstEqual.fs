@@ -23,18 +23,18 @@ let isEqualBodyOctetString (l:BAst.ProgrammingLanguage) sMin sMax (childAccess: 
     let v2 = sprintf "%s%s" v2 childAccess
     match l with
     | BAst.C         -> Some (equal_c.isEqual_OctetString v1 v2 (sMin = sMax) sMax, [])
-    | BAst.Ada       -> Some (equal_c.isEqual_OctetString v1 v2 (sMin = sMax) sMax, [])
+    | BAst.Ada       -> Some (equal_a.isEqual_OctetString v1 v2 (sMin = sMax) sMax, [])
 
 let isEqualBodyBitString (l:BAst.ProgrammingLanguage) sMin sMax (childAccess: string) v1 v2 =
     let v1 = sprintf "%s%s" v1 childAccess
     let v2 = sprintf "%s%s" v2 childAccess
     match l with
     | BAst.C         -> Some (equal_c.isEqual_BitString v1 v2 (sMin = sMax) sMax, [])
-    | BAst.Ada       -> Some (equal_c.isEqual_BitString v1 v2 (sMin = sMax) sMax, [])
+    | BAst.Ada       -> Some (equal_a.isEqual_BitString v1 v2 (sMin = sMax) sMax, [])
 
 let isEqualBodySequenceOf  (childType:Asn1Type) (o:CAst.SequenceOf)  (l:BAst.ProgrammingLanguage) (childAccess: string) v1 v2  =
     let getInnerStatement i = 
-        let childAccesPath v = v + childAccess + "arr" + (l.ArrayAccess i) //"[" + i + "]"
+        let childAccesPath v = v + childAccess + l.ArrName + (l.ArrayAccess i) //"[" + i + "]"
         match childType.equalFunction.isEqualBody with
         | EqualBodyExpression func  ->  
             match func (childAccesPath v1) (childAccesPath v2) with
@@ -47,9 +47,13 @@ let isEqualBodySequenceOf  (childType:Asn1Type) (o:CAst.SequenceOf)  (l:BAst.Pro
     match getInnerStatement i with
     | None when o.minSize = o.maxSize        -> None
     | None                                   ->
-        Some (equal_c.isEqual_SequenceOf v1 v2 childAccess i (o.minSize = o.maxSize) (BigInteger o.minSize) None, lv::[])
+        match l with
+        | BAst.C    -> Some (equal_c.isEqual_SequenceOf v1 v2 childAccess i (o.minSize = o.maxSize) (BigInteger o.minSize) None, lv::[])
+        | BAst.Ada  -> Some (equal_a.isEqual_SequenceOf v1 v2 i (o.minSize = o.maxSize) (BigInteger o.minSize) None, lv::[])
     | Some (innerStatement, lvars)           ->
-        Some (equal_c.isEqual_SequenceOf v1 v2 childAccess i (o.minSize = o.maxSize) (BigInteger o.minSize) (Some innerStatement), lv::lvars)
+        match l with
+        | BAst.C    -> Some (equal_c.isEqual_SequenceOf v1 v2 childAccess i (o.minSize = o.maxSize) (BigInteger o.minSize) (Some innerStatement), lv::lvars)
+        | BAst.Ada  -> Some (equal_a.isEqual_SequenceOf v1 v2 i (o.minSize = o.maxSize) (BigInteger o.minSize) (Some innerStatement), lv::lvars)
 
     
 
@@ -71,16 +75,19 @@ let isEqualBodySequenceChild   (l:BAst.ProgrammingLanguage) (o:CAst.SeqChildInfo
         | Some (sInnerStatement, lvars)     -> Some (equal_c.isEqual_Sequence_child v1  v2  childAccess o.optionality.IsSome c_name (Some sInnerStatement), lvars)
     | BAst.Ada       ->
         match sInnerStatement with
-        | None  when  o.optionality.IsSome  -> Some (equal_c.isEqual_Sequence_child v1  v2  childAccess o.optionality.IsSome c_name None, [])
+        | None  when  o.optionality.IsSome  -> Some (equal_a.isEqual_Sequence_Child v1  v2  o.optionality.IsSome c_name None, [])
         | None                              -> None
-        | Some (sInnerStatement, lvars)     -> Some (equal_c.isEqual_Sequence_child v1  v2  childAccess o.optionality.IsSome c_name (Some sInnerStatement), lvars)
+        | Some (sInnerStatement, lvars)     -> Some (equal_a.isEqual_Sequence_Child v1  v2  o.optionality.IsSome c_name (Some sInnerStatement), lvars)
 
 
 let isEqualBodySequence  (l:BAst.ProgrammingLanguage) (children:SeqChildInfo list) (childAccess: string) (v1:string) (v2:string)  = 
     let printChild (content:string, lvars:LocalVariable list) (sNestedContent:string option) = 
         match sNestedContent with
         | None  -> content, lvars
-        | Some c-> equal_c.JoinItems content sNestedContent, lvars
+        | Some c-> 
+            match l with
+            | BAst.C        -> equal_c.JoinItems content sNestedContent, lvars
+            | BAst.Ada      -> equal_a.JoinItems content sNestedContent, lvars
     let rec printChildren children : Option<string*list<LocalVariable>> = 
         match children with
         |[]     -> None
@@ -197,14 +204,16 @@ let createStringEqualFunction (r:CAst.AstRoot) (l:BAst.ProgrammingLanguage) (o:C
 
 let createOctetOrBitStringEqualFunction (r:CAst.AstRoot) (l:BAst.ProgrammingLanguage) (tasInfo:BAst.TypeAssignmentInfo option) (typeDefinition:TypeDefinitionCommon) isEqualBody stgMacroDefFunc =
     let isEqualFuncName     = getEqualFuncName r l tasInfo
-    let topLevAcc =  match l with | BAst.C -> "->" | BAst.Ada -> "."
+    let topLevAcc, val1, val2 =  match l with | BAst.C -> "->", "pVal1", "pVal2" | BAst.Ada -> ".", "val1", "val2"
     let    isEqualFunc, isEqualFuncDef                   = 
             match isEqualFuncName with
             | None              -> None, None
             | Some funcName     -> 
-                match isEqualBody topLevAcc "pVal1" "pVal2" with
+                match isEqualBody topLevAcc val1 val2 with
                 | Some (funcBody,_) -> 
-                    Some (equal_c.PrintEqualOctBit funcName typeDefinition.name funcBody), Some (stgMacroDefFunc funcName typeDefinition.name)
+                    match l with
+                    | BAst.C    -> Some (equal_c.PrintEqualOctBit funcName typeDefinition.name funcBody), Some (stgMacroDefFunc funcName typeDefinition.name)
+                    | BAst.Ada  -> Some (equal_a.PrintEqualPrimitive funcName typeDefinition.name funcBody), Some (stgMacroDefFunc funcName typeDefinition.name)
                 | None     -> None, None
     {
         EqualFunction.isEqualFuncName  = isEqualFuncName
@@ -224,15 +233,17 @@ let createBitStringEqualFunction (r:CAst.AstRoot) (l:BAst.ProgrammingLanguage) (
 
 let createCompositeEqualFunction (r:CAst.AstRoot) (l:BAst.ProgrammingLanguage) (tasInfo:BAst.TypeAssignmentInfo option) (typeDefinition:TypeDefinitionCommon) isEqualBody stgMacroDefFunc =
     let isEqualFuncName     = getEqualFuncName r l tasInfo
-    let topLevAcc =  match l with | BAst.C -> "->" | BAst.Ada -> "."
+    let topLevAcc, val1, val2 =  match l with | BAst.C -> "->", "pVal1", "pVal2" | BAst.Ada -> ".", "val1", "val2"
     let isEqualFunc, isEqualFuncDef = 
             match isEqualFuncName with
             | None              -> None, None
             | Some funcName     -> 
-                match isEqualBody topLevAcc "pVal1" "pVal2" with
+                match isEqualBody topLevAcc val1 val2 with
                 | Some (funcBody, lvars) -> 
                     let lvars = lvars |> List.map(fun (lv:LocalVariable) -> lv.GetDeclaration l) |> Seq.distinct
-                    Some (equal_c.PrintEqualComposite funcName typeDefinition.name funcBody lvars), Some (stgMacroDefFunc funcName typeDefinition.name)
+                    match l with
+                    | BAst.C    -> Some (equal_c.PrintEqualComposite funcName typeDefinition.name funcBody lvars), Some (stgMacroDefFunc funcName typeDefinition.name)
+                    | BAst.Ada  -> Some (equal_a.PrintEqualComposite funcName typeDefinition.name funcBody lvars), Some (stgMacroDefFunc funcName typeDefinition.name)
                 | None     -> None, None
     {
         EqualFunction.isEqualFuncName  = isEqualFuncName

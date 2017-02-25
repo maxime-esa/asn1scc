@@ -20,6 +20,10 @@ with
         match this with
         |C      -> "c"
         |Ada    -> "adb"
+    member this.ArrName =
+        match this with
+        |C      -> "arr"
+        |Ada    -> "Data"
     member this.AssignOperator =
         match this with
         |C      -> "="

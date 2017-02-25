@@ -45,7 +45,7 @@ type TypeDefinitionCommon = {
     // in C   is the struct { ... fields ...}
     // in Ada is the IS RECORD ... fields ... END RECORD
     // Ada does not allow nested type defintions. Therefore when called with NESTED_DEFINITION_SCOPE (i.e. from a SEQUENCE) the name of the type is returned
-    typeDefinitionBody  : string            
+    //typeDefinitionBody  : string            
 
     // Used only for Strings and is the size of the string (plus one for the null terminated character)
     // It is usefull only in C due to the fact that the size of the array is not part of the type definition body but follows the the type name

@@ -1,6 +1,15 @@
 group a_equals;
 
 
+JoinItems(sPart, soNestedPart) ::= <<
+<sPart>
+<if(soNestedPart)>
+if ret then
+    <soNestedPart>
+end if;
+<endif>
+>>
+
 
 PrintEqualDefintion(sFuncName, sTypeDefName) ::= <<
 function <sFuncName>(val1, val2: in <sTypeDefName>) return Boolean;
@@ -14,6 +23,17 @@ begin
 end <sFuncName>;
 >>
 
+PrintEqualComposite(sFuncName, sTypeDefName, sContent, arrsLocalVars) ::= <<
+function <sFuncName>(val1, val2: in <sTypeDefName>) 
+    return Boolean 
+is
+    ret : Boolean := TRUE;
+    <arrsLocalVars; separator="\n">
+begin
+    <sContent>
+    return ret;
+end <sFuncName>;
+>>
 
 
 CHOICE_setters_body_child(sTasName, sName, sType, sNamePresent) ::= <<
@@ -89,14 +109,7 @@ begin
 
 
 isEqual_OctetString(p1, p2, bFixedSize, nFixedSize) ::= <<
-<if(!bFixedSize)>
-    subtype Slice is Natural range 1 .. <p1>.Length;
-begin
-    return (<p1>.Length = <p2>.Length and then <p1>.Data(Slice) = <p2>.Data(Slice));
-<else>
-begin
-    return <p1>.Data(<p1>.Data'Range) = <p2>.Data(<p2>.Data'Range);
-<endif>	
+<if(!bFixedSize)><p1>Length = <p2>Length and then <endif><p1>Data(1 .. <p1>Length) = <p2>Data(1 .. <p2>Length)
 >>
 
 
@@ -122,15 +135,19 @@ begin
 >>
 
 
-isEqual_SequenceOf(p1,p2, i, bIsFixedSize, nFixedSize, sInnerType, sInnerTypeName) ::= <<
+isEqual_SequenceOf(p1,p2, i, bIsFixedSize, nFixedSize, soInnerStatement) ::= <<
 <if(!bIsFixedSize)>
-    subtype Slice is Natural range 1 .. <p1>.Length;
-begin
-    return (<p1>.Length = <p2>.Length and then (for all I in Slice => <sInnerTypeName>_Equal(<p1>.Data(I), <p2>.Data(I))));
-<else>
-begin
-    return (for all I in <p1>.Data'Range => <sInnerTypeName>_Equal(<p1>.Data(I), <p2>.Data(I)));
-<endif>	
+ret := (<p1>.Length = <p2>.Length);
+
+<endif>
+<if (soInnerStatement)>
+if ret then
+    for <i> in integer  range 1 .. <p1>.Length loop
+	    <soInnerStatement>
+    end loop;
+end if;
+
+<endif>
 >>
 
 
@@ -148,11 +165,19 @@ begin
 >>
 
 
-isEqual_Sequence_Child(p1, p2, bIsOptional, sChName, sInnerTypeName) ::= <<
+isEqual_Sequence_Child(p1, p2, bIsOptional, sChName, soInnerStatement) ::= <<
 <if(bIsOptional)>
-(if <p1>.Exist.<sChName> = 1 then (<p2>.Exist.<sChName> = 1 and <sInnerTypeName>_Equal(<p1>.<sChName>, <p2>.<sChName>)) else (<p2>.Exist.<sChName> = 0))
+ret := <p1>.Exist.<sChName> = <p2>.Exist.<sChName>;
+<if(soInnerStatement)>
+if ret and then <p1>.Exist.<sChName> = 1 then
+    <soInnerStatement>
+end if;
+
+<endif>
+
 <else>
-<sInnerTypeName>_Equal(<p1>.<sChName>, <p2>.<sChName>)
+<soInnerStatement>
+
 <endif>
 >>
 
