@@ -334,6 +334,7 @@ and SeqChildInfo = {
     optionality         :Asn1Optionality option
     acnInsertetField    :bool
     comments            :string list
+    c_name              : string
 }
 
 
@@ -373,6 +374,7 @@ and ChChildInfo = {
     chType              :Asn1Type
     comments            :string list
     presenseIsHandleByExtField :bool
+    c_name              : string
 }
 
 

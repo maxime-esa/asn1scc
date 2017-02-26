@@ -30,6 +30,11 @@ type TypeOrSubsType =
     | TYPE
     | SUBTYPE
 
+type ChoicePrivateGetters = {
+    specPart  : string
+    bodyPart  : string
+}
+
 type TypeDefinitionCommon = {
     // the name of the type C or Ada type. Defives from ASN.1 Type Assignment name.
     // Eg. for MyInt4 ::= INTEGER(0..15|20|25)
@@ -58,6 +63,10 @@ type TypeDefinitionCommon = {
     // e.g. C : typedef asn1SccSint MyInt4;
     // and Ada: SUBTYPE MyInt4 IS adaasn1rtl.Asn1Int range 0..25;    
     completeDefinition  : string  
+
+    //In some cases, (e.g. Ada choices) are declared at the end of the module in a private section.
+    //In all other cases, it is none
+    choicePrivateGetters : ChoicePrivateGetters list
 
     // Ada does not allow nested type definitions.
     // Therefore The following type MySeq { a INTEGER, innerSeq SEQUENCE {b REAL}}
@@ -462,7 +471,7 @@ and ChChildInfo = {
     
     //DAst properties
     c_name              : string
-    isEqualBodyStats    : string -> string -> string -> (string*(LocalVariable list)) option  // 
+    isEqualBodyStats    : string -> string -> string -> string*(LocalVariable list) // 
 }
 
 and Choice = {
@@ -594,7 +603,7 @@ with
         | Sequence     t -> t.acnMaxSizeInBits
         | Choice       t -> t.acnMaxSizeInBits
 
-
+   
     member this.equalFunction =
         match this with
         | Integer      t -> t.equalFunction

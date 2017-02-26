@@ -36,33 +36,6 @@ end <sFuncName>;
 >>
 
 
-CHOICE_setters_body_child(sTasName, sName, sType, sNamePresent) ::= <<
-FUNCTION <sTasName>_<sName>_get(val:<sTasName>) RETURN <sType>
-IS --# hide <sTasName>_<sName>_get;
-BEGIN
-    RETURN val.<sName>;
-END <sTasName>_<sName>_get;
-
-FUNCTION <sTasName>_<sName>_set(itm:<sType>) RETURN <sTasName>
-IS --# hide <sTasName>_<sName>_set;
-BEGIN
-    RETURN <sTasName>'(kind => <sNamePresent>, <sName> => itm);
-END <sTasName>_<sName>_set;
->>
-
-
-CHOICE_setters_body(sTasName, arrsChildren) ::= <<
-FUNCTION <sTasName>_kind(val:<sTasName>) RETURN <sTasName>_selection 
-IS --# hide <sTasName>_kind;
-BEGIN
-    return val.kind;
-END <sTasName>_kind;
-
-<arrsChildren; separator="\n">
-
-
->>
-
 
 
 PrintTypeAssignment(sName, sInitBody, bContainsChoice) ::= <<
@@ -78,61 +51,21 @@ END <sName>_Init;
                E Q U A L I T Y     F U N C T I O N S
  *****************************************************************************************
  */
-PrimitiveEqual(p1,p2) ::= <<
-begin
-    return <p1> = <p2>;
->>
 
 
-isEqual_Integer(p1, p2) ::= <<
-begin
-    return <p1> = <p2>;
->>
-
-
-isEqual_Real(p1, p2) ::= <<
-begin
-    return Asn1Real_Equal(<p1>, <p2>);
->>
-
-
-isEqual_IA5String(p1, p2) ::= <<
-begin
-    return <p1> = <p2>;
->>
-
-
-isEqual_NumericString(p1, p2) ::= <<
-begin
-    return <p1> = <p2>;
->>
 
 
 isEqual_OctetString(p1, p2, bFixedSize, nFixedSize) ::= <<
-<if(!bFixedSize)><p1>Length = <p2>Length and then <endif><p1>Data(1 .. <p1>Length) = <p2>Data(1 .. <p2>Length)
+<if(!bFixedSize)><p1>Length = <p2>Length and then <p1>Data(1 .. <p1>Length) = <p2>Data(1 .. <p2>Length)<else><p1>Data = <p2>Data<endif>
 >>
 
 
-isEqual_NullType() ::= <<
-begin
-    return True;
->>
 
 
 isEqual_BitString(p1,p2,bFixedSize,nFixedSize) ::= <<
 <isEqual_OctetString(p1=p1,p2=p2, bFixedSize=bFixedSize, nFixedSize=nFixedSize)>
 >>
 
-isEqual_Boolean(p1, p2) ::= <<
-begin
-    return <p1> = <p2>;
->>
-
-
-isEqual_Enumerated(p1, p2) ::= <<
-begin
-    return <p1> = <p2>;
->>
 
 
 isEqual_SequenceOf(p1,p2, i, bIsFixedSize, nFixedSize, soInnerStatement) ::= <<
@@ -141,28 +74,16 @@ ret := (<p1>.Length = <p2>.Length);
 
 <endif>
 <if (soInnerStatement)>
-if ret then
-    for <i> in integer  range 1 .. <p1>.Length loop
-	    <soInnerStatement>
-    end loop;
-end if;
+<i> := <p1>.Data'First;
+while ret and <i>\<=<if(bIsFixedSize)><nFixedSize><else><p1>.Length<endif> loop
+    <soInnerStatement>
+    <i> := <i>+1;
+end loop;
 
 <endif>
 >>
 
 
-isEqual_Choice_Child(p1, p2, sCid, sAsn1Id, sInnerType, sTasName, sInnerTypeName) ::= <<
-(if <sTasName>_kind(<p1>) = <sCid> then
- <sInnerTypeName>_Equal(<sTasName>_<sAsn1Id>_get(<p1>), <sTasName>_<sAsn1Id>_get(<p2>)) else False)
->>
-
-
-isEqual_Choice(p1,p2, arrsChildren, sTasName) ::= <<
-begin
-    return <sTasName>_kind(<p1>) = <sTasName>_kind(<p2>) and then
-    (<arrsChildren; separator=" or \n">);
-
->>
 
 
 isEqual_Sequence_Child(p1, p2, bIsOptional, sChName, soInnerStatement) ::= <<
@@ -181,10 +102,18 @@ end if;
 <endif>
 >>
 
+isEqual_Choice_Child(sNamePresent, sInnerStatement) ::= <<
+when <sNamePresent> =>
+    <sInnerStatement>
+>>
 
-isEqual_Sequence(p1, p2, arrsChildren) ::= <<
-begin
-    return <if(arrsChildren)><arrsChildren; separator=" and "><else>true<endif>;
+isEqual_Choice(p1, p2, sTasName, arrsChildren) ::= <<
+ret := <sTasName>_kind(<p1>) = <sTasName>_kind(<p2>);
+if ret then
+    case <sTasName>_kind(<p1>) is
+        <arrsChildren; separator="\n">
+    end case;
+end if;
 >>
 
 

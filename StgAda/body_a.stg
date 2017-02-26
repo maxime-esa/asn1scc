@@ -26,6 +26,7 @@ END <sPackageName>;
 
 
 
-printTass(soEqualFunc) ::= <<
+printTass(arrsChoiceGetters, soEqualFunc) ::= <<
+<arrsChoiceGetters; separator="\n">
 <soEqualFunc>
 >>

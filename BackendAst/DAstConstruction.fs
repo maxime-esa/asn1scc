@@ -287,14 +287,13 @@ let createSequenceOf (r:CAst.AstRoot) (l:BAst.ProgrammingLanguage) (childType:As
 
 
 let createSequenceChild (r:CAst.AstRoot) (l:BAst.ProgrammingLanguage)  (o:CAst.SeqChildInfo)  (newChild:Asn1Type) (us:State) : (SeqChildInfo*State) =
-    let c_name = ToC o.name
     {
         SeqChildInfo.name   = o.name
         chType              = newChild
         optionality         = o.optionality
         acnInsertetField    = o.acnInsertetField
         comments            = o.comments
-        c_name              = c_name
+        c_name              = o.c_name
         isEqualBodyStats = DAstEqual.isEqualBodySequenceChild l o newChild
     }, us
 
@@ -331,20 +330,23 @@ let createSequence (r:CAst.AstRoot) (l:BAst.ProgrammingLanguage) (children:SeqCh
 
 
 let createChoiceChild (r:CAst.AstRoot) (l:BAst.ProgrammingLanguage)  (o:CAst.ChChildInfo)  (newChild:Asn1Type) (us:State) : (ChChildInfo*State) =
-    let c_name = ToC o.name
+    let typeDefinitionName = 
+        let longName = newChild.id.AcnAbsPath.Tail |> List.rev |> List.tail |> List.rev |> Seq.StrJoin "_"
+        ToC2(r.TypePrefix + longName.Replace("#","elem"))
+
     {
         ChChildInfo.name   = o.name
         chType              = newChild
         comments            = o.comments
         presenseIsHandleByExtField = o.presenseIsHandleByExtField
-        c_name              = c_name
+        c_name              = o.c_name
         presentWhenName     = o.presentWhenName
 
-        isEqualBodyStats = DAstEqual.isEqualBodyChoiceChild l o newChild
+        isEqualBodyStats = DAstEqual.isEqualBodyChoiceChild typeDefinitionName l o newChild
     }, us
 
 let createChoice (r:CAst.AstRoot) (l:BAst.ProgrammingLanguage) (children:ChChildInfo list) (o:CAst.Choice)  (newBase:Choice option) (us:State) : (Choice*State) =
-    let typeDefinition      = createChoiceTypeDefinition r l o  (newBase |> Option.map(fun x -> x.typeDefinition)) children ds
+    let typeDefinition = createChoiceTypeDefinition r l o  (newBase |> Option.map(fun x -> x.typeDefinition)) children ds
     let ret : Choice= 
             {
                 Choice.id           = o.id

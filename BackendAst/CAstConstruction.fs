@@ -69,7 +69,7 @@ let mapBTypeToCType (r:BAst.AstRoot) (t:BAst.Asn1Type) (acn:AcnTypes.AcnAst) (ac
         (fun o newChild us -> 
             let acnParams = getAcnParams newChild.id
             let newOptionality, nus = GetSeqChildOptionality acn  acnTypes o.Location newChild o.Optionality (acnParams: AcnParameter list) (us:State)
-            {SeqChildInfo.name = o.Name; chType = newChild; optionality = newOptionality; acnInsertetField = o.acnInsertetField; comments = o.Comments}, nus)
+            {SeqChildInfo.name = o.Name; chType = newChild; optionality = newOptionality; acnInsertetField = o.acnInsertetField; comments = o.Comments; c_name = ToC o.Name}, nus)
         (fun children o newBase us -> 
             let acnProps = getAcnProps acnTypes o.id
             let alignment, alignmentSize = GetAlignment acnProps
@@ -84,7 +84,7 @@ let mapBTypeToCType (r:BAst.AstRoot) (t:BAst.Asn1Type) (acn:AcnTypes.AcnAst) (ac
         (fun o newChild us -> 
             let acnParams = getAcnParams newChild.id
             let presenseIsHandleByExtField, nus = getChildLinks acn  acnTypes o.Location newChild  acnParams us
-            {ChChildInfo.name = o.Name; chType = newChild; comments = o.Comments; presenseIsHandleByExtField=presenseIsHandleByExtField; presentWhenName = (ToC o.Name) + "_PRESENT"}, nus)
+            {ChChildInfo.name = o.Name; chType = newChild; comments = o.Comments; presenseIsHandleByExtField=presenseIsHandleByExtField; presentWhenName = (ToC o.Name) + "_PRESENT"; c_name = ToC o.Name}, nus)
         (fun children o newBase us -> 
             let acnParams = getAcnParams o.id
             let encClass, alignment, acnMinSizeInBits, acnMaxSizeInBits, nus = GetChoiceEncodingClass acn  acnTypes o.Location o children acnParams us

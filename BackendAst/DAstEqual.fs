@@ -105,38 +105,47 @@ let isEqualBodySequence  (l:BAst.ProgrammingLanguage) (children:SeqChildInfo lis
 
 
 
-let isEqualBodyChoiceChild   (l:BAst.ProgrammingLanguage) (o:CAst.ChChildInfo) (newChild:Asn1Type) (childAccess: string) (v1:string) (v2:string)  = 
-    let c_name = ToC o.name
-    let sInnerStatement = 
+let isEqualBodyChoiceChild  (choiceTypeDefName:string) (l:BAst.ProgrammingLanguage) (o:CAst.ChChildInfo) (newChild:Asn1Type) (childAccess: string) (v1:string) (v2:string)  = 
+    let sInnerStatement, lvars = 
+        let p1,p2 =
+            match l with
+            | BAst.C    ->
+                (v1 + childAccess + o.c_name), (v2 + childAccess + o.c_name)
+            | BAst.Ada  ->
+                let p1 = sprintf "%s_%s_get(%s)" choiceTypeDefName o.c_name v1
+                let p2 = sprintf "%s_%s_get(%s)" choiceTypeDefName o.c_name v2
+                p1,p2
         match newChild.equalFunction.isEqualBody with
         | EqualBodyExpression func  ->  
-            match func (v1 + childAccess + c_name) (v2 + childAccess + c_name) with
-            | Some (exp, lvars)  -> Some (sprintf "ret %s (%s);" l.AssignOperator exp, lvars)
-            | None      -> None
-        | EqualBodyStatementList  func   -> func (v1 + childAccess + c_name) (v2 + childAccess + c_name)
+            match func p1 p2 with
+            | Some (exp, lvars)     -> sprintf "ret %s (%s);" l.AssignOperator exp, lvars
+            | None                  -> sprintf "ret %s TRUE;" l.AssignOperator, []
+        | EqualBodyStatementList  func   -> 
+            match func p1 p2 with
+            | Some a    -> a
+            | None      -> sprintf "ret %s TRUE;" l.AssignOperator, []
 
     match l with
     | BAst.C         -> 
-        match sInnerStatement with
-        | None                              -> None
-        | Some (sInnerStatement, lvars)     -> Some (equal_c.isEqual_Choice_Child o.presentWhenName sInnerStatement, lvars)
+        equal_c.isEqual_Choice_Child o.presentWhenName sInnerStatement, lvars
     | BAst.Ada       ->
-        match sInnerStatement with
-        | None                              -> None
-        | Some (sInnerStatement, lvars)     -> Some (equal_c.isEqual_Choice_Child o.presentWhenName sInnerStatement, lvars)
+        equal_a.isEqual_Choice_Child o.presentWhenName sInnerStatement, lvars
 
-let isEqualBodyChoice  (l:BAst.ProgrammingLanguage) (children:ChChildInfo list) (childAccess: string) (v1:string) (v2:string)  = 
+let isEqualBodyChoice  (typeDefinition:TypeDefinitionCommon) (l:BAst.ProgrammingLanguage) (children:ChChildInfo list) (childAccess: string) (v1:string) (v2:string)  = 
     let childrenConent,lvars =   
         children |> 
         List.map(fun c -> 
-            match c.isEqualBodyStats "." (v1+childAccess+"u") (v2+childAccess+"u") with
-            | Some a -> a
-            | None   -> sprintf "ret %s TRUE;" l.AssignOperator ,[])  |>
+            match l with
+            | BAst.C    ->
+                c.isEqualBodyStats "." (v1+childAccess+"u") (v2+childAccess+"u") 
+            |BAst.Ada   ->
+                c.isEqualBodyStats "." v1 v2 
+        )  |>
         List.unzip
     let lvars = lvars |> List.collect id
     match l with
     |BAst.C   -> Some(equal_c.isEqual_Choice v1 v2 childAccess childrenConent, lvars)
-    |BAst.Ada -> Some(equal_c.isEqual_Choice v1 v2 childAccess childrenConent, lvars)
+    |BAst.Ada -> Some(equal_a.isEqual_Choice v1 v2 typeDefinition.name childrenConent, lvars)
 
 
 let getEqualFuncName (r:CAst.AstRoot) (l:BAst.ProgrammingLanguage) (tasInfo:BAst.TypeAssignmentInfo option) =
@@ -261,5 +270,5 @@ let createSequenceEqualFunction (r:CAst.AstRoot) (l:BAst.ProgrammingLanguage) (o
     createCompositeEqualFunction r l o.tasInfo typeDefinition isEqualBody (stgMacroCompDefFunc l)
 
 let createChoiceEqualFunction (r:CAst.AstRoot) (l:BAst.ProgrammingLanguage) (o:CAst.Choice) (typeDefinition:TypeDefinitionCommon) (children:ChChildInfo list) =
-    let isEqualBody         = isEqualBodyChoice l children
+    let isEqualBody         = isEqualBodyChoice typeDefinition l children
     createCompositeEqualFunction r l o.tasInfo typeDefinition isEqualBody (stgMacroCompDefFunc l)

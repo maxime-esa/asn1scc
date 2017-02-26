@@ -64,6 +64,7 @@ END <sPackageName>;
 
 
 Define_Type(sTypeOrSubsType, sTypeDefinitionName, sTypeDefinitionBody, arrsChildldrenDefintions) ::= <<
+-- <sTypeDefinitionName> --------------------------------------------
 <arrsChildldrenDefintions; separator= "\n">
 
 <sTypeOrSubsType> <sTypeDefinitionName> is <sTypeDefinitionBody>;
@@ -141,7 +142,10 @@ SEQUENCE_tas_decl_child_bit(sName) ::= "<sName>:<rtlModuleName()>.BIT;"
 
 SEQUENCE_tas_decl_child(sName, sType) ::= "<sName> : <sType>;"
 
-SEQUENCE_tas_decl(sName, arrsChildren, arrsOptionalChildren) ::= <<
+SEQUENCE_tas_decl(sName, arrsChildren, arrsOptionalChildren, arrsChildldrenDefintions) ::= <<
+-- <sName> --------------------------------------------
+<arrsChildldrenDefintions; separator= "\n">
+
 <if(arrsChildren)>
 <if (arrsOptionalChildren)>
 TYPE <sName>_EXIST IS RECORD
@@ -172,8 +176,25 @@ FUNCTION <sTasName>_<sName>_get(val:<sTasName>) RETURN <sType>;
 FUNCTION <sTasName>_<sName>_set(itm:<sType>) RETURN <sTasName>;
 >>
 
+CHOICE_setters_body_child(sTasName, sName, sType, sNamePresent) ::= <<
+FUNCTION <sTasName>_<sName>_get(val:<sTasName>) RETURN <sType>
+IS --# hide <sTasName>_<sName>_get;
+BEGIN
+    RETURN val.<sName>;
+END <sTasName>_<sName>_get;
 
-CHOICE_tas_decl(sName, arrsChildren, arrsPresent, nIndexMax) ::= <<
+FUNCTION <sTasName>_<sName>_set(itm:<sType>) RETURN <sTasName>
+IS --# hide <sTasName>_<sName>_set;
+BEGIN
+    RETURN <sTasName>'(kind => <sNamePresent>, <sName> => itm);
+END <sTasName>_<sName>_set;
+>>
+
+
+CHOICE_tas_decl(sName, arrsChildren, arrsPresent, nIndexMax, arrsChildldrenDefintions) ::= <<
+-- <sName> --------------------------------------------
+<arrsChildldrenDefintions; separator= "\n">
+
 TYPE <sName> IS PRIVATE;
 SUBTYPE <sName>_index_range is integer range 0..<nIndexMax>;
 
@@ -187,6 +208,20 @@ for <sName>_selection'Size use 32;
 FUNCTION <sName>_kind(val:<sName>) RETURN <sName>_selection;
 <arrsChildren; separator="\n">
 >>
+
+
+CHOICE_setters_body(sTasName, arrsChildren) ::= <<
+FUNCTION <sTasName>_kind(val:<sTasName>) RETURN <sTasName>_selection 
+IS --# hide <sTasName>_kind;
+BEGIN
+    return val.kind;
+END <sTasName>_kind;
+
+<arrsChildren; separator="\n">
+
+
+>>
+
 
 CHOICE_tas_decl_priv_child(sName, sType, sPresent) ::=<<
 when <sPresent> =>
@@ -206,7 +241,12 @@ RECORD
 END RECORD;
 >>
 
-SEQUENCE_OF_tas_decl(sName, nMin, nMax, bFixedSize, sChildType) ::= <<
+
+
+
+SEQUENCE_OF_tas_decl(sName, nMin, nMax, bFixedSize, sChildType, arrsChildldrenDefintions) ::= <<
+-- <sName> --------------------------------------------
+<arrsChildldrenDefintions; separator= "\n">
 SUBTYPE <sName>_index is integer range 1..<nMax>;
 TYPE <sName>_array IS ARRAY (<sName>_index) OF <sChildType>;
 <if(!bFixedSize)>SUBTYPE <sName>_length_index is integer range <nMin>..<nMax>;<endif>
@@ -364,4 +404,7 @@ Declare_NULL() ::= "<rtlModuleName()>.Asn1NullType"
 
 Declare_Reference1(sName) ::= "<sName>"
 Declare_Reference2(sModName,sName) ::= "<sModName>.<sName>"
+
+
+
 
