@@ -169,33 +169,15 @@ END RECORD;
 >>
 
 
-
-CHOICE_tas_decl_child(sTasName, sName, sType, sNamePresent) ::= <<
-FUNCTION <sTasName>_<sName>_get(val:<sTasName>) RETURN <sType>;
---# pre <sTasName>_kind(val) = <sNamePresent>;
-FUNCTION <sTasName>_<sName>_set(itm:<sType>) RETURN <sTasName>;
+CHOICE_tas_decl_child(sName, sType, sPresent) ::=<<
+when <sPresent> =>
+        <sName>: <sType>;
 >>
 
-CHOICE_setters_body_child(sTasName, sName, sType, sNamePresent) ::= <<
-FUNCTION <sTasName>_<sName>_get(val:<sTasName>) RETURN <sType>
-IS --# hide <sTasName>_<sName>_get;
-BEGIN
-    RETURN val.<sName>;
-END <sTasName>_<sName>_get;
-
-FUNCTION <sTasName>_<sName>_set(itm:<sType>) RETURN <sTasName>
-IS --# hide <sTasName>_<sName>_set;
-BEGIN
-    RETURN <sTasName>'(kind => <sNamePresent>, <sName> => itm);
-END <sTasName>_<sName>_set;
->>
-
-
-CHOICE_tas_decl(sName, arrsChildren, arrsPresent, nIndexMax, arrsChildldrenDefintions) ::= <<
+CHOICE_tas_decl(sName, sFirstChildNamePresent, arrsChildren, arrsPresent, nIndexMax, arrsChildldrenDefintions) ::= <<
 -- <sName> --------------------------------------------
 <arrsChildldrenDefintions; separator= "\n">
 
-TYPE <sName> IS PRIVATE;
 SUBTYPE <sName>_index_range is integer range 0..<nIndexMax>;
 
 TYPE <sName>_selection IS (<arrsPresent; separator=", ">);
@@ -203,31 +185,6 @@ for <sName>_selection use
     (<arrsPresent:{c|<c> => <i>}; separator=", ">);
 for <sName>_selection'Size use 32;
 
-
--- getters and setters
-FUNCTION <sName>_kind(val:<sName>) RETURN <sName>_selection;
-<arrsChildren; separator="\n">
->>
-
-
-CHOICE_setters_body(sTasName, arrsChildren) ::= <<
-FUNCTION <sTasName>_kind(val:<sTasName>) RETURN <sTasName>_selection 
-IS --# hide <sTasName>_kind;
-BEGIN
-    return val.kind;
-END <sTasName>_kind;
-
-<arrsChildren; separator="\n">
-
-
->>
-
-
-CHOICE_tas_decl_priv_child(sName, sType, sPresent) ::=<<
-when <sPresent> =>
-        <sName>: <sType>;
->>
-CHOICE_tas_decl_priv(sName, sFirstChildNamePresent, arrsChildren) ::= <<
 TYPE <sName>(kind : <sName>_selection:= <sFirstChildNamePresent>) IS 
 RECORD
     case kind is
@@ -239,7 +196,13 @@ FOR <sName> USE
 RECORD
     kind AT 0 RANGE 0..31;
 END RECORD;
+
+
 >>
+
+
+
+
 
 
 

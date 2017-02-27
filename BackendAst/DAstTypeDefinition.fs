@@ -372,7 +372,7 @@ let createChoiceTypeDefinition (r:CAst.AstRoot) (l:BAst.ProgrammingLanguage) (o:
             let typeDefinitionArrayPostfix = match o.chType.typeDefinition.arraySize with None -> "" | Some x -> (sprintf "[%d]" x)
             header_c.PrintSeq_ChoiceChild o.chType.typeDefinition.typeDefinitionBodyWithinSeq o.c_name typeDefinitionArrayPostfix
         | BAst.Ada                    -> 
-            header_a.CHOICE_tas_decl_child typeDefinitionName o.c_name  o.chType.typeDefinition.typeDefinitionBodyWithinSeq o.presentWhenName
+            header_a.CHOICE_tas_decl_child o.c_name  o.chType.typeDefinition.typeDefinitionBodyWithinSeq o.presentWhenName
 
     let childldrenCompleteDefintions =
         match createInnerTypes l with
@@ -398,14 +398,14 @@ let createChoiceTypeDefinition (r:CAst.AstRoot) (l:BAst.ProgrammingLanguage) (o:
                     let chEnms = children |> List.map(fun c -> c.presentWhenName)
                     let childrenBodies = children |> List.map handleChild
                     let nIndexMax = BigInteger ((Seq.length children)-1)
-                    header_a.CHOICE_tas_decl typeDefinitionName childrenBodies chEnms nIndexMax childldrenCompleteDefintions
-                let choiceGettersSpec =
+                    header_a.CHOICE_tas_decl typeDefinitionName children.Head.presentWhenName childrenBodies chEnms nIndexMax childldrenCompleteDefintions
+(*                let choiceGettersSpec =
                     let childrenBodies = children |> List.map(fun o -> header_a.CHOICE_tas_decl_priv_child o.c_name  o.chType.typeDefinition.typeDefinitionBodyWithinSeq o.presentWhenName)
                     header_a.CHOICE_tas_decl_priv typeDefinitionName children.Head.presentWhenName childrenBodies
                 let choiceGettersImplementation =
                     let children =  children |> List.map(fun o -> header_a.CHOICE_setters_body_child typeDefinitionName o.c_name  o.chType.typeDefinition.typeDefinitionBodyWithinSeq o.presentWhenName)
-                    header_a.CHOICE_setters_body  typeDefinitionName children
-                completeDefintion, typeDefinitionName, (Some completeDefintion),  [{ChoicePrivateGetters.specPart = choiceGettersSpec; bodyPart = choiceGettersImplementation}]
+                    header_a.CHOICE_setters_body  typeDefinitionName children*)
+                completeDefintion, typeDefinitionName, (Some completeDefintion),  []//[{ChoicePrivateGetters.specPart = choiceGettersSpec; bodyPart = choiceGettersImplementation}]
             | Some baseTypeName     ->
                 let typeDefinitionBody = baseTypeName.name
                 getCompleteDefinition l SUBTYPE typeDefinitionBody typeDefinitionName None [], typeDefinitionBody, None, []

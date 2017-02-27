@@ -115,9 +115,9 @@ when <sNamePresent> =>
 >>
 
 isEqual_Choice(p1, p2, sTasName, arrsChildren) ::= <<
-ret := <sTasName>_kind(<p1>) = <sTasName>_kind(<p2>);
+ret := <p1>.kind = <p2>.kind;
 if ret then
-    case <sTasName>_kind(<p1>) is
+    case <p1>.kind is
         <arrsChildren; separator="\n">
     end case;
 end if;

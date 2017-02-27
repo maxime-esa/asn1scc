@@ -115,9 +115,7 @@ let isEqualBodyChoiceChild  (choiceTypeDefName:string) (l:BAst.ProgrammingLangua
             | BAst.C    ->
                 (v1 + childAccess + o.c_name), (v2 + childAccess + o.c_name)
             | BAst.Ada  ->
-                let p1 = sprintf "%s_%s_get(%s)" choiceTypeDefName o.c_name v1
-                let p2 = sprintf "%s_%s_get(%s)" choiceTypeDefName o.c_name v2
-                p1,p2
+                (v1 + childAccess + o.c_name), (v2 + childAccess + o.c_name)
         match newChild.equalFunction.isEqualBody with
         | EqualBodyExpression func  ->  
             match func p1 p2 with
