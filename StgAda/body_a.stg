@@ -11,7 +11,7 @@ use type <rtlModuleName()>.Asn1Int;
 use type <rtlModuleName()>.BIT;
 
 
-PACKAGE BODY <sPackageName> IS
+PACKAGE BODY <sPackageName> with SPARK_Mode IS
 
 <arrsNegativeReals; separator="\n\n">
 

@@ -22,7 +22,7 @@ use type <rtlModuleName()>.BIT;
 --# inherit <arrsIncludedModules:{inc| <inc>}; separator=",">;
 
 
-PACKAGE <sPackageName>
+PACKAGE <sPackageName> with SPARK_Mode
 IS
 
 

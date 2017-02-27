@@ -49,11 +49,14 @@ let isEqualBodySequenceOf  (childType:Asn1Type) (o:CAst.SequenceOf)  (l:BAst.Pro
     | None                                   ->
         match l with
         | BAst.C    -> Some (equal_c.isEqual_SequenceOf v1 v2 childAccess i (o.minSize = o.maxSize) (BigInteger o.minSize) None, lv::[])
-        | BAst.Ada  -> Some (equal_a.isEqual_SequenceOf v1 v2 i (o.minSize = o.maxSize) (BigInteger o.minSize) None, lv::[])
+        | BAst.Ada  -> Some (equal_a.isEqual_SequenceOf_var_size v1 v2 i None, lv::[])
     | Some (innerStatement, lvars)           ->
         match l with
         | BAst.C    -> Some (equal_c.isEqual_SequenceOf v1 v2 childAccess i (o.minSize = o.maxSize) (BigInteger o.minSize) (Some innerStatement), lv::lvars)
-        | BAst.Ada  -> Some (equal_a.isEqual_SequenceOf v1 v2 i (o.minSize = o.maxSize) (BigInteger o.minSize) (Some innerStatement), lv::lvars)
+        | BAst.Ada  -> 
+            match (o.minSize = o.maxSize) with
+            | true  -> Some (equal_a.isEqual_SequenceOf_fix_size v1 v2 i  (BigInteger o.minSize) innerStatement, lv::lvars)
+            | false -> Some (equal_a.isEqual_SequenceOf_var_size v1 v2 i  (Some innerStatement), lv::lvars)
 
     
 
