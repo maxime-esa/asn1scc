@@ -30,7 +30,7 @@ let printUnit (r:DAst.AstRoot) (l:BAst.ProgrammingLanguage) outDir (pu:ProgramUn
             let arrsUtilityDefines = []
             header_c.PrintHeaderFile pu.name.U1 pu.importedProgramUnits typeDefs arrsValues arrsPrototypes arrsUtilityDefines
         | BAst.Ada   -> 
-            let arrsPrivateChoices = tases |> List.collect(fun x -> x.typeDefinition.choicePrivateGetters) |> List.map(fun x -> x.specPart)
+            let arrsPrivateChoices = []
             header_a.PrintPackageSpec pu.name pu.importedProgramUnits typeDefs arrsValues arrsPrivateChoices
 
     let fileName = Path.Combine(outDir, pu.specFileName)
@@ -43,7 +43,7 @@ let printUnit (r:DAst.AstRoot) (l:BAst.ProgrammingLanguage) outDir (pu:ProgramUn
             match l with
             | BAst.C     ->  body_c.printTass eqFunc
             | BAst.Ada   ->  
-                let choiceGettersBody = t.typeDefinition.choicePrivateGetters |> List.map(fun x -> x.bodyPart)
+                let choiceGettersBody = []
                 body_a.printTass choiceGettersBody eqFunc
         )
     let eqContntent = 

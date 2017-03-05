@@ -13,8 +13,12 @@ if (ret) {
 <endif>
 >>
 
-Tas_encode(sName, sStar, arrsLocalVariables, sContent,  arrsExtraParams) ::= <<
-flag <sName>_ACN_Encode(const <sName><sStar> pVal, BitStream* pBitStrm, int* pErrCode, flag bCheckConstraints<if(arrsExtraParams)>, <arrsExtraParams; separator=", "><endif>)
+TasPrimitiveDefinition_encode(sFuncName, sTypeDefName, arrsExtraParams) ::= <<
+flag <sFuncName>(const <sTypeDefName> val1, BitStream* pBitStrm, int* pErrCode, flag bCheckConstraints<if(arrsExtraParams)>, <arrsExtraParams; separator=", "><endif>);
+>>
+
+TasPrimitive_encode(sFuncName, sTypeDefName, arrsLocalVariables, sContent,  arrsExtraParams) ::= <<
+flag <sFuncName>(const <sTypeDefName> val1, BitStream* pBitStrm, int* pErrCode, flag bCheckConstraints<if(arrsExtraParams)>, <arrsExtraParams; separator=", "><endif>)
 {
     flag ret = TRUE;
     <arrsLocalVariables; separator="\n">
@@ -28,8 +32,12 @@ flag <sName>_ACN_Encode(const <sName><sStar> pVal, BitStream* pBitStrm, int* pEr
 }
 >>
 
-Tas_decode(sName, sStar, arrsLocalVariables, sContent, arrsExtraParams) ::= <<
-flag <sName>_ACN_Decode(<sName><sStar> pVal, BitStream* pBitStrm, int* pErrCode<if(arrsExtraParams)>, <arrsExtraParams; separator=", "><endif>)
+TasPrimitiveDefinition_decode(sFuncName, sTypeDefName, arrsExtraParams) ::= <<
+flag <sFuncName>(<sTypeDefName>* pVal1, BitStream* pBitStrm, int* pErrCode<if(arrsExtraParams)>, <arrsExtraParams; separator=", "><endif>)
+>>
+
+TasPrimitive_decode(sFuncName, sTypeDefName, arrsLocalVariables, sContent, arrsExtraParams) ::= <<
+flag <sFuncName>(<sTypeDefName>* pVal1, BitStream* pBitStrm, int* pErrCode<if(arrsExtraParams)>, <arrsExtraParams; separator=", "><endif>)
 {
     flag ret = TRUE;
     <arrsLocalVariables; separator="\n">

@@ -30,10 +30,6 @@ type TypeOrSubsType =
     | TYPE
     | SUBTYPE
 
-type ChoicePrivateGetters = {
-    specPart  : string
-    bodyPart  : string
-}
 
 type TypeDefinitionCommon = {
     // the name of the type C or Ada type. Defives from ASN.1 Type Assignment name.
@@ -64,9 +60,6 @@ type TypeDefinitionCommon = {
     // and Ada: SUBTYPE MyInt4 IS adaasn1rtl.Asn1Int range 0..25;    
     completeDefinition  : string  
 
-    //In some cases, (e.g. Ada choices) are declared at the end of the module in a private section.
-    //In all other cases, it is none
-    choicePrivateGetters : ChoicePrivateGetters list
 
     // Ada does not allow nested type definitions.
     // Therefore The following type MySeq { a INTEGER, innerSeq SEQUENCE {b REAL}}
@@ -89,17 +82,14 @@ type EqualFunction = {
     isEqualFuncDef      : string option
     isEqualBody         : IsEqualBody                 // a function that  returns an expression or a statement list
 }
-(*
-with 
-    member this.getEqualFuncDefintion (typeDefinition:TypeDefinitionCommon) (l:BAst.ProgrammingLanguage) =
-        match this.isEqualFuncName with
-        | Some isEqualFuncName  ->
-            match l with
-            | BAst.Ada  -> Some(equal_a.PrintEqualDefintion isEqualFuncName typeDefinition.name )
-            | BAst.C    -> Some(equal_c.PrintEqualDefintion isEqualFuncName typeDefinition.name )
-        | None          -> None
 
-        *)
+
+type AcnFunction = {
+    funcName            : Ast.Codec -> string option               // the name of the function. Valid only for TASes)
+    func                : Ast.Codec -> string option               // the body of the function
+    funcDef             : Ast.Codec -> string option               // function definition
+    funcBody            : (string -> Ast.Codec -> (string*(LocalVariable list)) list)   //returns a list of encoding statements plus any variables required to declared locally
+}
 
 type Integer = {
     //bast inherrited properties
