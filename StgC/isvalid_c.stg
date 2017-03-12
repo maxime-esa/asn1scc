@@ -3,7 +3,6 @@
 
 getStringSize(p) ::= "strlen(<p>)"
 
-getSizeableSize(p) ::= "<p>nCount"
 
 Print_AlphabetCheckFunc_str(p) ::= "<p>[i]"
 
@@ -73,21 +72,58 @@ void <sTasName>_Initialize(<sTasName><sStar> pVal)
  C H E C K   C O N S T R A I N T S      F U N C T I O N S
 *****************************************************************************************
 */
+PrintErrorCode(sErrorName, nErrCode, sComment) ::= <<
+#define <sErrorName>		<nErrCode>  /*<sComment>*/
+>>
 
-PrintIsConstraintValid(sTasName, sStar, arrsLocalVariables, sContent, arrsAlphaCheckFunctions) ::= <<
-<arrsAlphaCheckFunctions; separator="\n"> 
-flag <sTasName>_IsConstraintValid(const <sTasName><sStar> pVal, int* pErrCode)
+
+EmitTypeAssignment_primitive_def(sFuncName, sTypeDefName, sErrCode, nErrValue) ::= <<
+#define <sErrCode>		<nErrValue>  /**/
+flag <sFuncName>(const <sTypeDefName> val, int* pErrCode);
+>>
+
+EmitTypeAssignment_primitive(sFuncName, sTypeDefName, sContent, sErrCode, arrsAlphaFuncs) ::= <<
+<arrsAlphaFuncs; separator="\n">
+flag <sFuncName>(const <sTypeDefName> val, int* pErrCode)
 {
-    
     flag ret = TRUE;
-	<arrsLocalVariables; separator="\n">
-	*pErrCode=0;
-
-	(void)pVal;
-
-	<sContent>
+	
+    ret = <sContent>;
+    *pErrCode = ret ? 0 :  <sErrCode>;
 
 	return ret;
+}
+>>
+
+
+
+ExpEqual(sExp1, sExp2) ::= "(<sExp1> == <sExp2>)"
+ExpStringEqual(sExp1, sExp2) ::= "(strcmp(<sExp1>,<sExp2>)  == 0)"
+ExpGt(sExp1, sExp2) ::= "(<sExp1> \> <sExp2>)"
+ExpGte(sExp1, sExp2) ::= "(<sExp1> \>= <sExp2>)"
+ExpLt(sExp1, sExp2) ::= "(<sExp1> \< <sExp2>)"
+ExpLte(sExp1, sExp2) ::= "(<sExp1> \<= <sExp2>)"
+ExpOr(sExp1, sExp2) ::= "(<sExp1> || <sExp2>)"
+ExpAnd(sExp1, sExp2) ::= "(<sExp1> && <sExp2>)"
+ExpAndMulit(arrsExp) ::= <<
+<arrsExp; separator=" && ">
+>>
+ExpNot(sExp) ::= "(!<sExp>)"
+StrLen(sExp) ::= "strlen(<sExp>)"
+ArrayLen(sExp, sAcc) ::= "<sExp><sAcc>nCount"
+
+
+Print_AlphabetCheckFunc(sFuncName, arrsAlphaConBody) ::= <<
+flag <sFuncName>(const char* str) 
+{
+    flag ret=TRUE;
+    int i=0;
+
+    while ((str[i] != '\0') && ret) {
+        ret = ret && (<arrsAlphaConBody; separator=" && ">);
+        i = i + 1;
+    }
+    return ret;
 }
 >>
 
@@ -138,19 +174,6 @@ PrintMultipleConstraints(arrsConstraints) ::= "<arrsConstraints; separator=\" &&
 Emit_local_variable_SQF_Index(nI)::="int i<nI>=0;"
 
 
-Print_AlphabetCheckFunc(sName, arrsAlphaConBody) ::= <<
-flag <sName>_CharsAreValid(const char* pVal) 
-{
-    flag ret=TRUE;
-    int i=0;
-
-    while ((pVal[i] != '\0') && ret) {
-        ret = ret && (<arrsAlphaConBody; separator=" && ">);
-        i = i + 1;
-    }
-    return ret;
-}
->>
 
 
 Emit_type(arrsConstraints, sErrCodeName) ::= <<

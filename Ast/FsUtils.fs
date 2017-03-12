@@ -172,6 +172,9 @@ type System.String with
     member this.JSEsc =
         if this.IsEmptyOrNull then ""
         else this.Replace("'","\\'").Replace("\"","\\\"")
+    member this.IDQ =
+        if this.IsEmptyOrNull then "\"\""
+        else sprintf "\"%s\"" this
     member this.ISQ =
         if this.IsEmptyOrNull then "''"
         else sprintf "'%s'" this.JSEsc

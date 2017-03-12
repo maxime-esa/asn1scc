@@ -1,23 +1,61 @@
 group a_isvalid;
 
+rtlModuleName() ::= "adaasn1rtl"
+
+ExpEqual(sExp1, sExp2) ::= "(<sExp1> = <sExp2>)"
+ExpStringEqual(sExp1, sExp2) ::= "(<sExp1> = <sExp2>)"
+ExpGt(sExp1, sExp2) ::= "(<sExp1> \> <sExp2>)"
+ExpGte(sExp1, sExp2) ::= "(<sExp1> \>= <sExp2>)"
+ExpLt(sExp1, sExp2) ::= "(<sExp1> \< <sExp2>)"
+ExpLte(sExp1, sExp2) ::= "(<sExp1> \<= <sExp2>)"
+ExpOr(sExp1, sExp2) ::= "(<sExp1> OR <sExp2>)"
+ExpAnd(sExp1, sExp2) ::= "(<sExp1> AND <sExp2>)"
+ExpAndMulit(arrsExp) ::= <<
+<arrsExp; separator=" AND ">
+>>
+ExpNot(sExp) ::= "(NOT <sExp>)"
+StrLen(sExp) ::= "<rtlModuleName()>.getStringSize(<sExp>)"
+ArrayLen(sExp, sAcc) ::= "<sExp><sAcc>Length"
+
+
+EmitTypeAssignment_primitive_def(sFuncName, sTypeDefName, sErrCode, nErrValue) ::= <<
+<sErrCode>:CONSTANT INTEGER := <nErrValue>; -- 
+FUNCTION <sFuncName>(val : in <sTypeDefName>) return <rtlModuleName()>.ASN1_RESULT;
+>>
+
+EmitTypeAssignment_primitive(sFuncName, sTypeDefName, sExpContent, sErrCode, arrsAlphaFuncs) ::= <<
+<arrsAlphaFuncs; separator="\n">
+FUNCTION <sFuncName>(val : in <sTypeDefName>) return <rtlModuleName()>.ASN1_RESULT
+IS
+    ret : <rtlModuleName()>.ASN1_RESULT;
+BEGIN
+    ret := <rtlModuleName()>.ASN1_RESULT'(Success => <sExpContent>, ErrorCode => <sErrCode>);
+    RETURN ret;
+END <sFuncName>;
+>>
+
+
+
 
 Print_AlphabetCheckFunc_str() ::= "str(I)"
 
-Print_AlphabetCheckFunc(sName, arrsAlphaConBody) ::= <<
-FUNCTION <sName>_CharsAreValid(str : in String) return boolean 
---# pre STR'First=1 AND STR'Last>=STR'First AND STR'Last\<=INTEGER'LAST-1;
+Print_AlphabetCheckFunc(sFuncName, arrsAlphaConBody) ::= <<
+FUNCTION <sFuncName>(str : in String) return boolean 
 IS
     ret:BOOLEAN:=true;
     I:INTEGER:=1;
 BEGIN
     WHILE I\<=<rtlModuleName()>.getStringSize(str) and ret LOOP
-    --# assert I>=1 AND I\<=str'Last;
+        pragma Loop_Invariant (I>=1 AND I\<=str'Last);
         ret := ret AND <arrsAlphaConBody; separator=" AND ">;
         I := I + 1;
     END LOOP;
     return ret;
-END <sName>_CharsAreValid;
+END <sFuncName>;
 >>
+
+
+
 
 PrintMultipleConstraints(arrsConstraints) ::= "<arrsConstraints; separator=\" AND \">"
 
@@ -53,20 +91,6 @@ ExceptConstraint(sCon1,sCon2) ::= "(<sCon1> AND NOT (<sCon2>))"
 Emit_local_variable_SQF_Index(nI, bHasInitalValue)::="I<nI>:Integer<if(bHasInitalValue)>:=1<endif>;"
 
 
-EmitTypeAssignment(sName, sTypeBody, arrsAlphaCheckFunctions, arrsLocalVars, sAsn1TypeDefinition) ::= <<
-FUNCTION <sName>_IsConstraintValid(val : in <sName>) return <rtlModuleName()>.ASN1_RESULT
-IS
-    ret : <rtlModuleName()>.ASN1_RESULT;
-    <arrsLocalVars; separator="\n"> 
-    <arrsAlphaCheckFunctions; separator="\n"> 
-BEGIN
-<sAsn1TypeDefinition>
-
-
-    <sTypeBody>
-    RETURN ret;
-END <sName>_IsConstraintValid;
->>
 
 
 Emit_type(arrsConstraints, sErrCodeName) ::= <<

@@ -72,7 +72,8 @@ let createIntegerFunction (r:CAst.AstRoot) (l:BAst.ProgrammingLanguage) (o:CAst.
             match funcName codec with
             | None              -> None
             | Some funcName     -> 
-                let (statement, _) = funcBody "val1" codec 
+                let p = if codec = Ast.Encode then "val1" else "pVal1"
+                let (statement, _) = funcBody p codec 
                 match l with
                 |BAst.C     -> Some(acn_c.TasPrimitive funcName  typeDefinition.name [] statement [] codec)
                 |BAst.Ada   -> Some(acn_c.TasPrimitive funcName  typeDefinition.name [] statement [] codec)

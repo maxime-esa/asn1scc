@@ -83,6 +83,20 @@ type EqualFunction = {
     isEqualBody         : IsEqualBody                 // a function that  returns an expression or a statement list
 }
 
+type AlphaFunc   = {
+    funcName            : string
+    funcBody            : string
+}
+
+type IsValidFunction = {
+    errCode             : string
+    errCodeValue        : int
+    funcName            : string option               // the name of the function. Valid only for TASes)
+    func                : string option               // the body of the function
+    funcDef             : string option               // function definition in header file
+    funcBody            : (string -> (string*(LocalVariable list)) list)   //returns a list of encoding statements plus any variables required to declared locally
+    alphaFuncs          : AlphaFunc list  
+}
 
 type AcnFunction = {
     funcName            : Ast.Codec -> string option               // the name of the function. Valid only for TASes)
@@ -112,6 +126,8 @@ type Integer = {
     //DAst properties
     typeDefinition      : TypeDefinitionCommon
     equalFunction       : EqualFunction
+    isValidFunction     : IsValidFunction option      // it is optional because some types do not require an IsValid function (e.g. an unconstraint integer)
+    acnFunction         : AcnFunction
     
     isValidFuncName     : string option               // it has value only for TASes and only if isValidBody has value
     isValidBody         : (string -> string) option   // 
@@ -148,6 +164,7 @@ type Enumerated = {
     //DAst properties
     typeDefinition      : TypeDefinitionCommon
     equalFunction       : EqualFunction
+    isValidFunction     : IsValidFunction option      // it is optional because some types do not require an IsValid function (e.g. an unconstraint integer)
 
     isValidFuncName     : string option               // it has value only for TASes and only if isValidBody has value
     isValidBody         : (string -> string) option   // 
@@ -182,6 +199,7 @@ type Real = {
     //DAst properties
     typeDefinition      : TypeDefinitionCommon
     equalFunction       : EqualFunction
+    isValidFunction     : IsValidFunction option      // it is optional because some types do not require an IsValid function (e.g. an unconstraint integer)
 
     isValidFuncName     : string option               // it has value only for TASes and only if isValidBody has value
     isValidBody         : (string -> string) option   // 
@@ -215,6 +233,7 @@ type Boolean = {
     //DAst properties
     typeDefinition      : TypeDefinitionCommon
     equalFunction       : EqualFunction
+    isValidFunction     : IsValidFunction option      // it is optional because some types do not require an IsValid function (e.g. an unconstraint integer)
 
     isValidFuncName     : string option               // it has value only for TASes and only if isValidBody has value
     isValidBody         : (string -> string) option   // 
@@ -279,6 +298,7 @@ type StringType = {
     //DAst properties
     typeDefinition      : TypeDefinitionCommon
     equalFunction       : EqualFunction
+    isValidFunction     : IsValidFunction option      // it is optional because some types do not require an IsValid function (e.g. an unconstraint integer)
 
     isValidFuncName     : string option               // it has value only for TASes and only if isValidBody has value
     isValidBody         : (string -> string) option   // 
@@ -314,6 +334,7 @@ type OctetString = {
     //DAst properties
     typeDefinition      : TypeDefinitionCommon
     equalFunction       : EqualFunction
+    isValidFunction     : IsValidFunction option      // it is optional because some types do not require an IsValid function (e.g. an unconstraint integer)
 
     isValidFuncName     : string option               // it has value only for TASes and only if isValidBody has value
     isValidBody         : (string -> string) option   // 
@@ -351,6 +372,7 @@ type BitString = {
     //DAst properties
     typeDefinition      : TypeDefinitionCommon
     equalFunction       : EqualFunction
+    isValidFunction     : IsValidFunction option      // it is optional because some types do not require an IsValid function (e.g. an unconstraint integer)
 
     isValidFuncName     : string option               // it has value only for TASes and only if isValidBody has value
     isValidBody         : (string -> string) option   // 
@@ -608,6 +630,33 @@ with
         | Sequence     t -> t.equalFunction
         | Choice       t -> t.equalFunction
 
+    member this.isValidFunction =
+        match this with
+        | Integer      t -> t.isValidFunction
+        | Real         t -> t.isValidFunction
+        | IA5String    t -> t.isValidFunction
+        | OctetString  t -> t.isValidFunction
+        | NullType     t -> None
+        | BitString    t -> t.isValidFunction
+        | Boolean      t -> t.isValidFunction
+        | Enumerated   t -> t.isValidFunction
+        | SequenceOf   t -> None
+        | Sequence     t -> None
+        | Choice       t -> None
+    member this.acnFunction : AcnFunction option =
+        match this with
+        | Integer      t -> None //Some (t.acnFunction)
+        | Real         t -> None
+        | IA5String    t -> None
+        | OctetString  t -> None
+        | NullType     t -> None
+        | BitString    t -> None
+        | Boolean      t -> None
+        | Enumerated   t -> None
+        | SequenceOf   t -> None
+        | Sequence     t -> None
+        | Choice       t -> None
+
     member this.typeDefinition =
         match this with
         | Integer      t -> t.typeDefinition
@@ -641,6 +690,12 @@ with
         | ReferenceToType((GenericFold2.MD _)::(GenericFold2.TA tasName)::[])   -> Some tasName
         | _                                                                     -> None
 
+type State = {
+    curSeqOfLevel : int
+    currentTypes  : Asn1Type list
+    currErrCode   : int
+
+}
 
 type ProgramUnit = {
     name    : string

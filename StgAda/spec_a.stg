@@ -73,10 +73,13 @@ Define_Type(sTypeOrSubsType, sTypeDefinitionName, sTypeDefinitionBody, arrsChild
 
 
 
-Define_TAS(sTypeDefinition, soEqualFunc) ::= <<
+Define_TAS(sTypeDefinition, soEqualFunc, soIsValid, soAcnEncFunc, soAcnDecFunc) ::= <<
 <sTypeDefinition>
 
 <soEqualFunc>
+<soIsValid>
+<soAcnEncFunc>
+<soAcnDecFunc>
 >>
 
 

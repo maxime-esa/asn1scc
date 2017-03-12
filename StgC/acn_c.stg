@@ -23,7 +23,7 @@ flag <sFuncName>(const <sTypeDefName> val1, BitStream* pBitStrm, int* pErrCode, 
     flag ret = TRUE;
     <arrsLocalVariables; separator="\n">
 
-    ret = bCheckConstraints ? <sName>_IsConstraintValid(pVal, pErrCode) : TRUE ;
+    /*ret = bCheckConstraints ? <sName>_IsConstraintValid(pVal, pErrCode) : TRUE ;*/
 	if (ret) {
 	    <sContent>
     }
@@ -33,7 +33,7 @@ flag <sFuncName>(const <sTypeDefName> val1, BitStream* pBitStrm, int* pErrCode, 
 >>
 
 TasPrimitiveDefinition_decode(sFuncName, sTypeDefName, arrsExtraParams) ::= <<
-flag <sFuncName>(<sTypeDefName>* pVal1, BitStream* pBitStrm, int* pErrCode<if(arrsExtraParams)>, <arrsExtraParams; separator=", "><endif>)
+flag <sFuncName>(<sTypeDefName>* pVal1, BitStream* pBitStrm, int* pErrCode<if(arrsExtraParams)>, <arrsExtraParams; separator=", "><endif>);
 >>
 
 TasPrimitive_decode(sFuncName, sTypeDefName, arrsLocalVariables, sContent, arrsExtraParams) ::= <<

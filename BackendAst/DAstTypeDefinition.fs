@@ -26,11 +26,8 @@ let getCompleteDefinition l (typeOrSubsType:TypeOrSubsType) typeDefinitionBody t
         header_a.Define_Type typeOrSubsType typeDefinitionName typeDefinitionBody  childldrenCompleteDefintions
 
 
-type State = {
-    dummy : int
-}
 
-let ds = {dummy=0}
+//let ds = {dummy=0}
 
 let createIntegerTypeDefinition (r:CAst.AstRoot) (l:BAst.ProgrammingLanguage) (o:CAst.Integer)  (baseDefinition:TypeDefinitionCommon option) (us:State) =
     let typeDefinitionName = getTypeDefinitionName r l o.id

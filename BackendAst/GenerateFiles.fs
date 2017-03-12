@@ -18,9 +18,18 @@ let printUnit (r:DAst.AstRoot) (l:BAst.ProgrammingLanguage) outDir (pu:ProgramUn
         List.map(fun t -> 
             let type_defintion = t.typeDefinition.completeDefinition
             let equal_def      = t.equalFunction.isEqualFuncDef
+            let isValid        = 
+                match t.isValidFunction with
+                | None      -> None
+                | Some f    -> f.funcDef
+            let ancEncDec codec         = 
+                match t.acnFunction with
+                | None    -> None
+                | Some a  -> a.funcDef codec
+                     
             match l with
-            |BAst.C     -> header_c.Define_TAS type_defintion equal_def
-            |BAst.Ada   -> header_a.Define_TAS type_defintion equal_def
+            |BAst.C     -> header_c.Define_TAS type_defintion equal_def isValid (ancEncDec Ast.Encode) (ancEncDec Ast.Decode)
+            |BAst.Ada   -> header_a.Define_TAS type_defintion equal_def isValid (ancEncDec Ast.Encode) (ancEncDec Ast.Decode)
         )
     let arrsValues = []
     let arrsPrototypes = []
@@ -40,11 +49,18 @@ let printUnit (r:DAst.AstRoot) (l:BAst.ProgrammingLanguage) outDir (pu:ProgramUn
     let arrsTypeAssignments = 
         tases |> List.map(fun t -> 
             let eqFunc = t.equalFunction.isEqualFunc
+            let isValid = match t.isValidFunction with None -> None | Some isVal -> isVal.func
+
+            let uperEncDec codec         =  None
+            let ancEncDec codec         = 
+                match t.acnFunction with
+                | None    -> None
+                | Some a  -> a.func codec
             match l with
-            | BAst.C     ->  body_c.printTass eqFunc
+            | BAst.C     ->  body_c.printTass eqFunc isValid (uperEncDec Ast.Encode) (uperEncDec Ast.Decode) (ancEncDec Ast.Encode) (ancEncDec Ast.Decode)
             | BAst.Ada   ->  
                 let choiceGettersBody = []
-                body_a.printTass choiceGettersBody eqFunc
+                body_a.printTass choiceGettersBody eqFunc isValid (uperEncDec Ast.Encode) (uperEncDec Ast.Decode) (ancEncDec Ast.Encode) (ancEncDec Ast.Decode)
         )
     let eqContntent = 
         match l with
