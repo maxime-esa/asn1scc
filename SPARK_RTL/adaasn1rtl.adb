@@ -51,7 +51,7 @@ PACKAGE BODY adaasn1rtl IS
       I:Integer:=1;
    BEGIN
       WHILE I<=str'Last AND THEN str(I)/=NUL LOOP
-         pragma Loop_Invariant (I>=1 AND I<=str'Last);
+         --# assert I>=1 AND I<=str'Last;
          I:=I+1;
       END LOOP;
       RETURN I-1;

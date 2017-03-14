@@ -104,10 +104,9 @@ IS
 
 
 
-    FUNCTION getStringSize(str:String) RETURN Integer
-      with
-      pre => STR'First=1 AND STR'Last>=STR'First AND STR'Last<=INTEGER'LAST-1,
-      post => (getStringSize'Result>=0 AND getStringSize'Result <= STR'Last);
+   FUNCTION getStringSize(str:String) RETURN Integer;
+    --# pre STR'First=1 AND STR'Last>=STR'First AND STR'Last<=INTEGER'LAST-1;
+    --# return res => (res>=0 AND res<=STR'Last);
 
    FUNCTION stringContainsChar(str:String; ch:Character) RETURN Boolean;
    --# pre STR'Last<=INTEGER'LAST-1;

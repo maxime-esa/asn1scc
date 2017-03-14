@@ -29,6 +29,7 @@ use type <rtlModuleName()>.BitArray;
 use type <rtlModuleName()>.Asn1UInt;
 use type <rtlModuleName()>.Asn1Int;
 use type <rtlModuleName()>.BIT;
+WITH System;
 <rest(arrsIncludedModules):{inc| WITH <inc>;}; separator="\n">
 --# inherit <arrsIncludedModules:{inc| <inc>}; separator=",">;
 
@@ -137,6 +138,8 @@ SEQUENCE_tas_decl(sName, arrsChildren, arrsOptionalChildren) ::= <<
 TYPE <sName>_EXIST IS RECORD
     <arrsOptionalChildren; separator="\n">
 END RECORD;
+Pragma Pack(<sName>_EXIST);
+for <sName>_EXIST'Size use ((<length(arrsOptionalChildren)> - 1) / System.Word_Size + 1) * System.Word_Size;
 
 <endif>
 TYPE <sName> IS RECORD 
