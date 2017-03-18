@@ -1,0 +1,8 @@
+TASTE-BasicTypes DEFINITIONS ::=
+BEGIN
+
+My-Type ::= INTEGER -- Accepted but should not be, because -- is a comment
+MyE ::= ENUMERATED { a--b, b, c } -- Also accepted, should not be
+
+END
+

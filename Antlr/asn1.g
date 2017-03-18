@@ -762,10 +762,20 @@ StringLiteral 	: 	STR+ ;
 fragment
 STR 	:	'"' ( options {greedy=false;} : .)* '"' ;
 			
-UID  :   ('A'..'Z') ('a'..'z'|'A'..'Z'|'0'..'9'|'-')*
+UID  :   ('A'..'Z') ('a'..'z'|'A'..'Z'|'0'..'9'|'-')* {if (Text.Contains("--"))
+                {
+                        MismatchedSetException mse = new MismatchedSetException(null, input);
+                        Recover(mse);
+                        throw mse;
+                }}
     ;
 
-LID  :   ('a'..'z') ('a'..'z'|'A'..'Z'|'0'..'9'|'-')*
+LID  :   ('a'..'z') ('a'..'z'|'A'..'Z'|'0'..'9'|'-')* {if (Text.Contains("--"))
+                {
+                        MismatchedSetException mse = new MismatchedSetException(null, input);
+                        Recover(mse);
+                        throw mse;
+                }}
     ;
 
 
