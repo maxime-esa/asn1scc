@@ -443,11 +443,12 @@ let rec CheckType(t:Asn1Type) (m:Asn1Module) ast =
             |_->None) 
         |> Seq.iter (fun (t,v) -> 
             CheckValueType t v ast
-            match CheckIfVariableViolatesTypeConstraints t v ast with
-            | true  -> 
+            let ret = CheckIfVariableViolatesTypeConstraints t v ast
+            match ret with
+            | false  -> 
                 let msg = sprintf "Value does not conform to its type constraints"
                 raise(SemanticError(v.Location,msg))
-            | false -> ()
+            | true -> ()
             )
     let CheckNamedItem (children:seq<NamedItem>) =
         children |> Seq.map(fun c -> c.Name) |> CheckForDuplicates 
