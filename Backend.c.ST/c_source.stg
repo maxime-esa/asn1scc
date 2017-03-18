@@ -323,6 +323,20 @@ if (ret && <p1>exist.<sChName>) {
 <endif>
 >>
 
+isEqual_Sequence_child_default(p1,p2, sDefault, sChName, sChildType, sInnerType, sInnerType1Def, sInnerTypeDef2) ::= <<
+{
+    static <sChildType> defValue = <sDefault>;
+    if (ret && <p1>exist.<sChName> == 1 && <p2>exist.<sChName> == 1) {
+        <sInnerType>
+    } else if (ret && <p1>exist.<sChName> == 0 && <p2>exist.<sChName> == 1) {
+        <sInnerType1Def>
+    } else if (ret && <p1>exist.<sChName> == 1 && <p2>exist.<sChName> == 0) {       //COVERAGE_IGNORE
+        <sInnerTypeDef2>                                                            //COVERAGE_IGNORE
+    } else {
+        ret = TRUE;                                                                 //COVERAGE_IGNORE    
+    }
+}
+>>
 
 isEqual_SequenceOf(p1,p2, i, bIsFixedSize, nFixedSize, sInnerType) ::= <<
 <if(!bIsFixedSize)>

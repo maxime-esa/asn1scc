@@ -40,7 +40,7 @@ namespace Asn1f2
                 Console.Error.WriteLine("* Unexpected internal compiler error");
                 Console.Error.WriteLine("*");
                 Console.Error.WriteLine("* ");
-                Console.Error.WriteLine("* Please report bugs to: support@semantix.gr");
+                Console.Error.WriteLine("* Please report bugs to: https://github.com/ttsiodras/asn1scc/issues");
                 Console.Error.WriteLine("* Error is:");
                 Console.Error.WriteLine("* {0}", ex.Data0);
                 Console.Error.WriteLine("* ");

@@ -22,9 +22,9 @@ open c_utils
 
 
 
-let rec EmitTypeBody (t:Asn1Type) (path:list<string>)  (m:Asn1Module) (r:AstRoot)  =
-    let p1 = GetTypeAccessPathPriv "pVal1" path  r
-    let p2 = GetTypeAccessPathPriv "pVal2" path  r
+let rec EmitTypeBody (t:Asn1Type) (path:list<string>)  (m:Asn1Module) (r:AstRoot) (cp1:string option, cp2:string option)   =
+    let p1 = match cp1 with Some p1 -> p1 | None -> GetTypeAccessPathPriv "pVal1" path  r
+    let p2 = match cp2 with Some p2 -> p2 | None -> GetTypeAccessPathPriv "pVal2" path  r
     match t.Kind with
     | Integer           -> c_src.isEqual_Integer p1 p2
     | Enumerated(_)     -> c_src.isEqual_Enumerated p1 p2
@@ -50,18 +50,27 @@ let rec EmitTypeBody (t:Asn1Type) (path:list<string>)  (m:Asn1Module) (r:AstRoot
         | Full                      -> raise (BugErrorException("All sizeable types must be constraint, otherwise max size is infinite"))
         | Empty                     -> raise (BugErrorException("I do not known how this is handled"))      
     | Choice(children)  ->
-        let arrChildre = children |> Seq.map(fun c -> c_src.isEqual_Choice_Child (c.CName_Present C) (EmitTypeBody c.Type (path@[c.Name.Value]) m r))
+        let arrChildre = children |> Seq.map(fun c -> c_src.isEqual_Choice_Child (c.CName_Present C) (EmitTypeBody c.Type (path@[c.Name.Value]) m r (None, None)))
         c_src.isEqual_Choice p1 p2 arrChildre
     | ReferenceType(md,ts, _)  ->
-        let ptr1 = GetTypeAccessPathPrivPtr "pVal1" path  r
-        let ptr2 = GetTypeAccessPathPrivPtr "pVal2" path  r
+        let getPrtAux (cp:string option) (pVal:string) =
+            match cp with
+            | None      -> GetTypeAccessPathPrivPtr pVal path  r
+            | Some x   ->
+                match (Ast.GetActualTypeByName md ts r).Kind with
+                | IA5String 
+                | NumericString -> x
+                | _             -> sprintf "&%s" x
+            
+        let ptr1 = getPrtAux cp1 "pVal1"
+        let ptr2 = getPrtAux cp2 "pVal2"
         let tsName = Ast.GetTasCName ts.Value r.TypePrefix
         c_src.isEqual_ReferenceType ptr1 ptr2 tsName
     | SequenceOf(child)     -> 
         let getIndexNameByPath (path:string list) =
             "i" + ((Seq.length (path |> Seq.filter(fun s -> s ="#"))) + 1).ToString()
         let index = getIndexNameByPath path
-        let sInnerType = EmitTypeBody child (path@["#"]) m r
+        let sInnerType = EmitTypeBody child (path@["#"]) m r (None, None)
         match (GetTypeUperRange t.Kind t.Constraints r) with
         | Concrete(a,b) when  a=b   -> c_src.isEqual_SequenceOf p1 p2 index true a sInnerType
         | Concrete(a,b)             -> c_src.isEqual_SequenceOf p1 p2 index false a sInnerType
@@ -73,10 +82,15 @@ let rec EmitTypeBody (t:Asn1Type) (path:list<string>)  (m:Asn1Module) (r:AstRoot
         let asn1Children = children |> List.filter(fun x -> not x.AcnInsertedField)
         let printChild (c:ChildInfo) sNestedContent = 
             let chKey = (path@[c.Name.Value])
-            let sChildBody = EmitTypeBody c.Type chKey m r
+            let sChildBody = EmitTypeBody c.Type chKey m r (None, None)
             let content = 
                 match c.Optionality with
-                | Some(Default(_)) -> "ret = TRUE;"
+                | Some(Default(dv)) -> 
+                    let sDefaultValue = c_variables.PrintAsn1Value dv c.Type false ("",0) m r
+                    let sChildTypeDeclaration = c_h.PrintTypeDeclaration c.Type chKey r
+                    let sInnerType1Def = EmitTypeBody c.Type chKey m r (Some "defValue", None)
+                    let sInnerTypeDef2 = EmitTypeBody c.Type chKey m r (None, Some "defValue")
+                    c_src.isEqual_Sequence_child_default p1 p2 sDefaultValue (c.CName ProgrammingLanguage.C) sChildTypeDeclaration sChildBody sInnerType1Def sInnerTypeDef2
                 | _                -> c_src.isEqual_Sequence_child p1 p2 c.Optionality.IsSome (c.CName ProgrammingLanguage.C) sChildBody
             c_src.JoinItems content sNestedContent
 
@@ -111,7 +125,7 @@ let PrintTypeAss (tas:TypeAssignment) (m:Asn1Module) (r:AstRoot) =
     let t = RemoveWithComponents tas.Type r
     let sStar = (TypeStar tas.Type r)
     let localVars = CollectLocalVars t tas m r
-    let sContent = EmitTypeBody t [m.Name.Value; tas.Name.Value] m r
+    let sContent = EmitTypeBody t [m.Name.Value; tas.Name.Value] m r (None, None)
     c_src.PrintEqual sName sStar localVars sContent 
 
 
