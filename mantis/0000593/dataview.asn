@@ -1,0 +1,11 @@
+TASTE-BasicTypes DEFINITIONS ::=
+BEGIN
+
+SeqDef ::= SEQUENCE {
+        a BOOLEAN DEFAULT TRUE,
+        b INTEGER (10..20) DEFAULT 5,   -- XXX 5 is out of range!
+        c INTEGER (8..255)
+    }
+
+END
+

@@ -436,7 +436,19 @@ let rec CheckType(t:Asn1Type) (m:Asn1Module) ast =
     let CheckSeqChoiceChildren (children:seq<ChildInfo>) =
         children |> Seq.map(fun c -> c.Name) |> CheckForDuplicates 
         children |> Seq.map(fun c -> c.Type) |> Seq.iter (fun x -> CheckType x m ast)
-        children |> Seq.choose(fun c -> match c.Optionality with Some(Default v) -> Some (c.Type, v) |_->None) |> Seq.iter (fun (t,v) -> CheckValueType t v ast)
+        children |> 
+        Seq.choose(fun c -> 
+            match c.Optionality with 
+            | Some(Default v) -> Some (c.Type, v) 
+            |_->None) 
+        |> Seq.iter (fun (t,v) -> 
+            CheckValueType t v ast
+            match CheckIfVariableViolatesTypeConstraints t v ast with
+            | true  -> 
+                let msg = sprintf "Value does not conform to its type constraints"
+                raise(SemanticError(v.Location,msg))
+            | false -> ()
+            )
     let CheckNamedItem (children:seq<NamedItem>) =
         children |> Seq.map(fun c -> c.Name) |> CheckForDuplicates 
         children |> 
