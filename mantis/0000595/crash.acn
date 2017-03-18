@@ -1,0 +1,10 @@
+TESTMOD DEFINITIONS ::= BEGIN
+
+TC-2-2-INSTRUCTION [] 
+{	
+	registerAddress REGISTER-ADDRESS[],
+	registerData [determinant registerAddress]
+}
+
+
+END

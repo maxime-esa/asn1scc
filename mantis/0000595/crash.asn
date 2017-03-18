@@ -1,0 +1,20 @@
+TESTMOD DEFINITIONS AUTOMATIC TAGS ::= BEGIN
+
+REGISTER-ADDRESS ::= ENUMERATED
+{ 
+	register1,
+	register2
+}
+
+REGISTER-DATA ::= CHOICE
+{
+	register1 INTEGER(0..255),
+	register2 INTEGER(0..255)
+}
+
+TC-2-2-INSTRUCTION ::= SEQUENCE
+{
+	registerData REGISTER-DATA
+}
+
+END

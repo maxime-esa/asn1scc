@@ -35,7 +35,8 @@ let CheckReference (newAsn1:AstRoot) (newAcn:AcnTypes.AcnAst) (r:AcnTypes.LongRe
         | AcnTypes.PresenceStr(_), NumericString-> ()
         | AcnTypes.PresenceStr(_), _        -> raise(SemanticError(loc, "expecting IA5String field"))
         | AcnTypes.ChoiceDeteterminant, Enumerated(nItems)  ->
-            match asn1Type.Kind with
+            let atcType = Ast.GetActualType asn1Type newAsn1 
+            match atcType.Kind with
             | Choice(children)  ->
                 let altNames = children |> List.map(fun x -> x.Name.Value) |> List.sort
                 let enmNames = nItems |> List.map(fun x -> x.Name.Value) |> List.sort
