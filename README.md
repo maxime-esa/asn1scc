@@ -65,7 +65,14 @@ Install:
         make && sudo make install 
     ```
 
-3. Execute 'xbuild'.
+3. Execute
+
+    xbuild
+
+Depending on the version of Mono that you are using, you may need to specify
+a specific target .NET framework version:
+
+    xbuild /p:TargetFrameworkVersion="v4.5"
 
 4. Run tests (if you want to):
 
@@ -77,6 +84,40 @@ Install:
 Note that in order to run the tests you need both GCC and GNAT.
 The tests will process hundreds of ASN.1 grammars, generate C and
 Ada source code, compile it, run it, and check the coverage results.
+
+Continuous integration
+======================
+
+Every time CircleCI detected a commit in ASN1SCC (any branch), it
+checks the code, and tries to...
+
+    (a) build it 
+    (b) then run the tests.
+
+But build it where? Inside what environment?
+
+CircleCI offers only 3 build environments: OSX, Ubuntu 12 and Ubuntu 14.
+
+Till recently (Mar/2017) Ubuntu 14 met all the dependencies we needed to build
+and run the tests. But the work being done to enhance the Ada backend with the
+new SPARK annotations needs the latest GNAT; which is simply not installeable
+in Ubuntu 14 (even after adding the latest Ubuntu's source in the available
+package sources).
+
+But thankfully, CircleCI supports Docker images.
+
+We have therefore setup the build, so that it creates (on the fly) a Debian
+image using the latest version of Debian stable (the soon to be announced
+Debian Stretch). Both the ASN1SCC build and the tests are then executed inside
+the Docker image.
+
+The amazing thing is, that after building the image for the first time, we can
+cache it (see circle.yml for details) - which means that commits in ASN1SCC
+re-use the pre-made Docker image - they don't re-install the build environment
+every time.
+
+In plain terms, we not only support the latest package versions that we need,
+but also, the CircleCI checks of commits on ASN1SCC are very fast.
 
 Usage
 =====
