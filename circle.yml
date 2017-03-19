@@ -1,9 +1,11 @@
+machine:
+  services:
+    - docker
+
 dependencies:
   pre:
-    - echo 'deb http://archive.ubuntu.com/ubuntu zesty main restricted' | sudo tee /etc/apt/sources.list.d/xenial.list
-    - sudo apt-get update
-    - sudo apt-get install mono-devel mono-complete fsharp mono-xbuild python3 gnat
+    - docker build -t asn1scc .
 
 test:
   override:
-      - ./circleci-build.sh
+      - docker run -v .:/root/asn1scc 'cd /root/asn1scc && ./circleci-build.sh'
