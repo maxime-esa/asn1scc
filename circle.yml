@@ -2,7 +2,7 @@ dependencies:
   pre:
     - echo 'deb http://archive.ubuntu.com/ubuntu zesty main restricted' | sudo tee /etc/apt/sources.list.d/xenial.list
     - sudo apt-get update
-    - sudo apt-get install mono-devel mono-complete fsharp mono-xbuild python3 gnat-6
+    - sudo apt-get install mono-devel mono-complete fsharp mono-xbuild python3 gnat
 
 test:
   override:
