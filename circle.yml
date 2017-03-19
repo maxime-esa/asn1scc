@@ -8,4 +8,4 @@ dependencies:
 
 test:
   override:
-      - docker run -v .:/root/asn1scc 'cd /root/asn1scc && ./circleci-build.sh'
+      - docker run -it -v .:/root/asn1scc asn1scc bash -c 'cd /root/asn1scc ; ./circleci-build.sh'
