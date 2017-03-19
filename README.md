@@ -125,7 +125,7 @@ test suite. To do so, you'll need to run this:
     (Your Docker image starts up)
 
     # cd /root/asn1scc 
-    # xbuild
+    # xbuild /p:TargetFrameworkVersion="v4.5"
     ...
 
     ASN1SCC is built at this point - and if you want to run the tests:
