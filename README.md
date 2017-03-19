@@ -67,12 +67,16 @@ Install:
 
 3. Execute
 
+    ```
     xbuild
+    ```
 
 Depending on the version of Mono that you are using, you may need to specify
 a specific target .NET framework version:
 
+    ```
     xbuild /p:TargetFrameworkVersion="v4.5"
+    ```
 
 4. Run tests (if you want to):
 
@@ -85,39 +89,64 @@ Note that in order to run the tests you need both GCC and GNAT.
 The tests will process hundreds of ASN.1 grammars, generate C and
 Ada source code, compile it, run it, and check the coverage results.
 
-Continuous integration
-======================
+Continuous integration and Docker image
+=======================================
 
-Every time CircleCI detected a commit in ASN1SCC (any branch), it
-checks the code, and tries to...
+ASN1SCC is setup to use CircleCI for continuous integration. Upon every
+commit or merge request, the packaged circle.yml instructs CircleCI to...
 
-    (a) build it 
-    (b) then run the tests.
+    (a) build ASN1SCC with the new code
+    (b) then run all the tests and check the coverage results.
 
-But build it where? Inside what environment?
+But where is that build being made? Inside what environment?
 
 CircleCI offers only 3 build environments: OSX, Ubuntu 12 and Ubuntu 14.
+Till recently (March/2017) Ubuntu 14 met all the dependencies that were
+needed to build and run the tests. But the work being done to enhance the
+Ada backend with the new SPARK annotations, requires the latest GNAT;
+which is simply not installeable in Ubuntu 14.
 
-Till recently (Mar/2017) Ubuntu 14 met all the dependencies we needed to build
-and run the tests. But the work being done to enhance the Ada backend with the
-new SPARK annotations needs the latest GNAT; which is simply not installeable
-in Ubuntu 14 (even after adding the latest Ubuntu's source in the available
-package sources).
+Thankfully, CircleCI also supports Docker images.
 
-But thankfully, CircleCI supports Docker images.
+We have therefore setup the build, so that it creates (on the fly)
+a Debian Docker image based on the latest version of Debian stable
+(the soon to be announced Debian Stretch). Both the ASN1SCC build and
+the test run are then executed inside the Docker image.
 
-We have therefore setup the build, so that it creates (on the fly) a Debian
-image using the latest version of Debian stable (the soon to be announced
-Debian Stretch). Both the ASN1SCC build and the tests are then executed inside
-the Docker image.
+Needless to say, the Docker image can be used for development as well;
+simply execute...
 
-The amazing thing is, that after building the image for the first time, we can
-cache it (see circle.yml for details) - which means that commits in ASN1SCC
-re-use the pre-made Docker image - they don't re-install the build environment
-every time.
+    ```
+    docker build -t asn1scc 
+    ```
 
-In plain terms, we not only support the latest package versions that we need,
-but also, the CircleCI checks of commits on ASN1SCC are very fast.
+...and your Docker install will build an "asn1scc" Docker image, pre-setup
+with all the build-time dependencies to compile ASN1SCC and run its 
+testsuite. To do so, you'll need to run this:
+
+    ```
+    $ docker run -it -v $(pwd):/root/asn1scc asn1scc
+
+    (Your Docker image starts up)
+
+    # cd /root/asn1scc 
+    # xbuild
+    ...
+
+    ASN1SCC is built at this point - and if you want to run the tests:
+
+    # cd Tests
+    # make
+    ...
+    ```
+
+This same sequence of commands is executed in CircleCI to check for
+regressions; with the added benefit that after building the image for
+the first time, CircleCI is configured to cache the Docker image (see
+circle.yml for details). This means that upon new commits in ASN1SCC,
+CircleCI will re-use the Docker image that was made in previous runs,
+and therefore avoid re-installing all the build environment tools every
+time. The develop-test cycles are therefore as fast as they can be.
 
 Usage
 =====
