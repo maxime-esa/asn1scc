@@ -74,9 +74,7 @@ Install:
 Depending on the version of Mono that you are using, you may need to specify
 a specific target .NET framework version:
 
-    ```
     xbuild /p:TargetFrameworkVersion="v4.5"
-    ```
 
 4. Run tests (if you want to):
 
@@ -104,7 +102,7 @@ CircleCI offers only 3 build environments: OSX, Ubuntu 12 and Ubuntu 14.
 Till recently (March/2017) Ubuntu 14 met all the dependencies that were
 needed to build and run the tests. But the work being done to enhance the
 Ada backend with the new SPARK annotations, requires the latest GNAT;
-which is simply not installeable in Ubuntu 14.
+which is simply not installable in Ubuntu 14.
 
 Thankfully, CircleCI also supports Docker images.
 
@@ -116,15 +114,12 @@ the test run are then executed inside the Docker image.
 Needless to say, the Docker image can be used for development as well;
 simply execute...
 
-    ```
     docker build -t asn1scc 
-    ```
 
 ...and your Docker install will build an "asn1scc" Docker image, pre-setup
 with all the build-time dependencies to compile ASN1SCC and run its 
-testsuite. To do so, you'll need to run this:
+test suite. To do so, you'll need to run this:
 
-    ```
     $ docker run -it -v $(pwd):/root/asn1scc asn1scc
 
     (Your Docker image starts up)
@@ -138,7 +133,6 @@ testsuite. To do so, you'll need to run this:
     # cd Tests
     # make
     ...
-    ```
 
 This same sequence of commands is executed in CircleCI to check for
 regressions; with the added benefit that after building the image for
