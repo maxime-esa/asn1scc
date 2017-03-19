@@ -1,6 +1,6 @@
 dependencies:
   pre:
-    - echo 'deb http://httpredir.debian.org/debian stretch main' | sudo tee -a /etc/apt/sources.list
+    - echo 'deb http://archive.ubuntu.com/ubuntu xenial main restricted' | sudo tee /etc/apt/sources.list.d/xenial.list
     - sudo apt-get update
     - sudo apt-get install mono-devel mono-complete fsharp mono-xbuild python3 gnat-6
 
