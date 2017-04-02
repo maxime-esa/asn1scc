@@ -93,5 +93,49 @@ let foldAsn1Type
 
     
 
+let foldAsn1Type2
+    (t:Asn1Type) 
+    (us:'UserState) 
+    integerFunc 
+    realFunc
+    ia5StringFunc
+    octetStringFunc
+    nullTypeFunc
+    bitStringFunc
+    booleanFunc
+    enumeratedFunc
+    seqOfTypeFunc
+    seqChild
+    seqTypeFunc
+    chChild
+    chTypeFunc
+    =
+    foldAsn1Type 
+        t
+        us
+        integerFunc 
+        id 
+        realFunc
+        id
+        ia5StringFunc
+        id
+        octetStringFunc
+        id
+        nullTypeFunc
+        id
+        bitStringFunc
+        id
+        booleanFunc
+        id
+        enumeratedFunc
+        id
+        seqOfTypeFunc
+        id
+        seqChild
+        seqTypeFunc
+        id
+        chChild
+        chTypeFunc
+        id
 
 

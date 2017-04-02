@@ -321,7 +321,31 @@ let bitStringValueToByteArray (s:StringLoc) =
         NibblesToBytesAux l []
     NibblesToBytes (BitsToNibbles s1) |> List.toArray
 
- 
+let byteArrayToBitStringValue (bytes: byte seq)  =
+    let handleOctet (oct:byte) =
+        let handleNibble (n:char) =
+            match n with
+            |'0'-> "0000"
+            |'1'-> "0001"
+            |'2'-> "0010"
+            |'3'-> "0011"
+            |'4'-> "0100"
+            |'5'-> "0101"
+            |'6'-> "0110"
+            |'7'-> "0111"
+            |'8'-> "1000"
+            |'9'-> "1001"
+            |'A'-> "1010"
+            |'B'-> "1011"
+            |'C'-> "1100"
+            |'D'-> "1101"
+            |'E'-> "1110"
+            |'F'-> "1111"
+            | _ -> raise(BugErrorException "")
+        let octStr = sprintf "%02X" oct
+        (handleNibble octStr.[0]) + (handleNibble octStr.[1])
+    bytes |> Seq.map handleOctet  |> Seq.StrJoin ""
+
 
 
 //let rec DoTopologicalSort2 independentNodes dependentNodes  comparer excToThrow =

@@ -8,7 +8,7 @@ open FsUtils
 open System
 open System.IO
 open Constraints
-open BAst
+open DAst
 open uPER2
 
 type PRINT_CONTENT =
@@ -100,7 +100,9 @@ and printReferenceToValue (r:AstRoot) (p:PRINT_CONTENT) (ReferenceToValue (path,
     | REF ->
         let p1 = path |> Seq.skip 1 |> Seq.toList |> List.map (fun x -> x.StrValue) |> Seq.StrJoin "."
         let p2 = vpath |> List.map (fun x -> x.StrValue) |> Seq.StrJoin "."
-        p1 + "." + p2
+        match p2 = "" with
+        | true  -> p1
+        | false -> p1 + "." + p2
     | CON ->
         PrintAsn1GenericValue r r.valsMap.[(ReferenceToValue (path, vpath))]
     
@@ -148,19 +150,21 @@ and PrintType (r:AstRoot) (t:Asn1Type) =
         let cons = cmb x |> List.map (printCon printGenericConstraint (fun x -> x.ToString()) ) 
         stg_asn1.Print_Enumerated items  cons
     |Choice x   ->
-        let printChild (c:ChildInfo) = stg_asn1.Print_Choice_child c.Name (printReferenceToType r CON c.chType.id)
+        let printChild (c:ChChildInfo) = stg_asn1.Print_Choice_child c.name (printReferenceToType r CON c.chType.id)
         let cons = cmb x |> List.map (printCon printGenericConstraint (fun chv -> stg_asn1.Print_ChValue chv.Value.name (printReferenceToValue r CON chv.Value.Value.id)  ) ) 
         stg_asn1.Print_Choice (x.children |> Seq.map printChild |> Seq.toArray) cons
     |Sequence x ->
-        let printChild (c:ChildInfo) = 
+        let printChild (c:SeqChildInfo) = 
             let bIsOptionalOrDefault, soDefValue = 
-                match c.Optionality with
-                | Some Optional   -> true, None
-                | Some (Default v)    -> true, Some (printReferenceToValue r CON v.id)
-                | Some  AlwaysAbsent  -> true, None
-                | Some AlwaysPresent  -> true, None
+                match c.optionality with
+                | Some(CAst.AlwaysAbsent) ->  true, None
+                | Some(CAst.AlwaysPresent) -> true, None
+                | Some(CAst.Optional opt)  ->
+                    match opt.defaultValue with
+                    | None                  -> true, None
+                    | Some v                -> true, Some (printReferenceToValue r CON v.id)
                 | None                -> false, None
-            stg_asn1.Print_Sequence_child c.Name (printReferenceToType r CON c.chType.id) bIsOptionalOrDefault soDefValue
+            stg_asn1.Print_Sequence_child c.name (printReferenceToType r CON c.chType.id) bIsOptionalOrDefault soDefValue
         let cons = cmb x |> List.map (printCon printGenericConstraint (fun sqv -> stg_asn1.Print_SeqValue (sqv.Value |> List.map(fun nmv -> stg_asn1.Print_SeqValue_Child nmv.name (printReferenceToValue r CON nmv.Value.id) ) )  ) ) 
         stg_asn1.Print_Sequence (x.children |> Seq.map printChild |> Seq.toArray) cons
     |SequenceOf x  -> 
@@ -186,7 +190,7 @@ let PrintModule (r:AstRoot) (m:Asn1Module) =
         List.map(fun im -> stg_asn1.PrintModuleImportFromModule ( (im.Types @ im.Values) |> List.map(fun s -> s.Value)) im.Name.Value )
 
     let tases = r.TypeAssignments |> Seq.filter(fun x ->x.id.ModName=m.Name) |> Seq.map(fun x -> PrintTypeAss r x ) |> Seq.toArray
-    let vases = r.ValueAssignments |> Seq.filter(fun x ->x.id.ModName=m.Name)|> Seq.map(fun x -> PrintValueAss r x )|> Seq.toArray
+    let vases = r.ValueAssignments |> Seq.filter(fun x ->x.id.ModName=m.Name && not x.childValue)|> Seq.map(fun x -> PrintValueAss r x )|> Seq.toArray
     stg_asn1.PrintModule m.Name tases vases exports importsFromModule
 
 let PrintFile (r:AstRoot) (f:Asn1File) outDir newFileExt =

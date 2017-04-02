@@ -380,65 +380,65 @@ let createValidationAst (lang:Ast.ProgrammingLanguage) (app:Ast.AstRoot) (acn:Ac
         (fun _ -> 0) 
 
         //28 enumValueFunc
-        (fun us asn1ValName ts vs v nmItem -> 
-            let ret = EnumValue {EnumValue.litOrRef=l_aux asn1ValName; id=ReferenceToValue (ts, vs); refToType=ReferenceToType ts; Value=nmItem.Value}
+        (fun us asn1ValName ts vs v nmItem childValue -> 
+            let ret = EnumValue {EnumValue.litOrRef=l_aux asn1ValName; id=ReferenceToValue (ts, vs); refToType=ReferenceToType ts; Value=nmItem.Value; childValue=childValue}
             s_aux ret us)
 
         //29 intValFunc
-        (fun us asn1ValName ts vs v bi -> 
-            let ret = IntegerValue {IntegerValue.litOrRef=l_aux asn1ValName; id=ReferenceToValue (ts, vs); refToType=ReferenceToType ts; Value=bi.Value}
+        (fun us asn1ValName ts vs v bi childValue -> 
+            let ret = IntegerValue {IntegerValue.litOrRef=l_aux asn1ValName; id=ReferenceToValue (ts, vs); refToType=ReferenceToType ts; Value=bi.Value; childValue=childValue}
             s_aux ret us)
 
         //30 realValFunc
-        (fun us asn1ValName ts vs v bi -> 
-            let ret = RealValue {RealValue.litOrRef=l_aux asn1ValName; id=ReferenceToValue (ts, vs); refToType=ReferenceToType ts; Value=bi.Value}
+        (fun us asn1ValName ts vs v bi childValue -> 
+            let ret = RealValue {RealValue.litOrRef=l_aux asn1ValName; id=ReferenceToValue (ts, vs); refToType=ReferenceToType ts; Value=bi.Value; childValue=childValue}
             s_aux ret us)
 
         //31 ia5StringValFunc 
-        (fun us asn1ValName ts vs v str -> 
-            let ret = StringValue {StringValue.litOrRef=l_aux asn1ValName; id=ReferenceToValue (ts, vs); refToType=ReferenceToType ts; Value=str.Value}
+        (fun us asn1ValName ts vs v str childValue-> 
+            let ret = StringValue {StringValue.litOrRef=l_aux asn1ValName; id=ReferenceToValue (ts, vs); refToType=ReferenceToType ts; Value=str.Value; childValue=childValue}
             s_aux ret us)
 
         //32 numStringValFunc 
-        (fun us asn1ValName ts vs v str -> 
-            let ret = StringValue {StringValue.litOrRef=l_aux asn1ValName; id=ReferenceToValue (ts, vs); refToType=ReferenceToType ts; Value=str.Value}
+        (fun us asn1ValName ts vs v str childValue-> 
+            let ret = StringValue {StringValue.litOrRef=l_aux asn1ValName; id=ReferenceToValue (ts, vs); refToType=ReferenceToType ts; Value=str.Value; childValue=childValue}
             s_aux ret us)
 
         //33 boolValFunc 
-        (fun us asn1ValName ts vs v b -> 
-            let ret = BooleanValue {BooleanValue.litOrRef=l_aux asn1ValName; id=ReferenceToValue (ts, vs); refToType=ReferenceToType ts; Value=b.Value}
+        (fun us asn1ValName ts vs v b childValue -> 
+            let ret = BooleanValue {BooleanValue.litOrRef=l_aux asn1ValName; id=ReferenceToValue (ts, vs); refToType=ReferenceToType ts; Value=b.Value; childValue=childValue}
             s_aux ret us)
 
         //34 octetStringValueFunc
-        (fun us asn1ValName ts vs v bytes -> 
-            let ret = OctetStringValue {OctetStringValue.litOrRef=l_aux asn1ValName; id=ReferenceToValue (ts, vs); refToType=ReferenceToType ts; Value=bytes |> List.map(fun b->b.Value)}
+        (fun us asn1ValName ts vs v bytes childValue-> 
+            let ret = OctetStringValue {OctetStringValue.litOrRef=l_aux asn1ValName; id=ReferenceToValue (ts, vs); refToType=ReferenceToType ts; Value=bytes |> List.map(fun b->b.Value); childValue=childValue}
             s_aux ret us)
             //createValue us asn1ValName ts vs  (OctetStringValue (bytes |> List.map(fun b->b.Value))) )
 
         //35 bitStringValueFunc
-        (fun us asn1ValName ts vs v b -> 
-            let ret = BitStringValue {BitStringValue.litOrRef=l_aux asn1ValName; id=ReferenceToValue (ts, vs); refToType=ReferenceToType ts; Value=b.Value}
+        (fun us asn1ValName ts vs v b childValue -> 
+            let ret = BitStringValue {BitStringValue.litOrRef=l_aux asn1ValName; id=ReferenceToValue (ts, vs); refToType=ReferenceToType ts; Value=b.Value; childValue=childValue}
             s_aux ret us)
 
         //36 nullValueFunc
-        (fun us asn1ValName  ts vs v  -> 
-            let ret = NullValue {NullValue.litOrRef=l_aux asn1ValName; id=ReferenceToValue (ts, vs); refToType=ReferenceToType ts; Value=()}
+        (fun us asn1ValName  ts vs v  childValue -> 
+            let ret = NullValue {NullValue.litOrRef=l_aux asn1ValName; id=ReferenceToValue (ts, vs); refToType=ReferenceToType ts; Value=(); childValue=childValue}
             s_aux ret us)
 
         //37 seqOfValueFunc s t v actType  newVals
-        (fun us asn1ValName ts vs v  newVals -> 
-            let ret = SeqOfValue {SeqOfValue.litOrRef=l_aux asn1ValName; id=ReferenceToValue (ts, vs); refToType=ReferenceToType ts; Value=newVals}
+        (fun us asn1ValName ts vs v  newVals childValue -> 
+            let ret = SeqOfValue {SeqOfValue.litOrRef=l_aux asn1ValName; id=ReferenceToValue (ts, vs); refToType=ReferenceToType ts; Value=newVals; childValue=childValue}
             s_aux ret us)
 
         //38 seqValueFunc 
-        (fun us asn1ValName ts vs v  newVals -> 
+        (fun us asn1ValName ts vs v  newVals childValue -> 
             let newVals = newVals |> List.map (fun (nm, (v)) -> {NamedValue.name=nm.Value;Value=v})
-            let ret = SeqValue {SeqValue.litOrRef=l_aux asn1ValName; id=ReferenceToValue (ts, vs); refToType=ReferenceToType ts; Value=newVals}
+            let ret = SeqValue {SeqValue.litOrRef=l_aux asn1ValName; id=ReferenceToValue (ts, vs); refToType=ReferenceToType ts; Value=newVals; childValue=childValue}
             s_aux ret us)
 
         //39 chValueFunc s t v actType name newValue
-        (fun us asn1ValName ts vs v name newChValue -> 
-            let ret = ChValue {ChValue.litOrRef=l_aux asn1ValName; id=ReferenceToValue (ts, vs); refToType=ReferenceToType ts; Value={NamedValue.name=name.Value;Value=newChValue}}
+        (fun us asn1ValName ts vs v name newChValue childValue -> 
+            let ret = ChValue {ChValue.litOrRef=l_aux asn1ValName; id=ReferenceToValue (ts, vs); refToType=ReferenceToType ts; Value={NamedValue.name=name.Value;Value=newChValue}; childValue=childValue}
             s_aux ret us)
 
         //40 singleValueContraintFunc s t checContent actType newValue

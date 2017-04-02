@@ -5,6 +5,79 @@ open System.Numerics
 open FsUtils
 open Antlr.Runtime
 
+type ProgrammingLanguage =
+    |C
+    |Ada
+with
+    member this.SpecExtention =
+        match this with
+        |C      -> "h"
+        |Ada    -> "ads"
+    member this.BodyExtention =
+        match this with
+        |C      -> "c"
+        |Ada    -> "adb"
+    member this.ArrName =
+        match this with
+        |C      -> "arr"
+        |Ada    -> "Data"
+    member this.AssignOperator =
+        match this with
+        |C      -> "="
+        |Ada    -> ":="
+    member this.ArrayAccess idx =
+        match this with
+        |C      -> "[" + idx + "]"
+        |Ada    -> "(" + idx + ")"
+    member this.ExpOr e1 e2 =
+        match this with
+        |C      -> isvalid_c.ExpOr e1 e2
+        |Ada    -> isvalid_a.ExpOr e1 e2
+    member this.ExpAnd e1 e2 =
+        match this with
+        |C      -> isvalid_c.ExpAnd e1 e2
+        |Ada    -> isvalid_a.ExpAnd e1 e2
+    member this.ExpAndMulti expList =
+        match this with
+        |C      -> isvalid_c.ExpAndMulit expList
+        |Ada    -> isvalid_a.ExpAndMulit expList
+    member this.ExpNot e  =
+        match this with
+        |C      -> isvalid_c.ExpNot e
+        |Ada    -> isvalid_a.ExpNot e
+    member this.ExpEqual e1 e2  =
+        match this with
+        |C      -> isvalid_c.ExpEqual e1 e2
+        |Ada    -> isvalid_a.ExpEqual e1 e2
+    member this.ExpStringEqual e1 e2  =
+        match this with
+        |C      -> isvalid_c.ExpStringEqual e1 e2
+        |Ada    -> isvalid_a.ExpStringEqual e1 e2
+    member this.ExpGt e1 e2  =
+        match this with
+        |C      -> isvalid_c.ExpGt e1 e2
+        |Ada    -> isvalid_a.ExpGt e1 e2
+    member this.ExpGte e1 e2  =
+        match this with
+        |C      -> isvalid_c.ExpGte e1 e2
+        |Ada    -> isvalid_a.ExpGte e1 e2
+    member this.ExpLt e1 e2  =
+        match this with
+        |C      -> isvalid_c.ExpLt e1 e2
+        |Ada    -> isvalid_a.ExpLt e1 e2
+    member this.ExpLte e1 e2  =
+        match this with
+        |C      -> isvalid_c.ExpLte e1 e2
+        |Ada    -> isvalid_a.ExpLte e1 e2
+    member this.StrLen exp =
+        match this with
+        |C      -> isvalid_c.StrLen exp
+        |Ada    -> isvalid_a.StrLen exp
+    member this.Length exp sAcc =
+        match this with
+        |C      -> isvalid_c.ArrayLen exp sAcc
+        |Ada    -> isvalid_a.ArrayLen exp sAcc
+
 
 type Asn1TypeName = {
     moduName    : string
@@ -28,6 +101,9 @@ and ReferenceToType =
         override this.ToString() =
             match this with
             | ReferenceToType path -> path |> Seq.StrJoin "."
+        member this.ToScopeNodeList = 
+            match this with
+            | ReferenceToType path -> path 
         member this.ModName =
             match this with
             | ReferenceToType path -> 
@@ -124,10 +200,19 @@ type LiteralOrReference =
     | Literal
     | ReferenceToAsn1NamedValue  of Asn1ValueName
 
+
+
+
 type Asn1ValueTemplate<'v> = {
     id          : ReferenceToValue
     litOrRef    : LiteralOrReference
     refToType   : ReferenceToType
+    
+    //childValue is true if the value is contained within another value (one of SEQUENCE, CHOICE, SEQUENCE OF) .e.g. 
+    // MySeq ::= {a INTEGER, b INTEGER}
+    //mySeqValue MySeq ::= {a 10, b 20}
+    //In mySeqValue childValue is false, while in value a 10 is true.
+    childValue  : bool
     Value       :'v
 }
 
@@ -189,6 +274,43 @@ with
         | ChValue          v    -> v.refToType
         | NullValue        v    -> v.refToType
 
+    member this.childValue = 
+        match this with
+        | IntegerValue     v    -> v.childValue
+        | RealValue        v    -> v.childValue
+        | StringValue      v    -> v.childValue
+        | BooleanValue     v    -> v.childValue
+        | BitStringValue   v    -> v.childValue
+        | OctetStringValue v    -> v.childValue
+        | EnumValue        v    -> v.childValue
+        | SeqOfValue       v    -> v.childValue
+        | SeqValue         v    -> v.childValue
+        | ChValue          v    -> v.childValue
+        | NullValue        v    -> v.childValue
+    member this.isVAS =
+        match this.id with
+        | ReferenceToValue (typePath,(GenericFold2.VA2 vasName)::[]) -> true
+        | _                                                          -> false
+    member this.getBackendName (l:ProgrammingLanguage) =
+        match this.id with
+        | ReferenceToValue (typePath,(GenericFold2.VA2 vasName)::[]) -> ToC vasName
+        | ReferenceToValue (typePath, vasPath)      -> 
+            let longName = (typePath.Tail |> List.map (fun i -> i.StrValue))@ (vasPath |> List.map (fun i -> i.StrValue))  |> Seq.StrJoin "_"
+            ToC2(longName.Replace("#","elem").L1)
+
+    member this.isLiteral (l:ProgrammingLanguage) =
+        match this with
+        | IntegerValue     v    -> true
+        | RealValue        v    -> true
+        | StringValue      v    -> true
+        | BooleanValue     v    -> true
+        | BitStringValue   v    -> false
+        | OctetStringValue v    -> false
+        | EnumValue        v    -> true
+        | SeqOfValue       v    -> false
+        | SeqValue         v    -> false
+        | ChValue          v    -> false
+        | NullValue        v    -> true
 
 type AstRootTemplate<'ASN1TYPE> = {
     Files: list<Asn1File>

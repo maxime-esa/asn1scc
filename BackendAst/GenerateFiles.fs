@@ -8,9 +8,24 @@ open Constraints
 open DAst
 
 
-let printUnit (r:DAst.AstRoot) (l:BAst.ProgrammingLanguage) outDir (pu:ProgramUnit) =
+
+let printValueAssignment (r:DAst.AstRoot) (l:ProgrammingLanguage) (pu:ProgramUnit) (v:Asn1GenericValue) =
+    let sName = v.getBackendName l
+    let t = getValueType r v
+    let sTypeDecl= t.typeDefinition.name
+    let sVal = DAstVariables.printValue r l pu v
+    match l with
+    | C     ->variables_c.PrintValueAssignment sTypeDecl sName sVal
+    | Ada   -> header_a.PrintValueAssignment sName sTypeDecl sVal
+
+let printUnit (r:DAst.AstRoot) (l:ProgrammingLanguage) outDir (pu:ProgramUnit) =
     let tases = pu.sortedTypeAssignments
     
+    let vases =
+        pu.valueAssignments |>
+        List.filter(fun x -> not x.childValue) |>
+        List.filter(fun x -> x.isVAS || not (x.isLiteral l))
+
     //header file
     //let typeDefs = tases |> List.choose(fun t -> t.getTypeDefinition l)
     let typeDefs = 
@@ -28,17 +43,23 @@ let printUnit (r:DAst.AstRoot) (l:BAst.ProgrammingLanguage) outDir (pu:ProgramUn
                 | Some a  -> a.funcDef codec
                      
             match l with
-            |BAst.C     -> header_c.Define_TAS type_defintion equal_def isValid (ancEncDec Ast.Encode) (ancEncDec Ast.Decode)
-            |BAst.Ada   -> header_a.Define_TAS type_defintion equal_def isValid (ancEncDec Ast.Encode) (ancEncDec Ast.Decode)
+            |C     -> header_c.Define_TAS type_defintion equal_def isValid (ancEncDec Ast.Encode) (ancEncDec Ast.Decode)
+            |Ada   -> header_a.Define_TAS type_defintion equal_def isValid (ancEncDec Ast.Encode) (ancEncDec Ast.Decode)
         )
-    let arrsValues = []
+    let arrsValues = 
+        vases |>
+        List.map(fun gv -> 
+            let t = getValueType r gv
+            match l with
+            | C     -> header_c.PrintValueAssignment (t.typeDefinition.name) (gv.getBackendName l)
+            | Ada   -> printValueAssignment r l pu gv)
     let arrsPrototypes = []
     let defintionsContntent =
         match l with
-        | BAst.C     -> 
+        | C     -> 
             let arrsUtilityDefines = []
             header_c.PrintHeaderFile pu.name.U1 pu.importedProgramUnits typeDefs arrsValues arrsPrototypes arrsUtilityDefines
-        | BAst.Ada   -> 
+        | Ada   -> 
             let arrsPrivateChoices = []
             header_a.PrintPackageSpec pu.name pu.importedProgramUnits typeDefs arrsValues arrsPrivateChoices
 
@@ -57,18 +78,17 @@ let printUnit (r:DAst.AstRoot) (l:BAst.ProgrammingLanguage) outDir (pu:ProgramUn
                 | None    -> None
                 | Some a  -> a.func codec
             match l with
-            | BAst.C     ->  body_c.printTass eqFunc isValid (uperEncDec Ast.Encode) (uperEncDec Ast.Decode) (ancEncDec Ast.Encode) (ancEncDec Ast.Decode)
-            | BAst.Ada   ->  
+            | C     ->  body_c.printTass eqFunc isValid (uperEncDec Ast.Encode) (uperEncDec Ast.Decode) (ancEncDec Ast.Encode) (ancEncDec Ast.Decode)
+            | Ada   ->  
                 let choiceGettersBody = []
-                body_a.printTass choiceGettersBody eqFunc isValid (uperEncDec Ast.Encode) (uperEncDec Ast.Decode) (ancEncDec Ast.Encode) (ancEncDec Ast.Decode)
-        )
+                body_a.printTass choiceGettersBody eqFunc isValid (uperEncDec Ast.Encode) (uperEncDec Ast.Decode) (ancEncDec Ast.Encode) (ancEncDec Ast.Decode))
     let eqContntent = 
         match l with
-        | BAst.C     ->
+        | C     ->
             let arrsUnnamedVariables = []
-            let arrsValueAssignments = []
+            let arrsValueAssignments = vases |> List.map (printValueAssignment r l pu)
             body_c.printSourceFile pu.name arrsUnnamedVariables arrsValueAssignments arrsTypeAssignments
-        | BAst.Ada   ->
+        | Ada   ->
             let arrsNegativeReals = []
             let arrsBoolPatterns = []
             let arrsChoiceValueAssignments = []
@@ -97,12 +117,13 @@ let CreateAdaMain (r:AstRoot) bGenTestCases outDir =
     let outFileName = Path.Combine(outDir, "mainprogram.adb")
     File.WriteAllText(outFileName, content.Replace("\r",""))
 
-let printDAst (r:DAst.AstRoot) (l:BAst.ProgrammingLanguage) outDir =
+let printDAst (r:DAst.AstRoot) (l:ProgrammingLanguage) outDir =
     r.programUnits |> Seq.iter (printUnit r l outDir)
     //print extra such make files etc
+    print_debug.DoWork r outDir "debug.txt"
     match l with
-    | BAst.C    -> ()
-    | BAst.Ada  -> 
+    | C    -> ()
+    | Ada  -> 
         CreateAdaMain r false outDir
         CreateAdaIndexFile r false outDir
 

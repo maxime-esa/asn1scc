@@ -17,12 +17,12 @@ with
     member this.VarName =
         match this with
         | SequenceOfIndex (i,_)   -> sprintf "i%d" i
-    member this.GetDeclaration (l:BAst.ProgrammingLanguage) =
+    member this.GetDeclaration (l:ProgrammingLanguage) =
         match l, this with
-        | BAst.C,    SequenceOfIndex (i,None)         -> sprintf "int i%d;" i
-        | BAst.C,    SequenceOfIndex (i,Some iv)      -> sprintf "int i%d=%d;" i iv
-        | BAst.Ada,  SequenceOfIndex (i,None)         -> sprintf "i%d:Integer;" i
-        | BAst.Ada,  SequenceOfIndex (i,Some iv)      -> sprintf "i%d:Integer:=%d;" i iv
+        | C,    SequenceOfIndex (i,None)         -> sprintf "int i%d;" i
+        | C,    SequenceOfIndex (i,Some iv)      -> sprintf "int i%d=%d;" i iv
+        | Ada,  SequenceOfIndex (i,None)         -> sprintf "i%d:Integer;" i
+        | Ada,  SequenceOfIndex (i,Some iv)      -> sprintf "i%d:Integer:=%d;" i iv
 
          //Emit_local_variable_SQF_Index(nI, bHasInitalValue)::="I<nI>:Integer<if(bHasInitalValue)>:=1<endif>;"
 
@@ -729,3 +729,5 @@ type AstRoot = {
     acnLinks                : CAst.AcnLink list
 }
 
+let getValueType (r:AstRoot) (v:Asn1GenericValue) =
+    r.typesMap.[v.refToType]

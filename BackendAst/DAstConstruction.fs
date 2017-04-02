@@ -9,13 +9,13 @@ open DAst
 open uPER2
 
 
-let getTypeDefinitionName (r:CAst.AstRoot) (l:BAst.ProgrammingLanguage) (tasInfo:BAst.TypeAssignmentInfo option) =
+let getTypeDefinitionName (r:CAst.AstRoot) (l:ProgrammingLanguage) (tasInfo:BAst.TypeAssignmentInfo option) =
     tasInfo |> Option.map (fun x -> ToC2(r.TypePrefix + x.tasName))
 
-let getEqualFuncName (r:CAst.AstRoot) (l:BAst.ProgrammingLanguage) (tasInfo:BAst.TypeAssignmentInfo option) =
+let getEqualFuncName (r:CAst.AstRoot) (l:ProgrammingLanguage) (tasInfo:BAst.TypeAssignmentInfo option) =
     tasInfo |> Option.map (fun x -> ToC2(r.TypePrefix + x.tasName + "_Equal"))
 
-let createInteger (r:CAst.AstRoot) (l:BAst.ProgrammingLanguage) (o:CAst.Integer)  (newBase:Integer option) (us:State) =
+let createInteger (r:CAst.AstRoot) (l:ProgrammingLanguage) (o:CAst.Integer)  (newBase:Integer option) (us:State) =
     let typeDefinition      = createIntegerTypeDefinition r l o  (newBase |> Option.map(fun x -> x.typeDefinition)) us
     let isValidFunction, s1     = DAstValidate.createIntegerFunction r l o typeDefinition us
     let ret : Integer = 
@@ -47,7 +47,7 @@ let createInteger (r:CAst.AstRoot) (l:BAst.ProgrammingLanguage) (o:CAst.Integer)
             }
     ret, s1
 
-let createReal (r:CAst.AstRoot) (l:BAst.ProgrammingLanguage) (o:CAst.Real)  (newBase:Real option) (us:State) : (Real*State) =
+let createReal (r:CAst.AstRoot) (l:ProgrammingLanguage) (o:CAst.Real)  (newBase:Real option) (us:State) : (Real*State) =
     let typeDefinition      = createRealTypeDefinition r l o  (newBase |> Option.map(fun x -> x.typeDefinition)) us
     let isValidFunction, s1     = DAstValidate.createRealFunction r l o typeDefinition us
     let ret = 
@@ -77,7 +77,7 @@ let createReal (r:CAst.AstRoot) (l:BAst.ProgrammingLanguage) (o:CAst.Real)  (new
             }
     ret, s1
 
-let createString (r:CAst.AstRoot) (l:BAst.ProgrammingLanguage) (o:CAst.StringType)  (newBase:StringType option) (us:State) : (StringType*State) =
+let createString (r:CAst.AstRoot) (l:ProgrammingLanguage) (o:CAst.StringType)  (newBase:StringType option) (us:State) : (StringType*State) =
     let typeDefinition      = createStringTypeDefinition r l o  (newBase |> Option.map(fun x -> x.typeDefinition)) us
     let isValidFunction, s1     = DAstValidate.createStringFunction r l o typeDefinition us
     let ret : StringType= 
@@ -109,7 +109,7 @@ let createString (r:CAst.AstRoot) (l:BAst.ProgrammingLanguage) (o:CAst.StringTyp
             }
     ret, s1
 
-let createOctet (r:CAst.AstRoot) (l:BAst.ProgrammingLanguage) (o:CAst.OctetString)  (newBase:OctetString option) (us:State) : (OctetString*State) =
+let createOctet (r:CAst.AstRoot) (l:ProgrammingLanguage) (o:CAst.OctetString)  (newBase:OctetString option) (us:State) : (OctetString*State) =
     let typeDefinition          = createOctetTypeDefinition r l o  (newBase |> Option.map(fun x -> x.typeDefinition)) us
     let isValidFunction, s1     = DAstValidate.createOctetStringFunction r l o typeDefinition us
     let ret : OctetString= 
@@ -140,7 +140,7 @@ let createOctet (r:CAst.AstRoot) (l:BAst.ProgrammingLanguage) (o:CAst.OctetStrin
             }
     ret, s1
 
-let createBitString (r:CAst.AstRoot) (l:BAst.ProgrammingLanguage) (o:CAst.BitString)  (newBase:BitString option) (us:State) : (BitString*State) =
+let createBitString (r:CAst.AstRoot) (l:ProgrammingLanguage) (o:CAst.BitString)  (newBase:BitString option) (us:State) : (BitString*State) =
     let typeDefinition      = createBitStringTypeDefinition r l o  (newBase |> Option.map(fun x -> x.typeDefinition)) us
     let isValidFunction, s1     = DAstValidate.createBitStringFunction r l o typeDefinition us
     let ret : BitString= 
@@ -171,7 +171,7 @@ let createBitString (r:CAst.AstRoot) (l:BAst.ProgrammingLanguage) (o:CAst.BitStr
             }
     ret, us
 
-let createNullType (r:CAst.AstRoot) (l:BAst.ProgrammingLanguage) (o:CAst.NullType)  (newBase:NullType option) (us:State) : (NullType*State) =
+let createNullType (r:CAst.AstRoot) (l:ProgrammingLanguage) (o:CAst.NullType)  (newBase:NullType option) (us:State) : (NullType*State) =
     let ret : NullType= 
             {
                 NullType.id          = o.id
@@ -195,7 +195,7 @@ let createNullType (r:CAst.AstRoot) (l:BAst.ProgrammingLanguage) (o:CAst.NullTyp
 
             }
     ret, us
-let createBoolean (r:CAst.AstRoot) (l:BAst.ProgrammingLanguage) (o:CAst.Boolean)  (newBase:Boolean option) (us:State) : (Boolean*State) =
+let createBoolean (r:CAst.AstRoot) (l:ProgrammingLanguage) (o:CAst.Boolean)  (newBase:Boolean option) (us:State) : (Boolean*State) =
     let typeDefinition      = createBooleanTypeDefinition r l o  (newBase |> Option.map(fun x -> x.typeDefinition)) us
     let isValidFunction, s1     = DAstValidate.createBoolFunction r l o typeDefinition us
     let ret : Boolean= 
@@ -225,7 +225,7 @@ let createBoolean (r:CAst.AstRoot) (l:BAst.ProgrammingLanguage) (o:CAst.Boolean)
             }
     ret, s1
 
-let createEnumerated (r:CAst.AstRoot) (l:BAst.ProgrammingLanguage) (o:CAst.Enumerated)  (newBase:Enumerated option) (us:State) : (Enumerated*State) =
+let createEnumerated (r:CAst.AstRoot) (l:ProgrammingLanguage) (o:CAst.Enumerated)  (newBase:Enumerated option) (us:State) : (Enumerated*State) =
     let items = 
         match o.userDefinedValues with
         | true  -> o.items |> List.map( fun i -> header_c.PrintNamedItem (i.getBackendName l) i.Value)
@@ -263,7 +263,7 @@ let createEnumerated (r:CAst.AstRoot) (l:BAst.ProgrammingLanguage) (o:CAst.Enume
     ret, us
 
 
-let createSequenceOf (r:CAst.AstRoot) (l:BAst.ProgrammingLanguage) (childType:Asn1Type) (o:CAst.SequenceOf)  (newBase:SequenceOf option) (us:State) : (SequenceOf*State) =
+let createSequenceOf (r:CAst.AstRoot) (l:ProgrammingLanguage) (childType:Asn1Type) (o:CAst.SequenceOf)  (newBase:SequenceOf option) (us:State) : (SequenceOf*State) =
     let typeDefinition      = createSequenceOfTypeDefinition r l o  (newBase |> Option.map(fun x -> x.typeDefinition)) childType.typeDefinition us
     let ret : SequenceOf = 
             {
@@ -295,7 +295,7 @@ let createSequenceOf (r:CAst.AstRoot) (l:BAst.ProgrammingLanguage) (childType:As
     ret, us
 
 
-let createSequenceChild (r:CAst.AstRoot) (l:BAst.ProgrammingLanguage)  (o:CAst.SeqChildInfo)  (newChild:Asn1Type) (us:State) : (SeqChildInfo*State) =
+let createSequenceChild (r:CAst.AstRoot) (l:ProgrammingLanguage)  (o:CAst.SeqChildInfo)  (newChild:Asn1Type) (us:State) : (SeqChildInfo*State) =
     {
         SeqChildInfo.name   = o.name
         chType              = newChild
@@ -306,7 +306,7 @@ let createSequenceChild (r:CAst.AstRoot) (l:BAst.ProgrammingLanguage)  (o:CAst.S
         isEqualBodyStats = DAstEqual.isEqualBodySequenceChild l o newChild
     }, us
 
-let createSequence (r:CAst.AstRoot) (l:BAst.ProgrammingLanguage) (children:SeqChildInfo list) (o:CAst.Sequence)  (newBase:Sequence option) (us:State) : (Sequence*State) =
+let createSequence (r:CAst.AstRoot) (l:ProgrammingLanguage) (children:SeqChildInfo list) (o:CAst.Sequence)  (newBase:Sequence option) (us:State) : (Sequence*State) =
     let typeDefinition      = createSequenceTypeDefinition r l o  (newBase |> Option.map(fun x -> x.typeDefinition)) children us
 
     let ret : Sequence= 
@@ -338,7 +338,7 @@ let createSequence (r:CAst.AstRoot) (l:BAst.ProgrammingLanguage) (children:SeqCh
     ret, us
 
 
-let createChoiceChild (r:CAst.AstRoot) (l:BAst.ProgrammingLanguage)  (o:CAst.ChChildInfo)  (newChild:Asn1Type) (us:State) : (ChChildInfo*State) =
+let createChoiceChild (r:CAst.AstRoot) (l:ProgrammingLanguage)  (o:CAst.ChChildInfo)  (newChild:Asn1Type) (us:State) : (ChChildInfo*State) =
     let typeDefinitionName = 
         let longName = newChild.id.AcnAbsPath.Tail |> List.rev |> List.tail |> List.rev |> Seq.StrJoin "_"
         ToC2(r.TypePrefix + longName.Replace("#","elem"))
@@ -354,7 +354,7 @@ let createChoiceChild (r:CAst.AstRoot) (l:BAst.ProgrammingLanguage)  (o:CAst.ChC
         isEqualBodyStats = DAstEqual.isEqualBodyChoiceChild typeDefinitionName l o newChild
     }, us
 
-let createChoice (r:CAst.AstRoot) (l:BAst.ProgrammingLanguage) (children:ChChildInfo list) (o:CAst.Choice)  (newBase:Choice option) (us:State) : (Choice*State) =
+let createChoice (r:CAst.AstRoot) (l:ProgrammingLanguage) (children:ChChildInfo list) (o:CAst.Choice)  (newBase:Choice option) (us:State) : (Choice*State) =
     let typeDefinition = createChoiceTypeDefinition r l o  (newBase |> Option.map(fun x -> x.typeDefinition)) children us
     let ret : Choice= 
             {
@@ -386,7 +386,7 @@ let createChoice (r:CAst.AstRoot) (l:BAst.ProgrammingLanguage) (children:ChChild
     ret, us
 
 
-let mapCTypeToDType (r:CAst.AstRoot) (l:BAst.ProgrammingLanguage) (t:CAst.Asn1Type)  (initialSate:State) =
+let mapCTypeToDType (r:CAst.AstRoot) (l:ProgrammingLanguage) (t:CAst.Asn1Type)  (initialSate:State) =
    
     CAstFold.foldAsn1Type
         t
@@ -429,9 +429,42 @@ let mapCTypeToDType (r:CAst.AstRoot) (l:BAst.ProgrammingLanguage) (t:CAst.Asn1Ty
         (fun children o newBase us -> createChoice r l children o newBase us)
         Choice
 
+let treeCollect (r:CAst.AstRoot) (l:ProgrammingLanguage) (t:Asn1Type)  (initialSate:State) =
+    DastFold.foldAsn1Type
+        t
+        initialSate
+
+        (fun o newBase us -> [Integer o], us)
+        id
+        (fun o newBase us -> [Real o], us)
+        id
+        (fun o newBase us -> [IA5String o], us)
+        id
+        (fun o newBase us -> [OctetString o], us)
+        id
+        (fun o newBase us -> [NullType o], us)
+        id
+        (fun o newBase us -> [BitString o], us)
+        id
+        (fun o newBase us -> [Boolean o], us)
+        id
+        (fun o newBase us -> [Enumerated o], us)
+        id
+        (fun childType o newBase us -> (SequenceOf o)::childType, us)
+        id
+        //sequence
+        (fun o newChild us -> newChild, us)
+        (fun children o newBase us -> (Sequence o)::(children |> List.collect id) ,us)
+        id
+        //Choice
+        (fun o newChild us -> newChild, us)
+        (fun children o newBase us -> (Choice o)::(children |> List.collect id) ,us)
+        id
+
+
 let foldMap = CloneTree.foldMap
 
-let DoWork (r:CAst.AstRoot) (l:BAst.ProgrammingLanguage) =
+let DoWork (r:CAst.AstRoot) (l:ProgrammingLanguage) =
     let initialState = {State.currentTypes = []; curSeqOfLevel=0; currErrCode = 1000}
     let newTypeAssignments, finalState = 
         r.TypeAssignments |>
@@ -439,8 +472,14 @@ let DoWork (r:CAst.AstRoot) (l:BAst.ProgrammingLanguage) =
             let newType, newState = mapCTypeToDType r l t cs
             newType, {newState with currentTypes = newState.currentTypes@[newType]}
         ) initialState  
-    let newTypes = finalState.currentTypes
-    let newTypesMap = newTypes |> List.map(fun t -> t.id, t) |> Map.ofList
+    let _,allTypes = 
+        newTypeAssignments |>
+        foldMap (fun cs t ->
+            let newTypes, _ = treeCollect r l t initialState
+            0, newTypes@cs
+        ) []  
+    //let newTypes = finalState.currentTypes
+    let newTypesMap = allTypes |> List.map(fun t -> t.id, t) |> Map.ofList
     let programUnits = DAstProgramUnit.createProgramUnits r.Files newTypesMap newTypeAssignments r.ValueAssignments l
     {
         AstRoot.Files = r.Files

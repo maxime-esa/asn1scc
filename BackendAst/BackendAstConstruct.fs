@@ -1,11 +1,13 @@
 ﻿module BackendAstConstruct
 
+open Constraints
+
 let DoWork (lang:Ast.ProgrammingLanguage) (app:Ast.AstRoot) (acn:AcnTypes.AcnAst) outdir =
     let l =
         match lang with
-        | Ast.ProgrammingLanguage.C     -> BAst.C
+        | Ast.ProgrammingLanguage.C     -> C
         | Ast.ProgrammingLanguage.Ada   
-        | Ast.ProgrammingLanguage.Spark -> BAst.Ada
+        | Ast.ProgrammingLanguage.Spark -> Ada
         | _                             -> raise(System.Exception "Unsupported programming language")
     
     let bast = BAstConstruction.createValidationAst lang app acn

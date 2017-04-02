@@ -60,9 +60,9 @@ let sortTypes (typesToSort: Asn1Type list) (imports :ReferenceToType list) =
                      c))
     sortedTypeAss
 
-let createProgramUnits (files: Asn1File list) (typesMap : Map<ReferenceToType, Asn1Type>) (typeAssignments : Asn1Type list) (valueAssignments  : Asn1GenericValue list) (l:BAst.ProgrammingLanguage) =
+let createProgramUnits (files: Asn1File list) (typesMap : Map<ReferenceToType, Asn1Type>) (typeAssignments : Asn1Type list) (valueAssignments  : Asn1GenericValue list) (l:ProgrammingLanguage) =
     match l with
-    | BAst.C     -> 
+    | C     -> 
         files |>
         List.map(fun f -> 
             let modulesSet = f.Modules |> List.map(fun x -> x.Name) |> Set.ofList
@@ -91,7 +91,7 @@ let createProgramUnits (files: Asn1File list) (typesMap : Map<ReferenceToType, A
             let specFileName = f.FileNameWithoutExtension+"."+l.SpecExtention
             let bodyFileName = f.FileNameWithoutExtension+"."+l.BodyExtention
             {ProgramUnit.name = f.FileNameWithoutExtension; specFileName = specFileName; bodyFileName=bodyFileName; sortedTypeAssignments = soretedTypes; valueAssignments = valueAssignments; importedProgramUnits = importedProgramUnits})
-    | BAst.Ada   -> 
+    | Ada   -> 
 
 
 

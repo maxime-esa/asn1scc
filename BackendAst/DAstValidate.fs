@@ -9,15 +9,15 @@ open FsUtils
 open Constraints
 open DAst
 
-let getFuncName (r:CAst.AstRoot) (l:BAst.ProgrammingLanguage) (tasInfo:BAst.TypeAssignmentInfo option) =
+let getFuncName (r:CAst.AstRoot) (l:ProgrammingLanguage) (tasInfo:BAst.TypeAssignmentInfo option) =
     tasInfo |> Option.map (fun x -> ToC2(r.TypePrefix + x.tasName + "_IsConstraintValid"))
 
-let Lte (l:BAst.ProgrammingLanguage) eqIsInc  e1 e2 =
+let Lte (l:ProgrammingLanguage) eqIsInc  e1 e2 =
     match eqIsInc with
     | true   -> l.ExpLte e1 e2        
     | false  -> l.ExpLt  e1 e2
 
-let foldGenericCon (l:BAst.ProgrammingLanguage) valToStrFunc  (p:String)  (c:GenericConstraint<'v>)  =
+let foldGenericCon (l:ProgrammingLanguage) valToStrFunc  (p:String)  (c:GenericConstraint<'v>)  =
     foldGenericConstraint
         (fun e1 e2 b s      -> l.ExpOr e1 e2, s)
         (fun e1 e2 s        -> l.ExpAnd e1 e2, s)
@@ -29,7 +29,7 @@ let foldGenericCon (l:BAst.ProgrammingLanguage) valToStrFunc  (p:String)  (c:Gen
         c
         0 |> fst
 
-let foldRangeCon (l:BAst.ProgrammingLanguage) valToStrFunc1 valToStrFunc2 (p:String)  (c:RangeTypeConstraint<'v1,'v2>)  =
+let foldRangeCon (l:ProgrammingLanguage) valToStrFunc1 valToStrFunc2 (p:String)  (c:RangeTypeConstraint<'v1,'v2>)  =
     foldRangeTypeConstraint        
         (fun e1 e2 b s      -> l.ExpOr e1 e2, s)
         (fun e1 e2 s        -> l.ExpAnd e1 e2, s)
@@ -47,7 +47,7 @@ let foldRangeCon (l:BAst.ProgrammingLanguage) valToStrFunc1 valToStrFunc2 (p:Str
 
 
 
-let foldSizeRangeTypeConstraint (l:BAst.ProgrammingLanguage)  getSizeFunc (p:String) (c:PosIntTypeConstraint) = 
+let foldSizeRangeTypeConstraint (l:ProgrammingLanguage)  getSizeFunc (p:String) (c:PosIntTypeConstraint) = 
     foldRangeTypeConstraint        
         (fun e1 e2 b s      -> l.ExpOr e1 e2, s)
         (fun e1 e2 s        -> l.ExpAnd e1 e2, s)
@@ -64,7 +64,7 @@ let foldSizeRangeTypeConstraint (l:BAst.ProgrammingLanguage)  getSizeFunc (p:Str
         0 
 
 
-let foldSizableConstraint (l:BAst.ProgrammingLanguage) valToStrFunc  getSizeFunc (p:String) (c:SizableTypeConstraint<'v>) =
+let foldSizableConstraint (l:ProgrammingLanguage) valToStrFunc  getSizeFunc (p:String) (c:SizableTypeConstraint<'v>) =
     foldSizableTypeConstraint2
         (fun e1 e2 b s      -> l.ExpOr e1 e2, s)
         (fun e1 e2 s        -> l.ExpAnd e1 e2, s)
@@ -77,7 +77,7 @@ let foldSizableConstraint (l:BAst.ProgrammingLanguage) valToStrFunc  getSizeFunc
         c
         0 |> fst
 
-let foldStringCon (l:BAst.ProgrammingLanguage) alphaFuncName (p:String)  (c:IA5StringConstraint)  =
+let foldStringCon (l:ProgrammingLanguage) alphaFuncName (p:String)  (c:IA5StringConstraint)  =
     foldStringTypeConstraint2
         (fun e1 e2 b s      -> l.ExpOr e1 e2, s)
         (fun e1 e2 s        -> l.ExpAnd e1 e2, s)
@@ -91,7 +91,7 @@ let foldStringCon (l:BAst.ProgrammingLanguage) alphaFuncName (p:String)  (c:IA5S
         c
         0 |> fst
 
-let createPrimitiveFunction (r:CAst.AstRoot) (l:BAst.ProgrammingLanguage)  tasInfo (typeId:ReferenceToType) allCons  conToStrFunc (typeDefinition:TypeDefinitionCommon) (alphaFuncs : AlphaFunc list) (us:State)  =
+let createPrimitiveFunction (r:CAst.AstRoot) (l:ProgrammingLanguage)  tasInfo (typeId:ReferenceToType) allCons  conToStrFunc (typeDefinition:TypeDefinitionCommon) (alphaFuncs : AlphaFunc list) (us:State)  =
     match allCons with
     | []            -> None, us
     | _             ->
@@ -110,15 +110,15 @@ let createPrimitiveFunction (r:CAst.AstRoot) (l:BAst.ProgrammingLanguage)  tasIn
                     let p = "val"
                     let (exp, _) = funcBody p  
                     match l with
-                    |BAst.C     -> Some(isvalid_c.EmitTypeAssignment_primitive funcName  typeDefinition.name exp errCode (alphaFuncs |> List.map(fun x -> x.funcBody)) )
-                    |BAst.Ada   -> Some(isvalid_a.EmitTypeAssignment_primitive funcName  typeDefinition.name exp errCode (alphaFuncs |> List.map(fun x -> x.funcBody)) )
+                    |C     -> Some(isvalid_c.EmitTypeAssignment_primitive funcName  typeDefinition.name exp errCode (alphaFuncs |> List.map(fun x -> x.funcBody)) )
+                    |Ada   -> Some(isvalid_a.EmitTypeAssignment_primitive funcName  typeDefinition.name exp errCode (alphaFuncs |> List.map(fun x -> x.funcBody)) )
         let  funcDef  = 
                 match funcName with
                 | None              -> None
                 | Some funcName     -> 
                     match l with
-                    |BAst.C     ->  Some(isvalid_c.EmitTypeAssignment_primitive_def funcName  typeDefinition.name errCode (BigInteger errCodeValue))
-                    |BAst.Ada   ->  Some(isvalid_a.EmitTypeAssignment_primitive_def funcName  typeDefinition.name errCode (BigInteger errCodeValue))
+                    |C     ->  Some(isvalid_c.EmitTypeAssignment_primitive_def funcName  typeDefinition.name errCode (BigInteger errCodeValue))
+                    |Ada   ->  Some(isvalid_a.EmitTypeAssignment_primitive_def funcName  typeDefinition.name errCode (BigInteger errCodeValue))
         
         let ret = 
             {
@@ -134,13 +134,13 @@ let createPrimitiveFunction (r:CAst.AstRoot) (l:BAst.ProgrammingLanguage)  tasIn
 
 
 
-let createIntegerFunction (r:CAst.AstRoot) (l:BAst.ProgrammingLanguage) (o:CAst.Integer) (typeDefinition:TypeDefinitionCommon) (us:State)  =
+let createIntegerFunction (r:CAst.AstRoot) (l:ProgrammingLanguage) (o:CAst.Integer) (typeDefinition:TypeDefinitionCommon) (us:State)  =
     createPrimitiveFunction r l o.tasInfo o.id o.AllCons (foldRangeCon l (fun v -> v.ToString()) (fun v -> v.ToString())) typeDefinition [] us
 
-let createRealFunction (r:CAst.AstRoot) (l:BAst.ProgrammingLanguage) (o:CAst.Real) (typeDefinition:TypeDefinitionCommon) (us:State)  =
+let createRealFunction (r:CAst.AstRoot) (l:ProgrammingLanguage) (o:CAst.Real) (typeDefinition:TypeDefinitionCommon) (us:State)  =
     createPrimitiveFunction r l o.tasInfo o.id o.AllCons (foldRangeCon l (fun v -> v.ToString("E20", NumberFormatInfo.InvariantInfo)) (fun v -> v.ToString("E20", NumberFormatInfo.InvariantInfo))) typeDefinition [] us
 
-let createStringFunction (r:CAst.AstRoot) (l:BAst.ProgrammingLanguage) (o:CAst.StringType) (typeDefinition:TypeDefinitionCommon) (us:State)  =
+let createStringFunction (r:CAst.AstRoot) (l:ProgrammingLanguage) (o:CAst.StringType) (typeDefinition:TypeDefinitionCommon) (us:State)  =
     let alphafuncName = ToC (((o.id.AcnAbsPath |> Seq.skip 1 |> Seq.StrJoin("-")).Replace("#","elm")) + "_CharsAreValid")
     let foldAlpha = (foldRangeCon l (fun v -> v.ToString().ISQ) (fun v -> v.ToString().ISQ))
     let alpaCons = o.AllCons |> List.choose(fun x -> match x with AlphabetContraint al-> Some al | _ -> None) |> List.map (foldAlpha (sprintf "str%s" (l.ArrayAccess "i")))
@@ -150,29 +150,29 @@ let createStringFunction (r:CAst.AstRoot) (l:BAst.ProgrammingLanguage) (o:CAst.S
         | _     ->
             let funcBody =
                 match l with
-                | BAst.C    -> isvalid_c.Print_AlphabetCheckFunc alphafuncName alpaCons
-                | BAst.Ada  -> isvalid_a.Print_AlphabetCheckFunc alphafuncName alpaCons
+                | C    -> isvalid_c.Print_AlphabetCheckFunc alphafuncName alpaCons
+                | Ada  -> isvalid_a.Print_AlphabetCheckFunc alphafuncName alpaCons
             let alphFunc = {AlphaFunc.funcName = alphafuncName; funcBody = funcBody }
             [alphFunc]
     createPrimitiveFunction r l o.tasInfo o.id o.AllCons (foldStringCon l alphafuncName) typeDefinition alphaFuncs us
 
-let createBoolFunction (r:CAst.AstRoot) (l:BAst.ProgrammingLanguage) (o:CAst.Boolean) (typeDefinition:TypeDefinitionCommon) (us:State)  =
+let createBoolFunction (r:CAst.AstRoot) (l:ProgrammingLanguage) (o:CAst.Boolean) (typeDefinition:TypeDefinitionCommon) (us:State)  =
     createPrimitiveFunction r l o.tasInfo o.id o.AllCons (foldGenericCon l  (fun v -> v.ToString().ToLower())) typeDefinition [] us
 
-let createEnumeratedFunction (r:CAst.AstRoot) (l:BAst.ProgrammingLanguage) (o:CAst.Enumerated) (typeDefinition:TypeDefinitionCommon) (us:State)  =
+let createEnumeratedFunction (r:CAst.AstRoot) (l:ProgrammingLanguage) (o:CAst.Enumerated) (typeDefinition:TypeDefinitionCommon) (us:State)  =
     let printNamedItem (v:string) =
         let itm = o.items |> Seq.find (fun x -> x.name = v)
         itm.getBackendName l
     createPrimitiveFunction r l o.tasInfo o.id o.AllCons (foldGenericCon l  printNamedItem) typeDefinition [] us
 
-let createOctetStringFunction (r:CAst.AstRoot) (l:BAst.ProgrammingLanguage) (o:CAst.OctetString) (typeDefinition:TypeDefinitionCommon) (us:State)  =
+let createOctetStringFunction (r:CAst.AstRoot) (l:ProgrammingLanguage) (o:CAst.OctetString) (typeDefinition:TypeDefinitionCommon) (us:State)  =
     let allCons = 
         match o.minSize = o.maxSize with
         | false -> o.AllCons
         | true  -> o.AllCons |> List.filter(fun x -> match x with SizeContraint al-> false | _ -> true)
     createPrimitiveFunction r l o.tasInfo o.id allCons (foldSizableConstraint l (fun v -> v.ToString()) (fun l p -> l.Length p ".")) typeDefinition [] us
 
-let createBitStringFunction (r:CAst.AstRoot) (l:BAst.ProgrammingLanguage) (o:CAst.BitString) (typeDefinition:TypeDefinitionCommon) (us:State)  =
+let createBitStringFunction (r:CAst.AstRoot) (l:ProgrammingLanguage) (o:CAst.BitString) (typeDefinition:TypeDefinitionCommon) (us:State)  =
     let allCons = 
         match o.minSize = o.maxSize with
         | false -> o.AllCons

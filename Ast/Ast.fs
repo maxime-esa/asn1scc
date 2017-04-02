@@ -713,29 +713,7 @@ let rec RemoveWithComponents (t:Asn1Type) (r:AstRoot)  =
 let ConvertOctetStringValue_to_BitStringValue (v:Asn1Value) =
     match v.Kind with
     | OctetStringValue(bytes)   ->
-        let handleOctet (oct:byte) =
-            let handleNibble (n:char) =
-                match n with
-                |'0'-> "0000"
-                |'1'-> "0001"
-                |'2'-> "0010"
-                |'3'-> "0011"
-                |'4'-> "0100"
-                |'5'-> "0101"
-                |'6'-> "0110"
-                |'7'-> "0111"
-                |'8'-> "1000"
-                |'9'-> "1001"
-                |'A'-> "1010"
-                |'B'-> "1011"
-                |'C'-> "1100"
-                |'D'-> "1101"
-                |'E'-> "1110"
-                |'F'-> "1111"
-                | _ -> raise(BugErrorException "")
-            let octStr = sprintf "%02X" oct
-            (handleNibble octStr.[0]) + (handleNibble octStr.[1])
-        let bitStr = bytes |> Seq.map(fun x -> handleOctet x.Value ) |> Seq.StrJoin ""
+        let bitStr = bytes |> Seq.map(fun x -> x.Value ) |> FsUtils.byteArrayToBitStringValue
         {v with Kind = BitStringValue({StringLoc.Value=bitStr; Location=v.Location})}
     | _                         -> raise(BugErrorException "")    
 

@@ -136,3 +136,6 @@ Define_TAS(sTypeDefinition, soEqualFunc, soIsValid, soAcnEncFunc, soAcnDecFunc) 
 <soAcnEncFunc>
 <soAcnDecFunc>
 >>
+
+
+PrintValueAssignment(sTypeDecl, sName) ::= "extern const <sTypeDecl> <sName>;"

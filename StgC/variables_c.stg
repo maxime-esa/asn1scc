@@ -59,3 +59,4 @@ PrintSequenceOfValue(bIsFixedSize, arrsInnerValues) ::= <<
 }
 >>
 
+PrintValueAssignment(sTypeDecl, sName, sValue) ::= "const <sTypeDecl> <sName> = <sValue>;"
