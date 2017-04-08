@@ -34,6 +34,21 @@ BEGIN
 END <sFuncName>;
 >>
 
+EmitTypeAssignment_composite_def(sFuncName, sTypeDefName, sErrCode, nErrValue) ::= <<
+<sErrCode>:CONSTANT INTEGER := <nErrValue>; -- 
+FUNCTION <sFuncName>(val : in <sTypeDefName>) return <rtlModuleName()>.ASN1_RESULT;
+>>
+
+EmitTypeAssignment_composite(sFuncName, sTypeDefName, sExpContent, sErrCode, arrsAlphaFuncs) ::= <<
+<arrsAlphaFuncs; separator="\n">
+FUNCTION <sFuncName>(val : in <sTypeDefName>) return <rtlModuleName()>.ASN1_RESULT
+IS
+    ret : <rtlModuleName()>.ASN1_RESULT;
+BEGIN
+    ret := <rtlModuleName()>.ASN1_RESULT'(Success => <sExpContent>, ErrorCode => <sErrCode>);
+    RETURN ret;
+END <sFuncName>;
+>>
 
 
 

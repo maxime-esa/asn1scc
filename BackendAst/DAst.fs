@@ -87,15 +87,19 @@ type AlphaFunc   = {
     funcName            : string
     funcBody            : string
 }
+type IsValidBody =
+    | ValidBodyExpression       of (string -> string)
+    | ValidBodyStatementList    of (string -> string) 
 
 type IsValidFunction = {
-    errCode             : string
+    errCodes            : string list
     errCodeValue        : int
     funcName            : string option               // the name of the function. Valid only for TASes)
     func                : string option               // the body of the function
     funcDef             : string option               // function definition in header file
-    funcBody            : (string -> (string*(LocalVariable list)) list)   //returns a list of encoding statements plus any variables required to declared locally
+    funcBody            : IsValidBody //(string -> (string*(LocalVariable list)) list)   //returns a list of validations statements plus any variables required to declared locally
     alphaFuncs          : AlphaFunc list  
+    localVariables      : LocalVariable list
 }
 
 type AcnFunction = {
@@ -128,9 +132,6 @@ type Integer = {
     equalFunction       : EqualFunction
     isValidFunction     : IsValidFunction option      // it is optional because some types do not require an IsValid function (e.g. an unconstraint integer)
     acnFunction         : AcnFunction
-    
-    isValidFuncName     : string option               // it has value only for TASes and only if isValidBody has value
-    isValidBody         : (string -> string) option   // 
     
     encodeFuncName      : string option               // has value only for top level asn1 types (i.e. TypeAssignments (TAS))
     encodeFuncBody      : string -> string            // an stg macro according the acnEncodingClass
@@ -166,8 +167,6 @@ type Enumerated = {
     equalFunction       : EqualFunction
     isValidFunction     : IsValidFunction option      // it is optional because some types do not require an IsValid function (e.g. an unconstraint integer)
 
-    isValidFuncName     : string option               // it has value only for TASes and only if isValidBody has value
-    isValidBody         : (string -> string) option   // 
     encodeFuncName      : string option               // has value only for top level asn1 types (i.e. TypeAssignments (TAS))
     encodeFuncBody      : string -> string            // an stg macro according the acnEncodingClass
     decodeFuncName      : string option               // has value only for top level asn1 types (i.e. TypeAssignments (TAS))
@@ -201,8 +200,6 @@ type Real = {
     equalFunction       : EqualFunction
     isValidFunction     : IsValidFunction option      // it is optional because some types do not require an IsValid function (e.g. an unconstraint integer)
 
-    isValidFuncName     : string option               // it has value only for TASes and only if isValidBody has value
-    isValidBody         : (string -> string) option   // 
     encodeFuncName      : string option               // has value only for top level asn1 types (i.e. TypeAssignments (TAS))
     encodeFuncBody      : string -> string            // an stg macro according the acnEncodingClass
     decodeFuncName      : string option               // has value only for top level asn1 types (i.e. TypeAssignments (TAS))
@@ -235,8 +232,6 @@ type Boolean = {
     equalFunction       : EqualFunction
     isValidFunction     : IsValidFunction option      // it is optional because some types do not require an IsValid function (e.g. an unconstraint integer)
 
-    isValidFuncName     : string option               // it has value only for TASes and only if isValidBody has value
-    isValidBody         : (string -> string) option   // 
     encodeFuncName      : string option               // has value only for top level asn1 types (i.e. TypeAssignments (TAS))
     encodeFuncBody      : string -> string            // an stg macro according the acnEncodingClass
     decodeFuncName      : string option               // has value only for top level asn1 types (i.e. TypeAssignments (TAS))
@@ -266,8 +261,6 @@ type NullType = {
     typeDefinition      : TypeDefinitionCommon
     equalFunction       : EqualFunction
 
-    isValidFuncName     : string option               // it has value only for TASes and only if isValidBody has value
-    isValidBody         : (string -> string) option   // 
     encodeFuncName      : string option               // has value only for top level asn1 types (i.e. TypeAssignments (TAS))
     encodeFuncBody      : string -> string            // an stg macro according the acnEncodingClass
     decodeFuncName      : string option               // has value only for top level asn1 types (i.e. TypeAssignments (TAS))
@@ -300,8 +293,6 @@ type StringType = {
     equalFunction       : EqualFunction
     isValidFunction     : IsValidFunction option      // it is optional because some types do not require an IsValid function (e.g. an unconstraint integer)
 
-    isValidFuncName     : string option               // it has value only for TASes and only if isValidBody has value
-    isValidBody         : (string -> string) option   // 
     encodeFuncName      : string option               // has value only for top level asn1 types (i.e. TypeAssignments (TAS))
     encodeFuncBody      : string -> string            // an stg macro according the acnEncodingClass
     decodeFuncName      : string option               // has value only for top level asn1 types (i.e. TypeAssignments (TAS))
@@ -336,8 +327,6 @@ type OctetString = {
     equalFunction       : EqualFunction
     isValidFunction     : IsValidFunction option      // it is optional because some types do not require an IsValid function (e.g. an unconstraint integer)
 
-    isValidFuncName     : string option               // it has value only for TASes and only if isValidBody has value
-    isValidBody         : (string -> string) option   // 
     encodeFuncName      : string option               // has value only for top level asn1 types (i.e. TypeAssignments (TAS))
     encodeFuncBody      : string -> string            // an stg macro according the acnEncodingClass
     decodeFuncName      : string option               // has value only for top level asn1 types (i.e. TypeAssignments (TAS))
@@ -374,8 +363,6 @@ type BitString = {
     equalFunction       : EqualFunction
     isValidFunction     : IsValidFunction option      // it is optional because some types do not require an IsValid function (e.g. an unconstraint integer)
 
-    isValidFuncName     : string option               // it has value only for TASes and only if isValidBody has value
-    isValidBody         : (string -> string) option   // 
     encodeFuncName      : string option               // has value only for top level asn1 types (i.e. TypeAssignments (TAS))
     encodeFuncBody      : string -> string            // an stg macro according the acnEncodingClass
     decodeFuncName      : string option               // has value only for top level asn1 types (i.e. TypeAssignments (TAS))
@@ -411,8 +398,6 @@ type SequenceOf = {
     typeDefinition      : TypeDefinitionCommon
     equalFunction       : EqualFunction
 
-    isValidFuncName     : string option               // it has value only for TASes and only if isValidBody has value
-    isValidBody         : (string -> string) option   // 
     encodeFuncName      : string option               // has value only for top level asn1 types (i.e. TypeAssignments (TAS))
     encodeFuncBody      : string -> string            // an stg macro according the acnEncodingClass
     decodeFuncName      : string option               // has value only for top level asn1 types (i.e. TypeAssignments (TAS))
@@ -424,6 +409,13 @@ with
     member this.AllCons = this.cons@this.withcons
 
 
+and SeqChildInfoIsValid = {
+    isValidStatement  : string -> string -> string
+    localVars         : LocalVariable list
+    alphaFuncs        : AlphaFunc list
+    errCode           : string list
+}
+
 
 and SeqChildInfo = {
     name                :string
@@ -434,7 +426,9 @@ and SeqChildInfo = {
 
     //DAst properties
     c_name              : string
-    isEqualBodyStats    : string -> string -> string -> (string*(LocalVariable list)) option  // 
+    isEqualBodyStats    : string -> string  -> string -> (string*(LocalVariable list)) option  // 
+    //isValidBodyStats    : string -> string  -> int -> (SeqChildInfoIsValid option * int)
+    isValidBodyStats    : int -> (SeqChildInfoIsValid option * int)
 }
 
 
@@ -457,9 +451,8 @@ and Sequence = {
     //DAst properties
     typeDefinition      : TypeDefinitionCommon
     equalFunction       : EqualFunction
+    isValidFunction     : IsValidFunction option      // it is optional because some types do not require an IsValid function (e.g. an unconstraint integer)
 
-    isValidFuncName     : string option               // it has value only for TASes and only if isValidBody has value
-    isValidBody         : (string -> string) option   // 
     encodeFuncName      : string option               // has value only for top level asn1 types (i.e. TypeAssignments (TAS))
     encodeFuncBody      : string -> string            // an stg macro according the acnEncodingClass
     decodeFuncName      : string option               // has value only for top level asn1 types (i.e. TypeAssignments (TAS))
@@ -469,7 +462,6 @@ with
     member this.Cons     = this.cons
     member this.WithCons = this.withcons
     member this.AllCons = this.cons@this.withcons
-
 
 
 
@@ -508,8 +500,6 @@ and Choice = {
     typeDefinition      : TypeDefinitionCommon
     equalFunction       : EqualFunction
 
-    isValidFuncName     : string option               // it has value only for TASes and only if isValidBody has value
-    isValidBody         : (string -> string) option   // 
     encodeFuncName      : string option               // has value only for top level asn1 types (i.e. TypeAssignments (TAS))
     encodeFuncBody      : string -> string            // an stg macro according the acnEncodingClass
     decodeFuncName      : string option               // has value only for top level asn1 types (i.e. TypeAssignments (TAS))
@@ -641,7 +631,7 @@ with
         | Boolean      t -> t.isValidFunction
         | Enumerated   t -> t.isValidFunction
         | SequenceOf   t -> None
-        | Sequence     t -> None
+        | Sequence     t -> t.isValidFunction
         | Choice       t -> None
     member this.acnFunction : AcnFunction option =
         match this with

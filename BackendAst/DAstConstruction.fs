@@ -37,8 +37,6 @@ let createInteger (r:CAst.AstRoot) (l:ProgrammingLanguage) (o:CAst.Integer)  (ne
                 equalFunction       = DAstEqual.createIntegerEqualFunction r l o typeDefinition
                 isValidFunction     = isValidFunction
                 acnFunction         = DAstACN.createIntegerFunction r l o typeDefinition
-                isValidFuncName     = None
-                isValidBody         = None
                 encodeFuncName      = None
                 encodeFuncBody      = fun x -> x
                 decodeFuncName      = None
@@ -68,8 +66,6 @@ let createReal (r:CAst.AstRoot) (l:ProgrammingLanguage) (o:CAst.Real)  (newBase:
                 typeDefinition      = typeDefinition
                 equalFunction       = DAstEqual.createRealEqualFunction r l o typeDefinition
                 isValidFunction     = isValidFunction
-                isValidFuncName     = None
-                isValidBody         = None
                 encodeFuncName      = None
                 encodeFuncBody      = fun x -> x
                 decodeFuncName      = None
@@ -100,8 +96,6 @@ let createString (r:CAst.AstRoot) (l:ProgrammingLanguage) (o:CAst.StringType)  (
                 typeDefinition      = typeDefinition
                 equalFunction       = DAstEqual.createStringEqualFunction r l o typeDefinition
                 isValidFunction     = isValidFunction
-                isValidFuncName     = None
-                isValidBody         = None
                 encodeFuncName      = None
                 encodeFuncBody      = fun x -> x
                 decodeFuncName      = None
@@ -131,8 +125,6 @@ let createOctet (r:CAst.AstRoot) (l:ProgrammingLanguage) (o:CAst.OctetString)  (
                 typeDefinition      = typeDefinition
                 equalFunction       = DAstEqual.createOctetStringEqualFunction r l o typeDefinition
                 isValidFunction     = isValidFunction
-                isValidFuncName     = None
-                isValidBody         = None
                 encodeFuncName      = None
                 encodeFuncBody      = fun x -> x
                 decodeFuncName      = None
@@ -162,14 +154,12 @@ let createBitString (r:CAst.AstRoot) (l:ProgrammingLanguage) (o:CAst.BitString) 
                 typeDefinition      = typeDefinition
                 equalFunction       = DAstEqual.createBitStringEqualFunction r l o typeDefinition
                 isValidFunction     = isValidFunction
-                isValidFuncName     = None
-                isValidBody         = None
                 encodeFuncName      = None
                 encodeFuncBody      = fun x -> x
                 decodeFuncName      = None
                 decodeFuncBody      = fun x -> x
             }
-    ret, us
+    ret, s1
 
 let createNullType (r:CAst.AstRoot) (l:ProgrammingLanguage) (o:CAst.NullType)  (newBase:NullType option) (us:State) : (NullType*State) =
     let ret : NullType= 
@@ -186,8 +176,6 @@ let createNullType (r:CAst.AstRoot) (l:ProgrammingLanguage) (o:CAst.NullType)  (
                 acnEncodingClass    = o.acnEncodingClass
                 typeDefinition      = createNullTypeDefinition r l o  (newBase |> Option.map(fun x -> x.typeDefinition)) us
                 equalFunction       = DAstEqual.createNullTypeEqualFunction r l o 
-                isValidFuncName     = None
-                isValidBody         = None
                 encodeFuncName      = None
                 encodeFuncBody      = fun x -> x
                 decodeFuncName      = None
@@ -215,8 +203,6 @@ let createBoolean (r:CAst.AstRoot) (l:ProgrammingLanguage) (o:CAst.Boolean)  (ne
                 typeDefinition      = typeDefinition
                 equalFunction       = DAstEqual.createBooleanEqualFunction r l o typeDefinition
                 isValidFunction     = isValidFunction
-                isValidFuncName     = None
-                isValidBody         = None
                 encodeFuncName      = None
                 encodeFuncBody      = fun x -> x
                 decodeFuncName      = None
@@ -252,15 +238,13 @@ let createEnumerated (r:CAst.AstRoot) (l:ProgrammingLanguage) (o:CAst.Enumerated
                 typeDefinition      = typeDefinition
                 equalFunction       = DAstEqual.createEnumeratedEqualFunction r l o typeDefinition
                 isValidFunction     = isValidFunction
-                isValidFuncName     = None
-                isValidBody         = None
                 encodeFuncName      = None
                 encodeFuncBody      = fun x -> x
                 decodeFuncName      = None
                 decodeFuncBody      = fun x -> x
 
             }
-    ret, us
+    ret, s1
 
 
 let createSequenceOf (r:CAst.AstRoot) (l:ProgrammingLanguage) (childType:Asn1Type) (o:CAst.SequenceOf)  (newBase:SequenceOf option) (us:State) : (SequenceOf*State) =
@@ -284,8 +268,6 @@ let createSequenceOf (r:CAst.AstRoot) (l:ProgrammingLanguage) (childType:Asn1Typ
                 typeDefinition      = typeDefinition
                 equalFunction       = DAstEqual.createSequenceOfEqualFunction r l o typeDefinition childType
                 childType           = childType
-                isValidFuncName     = None
-                isValidBody         = None
                 encodeFuncName      = None
                 encodeFuncBody      = fun x -> x
                 decodeFuncName      = None
@@ -303,11 +285,13 @@ let createSequenceChild (r:CAst.AstRoot) (l:ProgrammingLanguage)  (o:CAst.SeqChi
         acnInsertetField    = o.acnInsertetField
         comments            = o.comments
         c_name              = o.c_name
-        isEqualBodyStats = DAstEqual.isEqualBodySequenceChild l o newChild
+        isEqualBodyStats    = DAstEqual.isEqualBodySequenceChild l o newChild
+        isValidBodyStats    = DAstValidate.isValidBodyStats l o newChild
     }, us
 
 let createSequence (r:CAst.AstRoot) (l:ProgrammingLanguage) (children:SeqChildInfo list) (o:CAst.Sequence)  (newBase:Sequence option) (us:State) : (Sequence*State) =
-    let typeDefinition      = createSequenceTypeDefinition r l o  (newBase |> Option.map(fun x -> x.typeDefinition)) children us
+    let typeDefinition          = createSequenceTypeDefinition r l o  (newBase |> Option.map(fun x -> x.typeDefinition)) children us
+    let isValidFunction, s1     = DAstValidate.createSequenceFunction r l o typeDefinition children us
 
     let ret : Sequence= 
             {
@@ -323,19 +307,17 @@ let createSequence (r:CAst.AstRoot) (l:ProgrammingLanguage) (children:SeqChildIn
                 acnMaxSizeInBits    = o.acnMaxSizeInBits
                 acnMinSizeInBits    = o.acnMinSizeInBits
                 alignment           = o.alignment
-
                 typeDefinition      = createSequenceTypeDefinition r l o  (newBase |> Option.map(fun x -> x.typeDefinition)) children us
                 equalFunction       = DAstEqual.createSequenceEqualFunction r l o typeDefinition children
+                isValidFunction     = isValidFunction
 
-                isValidFuncName     = None
-                isValidBody         = None
                 encodeFuncName      = None
                 encodeFuncBody      = fun x -> x
                 decodeFuncName      = None
                 decodeFuncBody      = fun x -> x
 
             }
-    ret, us
+    ret, s1
 
 
 let createChoiceChild (r:CAst.AstRoot) (l:ProgrammingLanguage)  (o:CAst.ChChildInfo)  (newChild:Asn1Type) (us:State) : (ChChildInfo*State) =
@@ -375,8 +357,6 @@ let createChoice (r:CAst.AstRoot) (l:ProgrammingLanguage) (children:ChChildInfo 
 
                 typeDefinition      = typeDefinition
                 equalFunction       = DAstEqual.createChoiceEqualFunction r l o typeDefinition children
-                isValidFuncName     = None
-                isValidBody         = None
                 encodeFuncName      = None
                 encodeFuncBody      = fun x -> x
                 decodeFuncName      = None

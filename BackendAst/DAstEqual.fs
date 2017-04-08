@@ -95,7 +95,6 @@ let isEqualBodySequence  (l:ProgrammingLanguage) (children:SeqChildInfo list) (c
         match children with
         |[]     -> None
         |x::xs  -> 
-            let aaa = printChildren xs
             match printChildren xs with
             | None                          -> Some (printChild x  None)
             | Some (childrenCont, lvars)    -> 
@@ -214,7 +213,11 @@ let createStringEqualFunction (r:CAst.AstRoot) (l:ProgrammingLanguage) (o:CAst.S
 
 let createOctetOrBitStringEqualFunction (r:CAst.AstRoot) (l:ProgrammingLanguage) (tasInfo:BAst.TypeAssignmentInfo option) (typeDefinition:TypeDefinitionCommon) isEqualBody stgMacroDefFunc =
     let isEqualFuncName     = getEqualFuncName r l tasInfo
-    let topLevAcc, val1, val2 =  match l with | C -> "->", "pVal1", "pVal2" | Ada -> ".", "val1", "val2"
+    let topLevAcc, val1, val2 =  
+        match l with 
+        | C -> "->", "pVal1", "pVal2" 
+        | Ada -> ".", "val1", "val2"
+
     let    isEqualFunc, isEqualFuncDef                   = 
             match isEqualFuncName with
             | None              -> None, None
