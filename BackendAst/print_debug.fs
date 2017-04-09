@@ -90,6 +90,7 @@ let printAlphaConstraint printValue (c:IA5StringConstraint)  =
         c 
         0
 
+
 let rec printReferenceToType (r:AstRoot) (p:PRINT_CONTENT) (ReferenceToType path) =
     match p with
     | REF -> path |> Seq.skip 1 |> Seq.toList |> List.map (fun x -> x.StrValue) |> Seq.StrJoin "."

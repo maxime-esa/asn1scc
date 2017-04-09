@@ -286,7 +286,7 @@ let createSequenceChild (r:CAst.AstRoot) (l:ProgrammingLanguage)  (o:CAst.SeqChi
         comments            = o.comments
         c_name              = o.c_name
         isEqualBodyStats    = DAstEqual.isEqualBodySequenceChild l o newChild
-        isValidBodyStats    = DAstValidate.isValidBodyStats l o newChild
+        isValidBodyStats    = DAstValidate.isValidSequenceChild l o newChild
     }, us
 
 let createSequence (r:CAst.AstRoot) (l:ProgrammingLanguage) (children:SeqChildInfo list) (o:CAst.Sequence)  (newBase:Sequence option) (us:State) : (Sequence*State) =
@@ -332,12 +332,13 @@ let createChoiceChild (r:CAst.AstRoot) (l:ProgrammingLanguage)  (o:CAst.ChChildI
         presenseIsHandleByExtField = o.presenseIsHandleByExtField
         c_name              = o.c_name
         presentWhenName     = o.presentWhenName
-
         isEqualBodyStats = DAstEqual.isEqualBodyChoiceChild typeDefinitionName l o newChild
+        isValidBodyStats = DAstValidate.isValidChoiceChild l o newChild
     }, us
 
 let createChoice (r:CAst.AstRoot) (l:ProgrammingLanguage) (children:ChChildInfo list) (o:CAst.Choice)  (newBase:Choice option) (us:State) : (Choice*State) =
     let typeDefinition = createChoiceTypeDefinition r l o  (newBase |> Option.map(fun x -> x.typeDefinition)) children us
+    let isValidFunction, s1     = DAstValidate.createChoiceFunction r l o typeDefinition children us
     let ret : Choice= 
             {
                 Choice.id           = o.id
@@ -357,13 +358,14 @@ let createChoice (r:CAst.AstRoot) (l:ProgrammingLanguage) (children:ChChildInfo 
 
                 typeDefinition      = typeDefinition
                 equalFunction       = DAstEqual.createChoiceEqualFunction r l o typeDefinition children
+                isValidFunction     = isValidFunction
                 encodeFuncName      = None
                 encodeFuncBody      = fun x -> x
                 decodeFuncName      = None
                 decodeFuncBody      = fun x -> x
 
             }
-    ret, us
+    ret, s1
 
 
 let mapCTypeToDType (r:CAst.AstRoot) (l:ProgrammingLanguage) (t:CAst.Asn1Type)  (initialSate:State) =

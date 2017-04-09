@@ -72,6 +72,11 @@ type TypeDefinitionCommon = {
     completeDefinitionWithinSeq : string option
 }
 
+type ErroCode = {
+    errCodeValue    : int
+    errCodeName     : string
+}
+
 type IsEqualBody =
     | EqualBodyExpression       of (string -> string -> (string*(LocalVariable list)) option)
     | EqualBodyStatementList    of (string -> string -> (string*(LocalVariable list)) option)
@@ -92,12 +97,11 @@ type IsValidBody =
     | ValidBodyStatementList    of (string -> string) 
 
 type IsValidFunction = {
-    errCodes            : string list
-    errCodeValue        : int
+    errCodes            : ErroCode list
     funcName            : string option               // the name of the function. Valid only for TASes)
     func                : string option               // the body of the function
     funcDef             : string option               // function definition in header file
-    funcBody            : IsValidBody //(string -> (string*(LocalVariable list)) list)   //returns a list of validations statements plus any variables required to declared locally
+    funcBody            : IsValidBody                 //returns a list of validations statements
     alphaFuncs          : AlphaFunc list  
     localVariables      : LocalVariable list
 }
@@ -409,11 +413,11 @@ with
     member this.AllCons = this.cons@this.withcons
 
 
-and SeqChildInfoIsValid = {
+and SeqChoiceChildInfoIsValid = {
     isValidStatement  : string -> string -> string
     localVars         : LocalVariable list
     alphaFuncs        : AlphaFunc list
-    errCode           : string list
+    errCode           : ErroCode list
 }
 
 
@@ -427,8 +431,7 @@ and SeqChildInfo = {
     //DAst properties
     c_name              : string
     isEqualBodyStats    : string -> string  -> string -> (string*(LocalVariable list)) option  // 
-    //isValidBodyStats    : string -> string  -> int -> (SeqChildInfoIsValid option * int)
-    isValidBodyStats    : int -> (SeqChildInfoIsValid option * int)
+    isValidBodyStats    : int -> (SeqChoiceChildInfoIsValid option * int)
 }
 
 
@@ -476,6 +479,7 @@ and ChChildInfo = {
     //DAst properties
     c_name              : string
     isEqualBodyStats    : string -> string -> string -> string*(LocalVariable list) // 
+    isValidBodyStats    : int -> (SeqChoiceChildInfoIsValid option * int)
 }
 
 and Choice = {
@@ -499,6 +503,7 @@ and Choice = {
     //DAst properties
     typeDefinition      : TypeDefinitionCommon
     equalFunction       : EqualFunction
+    isValidFunction     : IsValidFunction option      
 
     encodeFuncName      : string option               // has value only for top level asn1 types (i.e. TypeAssignments (TAS))
     encodeFuncBody      : string -> string            // an stg macro according the acnEncodingClass
@@ -632,7 +637,7 @@ with
         | Enumerated   t -> t.isValidFunction
         | SequenceOf   t -> None
         | Sequence     t -> t.isValidFunction
-        | Choice       t -> None
+        | Choice       t -> t.isValidFunction
     member this.acnFunction : AcnFunction option =
         match this with
         | Integer      t -> None //Some (t.acnFunction)
@@ -721,3 +726,4 @@ type AstRoot = {
 
 let getValueType (r:AstRoot) (v:Asn1GenericValue) =
     r.typesMap.[v.refToType]
+

@@ -180,7 +180,7 @@ Emit_Reference2(p, sModName,sTasName) ::= "<Emit_Reference1(p=p, sTasName = sTas
 
 /* SEQUENCE start*/
 
-isValid_Sequence_s1(sIsValidExp, sErrCode) ::= <<
+makeExpressionToStatement(sIsValidExp, sErrCode) ::= <<
 ret = <sIsValidExp>;
 *pErrCode = ret ? 0 :  <sErrCode>;
 >>
@@ -212,18 +212,21 @@ if (ret) {
 
 
 /* CHOICE start*/
-Emit_choice_child(sChPresent, sChildBody) ::= <<
+
+
+choice_child(sChPresent, soChildBody) ::= <<
 case <sChPresent> :
-    <sChildBody>
+    <soChildBody>
     break;
 >>
 
-Emit_choice(p, arrsChildren, sChoiceErrName) ::= <<
-switch (<p>kind) {
+
+choice(p, sAccess, arrsChildren, sErrCodeForInvalidCase) ::= <<
+switch (<p><sAccess>kind) {
     <arrsChildren; separator="\n">
     default:
-	    *pErrCode = ERR_INVALID_CHOICE_ALTERNATIVE;   //COVERAGE_IGNORE
-	    ret = FALSE;                    //COVERAGE_IGNORE
+	    *pErrCode = <sErrCodeForInvalidCase>;      /*COVERAGE_IGNORE*/
+	    ret = FALSE;                               /*COVERAGE_IGNORE*/
 }
 >>
 
