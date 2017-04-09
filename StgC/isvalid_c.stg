@@ -73,13 +73,14 @@ EmitTypeAssignment_composite_def(sFuncName, sTypeDefName, arrsErrcodes) ::= <<
 flag <sFuncName>(const <sTypeDefName>* pVal, int* pErrCode);
 >>
 
-EmitTypeAssignment_composite(sFuncName, sTypeDefName, sContent, arrsAlphaFuncs) ::= <<
+EmitTypeAssignment_composite(sFuncName, sTypeDefName, sContent, arrsAlphaFuncs, arrsLocalVars) ::= <<
 <arrsAlphaFuncs; separator="\n">
 flag <sFuncName>(const <sTypeDefName> *pVal, int* pErrCode)
 {
     flag ret = TRUE;
+    <arrsLocalVars; separator="\n">
 	
-    <sContent>;
+    <sContent>
 
 	return ret;
 }
@@ -246,6 +247,22 @@ while (ret && (<sI>\< <if(bFixed)><nMax><else><sPath>nCount<endif>)) {
 }
 >>
 
+
+
+sequenceOf(p,sAcc, i, bIsFixedSize, nFixedSize, soIsValidSizeExp, soErrCode, soInnerStatement) ::= <<
+<if(!bIsFixedSize)>
+ret = <soIsValidSizeExp>;
+*pErrCode = ret ? 0 :  <soErrCode>;
+
+<endif>
+<if (soInnerStatement)>
+for(<i> = 0; ret && <i> \< <if(!bIsFixedSize)><p><sAcc>nCount<else><nFixedSize><endif>; <i>++) 
+{
+	<soInnerStatement>
+}
+
+<endif>
+>>
 
 
 

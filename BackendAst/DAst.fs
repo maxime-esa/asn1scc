@@ -401,6 +401,7 @@ type SequenceOf = {
     //DAst properties
     typeDefinition      : TypeDefinitionCommon
     equalFunction       : EqualFunction
+    isValidFunction     : IsValidFunction option      
 
     encodeFuncName      : string option               // has value only for top level asn1 types (i.e. TypeAssignments (TAS))
     encodeFuncBody      : string -> string            // an stg macro according the acnEncodingClass
@@ -635,7 +636,7 @@ with
         | BitString    t -> t.isValidFunction
         | Boolean      t -> t.isValidFunction
         | Enumerated   t -> t.isValidFunction
-        | SequenceOf   t -> None
+        | SequenceOf   t -> t.isValidFunction
         | Sequence     t -> t.isValidFunction
         | Choice       t -> t.isValidFunction
     member this.acnFunction : AcnFunction option =

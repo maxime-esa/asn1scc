@@ -249,6 +249,7 @@ let createEnumerated (r:CAst.AstRoot) (l:ProgrammingLanguage) (o:CAst.Enumerated
 
 let createSequenceOf (r:CAst.AstRoot) (l:ProgrammingLanguage) (childType:Asn1Type) (o:CAst.SequenceOf)  (newBase:SequenceOf option) (us:State) : (SequenceOf*State) =
     let typeDefinition      = createSequenceOfTypeDefinition r l o  (newBase |> Option.map(fun x -> x.typeDefinition)) childType.typeDefinition us
+    let isValidFunction, s1     = DAstValidate.createSequenceOfFunction r l o typeDefinition childType us
     let ret : SequenceOf = 
             {
                 SequenceOf.id       = o.id
@@ -267,6 +268,7 @@ let createSequenceOf (r:CAst.AstRoot) (l:ProgrammingLanguage) (childType:Asn1Typ
                 acnEncodingClass    = o.acnEncodingClass
                 typeDefinition      = typeDefinition
                 equalFunction       = DAstEqual.createSequenceOfEqualFunction r l o typeDefinition childType
+                isValidFunction     = isValidFunction
                 childType           = childType
                 encodeFuncName      = None
                 encodeFuncBody      = fun x -> x
@@ -274,7 +276,7 @@ let createSequenceOf (r:CAst.AstRoot) (l:ProgrammingLanguage) (childType:Asn1Typ
                 decodeFuncBody      = fun x -> x
 
             }
-    ret, us
+    ret, s1
 
 
 let createSequenceChild (r:CAst.AstRoot) (l:ProgrammingLanguage)  (o:CAst.SeqChildInfo)  (newChild:Asn1Type) (us:State) : (SeqChildInfo*State) =
@@ -447,7 +449,7 @@ let treeCollect (r:CAst.AstRoot) (l:ProgrammingLanguage) (t:Asn1Type)  (initialS
 let foldMap = CloneTree.foldMap
 
 let DoWork (r:CAst.AstRoot) (l:ProgrammingLanguage) =
-    let initialState = {State.currentTypes = []; curSeqOfLevel=0; currErrCode = 1000}
+    let initialState = {State.currentTypes = []; curSeqOfLevel=0; currErrCode = 1}
     let newTypeAssignments, finalState = 
         r.TypeAssignments |>
         foldMap (fun cs t ->
