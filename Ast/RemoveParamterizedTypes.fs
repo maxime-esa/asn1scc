@@ -264,8 +264,11 @@ let DoModule (r:AstRoot) (m:Asn1Module) :Asn1Module =
             match newCurImports |> Seq.tryFind (fun imp -> imp.Name.Value = impMod) with
             | None      -> ({ImportedModule.Name = StringLoc.ByValue impMod; Types = [StringLoc.ByValue impTas];    Values = []})::newCurImports        
             | Some imp  ->
-                let newImp = {imp with Types = (StringLoc.ByValue impTas)::imp.Types}
-                newImp::(newCurImports|>List.filter(fun imp -> imp.Name.Value = impMod))
+                match imp.Types |> Seq.tryFind(fun x -> x.Value = impTas) with
+                | None  ->
+                    let newImp = {imp with Types = (StringLoc.ByValue impTas)::imp.Types}
+                    newImp::(newCurImports|>List.filter(fun imp -> imp.Name.Value = impMod))
+                | Some _    -> newCurImports
         )  existingImports
     
     {

@@ -1,0 +1,17 @@
+----------------------------------------------------------------------------------------
+-- Test module
+----------------------------------------------------------------------------------------
+Test-Dataview DEFINITIONS ::=
+BEGIN
+
+IMPORTS 
+  T-SecondModule-Type1 FROM SecondModule-Dataview;
+
+T-Test{TypeParameter} ::= SEQUENCE {
+  type1Thing            T-SecondModule-Type1,
+  value                 TypeParameter
+}  
+
+T-MyParameterisedType  ::= T-Test{INTEGER}
+
+END
