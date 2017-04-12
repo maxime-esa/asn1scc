@@ -286,8 +286,9 @@ namespace Asn1f2
                     {
                         WriteTextFile(Path.Combine(outDir, "xer.c"), Resource1.xer);
                     }
-
-                    BackendAstConstruct.DoWork(Ast.ProgrammingLanguage.C, asn1Ast0, acnAstUnresolved, outDir);
+                    var renamePolicy = getRenamePolicy(cmdArgs, ParameterizedAsn1Ast.EnumRenamePolicy.SelectiveEnumerants);
+                    var uniqueEnums = EnsureUniqueEnumNames.DoWork(asn1Ast0, renamePolicy);
+                    BackendAstConstruct.DoWork(Ast.ProgrammingLanguage.C, uniqueEnums, acnAstUnresolved, outDir);
                 } else if (cmdArgs.HasArgument("Ada"))
                 {
                     WriteTextFile(Path.Combine(outDir, spark_body.GetRTLName() + ".adb"), Resource1.adaasn1rtl_adb);
@@ -296,7 +297,9 @@ namespace Asn1f2
                     WriteTextFile(Path.Combine(outDir, "gnat.cfg"), Resource1.gnat);
                     WriteTextFile(Path.Combine(outDir, "runSpark.sh"), Resource1.run);
                     WriteTextFile(Path.Combine(outDir, "GPS_project.gpr"), Resource1.GPS_project);
-                    BackendAstConstruct.DoWork(Ast.ProgrammingLanguage.Ada, asn1Ast0, acnAstUnresolved, outDir);
+                    var renamePolicy = getRenamePolicy(cmdArgs, ParameterizedAsn1Ast.EnumRenamePolicy.NoRenamePolicy);
+                    var uniqueEnums = EnsureUniqueEnumNames.DoWork(asn1Ast0, renamePolicy);
+                    BackendAstConstruct.DoWork(Ast.ProgrammingLanguage.Ada, uniqueEnums, acnAstUnresolved, outDir);
                     System.IO.Directory.CreateDirectory(Path.Combine(outDir, "examiner"));
                     System.IO.Directory.CreateDirectory(Path.Combine(outDir, "bin"));
                 }

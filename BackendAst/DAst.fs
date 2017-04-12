@@ -92,16 +92,13 @@ type AlphaFunc   = {
     funcName            : string
     funcBody            : string
 }
-type IsValidBody =
-    | ValidBodyExpression       of (string -> string)
-    | ValidBodyStatementList    of (string -> string) 
 
 type IsValidFunction = {
     errCodes            : ErroCode list
     funcName            : string option               // the name of the function. Valid only for TASes)
     func                : string option               // the body of the function
     funcDef             : string option               // function definition in header file
-    funcBody            : IsValidBody                 //returns a list of validations statements
+    funcBody            : string -> string            //returns a list of validations statements
     alphaFuncs          : AlphaFunc list  
     localVariables      : LocalVariable list
 }

@@ -339,10 +339,10 @@ let createValidationAst (lang:Ast.ProgrammingLanguage) (app:Ast.AstRoot) (acn:Ac
             let newEnmItems, userDefinedValues = 
                 match enmItems |> Seq.exists (fun nm -> nm._value.IsSome) with
                 | false ->
-                    enmItems |> List.mapi(fun i x -> {EnumItem.name = x.Name.Value;  Value = BigInteger i; comments = x.Comments|> Seq.toList} ), false
+                    enmItems |> List.mapi(fun i x -> {EnumItem.name = x.Name.Value; c_name = x.c_name; ada_name = x.ada_name;  Value = BigInteger i; comments = x.Comments|> Seq.toList} ), false
                 | true  ->
                     let withVals = RemoveNumericStringsAndFixEnums.allocatedValuesToAllEnumItems enmItems app 
-                    withVals |> List.mapi(fun i x -> {EnumItem.name = x.Name.Value;  Value = BigInteger i; comments = x.Comments|> Seq.toList} ), true
+                    withVals |> List.mapi(fun i x -> {EnumItem.name = x.Name.Value; c_name = x.c_name; ada_name = x.ada_name;  Value = BigInteger i; comments = x.Comments|> Seq.toList} ), true
             InterimEnumerated (None, newEnmItems, userDefinedValues), ustate)
 
         //17 enmItemFunc

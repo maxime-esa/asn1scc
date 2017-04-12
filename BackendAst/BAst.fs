@@ -76,12 +76,14 @@ type EnumItem = {
     name        : string
     Value       : BigInteger
     comments    : string list
+    c_name:string
+    ada_name:string
 }
 with
     member this.getBackendName l = 
         match l with
-        | C         -> ToC this.name
-        | Ada       -> ToC this.name
+        | C         -> ToC this.c_name
+        | Ada       -> ToC this.ada_name
 
 type Enumerated = {
     id                  : ReferenceToType

@@ -2,6 +2,18 @@ group a_isvalid;
 
 rtlModuleName() ::= "adaasn1rtl"
 
+
+always_true_statement ()::= <<
+ret := <rtlModuleName()>.ASN1_RESULT'(Success => true, ErrorCode => 0);
+>>
+
+JoinTwoIfFirstOk(sStr1,sStr2) ::=<<
+<sStr1>
+if ret.Success then then
+    <sStr2>
+end if;
+>>
+
 ExpEqual(sExp1, sExp2) ::= "(<sExp1> = <sExp2>)"
 ExpStringEqual(sExp1, sExp2) ::= "(<sExp1> = <sExp2>)"
 ExpGt(sExp1, sExp2) ::= "(<sExp1> \> <sExp2>)"
@@ -18,34 +30,45 @@ StrLen(sExp) ::= "<rtlModuleName()>.getStringSize(<sExp>)"
 ArrayLen(sExp, sAcc) ::= "<sExp><sAcc>Length"
 
 
+
+makeExpressionToStatement(sIsValidExp, sErrCode) ::= <<
+ret := <rtlModuleName()>.ASN1_RESULT'(Success => <sIsValidExp>, ErrorCode => <sErrCode>);
+>>
+
+
 EmitTypeAssignment_primitive_def(sFuncName, sTypeDefName, sErrCode, nErrValue) ::= <<
 <sErrCode>:CONSTANT INTEGER := <nErrValue>; -- 
 FUNCTION <sFuncName>(val : in <sTypeDefName>) return <rtlModuleName()>.ASN1_RESULT;
 >>
 
-EmitTypeAssignment_primitive(sFuncName, sTypeDefName, sExpContent, sErrCode, arrsAlphaFuncs) ::= <<
+EmitTypeAssignment_primitive(sFuncName, sTypeDefName, sContent, arrsAlphaFuncs) ::= <<
 <arrsAlphaFuncs; separator="\n">
 FUNCTION <sFuncName>(val : in <sTypeDefName>) return <rtlModuleName()>.ASN1_RESULT
 IS
     ret : <rtlModuleName()>.ASN1_RESULT;
 BEGIN
-    ret := <rtlModuleName()>.ASN1_RESULT'(Success => <sExpContent>, ErrorCode => <sErrCode>);
+    <sContent>
     RETURN ret;
 END <sFuncName>;
 >>
 
-EmitTypeAssignment_composite_def(sFuncName, sTypeDefName, sErrCode, nErrValue) ::= <<
-<sErrCode>:CONSTANT INTEGER := <nErrValue>; -- 
+EmitTypeAssignment_composite_def_err_code(sErrCode, nErrValue) ::= <<
+<sErrCode>:CONSTANT INTEGER := <nErrValue>; 
+>>
+
+EmitTypeAssignment_composite_def(sFuncName, sTypeDefName, arrsErrcodes) ::= <<
+<arrsErrcodes; separator="\n">
 FUNCTION <sFuncName>(val : in <sTypeDefName>) return <rtlModuleName()>.ASN1_RESULT;
 >>
 
-EmitTypeAssignment_composite(sFuncName, sTypeDefName, sExpContent, sErrCode, arrsAlphaFuncs) ::= <<
+EmitTypeAssignment_composite(sFuncName, sTypeDefName, sContent, arrsAlphaFuncs, arrsLocalVars) ::= <<
 <arrsAlphaFuncs; separator="\n">
 FUNCTION <sFuncName>(val : in <sTypeDefName>) return <rtlModuleName()>.ASN1_RESULT
 IS
-    ret : <rtlModuleName()>.ASN1_RESULT;
+    ret : <rtlModuleName()>.ASN1_RESULT := <rtlModuleName()>.ASN1_RESULT'(Success => true, ErrorCode => 0);
+    <arrsLocalVars; separator="\n">
 BEGIN
-    ret := <rtlModuleName()>.ASN1_RESULT'(Success => <sExpContent>, ErrorCode => <sErrCode>);
+    <sContent>
     RETURN ret;
 END <sFuncName>;
 >>
@@ -56,6 +79,8 @@ Print_AlphabetCheckFunc_str() ::= "str(I)"
 
 Print_AlphabetCheckFunc(sFuncName, arrsAlphaConBody) ::= <<
 FUNCTION <sFuncName>(str : in String) return boolean 
+  with
+      pre =\> STR'First=1 AND STR'Last\>=STR'First AND STR'Last\<=INTEGER'LAST-1
 IS
     ret:BOOLEAN:=true;
     I:INTEGER:=1;
@@ -85,6 +110,9 @@ stringContainsChar(sStrVal, p) ::= "<rtlModuleName()>.stringContainsChar(<sStrVa
 PrintReference1(p, sName) ::= "<sName>_IsConstraintValid(<p>)"
 
 PrintReference2(p, sModName,sName) ::= "<sModName>.<sName>_IsConstraintValid(<p>)"
+
+call_base_type_func(p, sFuncName) ::= "ret := <sFuncName>(<p>);"
+
 
 SingleValContraint(p, v) ::= "(<p> = <v>)"
 
@@ -116,57 +144,76 @@ Emit_Reference1(p, sName) ::= "ret := <sName>_IsConstraintValid(<p>);"
 
 Emit_Reference2(p, sModName,sName) ::= "ret := <sModName>.<sName>_IsConstraintValid(<p>);"
 
+/* SEQUENCE OF start*/
 
 
-Emit_sequence_of_assert(sI, nMax) ::= "<sI> >= 1 AND <sI> \<= <nMax>"
 
-Emit_sequence_of(sI, sPath, nMax, sSizeConstraint, sChildBody, bFixed, arrsAssrtAnts) ::= <<
-<sSizeConstraint>
-<sI> := 1;
-WHILE ret.Success AND <sI>\<=<if(bFixed)><nMax><else><sPath>.Length<endif> LOOP
---# assert <arrsAssrtAnts; separator= " AND ">;
-    <sChildBody>
-    <sI> := <sI>+1;
-END LOOP;
+sequenceOf(p,sAcc, i, bIsFixedSize, nFixedSize, soIsValidSizeExp, soErrCode, soInnerStatement) ::= <<
+<if(!bIsFixedSize)>
+ret := <rtlModuleName()>.ASN1_RESULT'(Success => <soIsValidSizeExp>, ErrorCode => <soErrCode>);
+
+<endif>
+<if (soInnerStatement)>
+<i> := <p>.Data'First;
+while ret.Success and <i> \<= <if(bIsFixedSize)><nFixedSize><else><p>.Length<endif> loop
+    pragma Loop_Invariant (<i> \>= <p>.Data'First and <i> \<= <if(bIsFixedSize)><nFixedSize><else><p>.Length<endif>);
+    <soInnerStatement>
+    <i> := <i>+1;
+end loop;
+
+<endif>
 >>
 
-Emit_fixedSize_constraint() ::= "ret := <rtlModuleName()>.ASN1_RESULT'(Success => TRUE, ErrorCode => 0);"
+/* SEQUENCE OF end*/
 
 
 /* SEQUENCE start*/
+
+Sequence_optional_child_always_present_or_absent(p, sAcc,  sChName, sErrCode, sPresOrAbs) ::= <<
+ret:= <rtlModuleName()>.ASN1_RESULT'(Success => <p>.Exist.<sChName>=<sPresOrAbs>, ErrorCode => <sErrCode>);
+>>
+
+Sequence_OptionalChild(p, sAcc, sChName, sInnerStatement) ::= <<
+if <p>.Exist.<sChName> = 1 then
+    <sInnerStatement>
+end if;
+>>
+
+JoinItems(sPart, soNestedPart) ::= <<
+<sPart>
+<if(soNestedPart)>
+if ret.Success then
+    <soNestedPart>
+end if;
+
+<endif>
+>>
+
+
+
 Emit_sequence_optional_component(sParentPath, sName, sChildBody) ::=<<
 IF <sParentPath>.Exist.<sName>=1 THEN
     <sChildBody>
 END IF;
 >>
 
-Emit_sequence_check_component_is_always_present_or_absent(sParentPath, sName, nPresOrAbs, sErrCode) ::= <<
-ret:= <rtlModuleName()>.ASN1_RESULT'(Success => <sParentPath>.Exist.<sName>=<nPresOrAbs>, ErrorCode => <sErrCode>);
->>
 
-JoinItems(sPart, bCanFail, sNestedPart) ::= <<
-<sPart>
-<if(sNestedPart)>
-<if(bCanFail)>
-IF ret.Success THEN
-    <sNestedPart>
-END IF;
-<else>
-<sNestedPart>
-<endif>
-<endif>
->>
+
 
 /* SEQUENCE end*/
 
+/*CHOICE start*/
 
-Emit_choice_child(sName, sChildBody, sNamePresent) ::= <<
-WHEN <sNamePresent> =>
+
+choice_child(sChPresent, sChildBody) ::= <<
+WHEN <sChPresent> =>
     <sChildBody>
 >>
 
-Emit_choice(sTasName, arrsChildren) ::= <<
-CASE <sTasName>_kind(val) IS
+choice(p, sAccess, arrsChildren, sErrCodeForInvalidCase) ::= <<
+case <p>.kind is
     <arrsChildren; separator="\n">
-END CASE;
+end case;
 >>
+
+/*CHOICE end */

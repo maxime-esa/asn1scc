@@ -11,8 +11,17 @@ JoinTwo(sStr1,sStr2) ::=<<
 <sStr2>
 >>
 
+JoinTwoIfFirstOk(sStr1,sStr2) ::=<<
+<sStr1>
+if (ret) {
+    <sStr2>
+}
+>>
 
 
+always_true_statement ()::= <<
+ret = TRUE;
+>>
 
 
 
@@ -31,14 +40,13 @@ EmitTypeAssignment_primitive_def(sFuncName, sTypeDefName, sErrCode, nErrValue) :
 flag <sFuncName>(const <sTypeDefName> val, int* pErrCode);
 >>
 
-EmitTypeAssignment_primitive(sFuncName, sTypeDefName, sIsValidExp, sErrCode, arrsAlphaFuncs) ::= <<
+EmitTypeAssignment_primitive(sFuncName, sTypeDefName, sContent, arrsAlphaFuncs) ::= <<
 <arrsAlphaFuncs; separator="\n">
 flag <sFuncName>(const <sTypeDefName> val, int* pErrCode)
 {
     flag ret = TRUE;
 	
-    ret = <sIsValidExp>;
-    *pErrCode = ret ? 0 :  <sErrCode>;
+    <sContent>
 
 	return ret;
 }
@@ -50,14 +58,13 @@ EmitTypeAssignment_oct_or_bit_string_def(sFuncName, sTypeDefName, sErrCode, nErr
 flag <sFuncName>(const <sTypeDefName>* pVal, int* pErrCode);
 >>
 
-EmitTypeAssignment_oct_or_bit_string(sFuncName, sTypeDefName, sIsValidExp, sErrCode, arrsAlphaFuncs) ::= <<
+EmitTypeAssignment_oct_or_bit_string(sFuncName, sTypeDefName, sContent, arrsAlphaFuncs) ::= <<
 <arrsAlphaFuncs; separator="\n">
 flag <sFuncName>(const <sTypeDefName>* pVal, int* pErrCode)
 {
     flag ret = TRUE;
 	
-    ret = <sIsValidExp>;
-    *pErrCode = ret ? 0 :  <sErrCode>;
+    <sContent>
 
 	return ret;
 }
@@ -172,9 +179,8 @@ ret = <arrsConstraints; separator=" && ">;
 >>
 
 
-Emit_Reference1(p, sTasName) ::= "ret = <sTasName>_IsConstraintValid(<p>, pErrCode);"
+call_base_type_func(p, sFuncName) ::= "ret = <sFuncName>(<p>, pErrCode);"
 
-Emit_Reference2(p, sModName,sTasName) ::= "<Emit_Reference1(p=p, sTasName = sTasName)>"
 
 
 
@@ -186,15 +192,15 @@ ret = <sIsValidExp>;
 *pErrCode = ret ? 0 :  <sErrCode>;
 >>
 
-isValid_Sequence_optional_child(p, sAcc,  sChName, sInnerStatement) ::= <<
-if (ret && <p><sAcc>exist.<sChName>) {
+Sequence_OptionalChild(p, sAcc,  sChName, sInnerStatement) ::= <<
+if (<p><sAcc>exist.<sChName>) {
 	<sInnerStatement>
 }
 >>
 
 
-isValid_Sequence_optional_child_always_present_or_absent(p, sAcc,  sChName, sErrCode) ::= <<
-ret= <p><sAcc>exist.<sChName> == <soPresOrAbs>;
+Sequence_optional_child_always_present_or_absent(p, sAcc,  sChName, sErrCode, sPresOrAbs) ::= <<
+ret= <p><sAcc>exist.<sChName> == <sPresOrAbs>;
 *pErrCode = ret ? 0 : <sErrCode>;
 >>
 
@@ -215,9 +221,9 @@ if (ret) {
 /* CHOICE start*/
 
 
-choice_child(sChPresent, soChildBody) ::= <<
+choice_child(sChPresent, sChildBody) ::= <<
 case <sChPresent> :
-    <soChildBody>
+    <sChildBody>
     break;
 >>
 
