@@ -1,0 +1,47 @@
+----------------------------------------------------------------------------------------
+-- Test module
+----------------------------------------------------------------------------------------
+Test-Dataview DEFINITIONS ::=
+BEGIN
+
+IMPORTS 
+  T-SecondModule-Type1 FROM SecondModule-Dataview;
+
+T-Test ::= SEQUENCE {
+  type1Thing            T-SecondModule-Type1{INTEGER}
+}  
+
+END
+
+----------------------------------------------------------------------------------------
+-- Second module
+----------------------------------------------------------------------------------------
+
+SecondModule-Dataview DEFINITIONS ::=
+BEGIN
+
+IMPORTS
+  T-ThirdModule-Type2  FROM ThirdModule-Dataview;
+
+T-SecondModule-Type3 ::= INTEGER
+T-SecondModule-Type4 ::= INTEGER
+
+T-SecondModule-Type1{TypeParameter} ::= SEQUENCE {
+  val1                  T-SecondModule-Type3  ,
+  val2                  T-ThirdModule-Type2  ,
+  val3                  T-SecondModule-Type4 ,
+  value                 TypeParameter
+}  
+
+END
+
+----------------------------------------------------------------------------------------
+-- Third module
+----------------------------------------------------------------------------------------
+
+ThirdModule-Dataview DEFINITIONS ::=
+BEGIN
+
+T-ThirdModule-Type2 ::= INTEGER(0 .. 33)
+
+END

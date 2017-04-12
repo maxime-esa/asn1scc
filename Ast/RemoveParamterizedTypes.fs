@@ -267,7 +267,7 @@ let DoModule (r:AstRoot) (m:Asn1Module) :Asn1Module =
                 match imp.Types |> Seq.tryFind(fun x -> x.Value = impTas) with
                 | None  ->
                     let newImp = {imp with Types = (StringLoc.ByValue impTas)::imp.Types}
-                    newImp::(newCurImports|>List.filter(fun imp -> imp.Name.Value = impMod))
+                    newImp::(newCurImports|>List.filter(fun imp -> imp.Name.Value <> impMod))
                 | Some _    -> newCurImports
         )  existingImports
     
