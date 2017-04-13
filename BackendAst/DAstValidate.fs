@@ -9,6 +9,9 @@ open FsUtils
 open Constraints
 open DAst
 
+// TODO
+// single value constraints for composite types (SEQUENCE, SEQUENCE OF, CHOICE) by using the generated value and _equal function (like bit and octet strings)
+
 let getFuncName (r:CAst.AstRoot) (l:ProgrammingLanguage) (tasInfo:BAst.TypeAssignmentInfo option) =
     tasInfo |> Option.map (fun x -> ToC2(r.TypePrefix + x.tasName + "_IsConstraintValid"))
 
@@ -77,6 +80,8 @@ let foldSizableConstraint (l:ProgrammingLanguage) compareSingValueFunc  getSizeF
         c
         0 |> fst
 
+
+
 let foldStringCon (l:ProgrammingLanguage) alphaFuncName (p:String)  (c:IA5StringConstraint)  =
     foldStringTypeConstraint2
         (fun e1 e2 b s      -> l.ExpOr e1 e2, s)
@@ -104,11 +109,7 @@ let makeExpressionToStatement l = match l with C -> isvalid_c.makeExpressionToSt
 let callBaseTypeFunc l = match l with C -> isvalid_c.call_base_type_func | Ada -> isvalid_a.call_base_type_func
 let joinTwoIfFirstOk l = match l with C -> isvalid_c.JoinTwoIfFirstOk | Ada -> isvalid_a.JoinTwoIfFirstOk
 
-let getAddres l p=
-    match l with
-    | Ada -> p
-    | C  when p="pVal" -> p
-    | C                -> sprintf "&(%s)" p
+let getAddres = DAstEqual.getAddres
 
 let createPrimitiveFunction (r:CAst.AstRoot) (l:ProgrammingLanguage)  tasInfo (typeId:ReferenceToType) allCons  conToStrFunc (typeDefinition:TypeDefinitionCommon) (alphaFuncs : AlphaFunc list) (baseTypeValFunc : IsValidFunction option) (us:State)  =
     let baseFuncName = baseFuncName baseTypeValFunc
@@ -156,6 +157,7 @@ let createPrimitiveFunction (r:CAst.AstRoot) (l:ProgrammingLanguage)  tasInfo (t
                 func                        = func
                 funcDef                     = funcDef
                 funcBody                    = funcBody 
+                funcBody2                   = (fun p acc -> funcBody p)
                 alphaFuncs                  = alphaFuncs
                 localVariables              = []
             }    
@@ -210,6 +212,7 @@ let createBitOrOctetStringFunction (r:CAst.AstRoot) (l:ProgrammingLanguage)  tas
                 func                        = func
                 funcDef                     = funcDef
                 funcBody                    = (fun p -> funcBody p ".")
+                funcBody2                   = funcBody
                 alphaFuncs                  = alphaFuncs
                 localVariables              = []
             }    
@@ -255,20 +258,34 @@ let exlcudeSizeConstraintIfFixedSize minSize maxSize allCons =
 
 let createOctetStringFunction (r:CAst.AstRoot) (l:ProgrammingLanguage) (o:CAst.OctetString) (typeDefinition:TypeDefinitionCommon) (baseTypeValFunc : IsValidFunction option) (equalFunc:EqualFunction) (us:State)  =
     let allCons = exlcudeSizeConstraintIfFixedSize o.minSize o.maxSize o.AllCons
-    let compareSingValueFunc (p:String) (v:OctetStringValue) =
-        let vstr = getAddres l ((OctetStringValue v).getBackendName l)
-        match equalFunc.isEqualBody with
-        | EqualBodyExpression eqFunc    ->
-            match eqFunc p vstr with
+    let compareSingValueFunc (p:String) acc (v:OctetStringValue) =
+        let vstr = 
+            match acc with
+            | "->"  -> getAddres l ((OctetStringValue v).getBackendName l)
+            | _     -> ((OctetStringValue v).getBackendName l)
+        match equalFunc.isEqualBody2 with
+        | EqualBodyExpression2 eqFunc    ->
+            match eqFunc p vstr acc with
             | None          -> raise(BugErrorException "unexpected case")
             | Some (ret,_)      -> ret
-        | EqualBodyStatementList  _     -> raise(BugErrorException "unexpected case")
-    let foldSizeCon childAccess = foldSizableConstraint l compareSingValueFunc (fun l p -> l.Length p childAccess)
+        | EqualBodyStatementList2  _     -> raise(BugErrorException "unexpected case")
+    let foldSizeCon childAccess = foldSizableConstraint l (fun p v -> compareSingValueFunc p childAccess v) (fun l p -> l.Length p childAccess)
     createBitOrOctetStringFunction r l o.tasInfo o.id allCons foldSizeCon typeDefinition [] baseTypeValFunc us
 
-let createBitStringFunction (r:CAst.AstRoot) (l:ProgrammingLanguage) (o:CAst.BitString) (typeDefinition:TypeDefinitionCommon) (baseTypeValFunc : IsValidFunction option) (us:State)  =
+let createBitStringFunction (r:CAst.AstRoot) (l:ProgrammingLanguage) (o:CAst.BitString) (typeDefinition:TypeDefinitionCommon) (baseTypeValFunc : IsValidFunction option) (equalFunc:EqualFunction) (us:State)  =
     let allCons = exlcudeSizeConstraintIfFixedSize o.minSize o.maxSize o.AllCons
-    let foldSizeCon childAccess = foldSizableConstraint l (fun p v -> v.ToString()) (fun l p -> l.Length p childAccess)
+    let compareSingValueFunc (p:String) acc (v:BitStringValue) =
+        let vstr = 
+            match acc with
+            | "->"  -> getAddres l ((BitStringValue v).getBackendName l)
+            | _     -> ((BitStringValue v).getBackendName l)
+        match equalFunc.isEqualBody2 with
+        | EqualBodyExpression2 eqFunc    ->
+            match eqFunc p vstr acc with
+            | None          -> raise(BugErrorException "unexpected case")
+            | Some (ret,_)      -> ret
+        | EqualBodyStatementList2  _     -> raise(BugErrorException "unexpected case")
+    let foldSizeCon childAccess = foldSizableConstraint l (fun p v -> compareSingValueFunc p childAccess v) (fun l p -> l.Length p childAccess)
     createBitOrOctetStringFunction r l o.tasInfo o.id allCons foldSizeCon typeDefinition [] baseTypeValFunc us
 
 
@@ -406,6 +423,7 @@ let createSequenceFunction (r:CAst.AstRoot) (l:ProgrammingLanguage) (o:CAst.Sequ
                 func                        = func
                 funcDef                     = funcDef
                 funcBody                    = (fun p -> funcBody p ".")
+                funcBody2                   = funcBody
                 alphaFuncs                  = alphaFuncs
                 localVariables              = localVars
             }    
@@ -508,6 +526,7 @@ let createChoiceFunction (r:CAst.AstRoot) (l:ProgrammingLanguage) (o:CAst.Choice
                 func                        = func
                 funcDef                     = funcDef
                 funcBody                    = (fun p -> funcBody p ".")
+                funcBody2                   = funcBody
                 alphaFuncs                  = alphaFuncs
                 localVariables              = localVars
             }    
@@ -659,6 +678,7 @@ let createSequenceOfFunction (r:CAst.AstRoot) (l:ProgrammingLanguage) (o:CAst.Se
                 func                        = func
                 funcDef                     = funcDef
                 funcBody                    = (fun p -> funcBody p ".")
+                funcBody2                   = funcBody
                 alphaFuncs                  = alphaFuncs
                 localVariables              = localVars
             }    

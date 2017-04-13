@@ -26,10 +26,9 @@ END <sPackageName>;
 
 
 
-printTass(arrsChoiceGetters, soEqualFunc, soIsValidFunc, soUperEncFunc, soUperDecFunc, soAcnEncFunc, soAcnDecFunc) ::= <<
-<arrsChoiceGetters; separator="\n">
+printTass(arrsEqualFunc, soIsValidFunc, soUperEncFunc, soUperDecFunc, soAcnEncFunc, soAcnDecFunc) ::= <<
 
-<soEqualFunc>
+<arrsEqualFunc; separator="\n">
 
 <soIsValidFunc> 
 

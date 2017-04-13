@@ -81,11 +81,16 @@ type IsEqualBody =
     | EqualBodyExpression       of (string -> string -> (string*(LocalVariable list)) option)
     | EqualBodyStatementList    of (string -> string -> (string*(LocalVariable list)) option)
 
+type IsEqualBody2 =
+    | EqualBodyExpression2       of (string -> string -> string -> (string*(LocalVariable list)) option)
+    | EqualBodyStatementList2    of (string -> string -> string -> (string*(LocalVariable list)) option)
+
 type EqualFunction = {
     isEqualFuncName     : string option               // the name of the equal function. Valid only for TASes)
     isEqualFunc         : string option               // the body of the equal function
     isEqualFuncDef      : string option
     isEqualBody         : IsEqualBody                 // a function that  returns an expression or a statement list
+    isEqualBody2        : IsEqualBody2
 }
 
 type AlphaFunc   = {
@@ -99,6 +104,7 @@ type IsValidFunction = {
     func                : string option               // the body of the function
     funcDef             : string option               // function definition in header file
     funcBody            : string -> string            //returns a list of validations statements
+    funcBody2           : string -> string -> string  //like funBody but with two arguement p and accessOper ( i.e. '->' or '.')
     alphaFuncs          : AlphaFunc list  
     localVariables      : LocalVariable list
 }

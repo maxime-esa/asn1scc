@@ -88,6 +88,8 @@ memcmp(<p1>arr, <p2>arr, <nFixedSize>) ==0
 <endif>	
 >>
 
+
+
 isEqual_Choice_Child(sCid, sInnerStatement) ::= <<
 case <sCid>:
 	<sInnerStatement>
@@ -143,3 +145,8 @@ ret = <sName>_Equal(<sPtr1>, <sPtr2>);
 >>
 
 
+call_base_type_func(p1, p2, sFuncName) ::= "<sFuncName>(<p1>, <p2>)"
+
+makeExpressionToStatement(sIsValidExp) ::= <<
+ret = <sIsValidExp>;
+>>

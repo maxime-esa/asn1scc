@@ -128,10 +128,10 @@ struct {<if(!bIsFixedSize)>
 
 
 
-Define_TAS(sTypeDefinition, soEqualFunc, soIsValid, soAcnEncFunc, soAcnDecFunc) ::= <<
+Define_TAS(sTypeDefinition, arrsEqualFunc, soIsValid, soAcnEncFunc, soAcnDecFunc) ::= <<
 <sTypeDefinition>
 
-<soEqualFunc>
+<arrsEqualFunc; separator="\n">
 <soIsValid>
 <soAcnEncFunc>
 <soAcnDecFunc>

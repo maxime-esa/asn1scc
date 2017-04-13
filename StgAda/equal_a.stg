@@ -130,3 +130,8 @@ begin
 >>
 
 
+call_base_type_func(p1, p2, sFuncName) ::= "<sFuncName>(<p1>, <p2>)"
+
+makeExpressionToStatement(sIsValidExp) ::= <<
+ret := <sIsValidExp>;
+>>

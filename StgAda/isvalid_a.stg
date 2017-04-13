@@ -20,7 +20,7 @@ ExpGt(sExp1, sExp2) ::= "(<sExp1> \> <sExp2>)"
 ExpGte(sExp1, sExp2) ::= "(<sExp1> \>= <sExp2>)"
 ExpLt(sExp1, sExp2) ::= "(<sExp1> \< <sExp2>)"
 ExpLte(sExp1, sExp2) ::= "(<sExp1> \<= <sExp2>)"
-ExpOr(sExp1, sExp2) ::= "(<sExp1> OR <sExp2>)"
+ExpOr(sExp1, sExp2) ::= "((<sExp1>) OR (<sExp2>))"
 ExpAnd(sExp1, sExp2) ::= "(<sExp1> AND <sExp2>)"
 ExpAndMulit(arrsExp) ::= <<
 <arrsExp; separator=" AND ">
