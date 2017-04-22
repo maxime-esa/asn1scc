@@ -196,6 +196,12 @@ type Asn1Size<'a> =
 type Codec =
     |Encode
     |Decode
+ with
+    member this.suffix =
+        match this with
+        | Encode    -> "_Encode"
+        | Decode    -> "_Decode"
+
 
 type INTTYPE =
     | UINT      // declared as unsigned integer

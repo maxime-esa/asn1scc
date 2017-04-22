@@ -66,14 +66,16 @@ let printUnit (r:DAst.AstRoot) (l:ProgrammingLanguage) outDir (pu:ProgramUnit) =
                 match t.isValidFunction with
                 | None      -> None
                 | Some f    -> f.funcDef
+            let uPerEncFunc = match t.uperEncFunction with None -> None | Some x -> x.funcDef
+            let uPerDecFunc = match t.uperDecFunction with None -> None | Some x -> x.funcDef
             let ancEncDec codec         = 
                 match t.acnFunction with
                 | None    -> None
                 | Some a  -> a.funcDef codec
                      
             match l with
-            |C     -> header_c.Define_TAS type_defintion equal_defs isValid (ancEncDec Ast.Encode) (ancEncDec Ast.Decode)
-            |Ada   -> header_a.Define_TAS type_defintion equal_defs isValid (ancEncDec Ast.Encode) (ancEncDec Ast.Decode)
+            |C     -> header_c.Define_TAS type_defintion equal_defs isValid uPerEncFunc uPerDecFunc (ancEncDec Ast.Encode) (ancEncDec Ast.Decode)
+            |Ada   -> header_a.Define_TAS type_defintion equal_defs isValid uPerEncFunc uPerDecFunc (ancEncDec Ast.Encode) (ancEncDec Ast.Decode)
         )
     let arrsValues = 
         vases |>
@@ -101,7 +103,11 @@ let printUnit (r:DAst.AstRoot) (l:ProgrammingLanguage) outDir (pu:ProgramUnit) =
             let eqFuncs = collectEqualDeffinitions t |> List.choose(fun ef -> ef.isEqualFunc)
             let isValid = match t.isValidFunction with None -> None | Some isVal -> isVal.func
 
-            let uperEncDec codec         =  None
+            let uperEncDec codec         =  
+                match codec with
+                | Ast.Encode    -> match t.uperEncFunction with None -> None | Some x -> x.func
+                | Ast.Decode    -> match t.uperDecFunction with None -> None | Some x -> x.func
+
             let ancEncDec codec         = 
                 match t.acnFunction with
                 | None    -> None

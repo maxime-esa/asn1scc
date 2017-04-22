@@ -1,4 +1,4 @@
-all:	cTests adaTests
+all:	adaTests cTests 
 
 cTests:
 	PATH=$$PATH:../../Asn1f2/bin/Debug ./runTests.py -l c

@@ -9,7 +9,7 @@ open DAst
 
 
 // TODO
-// 1 In sequences with default components, default value must be taken into account when empty.
+// 1 In sequences with default components, default value must be taken into account when component not present.
 
 let callBaseTypeFunc l = match l with C -> equal_c.call_base_type_func | Ada -> equal_c.call_base_type_func
 let makeExpressionToStatement l = match l with C -> equal_c.makeExpressionToStatement | Ada -> equal_a.makeExpressionToStatement

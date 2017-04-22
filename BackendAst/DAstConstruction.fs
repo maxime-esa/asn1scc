@@ -20,6 +20,10 @@ let createInteger (r:CAst.AstRoot) (l:ProgrammingLanguage) (o:CAst.Integer)  (ne
     let baseTypeEqFunc  = newBase |> Option.map(fun x -> x.equalFunction)
     let baseTypeValFunc = match newBase with None -> None | Some x -> x.isValidFunction
     let isValidFunction, s1     = DAstValidate.createIntegerFunction r l o typeDefinition baseTypeValFunc us
+    let baseTypeEncUperFunc     = newBase |> Option.map(fun x -> x.uperEncFunction)
+    let baseTypeDecUperFunc     = newBase |> Option.map(fun x -> x.uperDecFunction)
+    let uperEncFunction, s2     = DAstUPer.createIntegerFunction r l Ast.Codec.Encode o typeDefinition baseTypeEncUperFunc isValidFunction s1
+    let uperDecFunction, s3     = DAstUPer.createIntegerFunction r l Ast.Codec.Decode o typeDefinition baseTypeDecUperFunc isValidFunction s2
     let ret : Integer = 
             {
                 Integer.id          = o.id
@@ -38,6 +42,8 @@ let createInteger (r:CAst.AstRoot) (l:ProgrammingLanguage) (o:CAst.Integer)  (ne
                 typeDefinition      = typeDefinition
                 equalFunction       = DAstEqual.createIntegerEqualFunction r l o typeDefinition baseTypeEqFunc
                 isValidFunction     = isValidFunction
+                uperEncFunction     = uperEncFunction
+                uperDecFunction     = uperDecFunction
                 acnFunction         = DAstACN.createIntegerFunction r l o typeDefinition
                 encodeFuncName      = None
                 encodeFuncBody      = fun x -> x
@@ -45,7 +51,7 @@ let createInteger (r:CAst.AstRoot) (l:ProgrammingLanguage) (o:CAst.Integer)  (ne
                 decodeFuncBody      = fun x -> x
 
             }
-    ret, s1
+    ret, s3
 
 let createReal (r:CAst.AstRoot) (l:ProgrammingLanguage) (o:CAst.Real)  (newBase:Real option) (us:State) : (Real*State) =
     let typeDefinition      = createRealTypeDefinition r l o  (newBase |> Option.map(fun x -> x.typeDefinition)) us

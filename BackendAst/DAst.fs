@@ -109,6 +109,16 @@ type IsValidFunction = {
     localVariables      : LocalVariable list
 }
 
+type UPerFunction = {
+    errCodes            : ErroCode list
+    funcName            : string option               // the name of the function
+    func                : string option               // the body of the function
+    funcDef             : string option               // function definition in header file
+    funcBody            : string -> string            // returns a list of validations statements
+    funcBody2           : string -> string -> string  //like funBody but with two arguement p and accessOper ( i.e. '->' or '.')
+    localVariables      : LocalVariable list
+}
+
 type AcnFunction = {
     funcName            : Ast.Codec -> string option               // the name of the function. Valid only for TASes)
     func                : Ast.Codec -> string option               // the body of the function
@@ -138,6 +148,8 @@ type Integer = {
     typeDefinition      : TypeDefinitionCommon
     equalFunction       : EqualFunction
     isValidFunction     : IsValidFunction option      // it is optional because some types do not require an IsValid function (e.g. an unconstraint integer)
+    uperEncFunction     : UPerFunction
+    uperDecFunction     : UPerFunction
     acnFunction         : AcnFunction
     
     encodeFuncName      : string option               // has value only for top level asn1 types (i.e. TypeAssignments (TAS))
@@ -642,6 +654,32 @@ with
         | SequenceOf   t -> t.isValidFunction
         | Sequence     t -> t.isValidFunction
         | Choice       t -> t.isValidFunction
+    member this.uperEncFunction =
+         match this with
+         | Integer      t -> Some(t.uperEncFunction)
+         | Real         t -> None
+         | IA5String    t -> None
+         | OctetString  t -> None
+         | NullType     t -> None
+         | BitString    t -> None
+         | Boolean      t -> None
+         | Enumerated   t -> None
+         | SequenceOf   t -> None
+         | Sequence     t -> None
+         | Choice       t -> None
+    member this.uperDecFunction =
+         match this with
+         | Integer      t -> Some(t.uperDecFunction)
+         | Real         t -> None
+         | IA5String    t -> None
+         | OctetString  t -> None
+         | NullType     t -> None
+         | BitString    t -> None
+         | Boolean      t -> None
+         | Enumerated   t -> None
+         | SequenceOf   t -> None
+         | Sequence     t -> None
+         | Choice       t -> None
     member this.acnFunction : AcnFunction option =
         match this with
         | Integer      t -> None //Some (t.acnFunction)

@@ -68,267 +68,6 @@ void <sTasName>_Initialize(<sTasName><sStar> pVal)
 >>
 
 
-/*
-*****************************************************************************************
- C H E C K   C O N S T R A I N T S      F U N C T I O N S
-*****************************************************************************************
-*/
-
-PrintIsConstraintValid(sTasName, sStar, arrsLocalVariables, sContent, arrsAlphaCheckFunctions) ::= <<
-<arrsAlphaCheckFunctions; separator="\n"> 
-flag <sTasName>_IsConstraintValid(const <sTasName><sStar> pVal, int* pErrCode)
-{
-    
-    flag ret = TRUE;
-	<arrsLocalVariables; separator="\n">
-	*pErrCode=0;
-
-	(void)pVal;
-
-	<sContent>
-
-	return ret;
-}
->>
-
-
-
-SingleValContraint(p, v) ::= "(<p> == <v>)"
-
-SingleValContraint_bitString_fixedSize(p1, p2, nFixedSize) ::= <<
-((memcmp(<p1>arr, <p2>.arr, <nFixedSize>/8) == 0) && ((<nFixedSize> % 8) >0 ? (<p1>arr[<nFixedSize>/8]\>>(8-<nFixedSize> % 8) == <p2>.arr[<nFixedSize>/8]\>>(8-<nFixedSize> % 8) ) : TRUE))
->>
-
-SingleValContraint_bitString_varSize(p1, p2) ::= <<
-(((<p1>nCount == <p2>.nCount) && (memcmp(<p1>arr, <p2>.arr, <p1>nCount/8) == 0)) && (<p1>nCount % 8 > 0 ? (<p1>arr[<p1>nCount/8] \>> (8-<p1>nCount % 8) == <p2>.arr[<p1>nCount/8]\>>(8-<p1>nCount % 8) ) : TRUE))
->>
-
-
-SingleValContraint_octetString_fixedSize(p1, p2, nFixedSize) ::= <<
-(memcmp(<p1>arr, <p2>.arr, <nFixedSize>) ==0)
->>
-
-SingleValContraint_octetString_varSize(p1, p2) ::= <<
-((<p1>nCount == <p2>.nCount) && (memcmp(<p1>arr, <p2>.arr, <p1>nCount) ==0))
->>
-
-
-stringContainsChar(sStrVal, p) ::= "strchr(<sStrVal>, <p>)"
-
-RangeContraint(p, v1, v2, bMin, bMax) ::= "(<v1> \<<if(bMin)>=<endif> <p> && <p> \<<if(bMax)>=<endif> <v2>)"
-
-RangeContraint_val_MAX(p, v, bMin) ::= "(<p> ><if(bMin)>=<endif> <v>)"
-
-RangeContraint_MIN_val(p, v, bMax) ::= "(<p> \<<if(bMax)>=<endif> <v>)"
-
-
-AND_Constraint(sCon1, sCon2) ::= "(<sCon1> && <sCon2>)"
-
-OR_Constraint(sCon1, sCon2) ::= "(<sCon1> || <sCon2>)"
-
-AllExceptConstraint(sCon)  ::= "(!<sCon>)"
-
-ExceptConstraint(sCon1,sCon2) ::= "(<sCon1> &&  !<sCon2>)"
-
-callAlphaFunc(sFuncName, p) ::= "<sFuncName>_CharsAreValid(<p>)"
-
-PrintMultipleConstraints(arrsConstraints) ::= "<arrsConstraints; separator=\" && \">"
-
-
-Emit_local_variable_SQF_Index(nI)::="int i<nI>=0;"
-
-
-Print_AlphabetCheckFunc(sName, arrsAlphaConBody) ::= <<
-flag <sName>_CharsAreValid(const char* pVal) 
-{
-    flag ret=TRUE;
-    int i=0;
-
-    while ((pVal[i] != '\0') && ret) {
-        ret = ret && (<arrsAlphaConBody; separator=" && ">);
-        i = i + 1;
-    }
-    return ret;
-}
->>
-
-
-Emit_type(arrsConstraints, sErrCodeName) ::= <<
-ret = <arrsConstraints; separator=" && ">;
-*pErrCode = ret ? 0 : <sErrCodeName>;
->>
-
-
-Emit_Reference1(p, sTasName) ::= "ret = <sTasName>_IsConstraintValid(<p>, pErrCode);"
-
-Emit_Reference2(p, sModName,sTasName) ::= "<Emit_Reference1(p=p, sTasName = sTasName)>"
-
-
-
-
-/* SEQUENCE start*/
-Emit_sequence_optional_component(sParentPath, sName, sChildBody) ::=<<
-if (<sParentPath>exist.<sName>==1) {
-    <sChildBody>
-}
->>
-
-Emit_sequence_check_component_is_always_present_or_absent(sParentPath, sName, nPresOrAbs, sErrCode) ::= <<
-ret= <sParentPath>exist.<sName>==<nPresOrAbs>;
-*pErrCode = ret ? 0 : <sErrCode>;
->>
-
-JoinItems(sPart, sNestedPart) ::= <<
-<sPart>
-<if(sNestedPart)>
-if (ret) {
-    <sNestedPart>
-}
-<endif>
->>
-
-/* SEQUENCE end*/
-
-
-/* CHOICE start*/
-Emit_choice_child(sChPresent, sChildBody) ::= <<
-case <sChPresent> :
-    <sChildBody>
-    break;
->>
-
-Emit_choice(p, arrsChildren, sChoiceErrName) ::= <<
-switch (<p>kind) {
-    <arrsChildren; separator="\n">
-    default:
-	    *pErrCode = ERR_INVALID_CHOICE_ALTERNATIVE;   //COVERAGE_IGNORE
-	    ret = FALSE;                    //COVERAGE_IGNORE
-}
->>
-
-/* CHOICE end*/
-
-
-Emit_fixedSize_constraint() ::= "ret = TRUE; *pErrCode = 0;"
-
-
-
-Emit_sequence_of(sI, sPath, nMax, sSizeConstraint, sChildBody, bFixed) ::= <<
-<sSizeConstraint>
-<sI> = 0;
-while (ret && (<sI>\< <if(bFixed)><nMax><else><sPath>nCount<endif>)) {
-    <sChildBody>
-    <sI> = <sI>+1;
-}
->>
-
-
-
-
-
-
-
-/*
-*****************************************************************************************
- E Q U A L      F U N C T I O N S
-*****************************************************************************************
-*/
-PrintEqual(sName, sStar, arrsLocalVariables, sContent) ::= <<
-flag <sName>_Equal(const <sName><sStar> pVal1, const <sName><sStar> pVal2)
-{
-	flag ret=TRUE;
-	<arrsLocalVariables:{lv|<lv>}; separator="\n">
-	
-	<sContent>
-
-	return ret;
-}
->>
-
-isEqual_Integer(p1, p2) ::= "ret = (<p1> == <p2>);"
-
-isEqual_Enumerated(p1, p2) ::= "<isEqual_Integer(p1=p1,p2=p2)>"
-
-
-isEqual_Boolean(p1, p2) ::= "ret = ( (<p1> && <p2>) || (!<p1> && !<p2>));"
-
-isEqual_Real(p1, p2) ::= <<
-ret =  <p1> == <p2> ? TRUE : (<p1> == 0.0 ? <p2> ==0.0 : (fabs((<p1> - <p2>) / <p1>) \< 0.00001));
->>
-
-isEqual_IA5String(p1, p2) ::= "ret = (strcmp(<p1>, <p2>) ==0);"
-
-isEqual_NumericString(p1, p2) ::= "<isEqual_IA5String(p1=p1, p2=p2)>"
-isEqual_NullType() ::= "ret = TRUE;"
-
-isEqual_BitString(p1,p2,bIsFixedSize, nFixedSize) ::= <<
-<if(!bIsFixedSize)>
-ret = ((<p1>nCount == <p2>nCount) && (memcmp(<p1>arr, <p2>arr, <p1>nCount/8) == 0));
-ret = ret && (<p1>nCount % 8 > 0 ? (<p1>arr[<p1>nCount/8] \>> (8-<p1>nCount % 8) == <p2>arr[<p1>nCount/8]\>>(8-<p1>nCount % 8) ) : TRUE);
-
-<else>
-ret = memcmp(<p1>arr, <p2>arr, <nFixedSize>/8) == 0;
-ret = ret && ((<nFixedSize> % 8) >0 ? (<p1>arr[<nFixedSize>/8]\>>(8-<nFixedSize> % 8) == <p2>arr[<nFixedSize>/8]\>>(8-<nFixedSize> % 8) ) : TRUE);
-
-<endif>
->>
-
-isEqual_OctetString(p1,p2,bIsFixedSize, nFixedSize) ::= <<
-<if(!bIsFixedSize)>
-ret = ((<p1>nCount == <p2>nCount) && (memcmp(<p1>arr, <p2>arr, <p1>nCount) ==0));
-
-<else>
-ret = (memcmp(<p1>arr, <p2>arr, <nFixedSize>) ==0);
-
-<endif>	
->>
-
-isEqual_Choice_Child(sCid, sInnerType) ::= <<
-case <sCid>:
-	<sInnerType>
-	break;
->>
-
-isEqual_Choice(p1,p2, arrsChildren) ::= <<
-ret = (<p1>kind == <p2>kind);
-if (ret) {
-	switch(<p1>kind) 
-	{
-	<arrsChildren: {ch|<ch>}; separator="\n">
-	default:
-		ret = FALSE;    //COVERAGE_IGNORE
-	}
-}
->>
-
-isEqual_Sequence_child(p1, p2, bIsOptional, sChName, sInnerType) ::= <<
-<if(bIsOptional)>
-ret = (<p1>exist.<sChName> == <p2>exist.<sChName>);
-if (ret && <p1>exist.<sChName>) {
-	<sInnerType>
-}
-<else>
-<sInnerType>
-<endif>
->>
-
-
-isEqual_SequenceOf(p1,p2, i, bIsFixedSize, nFixedSize, sInnerType) ::= <<
-<if(!bIsFixedSize)>
-ret = (<p1>nCount == <p2>nCount);
-<endif>
-
-for(<i> = 0; ret && <i>\<<if(!bIsFixedSize)><p1>nCount<else><nFixedSize><endif>; <i>++) 
-{
-	<sInnerType>
-}
->>
-
-
-isEqual_ReferenceType(sPtr1, sPtr2, sName) ::= <<
-ret = <sName>_Equal(<sPtr1>, <sPtr2>);
->>
-
 
 
 /*******************************************************/
@@ -339,6 +78,59 @@ Declare_EnumIndex() ::= "asn1SccSint enumIndex;"
 Declare_Length()    ::= "asn1SccSint nCount;"
 Declare_ChoiceIndex() ::= "asn1SccSint nChoiceIndex;"
 Declare_SequenceBitMask(sName, nSize) ::= "unsigned char <sName>[<nSize>];"
+
+
+EmitTypeAssignment_def_err_code(sErrCode, nErrValue) ::= <<
+#define <sErrCode>		<nErrValue>  /**/
+>>
+
+
+EmitTypeAssignment_primitive_def_encode(sFuncName, sTypeDefName, arrsErrcodes, bEmptyEncodingSpace, nMaxBytesInPER, nMaxBitsInPER) ::= <<
+<arrsErrcodes; separator="\n">
+#define <sTypeDefName>_REQUIRED_BYTES_FOR_ENCODING       <nMaxBytesInPER> 
+#define <sTypeDefName>_REQUIRED_BITS_FOR_ENCODING        <nMaxBitsInPER>
+
+flag <sFuncName>(const <sTypeDefName> val, BitStream* pBitStrm, int* pErrCode, flag bCheckConstraints);
+>>
+
+EmitTypeAssignment_primitive_encode(sFuncName, soIValidFuncName, sTypeDefName, arrsLocalVariables, sContent) ::= <<
+flag <sFuncName>(const <sTypeDefName> val, BitStream* pBitStrm, int* pErrCode, flag bCheckConstraints)
+{
+    flag ret = TRUE;
+	<arrsLocalVariables:{lv|<lv>}; separator="\n">
+    <if(soIValidFuncName)>
+	ret = bCheckConstraints ? <soIValidFuncName>(val, pErrCode) : TRUE ;
+	if (ret) {
+	    <sContent>
+    }
+
+    <else>
+    *pErrCode = 0;
+    bCheckConstraints=bCheckConstraints;
+    <sContent>
+
+    <endif>
+	
+    return ret;
+}
+>>
+
+EmitTypeAssignment_primitive_def_decode(sFuncName, sTypeDefName, arrsErrcodes, bEmptyEncodingSpace, nMaxBytesInPER, nMaxBitsInPER) ::= <<
+<arrsErrcodes; separator="\n">
+flag <sFuncName>(<sTypeDefName>* pVal, BitStream* pBitStrm, int* pErrCode);
+>>
+
+EmitTypeAssignment_primitive_decode(sFuncName, soIValidFuncName, sTypeDefName, arrsLocalVariables, sContent) ::= <<
+flag <sFuncName>(<sTypeDefName>* pVal, BitStream* pBitStrm, int* pErrCode)
+{
+    flag ret = TRUE;
+	<arrsLocalVariables:{lv|<lv>}; separator="\n">
+
+	<sContent>
+
+	return ret;
+}
+>>
 
 PrintUper_encode(sName, sStar, arrsLocalVariables, sContent) ::= <<
 flag <sName>_Encode(const <sName><sStar> pVal, BitStream* pBitStrm, int* pErrCode, flag bCheckConstraints)

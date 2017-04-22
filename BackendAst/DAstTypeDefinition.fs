@@ -55,7 +55,7 @@ let createIntegerTypeDefinition (r:CAst.AstRoot) (l:ProgrammingLanguage) (o:CAst
                 | Some baseType     -> baseType.name
                 | _    ->
                     match o.IsUnsigned with
-                    | true  -> header_c.Declare_Integer ()
+                    | true  -> header_c.Declare_PosInteger ()
                     | false -> header_c.Declare_Integer ()
             getCompleteDefinition l SUBTYPE typeDefinitionBody typeDefinitionName None [], typeDefinitionBody, None
         | Ada                    -> 

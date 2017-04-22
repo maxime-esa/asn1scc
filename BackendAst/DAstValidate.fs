@@ -10,7 +10,16 @@ open Constraints
 open DAst
 
 // TODO
-// single value constraints for composite types (SEQUENCE, SEQUENCE OF, CHOICE) by using the generated value and _equal function (like bit and octet strings)
+// 1 single value constraints for composite types (SEQUENCE, SEQUENCE OF, CHOICE) by using the generated value and _equal function (like bit and octet strings)
+// 2 simpify constraints. For example the constrains of the following type
+// INT20 ::= INTEGER(-11..10 | 23 | 24)(1..20 EXCEPT 100)
+// should be recalcualted as 
+//   uPerRange is 1..10
+// so the following simplifications must be performed
+//    INT20 ::= INTEGER(1..10)(1..10)
+// othwerwise the generated will have warnings
+
+
 
 let getFuncName (r:CAst.AstRoot) (l:ProgrammingLanguage) (tasInfo:BAst.TypeAssignmentInfo option) =
     tasInfo |> Option.map (fun x -> ToC2(r.TypePrefix + x.tasName + "_IsConstraintValid"))

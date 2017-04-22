@@ -9,7 +9,7 @@ use type Interfaces.Integer_8;
 use type Interfaces.Unsigned_64;
 use type Interfaces.Integer_64;
 
-PACKAGE BODY adaasn1rtl IS
+PACKAGE BODY adaasn1rtl with SPARK_Mode IS
 
    MASKS : CONSTANT OctetBuffer_8 := OctetBuffer_8'(16#80#, 16#40#, 16#20#, 16#10#, 16#08#, 16#04#, 16#02#, 16#01#);
    MSBIT_ONE  : CONSTANT Asn1UInt := 16#8000000000000000#;
@@ -44,8 +44,11 @@ PACKAGE BODY adaasn1rtl IS
    IS (Left = Right);
 
    FUNCTION Asn1NullType_Equal(Left, Right: in Asn1NullType) RETURN Boolean
-   IS (TRUE);
-
+    IS
+                pragma SPARK_Mode(Off);
+   begin
+      return true;
+   end Asn1NullType_Equal;
    FUNCTION getStringSize(str:String) RETURN Integer
    IS
       I:Integer:=1;
@@ -65,7 +68,7 @@ PACKAGE BODY adaasn1rtl IS
    BEGIN
       I:=str'First;
       WHILE I<=str'Last AND NOT bFound LOOP
-         --# assert I>=str'First AND I<=str'Last;
+         pragma Loop_Invariant (I>=str'First AND I<=str'Last);
          bFound := str(I) = ch;
          I:=I+1;
       END LOOP;
@@ -95,14 +98,14 @@ PACKAGE BODY adaasn1rtl IS
 
    FUNCTION PLUS_INFINITY return Asn1Real
    is
-      --# hide PLUS_INFINITY;
+        pragma SPARK_Mode(Off);
    BEGIN
         return 1.0/Zero;
    END PLUS_INFINITY;
 
    FUNCTION MINUS_INFINITY return Asn1Real
    is
-      --# hide MINUS_INFINITY;
+        pragma SPARK_Mode(Off);
    BEGIN
         return -1.0/Zero;
    END MINUS_INFINITY;
@@ -110,7 +113,7 @@ PACKAGE BODY adaasn1rtl IS
 
    FUNCTION RequiresReverse(dummy:BOOLEAN) return BOOLEAN
    IS
-      --# hide RequiresReverse;
+      pragma SPARK_Mode(Off);
       dword:Integer := 16#00000001#;
       arr: aliased OctetArray4;
       for arr'Address use dword'Address;
@@ -119,7 +122,7 @@ PACKAGE BODY adaasn1rtl IS
    END RequiresReverse;
 
    FUNCTION To_Int_n(IntVal: Asn1UInt; nBits: INTEGER) return Asn1Int
-   --# pre nBits>=0 and nBits<=64;
+   with pre => nBits>=0 and nBits<=64
    IS
       ret:Asn1Int;
       c:Asn1UInt;
@@ -129,8 +132,12 @@ PACKAGE BODY adaasn1rtl IS
       ELSIF nBits = 64 THEN
           ret := To_Int(IntVal);
       ELSE
-      --# assert  nBits>=1 and nBits<=63
-      --# and 2**(nBits-1)>=1 AND 2**(nBits-1)<=4611686018427387904 AND 2**nBits-1>=1 AND 2**nBits-1<=9223372036854775807;
+            pragma Assert (
+                             nBits>=1 and
+                             nBits<=63 and
+                             2**(nBits-1)>=1 AND
+                             2**(nBits-1)<=4611686018427387904 AND 2**nBits-1>=1 AND 2**nBits-1<=9223372036854775807);
+      --#  ;
           IF IntVal > Asn1UInt(2)**(nBits-1) THEN
               c := NOT (Asn1UInt(2)**nBits-1);
               ret := To_Int(IntVal OR c);
@@ -332,7 +339,7 @@ PACKAGE BODY adaasn1rtl IS
     --# pre A >= B;
     --# return Asn1Uint(A-B);
     IS
-        --# hide Sub;
+--                pragma SPARK_Mode(Off);
         ret:Asn1UInt ;
         diff:Asn1Int;
     BEGIN
@@ -807,7 +814,7 @@ PACKAGE BODY adaasn1rtl IS
 
    FUNCTION GetExponent(V:Asn1Real) return Asn1Int
    IS
-      --# hide GetExponent;
+        pragma SPARK_Mode(Off);
       --due to the fact that Examiner has not yet implement the Exponent attribute
    BEGIN
       RETURN Asn1Int(Asn1Real'Exponent(V) - Asn1Real'Machine_Mantissa);
@@ -815,7 +822,7 @@ PACKAGE BODY adaasn1rtl IS
 
    FUNCTION GetMantissa(V:Asn1Real) return Asn1UInt
    IS
-      --# hide GetMantissa;
+        pragma SPARK_Mode(Off);
       --due to the fact that Examiner has not yet implement the Fraction attribute
    BEGIN
       RETURN Asn1UInt(Asn1Real'Fraction(V)* MantissaFactor);
@@ -882,9 +889,9 @@ PACKAGE BODY adaasn1rtl IS
 
 
     FUNCTION CalcReal(Factor:Asn1UInt;N : Asn1UInt; base:Integer; Exp:Integer) RETURN Asn1Real
-    --# pre base=2 OR base=8 OR base=16;
+    with pre => base=2 OR base=8 OR base=16
     IS
-      --# hide CalcReal;
+--          pragma SPARK_Mode(Off);
     BEGIN
         RETURN Asn1Real(Factor*N)*Asn1Real(Base)**Exp;
     END CalcReal;
@@ -1020,9 +1027,9 @@ PACKAGE BODY adaasn1rtl IS
     	ret:=0;
         FOR I IN INTEGER range AllowedCharSet'RANGE LOOP
 	    ret:=I-AllowedCharSet'First;
-        --# assert I>=AllowedCharSet'FIRST AND I<=AllowedCharSet'LAST AND
-        --# AllowedCharSet'Last>=AllowedCharSet'First AND AllowedCharSet'Last<=INTEGER'LAST-1 AND
-        --# ret=I-AllowedCharSet'First;
+         pragma Loop_Invariant (I>=AllowedCharSet'FIRST AND I<=AllowedCharSet'LAST AND
+                                AllowedCharSet'Last>=AllowedCharSet'First AND AllowedCharSet'Last<=INTEGER'LAST-1 AND
+                                ret=I-AllowedCharSet'First);
             exit when CharToSearch=AllowedCharSet(I);
        END LOOP;
        return ret;
@@ -1259,7 +1266,7 @@ PACKAGE BODY adaasn1rtl IS
 
     PROCEDURE Acn_Enc_Int_BCD_VarSize_LengthEmbedded(S : in out BitArray; K : in out Natural; IntVal:IN Asn1Int)
     IS
-      --# hide Acn_Enc_Int_BCD_VarSize_LengthEmbedded;
+        pragma SPARK_Mode(Off);
     BEGIN
         null;
     END Acn_Enc_Int_BCD_VarSize_LengthEmbedded;
@@ -1292,14 +1299,14 @@ PACKAGE BODY adaasn1rtl IS
 
     PROCEDURE Acn_Enc_Int_ASCII_VarSize_LengthEmbedded(S : in out BitArray; K : in out Natural; IntVal:IN Asn1Int)
     IS
-      --# hide Acn_Enc_Int_ASCII_VarSize_LengthEmbedded;
+        pragma SPARK_Mode(Off);
     BEGIN
         null;
     END Acn_Enc_Int_ASCII_VarSize_LengthEmbedded;
 
     PROCEDURE Acn_Enc_Int_ASCII_VarSize_NullTerminated(S : in out BitArray; K : in out Natural; IntVal:IN Asn1Int)
     IS
-      --# hide Acn_Enc_Int_ASCII_VarSize_NullTerminated;
+        pragma SPARK_Mode(Off);
     BEGIN
         null;
     END Acn_Enc_Int_ASCII_VarSize_NullTerminated;
@@ -1309,14 +1316,14 @@ PACKAGE BODY adaasn1rtl IS
 
 
 
-    PROCEDURE Acn_Dec_Int_PositiveInteger_ConstSize (S : in BitArray; K : in out DECODE_PARAMS; IntVal:OUT Asn1Int; adjustVal:IN Asn1Int; minVal:IN Asn1Int; maxVal:IN Asn1Int; nSizeInBits:IN Integer; Result:OUT ASN1_RESULT)
+    PROCEDURE Acn_Dec_Int_PositiveInteger_ConstSize (S : in BitArray; K : in out DECODE_PARAMS; IntVal:OUT Asn1Int; minVal:IN Asn1Int; maxVal:IN Asn1Int; nSizeInBits:IN Integer; Result:OUT ASN1_RESULT)
     IS
         encVal : Asn1UInt;
     BEGIN
     	result.ErrorCode := 0;
         BitStream_Decode_Non_Negative_Integer(S, K, encVal, nSizeInBits, result.Success);
         IF result.Success THEN
-            IntVal := To_Int(encVal + To_UInt(adjustVal));
+            IntVal := To_Int(encVal);
 
             Result.Success := IntVal>= MinVal AND IntVal <=MaxVal;
             IF NOT Result.Success THEN
@@ -1329,33 +1336,32 @@ PACKAGE BODY adaasn1rtl IS
         END IF;
     END Acn_Dec_Int_PositiveInteger_ConstSize;
 
-    PROCEDURE Acn_Dec_Int_PositiveInteger_ConstSize_8(S : in BitArray; K : in out DECODE_PARAMS; IntVal:OUT Asn1Int; adjustVal:IN Asn1Int; minVal:IN Asn1Int; maxVal:IN Asn1Int; Result:OUT ASN1_RESULT)
+    PROCEDURE Acn_Dec_Int_PositiveInteger_ConstSize_8(S : in BitArray; K : in out DECODE_PARAMS; IntVal:OUT Asn1Int; minVal:IN Asn1Int; maxVal:IN Asn1Int; Result:OUT ASN1_RESULT)
     IS
     BEGIN
-        Acn_Dec_Int_PositiveInteger_ConstSize(S, K, IntVal, adjustVal, minVal, maxVal, 8, result);
+        Acn_Dec_Int_PositiveInteger_ConstSize(S, K, IntVal, minVal, maxVal, 8, result);
     END Acn_Dec_Int_PositiveInteger_ConstSize_8;
 
-    PROCEDURE Acn_Dec_Int_PositiveInteger_ConstSize_big_endian_16(S : in BitArray; K : in out DECODE_PARAMS; IntVal:OUT Asn1Int; adjustVal:IN Asn1Int; minVal:IN Asn1Int; maxVal:IN Asn1Int; Result:OUT ASN1_RESULT)
+    PROCEDURE Acn_Dec_Int_PositiveInteger_ConstSize_big_endian_16(S : in BitArray; K : in out DECODE_PARAMS; IntVal:OUT Asn1Int; minVal:IN Asn1Int; maxVal:IN Asn1Int; Result:OUT ASN1_RESULT)
     IS
     BEGIN
-         Acn_Dec_Int_PositiveInteger_ConstSize(S, K, IntVal, adjustVal, minVal, maxVal, 16, result);
+         Acn_Dec_Int_PositiveInteger_ConstSize(S, K, IntVal, minVal, maxVal, 16, result);
     END Acn_Dec_Int_PositiveInteger_ConstSize_big_endian_16;
 
-    PROCEDURE Acn_Dec_Int_PositiveInteger_ConstSize_big_endian_32(S : in BitArray; K : in out DECODE_PARAMS; IntVal:OUT Asn1Int; adjustVal:IN Asn1Int; minVal:IN Asn1Int; maxVal:IN Asn1Int; Result:OUT ASN1_RESULT)
+    PROCEDURE Acn_Dec_Int_PositiveInteger_ConstSize_big_endian_32(S : in BitArray; K : in out DECODE_PARAMS; IntVal:OUT Asn1Int; minVal:IN Asn1Int; maxVal:IN Asn1Int; Result:OUT ASN1_RESULT)
     IS
     BEGIN
-         Acn_Dec_Int_PositiveInteger_ConstSize(S, K, IntVal, adjustVal, minVal, maxVal, 32, result);
+         Acn_Dec_Int_PositiveInteger_ConstSize(S, K, IntVal, minVal, maxVal, 32, result);
     END Acn_Dec_Int_PositiveInteger_ConstSize_big_endian_32;
 
-    PROCEDURE Acn_Dec_Int_PositiveInteger_ConstSize_big_endian_64(S : in BitArray; K : in out DECODE_PARAMS; IntVal:OUT Asn1Int; adjustVal:IN Asn1Int; minVal:IN Asn1Int; maxVal:IN Asn1Int; Result:OUT ASN1_RESULT)
+    PROCEDURE Acn_Dec_Int_PositiveInteger_ConstSize_big_endian_64(S : in BitArray; K : in out DECODE_PARAMS; IntVal:OUT Asn1Int; minVal:IN Asn1Int; maxVal:IN Asn1Int; Result:OUT ASN1_RESULT)
     IS
     BEGIN
-         Acn_Dec_Int_PositiveInteger_ConstSize(S, K, IntVal, adjustVal, minVal, maxVal, 64, result);
+         Acn_Dec_Int_PositiveInteger_ConstSize(S, K, IntVal, minVal, maxVal, 64, result);
     END Acn_Dec_Int_PositiveInteger_ConstSize_big_endian_64;
 
-    PROCEDURE Acn_Dec_Int_PositiveInteger_ConstSize_little_endian_16(S : in BitArray; K : in out DECODE_PARAMS; IntVal:OUT Asn1Int; adjustVal:IN Asn1Int; minVal:IN Asn1Int; maxVal:IN Asn1Int; Result:OUT ASN1_RESULT)
+    PROCEDURE Acn_Dec_Int_PositiveInteger_ConstSize_little_endian_16(S : in BitArray; K : in out DECODE_PARAMS; IntVal:OUT Asn1Int; minVal:IN Asn1Int; maxVal:IN Asn1Int; Result:OUT ASN1_RESULT)
     IS
-        PRAGMA Unreferenced(adjustVal);
 	tmp : OctetArray2:=OctetArray2'(others=>0);
         I   : INTEGER;
         ret : Asn1Int;
@@ -1388,9 +1394,8 @@ PACKAGE BODY adaasn1rtl IS
         END IF;
     END Acn_Dec_Int_PositiveInteger_ConstSize_little_endian_16;
 
-    PROCEDURE Acn_Dec_Int_PositiveInteger_ConstSize_little_endian_32(S : in BitArray; K : in out DECODE_PARAMS; IntVal:OUT Asn1Int; adjustVal:IN Asn1Int; minVal:IN Asn1Int; maxVal:IN Asn1Int; Result:OUT ASN1_RESULT)
+    PROCEDURE Acn_Dec_Int_PositiveInteger_ConstSize_little_endian_32(S : in BitArray; K : in out DECODE_PARAMS; IntVal:OUT Asn1Int; minVal:IN Asn1Int; maxVal:IN Asn1Int; Result:OUT ASN1_RESULT)
     IS
-        PRAGMA Unreferenced(adjustVal);
 	tmp : OctetArray4:=OctetArray4'(others=>0);
         I   : INTEGER;
         ret : Asn1Int;
@@ -1423,9 +1428,8 @@ PACKAGE BODY adaasn1rtl IS
         END IF;
     END Acn_Dec_Int_PositiveInteger_ConstSize_little_endian_32;
 
-    PROCEDURE Acn_Dec_Int_PositiveInteger_ConstSize_little_endian_64(S : in BitArray; K : in out DECODE_PARAMS; IntVal:OUT Asn1Int; adjustVal:IN Asn1Int; minVal:IN Asn1Int; maxVal:IN Asn1Int; Result:OUT ASN1_RESULT)
+    PROCEDURE Acn_Dec_Int_PositiveInteger_ConstSize_little_endian_64(S : in BitArray; K : in out DECODE_PARAMS; IntVal:OUT Asn1Int; minVal:IN Asn1Int; maxVal:IN Asn1Int; Result:OUT ASN1_RESULT)
     IS
-        PRAGMA Unreferenced(adjustVal);
 	tmp : OctetArray8:=OctetArray8'(others=>0);
         I   : INTEGER;
         ret : Asn1Int;
@@ -1459,7 +1463,7 @@ PACKAGE BODY adaasn1rtl IS
     END Acn_Dec_Int_PositiveInteger_ConstSize_little_endian_64;
 
 
-    PROCEDURE Acn_Dec_Int_PositiveInteger_VarSize_LengthEmbedded(S : in BitArray; K : in out DECODE_PARAMS; IntVal:OUT Asn1Int; adjustVal:IN Asn1Int; minVal:IN Asn1Int; Result:OUT ASN1_RESULT)
+    PROCEDURE Acn_Dec_Int_PositiveInteger_VarSize_LengthEmbedded(S : in BitArray; K : in out DECODE_PARAMS; IntVal:OUT Asn1Int; minVal:IN Asn1Int; Result:OUT ASN1_RESULT)
     IS
       NBytes  : Asn1Int;
       Ret     : Asn1UInt;
@@ -1471,7 +1475,7 @@ PACKAGE BODY adaasn1rtl IS
       IF Result.Success AND NBytes>=1 AND NBytes<=8 THEN
             Dec_UInt(S, K, Integer(nBytes), Ret, result.Success);
             IF result.Success THEN
-                IntVal := To_Int(Ret + To_UInt(adjustVal));
+                IntVal := To_Int(Ret);
                 Result.Success := IntVal>= MinVal;
                 IF NOT Result.Success THEN
                      IntVal := MinVal;
@@ -1640,7 +1644,7 @@ PACKAGE BODY adaasn1rtl IS
 
     FUNCTION UInt16_to_OctetArray2(x:Interfaces.Unsigned_16) RETURN OctetArray2
     IS
-        --# hide UInt16_to_OctetArray2;
+        pragma SPARK_Mode(Off);
         function do_it IS NEW Ada.Unchecked_Conversion(Interfaces.Unsigned_16, OctetArray2);
     BEGIN
         RETURN do_it(x);
@@ -1648,7 +1652,7 @@ PACKAGE BODY adaasn1rtl IS
 
     FUNCTION OctetArray2_to_UInt16(x:OctetArray2) RETURN Interfaces.Unsigned_16
     IS
-        --# hide OctetArray2_to_UInt16;
+        pragma SPARK_Mode(Off);
         function do_it IS NEW Ada.Unchecked_Conversion(OctetArray2, Interfaces.Unsigned_16);
     BEGIN
         RETURN do_it(x);
@@ -1657,7 +1661,7 @@ PACKAGE BODY adaasn1rtl IS
 
     FUNCTION UInt32_to_OctetArray4(x:Interfaces.Unsigned_32) RETURN OctetArray4
     IS
-        --# hide UInt32_to_OctetArray4;
+        pragma SPARK_Mode(Off);
         function do_it IS NEW Ada.Unchecked_Conversion(Interfaces.Unsigned_32, OctetArray4);
     BEGIN
         RETURN do_it(x);
@@ -1665,7 +1669,7 @@ PACKAGE BODY adaasn1rtl IS
 
     FUNCTION OctetArray4_to_UInt32(x:OctetArray4) RETURN Interfaces.Unsigned_32
     IS
-        --# hide OctetArray4_to_UInt32;
+        pragma SPARK_Mode(Off);
         function do_it IS NEW Ada.Unchecked_Conversion(OctetArray4, Interfaces.Unsigned_32);
     BEGIN
         RETURN do_it(x);
@@ -1674,7 +1678,7 @@ PACKAGE BODY adaasn1rtl IS
 
     FUNCTION Asn1UInt_to_OctetArray8(x:Asn1UInt) RETURN OctetArray8
     IS
-        --# hide Asn1UInt_to_OctetArray8;
+        pragma SPARK_Mode(Off);
         function do_it  IS NEW Ada.Unchecked_Conversion(Asn1UInt, OctetArray8);
     BEGIN
         RETURN do_it(x);
@@ -1682,7 +1686,7 @@ PACKAGE BODY adaasn1rtl IS
 
     FUNCTION OctetArray8_to_Asn1UInt(x:OctetArray8) RETURN Asn1UInt
     IS
-        --# hide OctetArray8_to_Asn1UInt;
+        pragma SPARK_Mode(Off);
         function do_it IS NEW Ada.Unchecked_Conversion(OctetArray8, Asn1UInt);
     BEGIN
         RETURN do_it(x);
@@ -1692,7 +1696,7 @@ PACKAGE BODY adaasn1rtl IS
 
    FUNCTION Int16_to_OctetArray2(x:Interfaces.Integer_16) RETURN OctetArray2
    IS
-   	--# hide Int16_to_OctetArray2;
+        pragma SPARK_Mode(Off);
         function do_it IS NEW Ada.Unchecked_Conversion(Interfaces.Integer_16, OctetArray2);
    BEGIN
    	RETURN do_it(x);
@@ -1700,7 +1704,7 @@ PACKAGE BODY adaasn1rtl IS
 
    FUNCTION OctetArray2_to_Int16(x:OctetArray2) RETURN Interfaces.Integer_16
    IS
-   	--# hide OctetArray2_to_Int16;
+        pragma SPARK_Mode(Off);
         function do_it IS NEW Ada.Unchecked_Conversion(OctetArray2, Interfaces.Integer_16);
    BEGIN
    	RETURN do_it(x);
@@ -1709,7 +1713,7 @@ PACKAGE BODY adaasn1rtl IS
 
    FUNCTION Int32_to_OctetArray4(x:Interfaces.Integer_32) RETURN OctetArray4
    IS
-   	--# hide Int32_to_OctetArray4;
+        pragma SPARK_Mode(Off);
         function do_it IS NEW Ada.Unchecked_Conversion(Interfaces.Integer_32, OctetArray4);
    BEGIN
    	RETURN do_it(x);
@@ -1717,7 +1721,7 @@ PACKAGE BODY adaasn1rtl IS
 
    FUNCTION OctetArray4_to_Int32(x:OctetArray4) RETURN Interfaces.Integer_32
    IS
-   	--# hide OctetArray4_to_Int32;
+        pragma SPARK_Mode(Off);
         function do_it IS NEW Ada.Unchecked_Conversion(OctetArray4, Interfaces.Integer_32);
    BEGIN
    	RETURN do_it(x);
@@ -1726,7 +1730,7 @@ PACKAGE BODY adaasn1rtl IS
 
    FUNCTION Asn1Int_to_OctetArray8(x:Asn1Int) RETURN OctetArray8
    IS
-   	--# hide Asn1Int_to_OctetArray8;
+        pragma SPARK_Mode(Off);
         function do_it  IS NEW Ada.Unchecked_Conversion(Asn1Int, OctetArray8);
    BEGIN
    	RETURN do_it(x);
@@ -1734,7 +1738,7 @@ PACKAGE BODY adaasn1rtl IS
 
    FUNCTION OctetArray8_to_Asn1Int(x:OctetArray8) RETURN Asn1Int
    IS
-   	--# hide OctetArray8_to_Asn1Int;
+        pragma SPARK_Mode(Off);
         function do_it IS NEW Ada.Unchecked_Conversion(OctetArray8, Asn1Int);
    BEGIN
    	RETURN do_it(x);
@@ -1756,7 +1760,7 @@ PACKAGE BODY adaasn1rtl IS
 
    FUNCTION Float_to_OctetArray4(x:Float) RETURN OctetArray4
    IS
-   	--# hide Float_to_OctetArray4;
+--        pragma SPARK_Mode(Off);
         function do_it IS NEW Ada.Unchecked_Conversion(Float, OctetArray4);
    BEGIN
    	RETURN do_it(x);
@@ -1764,7 +1768,7 @@ PACKAGE BODY adaasn1rtl IS
 
    FUNCTION Long_Float_to_OctetArray8(x:Asn1Real) RETURN OctetArray8
    IS
-   	--# hide Long_Float_to_OctetArray8;
+        pragma SPARK_Mode(Off);
         function do_it  IS NEW Ada.Unchecked_Conversion(Asn1Real, OctetArray8);
    BEGIN
    	RETURN do_it(x);
@@ -1773,7 +1777,7 @@ PACKAGE BODY adaasn1rtl IS
 
    FUNCTION OctetArray4_to_Float(x:OctetArray4) RETURN Float
    IS
-   	--# hide OctetArray4_to_Float;
+        pragma SPARK_Mode(Off);
         function do_it IS NEW Ada.Unchecked_Conversion(OctetArray4, Float);
    BEGIN
    	RETURN do_it(x);
@@ -1781,7 +1785,7 @@ PACKAGE BODY adaasn1rtl IS
 
    FUNCTION OctetArray8_to_Long_Float(x:OctetArray8) RETURN Asn1Real
    IS
-   	--# hide OctetArray8_to_Long_Float;
+        pragma SPARK_Mode(Off);
         function do_it IS NEW Ada.Unchecked_Conversion(OctetArray8, Asn1Real);
    BEGIN
    	RETURN do_it(x);
@@ -1828,7 +1832,7 @@ PACKAGE BODY adaasn1rtl IS
 
     PROCEDURE Acn_Dec_Int_BCD_VarSize_LengthEmbedded(S : in BitArray; K : in out DECODE_PARAMS; IntVal:OUT Asn1Int; Result:OUT ASN1_RESULT)
     IS
-      --# hide Acn_Dec_Int_BCD_VarSize_LengthEmbedded;
+        pragma SPARK_Mode(Off);
     BEGIN
         null;
     END Acn_Dec_Int_BCD_VarSize_LengthEmbedded;
@@ -1941,14 +1945,14 @@ PACKAGE BODY adaasn1rtl IS
 
     PROCEDURE Acn_Dec_Int_ASCII_VarSize_LengthEmbedded(S : in BitArray; K : in out DECODE_PARAMS; IntVal:OUT Asn1Int; Result:OUT ASN1_RESULT)
     IS
-      --# hide Acn_Dec_Int_ASCII_VarSize_LengthEmbedded;
+        pragma SPARK_Mode(Off);
     BEGIN
         null;
     END Acn_Dec_Int_ASCII_VarSize_LengthEmbedded;
 
     PROCEDURE Acn_Dec_Int_ASCII_VarSize_NullTerminated(S : in BitArray; K : in out DECODE_PARAMS; IntVal:OUT Asn1Int; Result:OUT ASN1_RESULT)
     IS
-      --# hide Acn_Dec_Int_ASCII_VarSize_NullTerminated;
+        pragma SPARK_Mode(Off);
     BEGIN
         null;
     END Acn_Dec_Int_ASCII_VarSize_NullTerminated;
@@ -1956,7 +1960,7 @@ PACKAGE BODY adaasn1rtl IS
 
     FUNCTION Long_Float_to_Float(x:Asn1Real) RETURN Float
     IS
-        --# hide Long_Float_to_Float;
+--        pragma SPARK_Mode(Off);
     BEGIN
         RETURN float(x);
     END Long_Float_to_Float;
@@ -2309,7 +2313,7 @@ PACKAGE BODY adaasn1rtl IS
     ---# pre  K+1>= S'First and K <= S'Last;
     ---# post K = K~;
     IS
-       --# hide Acn_Enc_NullType;
+        pragma SPARK_Mode(Off);
     BEGIN
         null;
     END Acn_Enc_NullType;
@@ -2321,7 +2325,7 @@ PACKAGE BODY adaasn1rtl IS
     ---# pre  K.K+1>= S'First and K.K  <= S'Last;
     ---# post K.K = K~.K ;
     IS
-    	--# hide Acn_Dec_NullType;
+        pragma SPARK_Mode(Off);
         PRAGMA Unreferenced(S);
         PRAGMA Unreferenced(K);
     BEGIN
@@ -2376,14 +2380,14 @@ PACKAGE BODY adaasn1rtl IS
 
     END Acn_Enc_String_Ascii_Null_Teminated;
 
-    PROCEDURE Acn_Dec_String_Ascii_Null_Teminated(S : in BitArray; K : in out DECODE_PARAMS; null_character : in Integer; strVal : out String; Result:OUT ASN1_RESULT)
+    PROCEDURE Acn_Dec_String_Ascii_Null_Teminated(S : in BitArray; K : in out DECODE_PARAMS; null_character : in Integer; strVal :in out String; Result:OUT ASN1_RESULT)
     IS
          I:Integer:=strVal'First;
          charIndex:Integer:=65; -- ascii code of 'A'. Let's hope that 'A' will never be null Character
     BEGIN
         Result := ASN1_RESULT'(Success   => TRUE,ErrorCode => ERR_INSUFFICIENT_DATA);
         WHILE result.Success AND THEN I<=strVal'Last AND THEN charIndex/=null_character LOOP
-             --# assert I>=1 AND I<=str'Last;
+            pragma Loop_Invariant (I>=1 AND I<=strVal'Last);
             UPER_Dec_ConstraintWholeNumberInt(S, K, charIndex, 0, 255, 8, result.Success);
             IF charIndex/=null_character THEN
                 strVal(i) := Character'Val(charIndex);
@@ -2409,7 +2413,7 @@ PACKAGE BODY adaasn1rtl IS
     BEGIN
           UPER_Enc_ConstraintWholeNumber(S, K, Asn1Int(getStringSize(strVal)), asn1Min, nLengthDeterminantSizeInBits);
           WHILE I<=strVal'Last - 1 AND THEN strVal(I)/=NUL LOOP
-             --# assert I>=1 AND I<=str'Last-1;
+            pragma Loop_Invariant (I>=1 AND I<=strVal'Last);
              UPER_Enc_ConstraintWholeNumber(S, K, Asn1Int(CharacterPos(strVal(I))), 0, 8);
 
              I:=I+1;
@@ -2417,7 +2421,7 @@ PACKAGE BODY adaasn1rtl IS
 
     END Acn_Enc_String_Ascii_Internal_Field_Determinant;
 
-    PROCEDURE Acn_Dec_String_Ascii_Internal_Field_Determinant(S : in BitArray; K : in out DECODE_PARAMS; asn1Min: Asn1Int; asn1Max: Asn1Int; nLengthDeterminantSizeInBits : IN Integer; strVal : out String; Result:OUT ASN1_RESULT)
+    PROCEDURE Acn_Dec_String_Ascii_Internal_Field_Determinant(S : in BitArray; K : in out DECODE_PARAMS; asn1Min: Asn1Int; asn1Max: Asn1Int; nLengthDeterminantSizeInBits : IN  Integer; strVal : in out String; Result:OUT ASN1_RESULT)
     IS
          I:Integer:=strVal'First;
          nSize:Integer;
@@ -2427,7 +2431,7 @@ PACKAGE BODY adaasn1rtl IS
 
         UPER_Dec_ConstraintWholeNumberInt(S, K, nSize, Integer(asn1Min), Integer(asn1Max), nLengthDeterminantSizeInBits, result.Success);
         WHILE result.Success AND THEN I<=strVal'Last-1 AND THEN I <=  nSize LOOP
-             --# assert I>=1 AND I<=str'Last-1;
+            pragma Loop_Invariant (I>=1 AND I<=strVal'Last);
              UPER_Dec_ConstraintWholeNumberInt(S, K, charIndex, 0, 255, 8, result.Success);
              strVal(i) := Character'Val(charIndex);
 
@@ -2449,6 +2453,7 @@ PACKAGE BODY adaasn1rtl IS
     BEGIN
           WHILE I<=strVal'Last - 1 AND THEN strVal(I)/=NUL LOOP
              --# assert I>=1 AND I<=str'Last-1;
+            pragma Loop_Invariant (I>=1 AND I<=strVal'Last-1);
              UPER_Enc_ConstraintWholeNumber(S, K, Asn1Int(CharacterPos(strVal(I))), 0, 8);
 
              I:=I+1;
@@ -2456,7 +2461,7 @@ PACKAGE BODY adaasn1rtl IS
 
     END Acn_Enc_String_Ascii_External_Field_Determinant;
 
-    PROCEDURE Acn_Dec_String_Ascii_External_Field_Determinant(S : in BitArray; K : in out DECODE_PARAMS; extSizeDeterminatFld : IN Asn1Int; strVal : out String; Result:OUT ASN1_RESULT)
+    PROCEDURE Acn_Dec_String_Ascii_External_Field_Determinant(S : in BitArray; K : in out DECODE_PARAMS; extSizeDeterminatFld : IN Asn1Int; strVal : in out String; Result:OUT ASN1_RESULT)
     IS
          I:Integer:=strVal'First;
          charIndex:Integer;
@@ -2465,6 +2470,7 @@ PACKAGE BODY adaasn1rtl IS
 
         WHILE result.Success AND THEN I<=strVal'Last-1 AND THEN I <=  Integer(extSizeDeterminatFld) LOOP
              --# assert I>=1 AND I<=str'Last-1;
+            pragma Loop_Invariant (I>=1 AND I<=strVal'Last-1);
              UPER_Dec_ConstraintWholeNumberInt(S, K, charIndex, 0, 255, 8, result.Success);
              strVal(i) := Character'Val(charIndex);
 
@@ -2489,6 +2495,7 @@ PACKAGE BODY adaasn1rtl IS
      BEGIN
          WHILE I<=strVal'Last - 1 LOOP
              --# assert I>=1 AND I<=str'Last-1;
+            pragma Loop_Invariant (I>=1 AND I<=strVal'Last-1);
              charIndex := GetZeroBasedCharIndex(strVal(I), charSet);
              UPER_Enc_ConstraintWholeNumber(S, K, Asn1Int(charIndex), 0, nCharSize);
 
@@ -2507,6 +2514,7 @@ PACKAGE BODY adaasn1rtl IS
 	 Result := ASN1_RESULT'(Success   => TRUE,ErrorCode => ERR_INSUFFICIENT_DATA);
          WHILE I<=strVal'Last - 1 and Result.Success LOOP
              --# assert I>=1 AND I<=str'Last-1;
+            pragma Loop_Invariant (I>=1 AND I<=strVal'Last-1);
              UPER_Dec_ConstraintWholeNumberInt(S, K, charIndex, 0, asn1Max, nCharSize, Result.Success);
              strVal(i) := charSet(charIndex+1);
 
@@ -2533,7 +2541,7 @@ PACKAGE BODY adaasn1rtl IS
 
     END Acn_Enc_String_CharIndex_External_Field_Determinant;
 
-    PROCEDURE Acn_Dec_String_CharIndex_External_Field_Determinant(S : in BitArray; K : in out DECODE_PARAMS; charSet : String; nCharSize:Integer; extSizeDeterminatFld : IN Asn1Int; strVal : out String; Result:OUT ASN1_RESULT)
+    PROCEDURE Acn_Dec_String_CharIndex_External_Field_Determinant(S : in BitArray; K : in out DECODE_PARAMS; charSet : String; nCharSize:Integer; extSizeDeterminatFld : IN Asn1Int; strVal : in out String; Result:OUT ASN1_RESULT)
     IS
          I:Integer:=strVal'First;
          charIndex:Integer;
@@ -2573,7 +2581,7 @@ PACKAGE BODY adaasn1rtl IS
 
     END Acn_Enc_String_CharIndex_Internal_Field_Determinant;
 
-    PROCEDURE Acn_Dec_String_CharIndex_Internal_Field_Determinant(S : in BitArray; K : in out DECODE_PARAMS; charSet : String; nCharSize:Integer; asn1Min: Asn1Int; asn1Max: Asn1Int; nLengthDeterminantSizeInBits : IN Integer; strVal : out String; Result:OUT ASN1_RESULT)
+    PROCEDURE Acn_Dec_String_CharIndex_Internal_Field_Determinant(S : in BitArray; K : in out DECODE_PARAMS; charSet : String; nCharSize:Integer; asn1Min: Asn1Int; asn1Max: Asn1Int; nLengthDeterminantSizeInBits : IN Integer; strVal : in out String; Result:OUT ASN1_RESULT)
     IS
          I:Integer:=strVal'First;
          nSize:Integer;
