@@ -79,6 +79,52 @@ with
         |Ada    -> isvalid_a.ArrayLen exp sAcc
 
 
+
+type FuncParamType =
+  | VALUE       of string
+  | POINTER     of string
+  | FIXARRAY    of string
+  with 
+    member this.getPointer (l:ProgrammingLanguage) =
+        match l, this with
+        | Ada, VALUE x      -> x
+        | Ada, POINTER x    -> x
+        | Ada, FIXARRAY x   -> x
+        | C, VALUE x        -> sprintf "(&(%s))" x
+        | C, POINTER x      -> x
+        | C, FIXARRAY x     -> x
+    member this.getValue (l:ProgrammingLanguage) =
+        match l, this with
+        | Ada, VALUE x      -> x
+        | Ada, POINTER x    -> x
+        | Ada, FIXARRAY x   -> x
+        | C, VALUE x        -> x
+        | C, POINTER x      -> sprintf "(*(%s))" x
+        | C, FIXARRAY x     -> x
+    member this.p  =
+        match this with
+        | VALUE x      -> x
+        | POINTER x    -> x
+        | FIXARRAY x   -> x
+    member this.getAcces (l:ProgrammingLanguage) =
+        match l, this with
+        | Ada, VALUE x      -> "."
+        | Ada, POINTER x    -> "."
+        | Ada, FIXARRAY x   -> "."
+        | C, VALUE x        -> "."
+        | C, POINTER x      -> "->"
+        | C, FIXARRAY x     -> ""
+        
+    member this.getStar (l:ProgrammingLanguage) =
+        match l, this with
+        | Ada, VALUE x      -> ""
+        | Ada, POINTER x    -> ""
+        | Ada, FIXARRAY x   -> ""
+        | C, VALUE x        -> ""
+        | C, POINTER x      -> "*"
+        | C, FIXARRAY x     -> ""
+
+
 type Asn1TypeName = {
     moduName    : string
     tasName     : string

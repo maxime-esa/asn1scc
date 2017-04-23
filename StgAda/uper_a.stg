@@ -7,7 +7,7 @@ EmitTypeAssignment_def_err_code(sErrCode, nErrValue) ::= <<
 <sErrCode>:CONSTANT INTEGER := <nErrValue>; 
 >>
 
-EmitTypeAssignment_def_encode(sFuncName, sTypeDefName, arrsErrcodes, bEmptyEncodingSpace, nMaxBytesInPER, nMaxBitsInPER) ::= <<
+EmitTypeAssignment_def_encode(sVarName, sStar, sFuncName, sTypeDefName, arrsErrcodes, bEmptyEncodingSpace, nMaxBytesInPER, nMaxBitsInPER) ::= <<
 <arrsErrcodes; separator="\n">
 <sTypeDefName>_REQUIRED_BYTES_FOR_ENCODING:CONSTANT INTEGER := <nMaxBytesInPER>;
 <sTypeDefName>_REQUIRED_BITS_FOR_ENCODING:CONSTANT INTEGER := <nMaxBitsInPER>;
@@ -24,27 +24,27 @@ end RECORD;
 procedure <sFuncName>(val:in <sTypeDefName>; Stream : OUT <sTypeDefName>_uPER_Stream; result : OUT <rtlModuleName()>.ASN1_RESULT);
 >>
 
-EmitTypeAssignment_def_decode(sFuncName, sTypeDefName, arrsErrcodes, bEmptyEncodingSpace, nMaxBytesInPER, nMaxBitsInPER) ::= <<
+EmitTypeAssignment_def_decode(sVarName, sStar, sFuncName, sTypeDefName, arrsErrcodes, bEmptyEncodingSpace, nMaxBytesInPER, nMaxBitsInPER) ::= <<
 <arrsErrcodes; separator="\n">
-procedure <sFuncName>(val: out <sTypeDefName>; Stream : IN <sTypeDefName>_uPER_Stream; result : OUT <rtlModuleName()>.ASN1_RESULT);
+procedure <sFuncName>(<sVarName>: out <sTypeDefName>; Stream : IN <sTypeDefName>_uPER_Stream; result : OUT <rtlModuleName()>.ASN1_RESULT);
 >>
 
-TasEncodeMain(sFuncName, sTypeDefName) ::= /*nogen*/<<
-procedure <sFuncName>(val:in <sTypeDefName>; Stream : OUT <sTypeDefName>_uPER_Stream; result : OUT <rtlModuleName()>.ASN1_RESULT)
+TasEncodeMain(sVarName, sFuncName, sTypeDefName) ::= /*nogen*/<<
+procedure <sFuncName>(<sVarName>:in <sTypeDefName>; Stream : OUT <sTypeDefName>_uPER_Stream; result : OUT <rtlModuleName()>.ASN1_RESULT)
 IS
 begin
     Stream := <sTypeDefName>_uPER_Stream'(K => 0, DataLen => 0, Data => <sTypeDefName>_uPER_bit_array'(others => 0));
-    <sFuncName>_aux(val, Stream.Data, Stream.DataLen, result);
+    <sFuncName>_aux(<sVarName>, Stream.Data, Stream.DataLen, result);
 end <sFuncName>;
 >>
 
-EmitTypeAssignment_encode(sFuncName, soIValidFuncName, sTypeDefName, arrsLocalVariables, sContent) ::= <<
-procedure <sFuncName>_aux(val:in <sTypeDefName>; S : in out <rtlModuleName()>.BitArray; K : in out Natural; result : OUT <rtlModuleName()>.ASN1_RESULT)
+EmitTypeAssignment_encode(sVarName, sStar, sFuncName, soIValidFuncName, sTypeDefName, arrsLocalVariables, sContent) ::= <<
+procedure <sFuncName>_aux(<sVarName>:in <sTypeDefName>; S : in out <rtlModuleName()>.BitArray; K : in out Natural; result : OUT <rtlModuleName()>.ASN1_RESULT)
 IS
     <arrsLocalVariables; separator="\n">
 begin
     <if(soIValidFuncName)>
-    result := <soIValidFuncName>(val);
+    result := <soIValidFuncName>(<sVarName>);
     if result.success THEN
         <sContent>
     end if;
@@ -54,29 +54,29 @@ begin
     <endif>
 end <sFuncName>_aux;
 
-<TasEncodeMain(sFuncName=sFuncName, sTypeDefName=sTypeDefName)>
+<TasEncodeMain(sVarName=sVarName, sFuncName=sFuncName, sTypeDefName=sTypeDefName)>
 >>
 
-TasDecodeMain(sFuncName, sTypeDefName) ::= /*nogen*/<<
-procedure <sFuncName>(val: out <sTypeDefName>; Stream : IN <sTypeDefName>_uPER_Stream; result : OUT <rtlModuleName()>.ASN1_RESULT)
+TasDecodeMain(sVarName, sFuncName, sTypeDefName) ::= /*nogen*/<<
+procedure <sFuncName>(<sVarName>: out <sTypeDefName>; Stream : IN <sTypeDefName>_uPER_Stream; result : OUT <rtlModuleName()>.ASN1_RESULT)
 IS
     iter:<rtlModuleName()>.DECODE_PARAMS;
 begin
     iter := <rtlModuleName()>.DECODE_PARAMS'(K => 0, DataLen => Stream.DataLen);
-    <sFuncName>_aux(val, Stream.Data, iter, result);
+    <sFuncName>_aux(<sVarName>, Stream.Data, iter, result);
     result.Success := result.Success AND iter.K\<=iter.DataLen;
 end <sFuncName>;
 >>
 
-EmitTypeAssignment_decode(sFuncName, soIValidFuncName, sTypeDefName, arrsLocalVariables, sContent) ::= <<
-procedure <sFuncName>_aux(val:out <sTypeDefName>; S : in <rtlModuleName()>.BitArray; K : in out <rtlModuleName()>.DECODE_PARAMS; result : OUT <rtlModuleName()>.ASN1_RESULT)
+EmitTypeAssignment_decode(sVarName, sStar, sFuncName, soIValidFuncName, sTypeDefName, arrsLocalVariables, sContent) ::= <<
+procedure <sFuncName>_aux(<sVarName>:out <sTypeDefName>; S : in <rtlModuleName()>.BitArray; K : in out <rtlModuleName()>.DECODE_PARAMS; result : OUT <rtlModuleName()>.ASN1_RESULT)
 IS
     <arrsLocalVariables; separator="\n">
 begin
     <sContent>
 end <sFuncName>_aux;
 
-<TasDecodeMain(sFuncName=sFuncName, sTypeDefName=sTypeDefName)>
+<TasDecodeMain(sVarName=sVarName, sFuncName=sFuncName, sTypeDefName=sTypeDefName)>
 >>
 
 
@@ -90,29 +90,30 @@ end <sFuncName>_aux;
 /*case: A:: = INTEGER (5..20) */
 IntFullyConstraint_encode(p, nMin, nMax, nBits, sErrCode) ::= "<rtlModuleName()>.UPER_Enc_ConstraintWholeNumber(S, K, <p>, <nMin>, <nBits>);"
 IntFullyConstraint_decode(p, nMin, nMax, nBits, sErrCode) ::= <<
-result.ErrorCode := <rtlModuleName()>.ERR_INSUFFICIENT_DATA;
+result.ErrorCode := <sErrCode>;
 <rtlModuleName()>.UPER_Dec_ConstraintWholeNumber(S, K, <p>, <nMin>, <nMax>, <nBits>, result.Success);
 >>
 
 /*case: A :: = INTEGER */
 IntUnconstraint_encode(p, sErrCode) ::= "<rtlModuleName()>.UPER_Enc_UnConstraintWholeNumber(S, K, <p>);"
 IntUnconstraint_decode(p, sErrCode) ::= <<
-result.ErrorCode := <rtlModuleName()>.ERR_INSUFFICIENT_DATA;
+result.ErrorCode := <sErrCode>;
 <rtlModuleName()>.UPER_Dec_UnConstraintWholeNumber(S, K, <p>, result.Success);
 >>
 
 /*case: A :: = INTEGER(MIN..5) */
-IntUnconstraintMax_encode(p, nMax, sErrCode) ::= "<rtlModuleName()>.UPER_Enc_UnConstraintWholeNumber(S, K, <p>);"
-IntUnconstraintMax_decode(p, nMax, sErrCode) ::= <<
-result.ErrorCode := <rtlModuleName()>.ERR_INSUFFICIENT_DATA;
+IntUnconstraintMax_encode(p, nMax, soCheckExp, sErrCode) ::= "<rtlModuleName()>.UPER_Enc_UnConstraintWholeNumber(S, K, <p>);"
+IntUnconstraintMax_decode(p, nMax, soCheckExp, sErrCode) ::= <<
+result.ErrorCode := <sErrCode>;
 <rtlModuleName()>.UPER_Dec_UnConstraintWholeNumberMax(S, K, <p>, <nMax>, result.Success);
+--result.Success := result.Success and then (<soCheckExp>);
 >>
 
 
 /*case: A:: = INTEGER (5..MAX) */
 IntSemiConstraint_encode(p, nMin, sErrCode) ::= "<rtlModuleName()>.UPER_Enc_SemiConstraintWholeNumber(S, K, <p>, <nMin>);"
 IntSemiConstraint_decode(p, nMin, sErrCode) ::= <<
-result.ErrorCode := <rtlModuleName()>.ERR_INSUFFICIENT_DATA;
+result.ErrorCode := <sErrCode>;
 <rtlModuleName()>.UPER_Dec_SemiConstraintWholeNumber(S, K, <p>, <nMin>, result.Success);
 >>
 
@@ -128,7 +129,7 @@ end if;
 Declare_ExtensionBit()::="extBit:<rtlModuleName()>.BIT;"
 
 IntRootExt_decode(p, nMin, sRootBaseConstraint, sIntBody, sErrCode) ::=<<
-result.ErrorCode := <rtlModuleName()>.ERR_INSUFFICIENT_DATA;
+result.ErrorCode := <sErrCode>;
 <p> := <nMin>;
 declare
     extBit:<rtlModuleName()>.BIT;
@@ -185,28 +186,42 @@ Declare_EnumIndex()::="intVal:<rtlModuleName()>.Asn1Int;"
 
 Declare_AsnIntForMappingFuncion()::="mapFuncIntVal:<rtlModuleName()>.Asn1Int;"
 
-Enumerated_item_encode(p, sName, nIndex) ::= "when <sName>    => intVal := <nIndex>;"
+/* ENUMERATED START */
 
-Enumerated_item_decode(p, sName, nIndex) ::= "when <nIndex> => <p> := <sName>;"
+Enumerated_item_encode(p, sName, nIndex, nLastItemIndex) ::= "when <sName>    => intVal := <nIndex>;"
 
-Enumerated_encode(p, sTasName, arrsItem, nMin, nMax, nBits, sErrCode) ::= <<
-case <p> is 
-    <arrsItem; separator="\n">
-end case;
-<rtlModuleName()>.UPER_Enc_ConstraintWholeNumber(S, K, intVal, <nMin>, <nBits>);
->>
+Enumerated_item_decode(p, sName, nIndex, nLastItemIndex) ::= "when <nIndex> => <p> := <sName>;"
 
-Enumerated_decode(p, sTasName, arrsItem, nMin, nMax, nBits, sErrCode) ::= <<
-result.ErrorCode := <rtlModuleName()>.ERR_INSUFFICIENT_DATA;
-<p> := <sTasName>_Init;
-<rtlModuleName()>.UPER_Dec_ConstraintWholeNumber(S, K, intVal, <nMin>, <nMax>, <nBits>, result.Success);
-if result.Success THEN
-    case <sTasName>_index_range(intVal) is
+
+Enumerated_encode(p, sTypeName, arrsItem, nMin, nMax, nBits, sErrCode, nLastItemIndex, sFirstItemName) ::= <<
+declare
+    intVal:Asn1Int;
+begin
+    case <p> is 
         <arrsItem; separator="\n">
     end case;
-end if;
+    <rtlModuleName()>.UPER_Enc_ConstraintWholeNumber(S, K, intVal, <nMin>, <nBits>);
+end;
 >>
 
+Enumerated_decode(p, sTypeName, arrsItem, nMin, nMax, nBits, sErrCode, nLastItemIndex, sFirstItemName) ::= <<
+declare
+    intVal:Asn1Int;
+begin
+    <rtlModuleName()>.UPER_Dec_ConstraintWholeNumber(S, K, intVal, <nMin>, <nMax>, <nBits>, result.Success);
+    if result.Success THEN
+        case <sTypeName>_index_range(intVal) is
+            <arrsItem; separator="\n">
+        end case;
+        result.ErrorCode := 0;
+    else
+        <p> := <sFirstItemName>;
+        result.ErrorCode := <sErrCode>;
+    end if;
+end;
+>>
+
+/* ENUMERATED START */
 
 
 
@@ -355,8 +370,7 @@ ReferenceType2_decode(p, sTasName, sName, bAcnEncodeFuncRequiresResult) ::= "<sT
 
 loopFixedItem_enc (i, fixedSize, nfixedSizeUperLimit, sInternalItem, nCurOffset, nAlignSize, nIntItemMinSize, nIntItemMaxSize)::= /*nogen*/<<    
 while <i>\<= <fixedSize> loop
---# assert  <i> >=1 and <i>\<=<fixedSize>  and <fixedSize>\<= <nfixedSizeUperLimit> and
---#        K>=K~ and K\<=K~ + <nCurOffset> + <nAlignSize> + <nIntItemMaxSize>*(<i>-1);
+    pragma Loop_Invariant (<i> >=1 and <i>\<=<fixedSize>);
     <sInternalItem>
     <i> := <i> + 1;
 end loop;
@@ -365,8 +379,7 @@ end loop;
 
 loopFixedItem_dec (i, fixedSize, nfixedSizeUperLimit, sInternalItem, nCurOffset, nAlignSize, nIntItemMinSize, nIntItemMaxSize)::= /*nogen*/<<    
 while <i>\<= <fixedSize> AND result.Success loop
---# assert  <i> >=1 and <i>\<=<fixedSize>  and <fixedSize>\<= <nfixedSizeUperLimit> and
---#        K.K>=K~.K and K.K\<=K~.K + <nCurOffset> + <nAlignSize> + <nIntItemMaxSize>*(<i>-1);
+    pragma Loop_Invariant (<i> >=1 and <i>\<=<fixedSize>);
     <sInternalItem>
     <i> := <i> + 1;
 end loop;
@@ -438,13 +451,13 @@ InternalItem_string_no_alpha_decode(p, i) ::=<<
 >>
 
 
-InternalItem_string_with_alpha_encode(p, sTasName, i, nCharIndexSize, nCharIndexMax) ::=<<
+InternalItem_string_with_alpha_encode(p, sTasName, i, nLastItemIndex, arrnAlphabetAsciiCodes, nAlphabetLength, nCharIndexSize) ::=<<
 charIndex := <rtlModuleName()>.GetZeroBasedCharIndex(<p>(<i>), <sTasName>_alpha_set);
 <rtlModuleName()>.UPER_Enc_ConstraintWholeNumber(S, K, <rtlModuleName()>.Asn1Int(charIndex), 0, <nCharIndexSize>);
 >>
 
-InternalItem_string_with_alpha_decode(p, sTasName, i, nCharIndexSize, nCharIndexMax) ::=<<
-<rtlModuleName()>.UPER_Dec_ConstraintWholeNumberInt(S, K, charIndex, 0, <nCharIndexMax>, <nCharIndexSize>, result.Success);
+InternalItem_string_with_alpha_decode(p, sTasName, i, nLastItemIndex, arrnAlphabetAsciiCodes, nAlphabetLength, nCharIndexSize) ::=<<
+<rtlModuleName()>.UPER_Dec_ConstraintWholeNumberInt(S, K, charIndex, 0, <nLastItemIndex>, <nCharIndexSize>, result.Success);
 <p>(<i>) := <sTasName>_alpha_set(charIndex+1);
 >>
 
@@ -452,29 +465,33 @@ InternalItem_string_with_alpha_decode(p, sTasName, i, nCharIndexSize, nCharIndex
 
 
 str_FixedSize_encode(p, sTasName, i, sInternalItem, nFixedSize, nIntItemMinSize, nIntItemMaxSize, nAlignSize) ::= <<
+<i> := <sTasName>_index'First; 
 <loopFixedItem_enc(i=i, sInternalItem=sInternalItem, fixedSize=nFixedSize, nfixedSizeUperLimit = nFixedSize, nCurOffset="0", nAlignSize=nAlignSize, nIntItemMinSize=nIntItemMinSize, nIntItemMaxSize=nIntItemMaxSize)>
 >>
 
 str_FixedSize_decode(p, sTasName, i, sInternalItem, nFixedSize, nIntItemMinSize, nIntItemMaxSize, nAlignSize) ::= <<
-val := <sTasName>_Init;
+--val := <sTasName>_Init;
 result := <rtlModuleName()>.ASN1_RESULT'(Success => TRUE, ErrorCode => 0);
+<i> := <sTasName>_index'First; 
 <loopFixedItem_dec(i=i, sInternalItem=sInternalItem, fixedSize=nFixedSize, nfixedSizeUperLimit = nFixedSize, nCurOffset="0", nAlignSize=nAlignSize, nIntItemMinSize=nIntItemMinSize, nIntItemMaxSize=nIntItemMaxSize)>
 >>
 
 str_VarSize_encode(p, sTasName, i, sInternalItem, nSizeMin, nSizeMax, nSizeInBits, nIntItemMinSize, nIntItemMaxSize, nAlignSize) ::= <<
-length := <rtlModuleName()>.getStringSize(<p>);
-result.Success := length >= <nSizeMin> AND length \<= <nSizeMax>;
+nStringLength := <rtlModuleName()>.getStringSize(<p>);
+result.Success := nStringLength >= <nSizeMin> AND nStringLength \<= <nSizeMax>;
+<i> := <sTasName>_index'First; 
 if result.Success THEN
-    <rtlModuleName()>.UPER_Enc_ConstraintWholeNumber(S, K, <rtlModuleName()>.Asn1Int(length), <nSizeMin>, <nSizeInBits>);
-    <loopFixedItem_enc(i=i, sInternalItem=sInternalItem, fixedSize="length", nfixedSizeUperLimit = nSizeMax, nCurOffset=nSizeInBits, nAlignSize=nAlignSize, nIntItemMinSize=nIntItemMinSize, nIntItemMaxSize=nIntItemMaxSize)>
+    <rtlModuleName()>.UPER_Enc_ConstraintWholeNumber(S, K, <rtlModuleName()>.Asn1Int(nStringLength), <nSizeMin>, <nSizeInBits>);
+    <loopFixedItem_enc(i=i, sInternalItem=sInternalItem, fixedSize="nStringLength", nfixedSizeUperLimit = nSizeMax, nCurOffset=nSizeInBits, nAlignSize=nAlignSize, nIntItemMinSize=nIntItemMinSize, nIntItemMaxSize=nIntItemMaxSize)>
 end if;
 >>
 
 str_VarSize_decode(p, sTasName, i, sInternalItem, nSizeMin, nSizeMax, nSizeInBits, nIntItemMinSize, nIntItemMaxSize, nAlignSize) ::= <<
-val := <sTasName>_Init;
+--val := <sTasName>_Init;
 result.ErrorCode := <rtlModuleName()>.ERR_INSUFFICIENT_DATA; 
-<rtlModuleName()>.UPER_Dec_ConstraintWholeNumberInt(S, K, length, <nSizeMin>, <nSizeMax>, <nSizeInBits>, result.Success);
-<loopFixedItem_dec(i=i, sInternalItem=sInternalItem, fixedSize="length", nfixedSizeUperLimit = nSizeMax, nCurOffset=nSizeInBits, nAlignSize=nAlignSize, nIntItemMinSize=nIntItemMinSize, nIntItemMaxSize=nIntItemMaxSize)>
+<rtlModuleName()>.UPER_Dec_ConstraintWholeNumberInt(S, K, nStringLength, <nSizeMin>, <nSizeMax>, <nSizeInBits>, result.Success);
+<i> := <sTasName>_index'First; 
+<loopFixedItem_dec(i=i, sInternalItem=sInternalItem, fixedSize="nStringLength", nfixedSizeUperLimit = nSizeMax, nCurOffset=nSizeInBits, nAlignSize=nAlignSize, nIntItemMinSize=nIntItemMinSize, nIntItemMaxSize=nIntItemMaxSize)>
 >>
 
 

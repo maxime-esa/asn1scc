@@ -429,6 +429,20 @@ with
         | SequenceOf   t -> t.id
         | Sequence     t -> t.id
         | Choice       t -> t.id
+    member this.tasInfo =
+        match this with
+        | Integer      t -> t.tasInfo
+        | Real         t -> t.tasInfo
+        | IA5String    t -> t.tasInfo
+        | OctetString  t -> t.tasInfo
+        | NullType     t -> t.tasInfo
+        | BitString    t -> t.tasInfo
+        | Boolean      t -> t.tasInfo
+        | Enumerated   t -> t.tasInfo
+        | SequenceOf   t -> t.tasInfo
+        | Sequence     t -> t.tasInfo
+        | Choice       t -> t.tasInfo
+
     member this.baseType =
         match this with
         | Integer      t -> t.baseType |> Option.map Integer     
@@ -500,6 +514,37 @@ with
         match this.id with
         | ReferenceToType((GenericFold2.MD _)::(GenericFold2.TA tasName)::[])   -> Some tasName
         | _                                                                     -> None
+    member this.getParamType (l:ProgrammingLanguage) (c:Ast.Codec) =
+        match l with
+        | Ada   -> VALUE "val"
+        | C     ->
+            match c with
+            | Ast.Encode  ->
+                match this with
+                | Integer      _ -> VALUE "val"
+                | Real         _ -> VALUE "val"
+                | IA5String    _ -> FIXARRAY "val"
+                | OctetString  _ -> POINTER "pVal"
+                | NullType     _ -> VALUE "val"
+                | BitString    _ -> POINTER "pVal"
+                | Boolean      _ -> VALUE "val"
+                | Enumerated   _ -> VALUE "val"
+                | SequenceOf   _ -> POINTER "pVal"
+                | Sequence     _ -> POINTER "pVal"
+                | Choice       _ -> POINTER "pVal"
+            | Ast.Decode  ->
+                match this with
+                | Integer      _ -> POINTER "pVal"
+                | Real         _ -> POINTER "pVal"
+                | IA5String    _ -> FIXARRAY "val"
+                | OctetString  _ -> POINTER "pVal"
+                | NullType     _ -> POINTER "pVal"
+                | BitString    _ -> POINTER "pVal"
+                | Boolean      _ -> POINTER "pVal"
+                | Enumerated   _ -> POINTER "pVal"
+                | SequenceOf   _ -> POINTER "pVal"
+                | Sequence     _ -> POINTER "pVal"
+                | Choice       _ -> POINTER "pVal"
 
 
 let seqUPEROptionalChildren children =

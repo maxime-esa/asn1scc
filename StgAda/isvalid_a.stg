@@ -112,6 +112,7 @@ PrintReference1(p, sName) ::= "<sName>_IsConstraintValid(<p>)"
 PrintReference2(p, sModName,sName) ::= "<sModName>.<sName>_IsConstraintValid(<p>)"
 
 call_base_type_func(p, sFuncName) ::= "ret := <sFuncName>(<p>);"
+call_base_type_func_exp(p, sFuncName) ::= "<sFuncName>(<p>).Success"
 
 
 SingleValContraint(p, v) ::= "(<p> = <v>)"

@@ -12,17 +12,37 @@ type ExpOrStatement =
     | Statement  
 
 type LocalVariable =
-    | SequenceOfIndex of int*int option        //i index, initialValue
+    | SequenceOfIndex       of int*int option        //i index, initialValue
+    | IntegerLocalVariable  of string*int option     //variable name, initialValue
+    | Asn1SIntLocalVariable of string*int option     //variable name, initialValue
+    | Asn1UIntLocalVariable of string*int option     //variable name, initialValue
 with
     member this.VarName =
         match this with
         | SequenceOfIndex (i,_)   -> sprintf "i%d" i
+        | IntegerLocalVariable(name,_)    -> name
+        | Asn1SIntLocalVariable(name,_)   -> name
+        | Asn1UIntLocalVariable(name,_)   -> name
     member this.GetDeclaration (l:ProgrammingLanguage) =
         match l, this with
         | C,    SequenceOfIndex (i,None)         -> sprintf "int i%d;" i
         | C,    SequenceOfIndex (i,Some iv)      -> sprintf "int i%d=%d;" i iv
         | Ada,  SequenceOfIndex (i,None)         -> sprintf "i%d:Integer;" i
         | Ada,  SequenceOfIndex (i,Some iv)      -> sprintf "i%d:Integer:=%d;" i iv
+        | C,    IntegerLocalVariable (name,None)         -> sprintf "int %s;" name
+        | C,    IntegerLocalVariable (name,Some iv)      -> sprintf "int %s=%d;" name iv
+        | Ada,  IntegerLocalVariable (name,None)         -> sprintf "%s:Integer;" name
+        | Ada,  IntegerLocalVariable (name,Some iv)      -> sprintf "%s:Integer:=%d;" name iv
+        | C,    Asn1SIntLocalVariable (name,None)         -> sprintf "asn1SccSint %s;" name
+        | C,    Asn1SIntLocalVariable (name,Some iv)      -> sprintf "asn1SccSint %s=%d;" name iv
+        | Ada,  Asn1SIntLocalVariable (name,None)         -> sprintf "%s:adaasn1rtl.Asn1Int;" name
+        | Ada,  Asn1SIntLocalVariable (name,Some iv)      -> sprintf "%s:adaasn1rtl.Asn1Int:=%d;" name iv
+        | C,    Asn1UIntLocalVariable (name,None)         -> sprintf "asn1SccUint %s;" name
+        | C,    Asn1UIntLocalVariable (name,Some iv)      -> sprintf "asn1SccUint %s=%d;" name iv
+        | Ada,  Asn1UIntLocalVariable (name,None)         -> sprintf "%s:adaasn1rtl.Asn1UInt;" name
+        | Ada,  Asn1UIntLocalVariable (name,Some iv)      -> sprintf "%s:adaasn1rtl.Asn1UInt:=%d;" name iv
+
+
 
          //Emit_local_variable_SQF_Index(nI, bHasInitalValue)::="I<nI>:Integer<if(bHasInitalValue)>:=1<endif>;"
 
@@ -77,6 +97,11 @@ type ErroCode = {
     errCodeName     : string
 }
 
+        
+            
+
+
+
 type IsEqualBody =
     | EqualBodyExpression       of (string -> string -> (string*(LocalVariable list)) option)
     | EqualBodyStatementList    of (string -> string -> (string*(LocalVariable list)) option)
@@ -103,6 +128,7 @@ type IsValidFunction = {
     funcName            : string option               // the name of the function. Valid only for TASes)
     func                : string option               // the body of the function
     funcDef             : string option               // function definition in header file
+    funcExp             : (string -> string) option   // return a single boolean expression
     funcBody            : string -> string            //returns a list of validations statements
     funcBody2           : string -> string -> string  //like funBody but with two arguement p and accessOper ( i.e. '->' or '.')
     alphaFuncs          : AlphaFunc list  
@@ -114,8 +140,8 @@ type UPerFunction = {
     funcName            : string option               // the name of the function
     func                : string option               // the body of the function
     funcDef             : string option               // function definition in header file
-    funcBody            : string -> string            // returns a list of validations statements
-    funcBody2           : string -> string -> string  //like funBody but with two arguement p and accessOper ( i.e. '->' or '.')
+    funcBody            : FuncParamType -> string            // returns a list of validations statements
+    funcBody2           : FuncParamType -> string -> string  //like funBody but with two arguement p and accessOper ( i.e. '->' or '.')
     localVariables      : LocalVariable list
 }
 
@@ -185,6 +211,8 @@ type Enumerated = {
     typeDefinition      : TypeDefinitionCommon
     equalFunction       : EqualFunction
     isValidFunction     : IsValidFunction option      // it is optional because some types do not require an IsValid function (e.g. an unconstraint integer)
+    uperEncFunction     : UPerFunction
+    uperDecFunction     : UPerFunction
 
     encodeFuncName      : string option               // has value only for top level asn1 types (i.e. TypeAssignments (TAS))
     encodeFuncBody      : string -> string            // an stg macro according the acnEncodingClass
@@ -218,6 +246,8 @@ type Real = {
     typeDefinition      : TypeDefinitionCommon
     equalFunction       : EqualFunction
     isValidFunction     : IsValidFunction option      // it is optional because some types do not require an IsValid function (e.g. an unconstraint integer)
+    uperEncFunction     : UPerFunction
+    uperDecFunction     : UPerFunction
 
     encodeFuncName      : string option               // has value only for top level asn1 types (i.e. TypeAssignments (TAS))
     encodeFuncBody      : string -> string            // an stg macro according the acnEncodingClass
@@ -250,6 +280,8 @@ type Boolean = {
     typeDefinition      : TypeDefinitionCommon
     equalFunction       : EqualFunction
     isValidFunction     : IsValidFunction option      // it is optional because some types do not require an IsValid function (e.g. an unconstraint integer)
+    uperEncFunction     : UPerFunction
+    uperDecFunction     : UPerFunction
 
     encodeFuncName      : string option               // has value only for top level asn1 types (i.e. TypeAssignments (TAS))
     encodeFuncBody      : string -> string            // an stg macro according the acnEncodingClass
@@ -279,6 +311,8 @@ type NullType = {
     //DAst properties
     typeDefinition      : TypeDefinitionCommon
     equalFunction       : EqualFunction
+    uperEncFunction     : UPerFunction
+    uperDecFunction     : UPerFunction
 
     encodeFuncName      : string option               // has value only for top level asn1 types (i.e. TypeAssignments (TAS))
     encodeFuncBody      : string -> string            // an stg macro according the acnEncodingClass
@@ -311,6 +345,8 @@ type StringType = {
     typeDefinition      : TypeDefinitionCommon
     equalFunction       : EqualFunction
     isValidFunction     : IsValidFunction option      // it is optional because some types do not require an IsValid function (e.g. an unconstraint integer)
+    uperEncFunction     : UPerFunction
+    uperDecFunction     : UPerFunction
 
     encodeFuncName      : string option               // has value only for top level asn1 types (i.e. TypeAssignments (TAS))
     encodeFuncBody      : string -> string            // an stg macro according the acnEncodingClass
@@ -657,26 +693,26 @@ with
     member this.uperEncFunction =
          match this with
          | Integer      t -> Some(t.uperEncFunction)
-         | Real         t -> None
-         | IA5String    t -> None
+         | Real         t -> Some(t.uperEncFunction)
+         | IA5String    t -> Some(t.uperEncFunction)
          | OctetString  t -> None
-         | NullType     t -> None
+         | NullType     t -> Some(t.uperEncFunction)
          | BitString    t -> None
-         | Boolean      t -> None
-         | Enumerated   t -> None
+         | Boolean      t -> Some(t.uperEncFunction)
+         | Enumerated   t -> Some(t.uperEncFunction)
          | SequenceOf   t -> None
          | Sequence     t -> None
          | Choice       t -> None
     member this.uperDecFunction =
          match this with
          | Integer      t -> Some(t.uperDecFunction)
-         | Real         t -> None
-         | IA5String    t -> None
+         | Real         t -> Some(t.uperDecFunction)
+         | IA5String    t -> Some(t.uperDecFunction)
          | OctetString  t -> None
-         | NullType     t -> None
+         | NullType     t -> Some(t.uperDecFunction)
          | BitString    t -> None
-         | Boolean      t -> None
-         | Enumerated   t -> None
+         | Boolean      t -> Some(t.uperDecFunction)
+         | Enumerated   t -> Some(t.uperDecFunction)
          | SequenceOf   t -> None
          | Sequence     t -> None
          | Choice       t -> None

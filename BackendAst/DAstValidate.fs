@@ -116,6 +116,7 @@ let hasValidationFunc allCons baseFuncName =
 
 let makeExpressionToStatement l = match l with C -> isvalid_c.makeExpressionToStatement | Ada -> isvalid_a.makeExpressionToStatement
 let callBaseTypeFunc l = match l with C -> isvalid_c.call_base_type_func | Ada -> isvalid_a.call_base_type_func
+let callBaseTypeFuncExp l = match l with C -> isvalid_c.call_base_type_func_exp | Ada -> isvalid_a.call_base_type_func_exp
 let joinTwoIfFirstOk l = match l with C -> isvalid_c.JoinTwoIfFirstOk | Ada -> isvalid_a.JoinTwoIfFirstOk
 
 let getAddres = DAstEqual.getAddres
@@ -130,6 +131,17 @@ let createPrimitiveFunction (r:CAst.AstRoot) (l:ProgrammingLanguage)  tasInfo (t
         let errCodeName         = ToC ("ERR_" + ((typeId.AcnAbsPath |> Seq.skip 1 |> Seq.StrJoin("-")).Replace("#","elm")))
         let errCodeValue        = us.currErrCode
         let errCode             = {ErroCode.errCodeName = errCodeName; errCodeValue = errCodeValue}
+        let funcExp (p:String) = 
+            let allCons = allCons |> List.map (conToStrFunc p)
+            match allCons, baseFuncName with
+            | [], None      -> raise(BugErrorException("Invalid case"))
+            | c::cs, None   -> l.ExpAndMulti allCons 
+            | [], Some baseFncName      -> callBaseTypeFuncExp l p baseFncName
+            | c::cs, Some baseFncName   -> 
+                let e1 = callBaseTypeFuncExp l p baseFncName
+                let e2 = l.ExpAndMulti allCons
+                l.ExpAnd e1 e2
+
         let funcBody (p:String) = 
             let allCons = allCons |> List.map (conToStrFunc p)
             match allCons, baseFuncName with
@@ -165,6 +177,7 @@ let createPrimitiveFunction (r:CAst.AstRoot) (l:ProgrammingLanguage)  tasInfo (t
                 errCodes                    = [errCode]
                 func                        = func
                 funcDef                     = funcDef
+                funcExp                     = Some funcExp
                 funcBody                    = funcBody 
                 funcBody2                   = (fun p acc -> funcBody p)
                 alphaFuncs                  = alphaFuncs
@@ -185,6 +198,7 @@ let createBitOrOctetStringFunction (r:CAst.AstRoot) (l:ProgrammingLanguage)  tas
         let errCodeValue        = us.currErrCode
         let errCode             = {ErroCode.errCodeName = errCodeName; errCodeValue = errCodeValue}
 
+
         let funcBody (p:String) (childAccess:string)  = 
             let allCons = allCons |> List.map ((conToStrFunc childAccess) p )
             match allCons, baseFuncName with
@@ -196,6 +210,7 @@ let createBitOrOctetStringFunction (r:CAst.AstRoot) (l:ProgrammingLanguage)  tas
                 let s1 = baseCallStatement l p baseFncName
                 let s2 = makeExpressionToStatement l (l.ExpAndMulti allCons) errCode.errCodeName
                 joinTwoIfFirstOk l s1 s2
+
 
         let  func  = 
                 match funcName  with
@@ -219,6 +234,7 @@ let createBitOrOctetStringFunction (r:CAst.AstRoot) (l:ProgrammingLanguage)  tas
                 IsValidFunction.funcName    = funcName
                 errCodes                    = [errCode]
                 func                        = func
+                funcExp                     = None
                 funcDef                     = funcDef
                 funcBody                    = (fun p -> funcBody p ".")
                 funcBody2                   = funcBody
@@ -431,6 +447,7 @@ let createSequenceFunction (r:CAst.AstRoot) (l:ProgrammingLanguage) (o:CAst.Sequ
                 errCodes                    = ercCodes
                 func                        = func
                 funcDef                     = funcDef
+                funcExp                     = None
                 funcBody                    = (fun p -> funcBody p ".")
                 funcBody2                   = funcBody
                 alphaFuncs                  = alphaFuncs
@@ -534,6 +551,7 @@ let createChoiceFunction (r:CAst.AstRoot) (l:ProgrammingLanguage) (o:CAst.Choice
                 errCodes                    = ercCodes
                 func                        = func
                 funcDef                     = funcDef
+                funcExp                     = None
                 funcBody                    = (fun p -> funcBody p ".")
                 funcBody2                   = funcBody
                 alphaFuncs                  = alphaFuncs
@@ -686,6 +704,7 @@ let createSequenceOfFunction (r:CAst.AstRoot) (l:ProgrammingLanguage) (o:CAst.Se
                 errCodes                    = ercCodes
                 func                        = func
                 funcDef                     = funcDef
+                funcExp                     = None
                 funcBody                    = (fun p -> funcBody p ".")
                 funcBody2                   = funcBody
                 alphaFuncs                  = alphaFuncs
