@@ -26,7 +26,7 @@ procedure <sFuncName>(val:in <sTypeDefName>; Stream : OUT <sTypeDefName>_uPER_St
 
 EmitTypeAssignment_def_decode(sVarName, sStar, sFuncName, sTypeDefName, arrsErrcodes, bEmptyEncodingSpace, nMaxBytesInPER, nMaxBitsInPER) ::= <<
 <arrsErrcodes; separator="\n">
-procedure <sFuncName>(<sVarName>: out <sTypeDefName>; Stream : IN <sTypeDefName>_uPER_Stream; result : OUT <rtlModuleName()>.ASN1_RESULT);
+procedure <sFuncName>(<sVarName>:in out <sTypeDefName>; Stream : IN <sTypeDefName>_uPER_Stream; result : OUT <rtlModuleName()>.ASN1_RESULT);
 >>
 
 TasEncodeMain(sVarName, sFuncName, sTypeDefName) ::= /*nogen*/<<
@@ -38,8 +38,9 @@ begin
 end <sFuncName>;
 >>
 
-EmitTypeAssignment_encode(sVarName, sStar, sFuncName, soIValidFuncName, sTypeDefName, arrsLocalVariables, sContent) ::= <<
+EmitTypeAssignment_encode(sVarName, sStar, sFuncName, soIValidFuncName, sTypeDefName, arrsLocalVariables, sContent, soSparkAnnotations) ::= <<
 procedure <sFuncName>_aux(<sVarName>:in <sTypeDefName>; S : in out <rtlModuleName()>.BitArray; K : in out Natural; result : OUT <rtlModuleName()>.ASN1_RESULT)
+<soSparkAnnotations>
 IS
     <arrsLocalVariables; separator="\n">
 begin
@@ -58,7 +59,7 @@ end <sFuncName>_aux;
 >>
 
 TasDecodeMain(sVarName, sFuncName, sTypeDefName) ::= /*nogen*/<<
-procedure <sFuncName>(<sVarName>: out <sTypeDefName>; Stream : IN <sTypeDefName>_uPER_Stream; result : OUT <rtlModuleName()>.ASN1_RESULT)
+procedure <sFuncName>(<sVarName>:in out <sTypeDefName>; Stream : IN <sTypeDefName>_uPER_Stream; result : OUT <rtlModuleName()>.ASN1_RESULT)
 IS
     iter:<rtlModuleName()>.DECODE_PARAMS;
 begin
@@ -68,8 +69,9 @@ begin
 end <sFuncName>;
 >>
 
-EmitTypeAssignment_decode(sVarName, sStar, sFuncName, soIValidFuncName, sTypeDefName, arrsLocalVariables, sContent) ::= <<
-procedure <sFuncName>_aux(<sVarName>:out <sTypeDefName>; S : in <rtlModuleName()>.BitArray; K : in out <rtlModuleName()>.DECODE_PARAMS; result : OUT <rtlModuleName()>.ASN1_RESULT)
+EmitTypeAssignment_decode(sVarName, sStar, sFuncName, soIValidFuncName, sTypeDefName, arrsLocalVariables, sContent, soSparkAnnotations) ::= <<
+procedure <sFuncName>_aux(<sVarName>:in out <sTypeDefName>; S : in <rtlModuleName()>.BitArray; K : in out <rtlModuleName()>.DECODE_PARAMS; result : OUT <rtlModuleName()>.ASN1_RESULT)
+<soSparkAnnotations>
 IS
     <arrsLocalVariables; separator="\n">
 begin
@@ -80,8 +82,34 @@ end <sFuncName>_aux;
 >>
 
 
+/*
+ depends => (
+                S => (S , K, val), 
+                K => (K<if(bKDependsOnValue)>, val<endif>)<if(bAcnEncodeFuncRequiresResult)> , 
+                result => val 
+                <endif>
+            ),
+*/
+annotations_encode(sName, bKDependsOnValue, bAcnEncodeFuncRequiresResult, bResDependsOnData, bKDependsOnData) ::= <<
+with
+ pre  => S'Last >= <sName>_REQUIRED_BITS_FOR_ENCODING and then K >= S'First - 1 and then K \<= S'Last - <sName>_REQUIRED_BITS_FOR_ENCODING and then K \<= Natural'Last - <sName>_REQUIRED_BITS_FOR_ENCODING,
+ post => K>=K'Old and K\<=K'Old + <sName>_REQUIRED_BITS_FOR_ENCODING
+>>
 
 
+/*
+ depends => (
+            val => (S , K) ,
+            K => (K <if(bKDependsOnData)>,S<endif>),
+            result => (K<if(bResDependsOnData)>,S<endif>)
+            ),
+*/
+
+annotations_decode(sName, bKDependsOnValue, bAcnEncodeFuncRequiresResult, bResDependsOnData, bKDependsOnData) ::= <<
+with
+ pre => S'Last >= <sName>_REQUIRED_BITS_FOR_ENCODING and then K.K >= S'First - 1 and then K.K \<= S'Last - <sName>_REQUIRED_BITS_FOR_ENCODING and then K.K \<= Natural'Last - <sName>_REQUIRED_BITS_FOR_ENCODING,
+ post => K.K>=K'Old.K and K.K\<=K'Old.K+<sName>_REQUIRED_BITS_FOR_ENCODING
+>>
 
 
 
@@ -371,6 +399,8 @@ ReferenceType2_decode(p, sTasName, sName, bAcnEncodeFuncRequiresResult) ::= "<sT
 loopFixedItem_enc (i, fixedSize, nfixedSizeUperLimit, sInternalItem, nCurOffset, nAlignSize, nIntItemMinSize, nIntItemMaxSize)::= /*nogen*/<<    
 while <i>\<= <fixedSize> loop
     pragma Loop_Invariant (<i> >=1 and <i>\<=<fixedSize>);
+    pragma Loop_Invariant (K >= K'Loop_Entry);
+    pragma Loop_Invariant (K\<=K'Loop_Entry + <nIntItemMaxSize>*(<i>-1));
     <sInternalItem>
     <i> := <i> + 1;
 end loop;
@@ -380,6 +410,8 @@ end loop;
 loopFixedItem_dec (i, fixedSize, nfixedSizeUperLimit, sInternalItem, nCurOffset, nAlignSize, nIntItemMinSize, nIntItemMaxSize)::= /*nogen*/<<    
 while <i>\<= <fixedSize> AND result.Success loop
     pragma Loop_Invariant (<i> >=1 and <i>\<=<fixedSize>);
+    pragma Loop_Invariant (K.K >= K'Loop_Entry.K);
+    pragma Loop_Invariant (K.K \<= K'Loop_Entry.K + <nIntItemMaxSize>*(<i>-1));
     <sInternalItem>
     <i> := <i> + 1;
 end loop;

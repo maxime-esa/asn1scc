@@ -15,7 +15,7 @@ let getFuncName (r:CAst.AstRoot) (l:ProgrammingLanguage) (codec:Ast.Codec) (tasI
 //1.Decode functions (and perhaps encode function) muct check if the decode value is within the constraints (currently, implemented only for Integers and for case IntUnconstraintMax )
 
 
-let createPrimitiveFunction (r:CAst.AstRoot) (l:ProgrammingLanguage) (codec:Ast.Codec) (o:CAst.Asn1Type) (typeDefinition:TypeDefinitionCommon) (baseTypeUperFunc : UPerFunction option) (isValidFunc: IsValidFunction option)  (funcBody:ErroCode->FuncParamType->string) localVars (us:State)  =
+let createPrimitiveFunction (r:CAst.AstRoot) (l:ProgrammingLanguage) (codec:Ast.Codec) (o:CAst.Asn1Type) (typeDefinition:TypeDefinitionCommon) (baseTypeUperFunc : UPerFunction option) (isValidFunc: IsValidFunction option)  (funcBody:ErroCode->FuncParamType->string) localVars soSparkAnnotations (us:State)  =
     let funcName            = getFuncName r l codec o.tasInfo
     let errCodeName         = ToC ("ERR_UPER" + (codec.suffix.ToUpper()) + "_" + ((o.id.AcnAbsPath |> Seq.skip 1 |> Seq.StrJoin("-")).Replace("#","elm")))
     let errCodeValue        = us.currErrCode
@@ -37,7 +37,7 @@ let createPrimitiveFunction (r:CAst.AstRoot) (l:ProgrammingLanguage) (codec:Ast.
             | Some funcName     -> 
                 let content = funcBody p  
                 let lvars = localVars |> List.map(fun (lv:LocalVariable) -> lv.GetDeclaration l) |> Seq.distinct
-                Some(EmitTypeAssignment_primitive varName sStar funcName isValidFuncName  typeDefinition.name lvars  content codec)
+                Some(EmitTypeAssignment_primitive varName sStar funcName isValidFuncName  typeDefinition.name lvars  content soSparkAnnotations codec)
     let  funcDef  = 
             match funcName with
             | None              -> None
@@ -106,27 +106,30 @@ let createIntegerFunction (r:CAst.AstRoot) (l:ProgrammingLanguage) (codec:Ast.Co
             let cc = DAstValidate.foldRangeCon l (fun v -> v.ToString()) (fun v -> v.ToString()) p.p a
             IntRootExt2 p.p (getValueByConstraint uperR) cc (IntBod uperR true) errCode.errCodeName codec 
         | _                             -> raise(BugErrorException "")
-
-    createPrimitiveFunction r l codec (CAst.Integer o) typeDefinition baseTypeUperFunc  isValidFunc  funcBody [] us
+    let soSparkAnnotations = None
+    createPrimitiveFunction r l codec (CAst.Integer o) typeDefinition baseTypeUperFunc  isValidFunc  funcBody [] soSparkAnnotations us
 
 
 let createBooleanFunction (r:CAst.AstRoot) (l:ProgrammingLanguage) (codec:Ast.Codec) (o:CAst.Boolean) (typeDefinition:TypeDefinitionCommon) (baseTypeUperFunc : UPerFunction option) (isValidFunc: IsValidFunction option) (us:State)  =
     let funcBody (errCode:ErroCode) (p:FuncParamType) = 
         let Boolean         = match l with C -> uper_c.Boolean          | Ada -> uper_a.Boolean
         Boolean p.p errCode.errCodeName codec
-    createPrimitiveFunction r l codec (CAst.Boolean o) typeDefinition baseTypeUperFunc  isValidFunc  funcBody [] us
+    let soSparkAnnotations = None
+    createPrimitiveFunction r l codec (CAst.Boolean o) typeDefinition baseTypeUperFunc  isValidFunc  funcBody [] soSparkAnnotations us
 
 let createRealFunction (r:CAst.AstRoot) (l:ProgrammingLanguage) (codec:Ast.Codec) (o:CAst.Real) (typeDefinition:TypeDefinitionCommon) (baseTypeUperFunc : UPerFunction option) (isValidFunc: IsValidFunction option) (us:State)  =
     let funcBody (errCode:ErroCode) (p:FuncParamType) = 
         let Real         = match l with C -> uper_c.Real          | Ada -> uper_a.Real
         Real p.p errCode.errCodeName codec
-    createPrimitiveFunction r l codec (CAst.Real o) typeDefinition baseTypeUperFunc  isValidFunc  funcBody [] us
+    let soSparkAnnotations = None
+    createPrimitiveFunction r l codec (CAst.Real o) typeDefinition baseTypeUperFunc  isValidFunc  funcBody [] soSparkAnnotations us
 
 let createNullTypeFunction (r:CAst.AstRoot) (l:ProgrammingLanguage) (codec:Ast.Codec) (o:CAst.NullType) (typeDefinition:TypeDefinitionCommon) (baseTypeUperFunc : UPerFunction option) (isValidFunc: IsValidFunction option) (us:State)  =
     let funcBody (errCode:ErroCode) (p:FuncParamType) = 
         let Null         = match l with C -> uper_c.Null          | Ada -> uper_a.Null
         Null p.p codec
-    createPrimitiveFunction r l codec (CAst.NullType o) typeDefinition baseTypeUperFunc  isValidFunc  funcBody [] us
+    let soSparkAnnotations = None
+    createPrimitiveFunction r l codec (CAst.NullType o) typeDefinition baseTypeUperFunc  isValidFunc  funcBody [] soSparkAnnotations us
 
 
 let createEnumeratedFunction (r:CAst.AstRoot) (l:ProgrammingLanguage) (codec:Ast.Codec) (o:CAst.Enumerated) (typeDefinition:TypeDefinitionCommon) (baseTypeUperFunc : UPerFunction option) (isValidFunc: IsValidFunction option) (us:State)  =
@@ -142,7 +145,8 @@ let createEnumeratedFunction (r:CAst.AstRoot) (l:ProgrammingLanguage) (codec:Ast
         let nBits = (GetNumberOfBitsForNonNegativeInteger (nMax-nMin))
         let sFirstItemName = o.items.Head.getBackendName l
         Enumerated p.p typeDefinition.name items nMin nMax nBits errCode.errCodeName nLastItemIndex sFirstItemName codec
-    createPrimitiveFunction r l codec (CAst.Enumerated o) typeDefinition baseTypeUperFunc  isValidFunc  funcBody [] us
+    let soSparkAnnotations = None
+    createPrimitiveFunction r l codec (CAst.Enumerated o) typeDefinition baseTypeUperFunc  isValidFunc  funcBody [] soSparkAnnotations us
 
 
 let createIA5StringFunction (r:CAst.AstRoot) (l:ProgrammingLanguage) (codec:Ast.Codec) (o:CAst.StringType) (typeDefinition:TypeDefinitionCommon) (baseTypeUperFunc : UPerFunction option) (isValidFunc: IsValidFunction option) (us:State)  =
@@ -179,5 +183,10 @@ let createIA5StringFunction (r:CAst.AstRoot) (l:ProgrammingLanguage) (codec:Ast.
         | _ when o.maxSize < 65536 && o.maxSize=o.minSize  -> str_FixedSize p.p typeDefinition.name i internalItem (BigInteger o.minSize) nBits nBits 0I codec 
         | _ when o.maxSize < 65536 && o.maxSize<>o.minSize  -> str_VarSize p.p typeDefinition.name i internalItem (BigInteger o.minSize) (BigInteger o.maxSize) nSizeInBits nBits nBits 0I codec 
         | _                                                -> raise(Exception "fragmentation not implemented yet")
-    createPrimitiveFunction r l codec (CAst.IA5String o) typeDefinition baseTypeUperFunc  isValidFunc  funcBody (lv::charIndex@nStringLength) us
+    let soSparkAnnotations = 
+        match l with
+        | C     -> None
+        | Ada   ->
+            Some(uper_a.annotations typeDefinition.name true isValidFunc.IsSome true true codec)
+    createPrimitiveFunction r l codec (CAst.IA5String o) typeDefinition baseTypeUperFunc  isValidFunc  funcBody (lv::charIndex@nStringLength) soSparkAnnotations  us
 
