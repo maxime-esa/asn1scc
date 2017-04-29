@@ -55,13 +55,13 @@
     <None Include="Script.fsx" />
     <Content Include="backends.xml" />
     <None Include="header_c.stg">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
     <None Include="body_c.stg">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
     <None Include="init_c.stg">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
     <None Include="equal_c.stg">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>

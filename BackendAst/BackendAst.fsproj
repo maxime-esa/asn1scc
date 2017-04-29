@@ -72,6 +72,7 @@
     <Compile Include="DastFold.fs" />
     <Compile Include="print_debug.fs" />
     <Compile Include="DAstTypeDefinition.fs" />
+    <Compile Include="DAstInitialize.fs" />
     <Compile Include="DAstVariables.fs" />
     <Compile Include="DAstEqual.fs" />
     <Compile Include="DAstValidate.fs" />

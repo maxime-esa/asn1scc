@@ -31,13 +31,17 @@ let createPrimitiveFunction (r:CAst.AstRoot) (l:ProgrammingLanguage) (codec:Ast.
     let varName = p.p
     let sStar = p.getStar l
     let isValidFuncName = match isValidFunc with None -> None | Some f -> f.funcName
+    let sInitilialExp =
+        match l with
+        | C     -> ""
+        | Ada   -> ""
     let  func  = 
             match funcName  with
             | None              -> None
             | Some funcName     -> 
                 let content = funcBody p  
                 let lvars = localVars |> List.map(fun (lv:LocalVariable) -> lv.GetDeclaration l) |> Seq.distinct
-                Some(EmitTypeAssignment_primitive varName sStar funcName isValidFuncName  typeDefinition.name lvars  content soSparkAnnotations codec)
+                Some(EmitTypeAssignment_primitive varName sStar funcName isValidFuncName  typeDefinition.name lvars  content soSparkAnnotations sInitilialExp codec)
     let  funcDef  = 
             match funcName with
             | None              -> None

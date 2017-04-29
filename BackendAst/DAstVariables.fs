@@ -11,60 +11,7 @@ open uPER2
 
 
 
-let getValueByUperRange (r:uperRange<'T>) (z:'T) = 
-    match r with
-    | Concrete (a,b)    -> if a <= z && z <= b then z else a
-    | NegInf  b         -> if z <= b then z else b              //(-inf, b]
-    | PosInf a          -> if a <= z then z else a               //[a, +inf)
-    | Full              -> z
-
-let getDefaultValueByType  (t:Asn1Type)  =
-    DastFold.foldAsn1Type2
-        t
-        false
-        (fun o newBase us -> 
-            let v = getValueByUperRange o.uperRange 0I
-            IntegerValue ({IntegerValue.id = (ReferenceToValue (o.id.ToScopeNodeList, [GenericFold2.IMG 0])); litOrRef=Literal; childValue = us; refToType = o.id; Value = v; }), true)
-
-        (fun o newBase us -> 
-            let v = getValueByUperRange o.uperRange 0.0
-            RealValue ({RealValue.id = (ReferenceToValue (o.id.ToScopeNodeList, [GenericFold2.IMG 0])); litOrRef=Literal; childValue = us; refToType = o.id; Value = v; }), true)
-
-        (fun o newBase us -> 
-            let ch = 
-                match o.charSet |> Seq.exists((=) ' ') with
-                | true  -> ' '
-                | false -> o.charSet |> Seq.find(fun c -> not (Char.IsControl c))
-            let v = System.String(ch, o.minSize)
-            StringValue ({StringValue.id = (ReferenceToValue (o.id.ToScopeNodeList, [GenericFold2.IMG 0])); litOrRef=Literal; childValue = us; refToType = o.id; Value = v; }), true)
-
-        (fun o newBase us -> 
-            let v = [1 .. o.minSize] |> List.map(fun i -> 0uy)
-            OctetStringValue ({OctetStringValue.id = (ReferenceToValue (o.id.ToScopeNodeList, [GenericFold2.IMG 0])); litOrRef=Literal; childValue = us; refToType = o.id; Value = v; }), true)
-        
-        (fun o newBase us -> 
-            NullValue ({NullValue.id = (ReferenceToValue (o.id.ToScopeNodeList, [GenericFold2.IMG 0])); litOrRef=Literal; childValue = us; refToType = o.id; Value = (); }), true)
-        
-        (fun o newBase us -> 
-            let v = System.String('0', o.minSize)
-            BitStringValue ({BitStringValue.id = (ReferenceToValue (o.id.ToScopeNodeList, [GenericFold2.IMG 0])); litOrRef=Literal; childValue = us; refToType = o.id; Value = v; }), true)
-        
-        (fun o newBase us -> BooleanValue ({BooleanValue.id = (ReferenceToValue (o.id.ToScopeNodeList, [GenericFold2.IMG 0])); litOrRef=Literal; childValue = us; refToType = o.id; Value = false; }), true)
-
-        (fun o newBase us -> EnumValue ({EnumValue.id = (ReferenceToValue (o.id.ToScopeNodeList, [GenericFold2.IMG 0])); litOrRef=Literal; childValue = us; refToType = o.id; Value = o.items.Head.name; }), true)
-
-        (fun childType o newBase us -> 
-            let v = [1 .. o.minSize] |> List.map(fun i -> childType)
-            SeqOfValue ({SeqOfValue.id = (ReferenceToValue (o.id.ToScopeNodeList, [GenericFold2.IMG 0])); litOrRef=Literal; childValue = us; refToType = o.id; Value = v; }), true)
-
-        //sequence
-        (fun o newChild us -> {NamedValue.name = o.name; Value=newChild}, us)
-        (fun children o newBase us -> SeqValue ({SeqValue.id = (ReferenceToValue (o.id.ToScopeNodeList, [GenericFold2.IMG 0])); litOrRef=Literal; childValue = us; refToType = o.id; Value = children; }), true)
-
-        //Choice
-        (fun o newChild us -> {NamedValue.name = o.name; Value=newChild}, us)
-        (fun children o newBase us -> ChValue ({ChValue.id = (ReferenceToValue (o.id.ToScopeNodeList, [GenericFold2.IMG 0])); litOrRef=Literal; childValue = us; refToType = o.id; Value = children.Head; }), true)
-    |> fst
+let getDefaultValueByType  (t:Asn1Type)  =  t.initialValue
 
 let rec printValue (r:DAst.AstRoot) (l:ProgrammingLanguage) (pu:ProgramUnit) (gv:Asn1GenericValue) =
     match l with

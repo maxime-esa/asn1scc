@@ -514,6 +514,10 @@ with
         match this.id with
         | ReferenceToType((GenericFold2.MD _)::(GenericFold2.TA tasName)::[])   -> Some tasName
         | _                                                                     -> None
+    member this.isIA5String =
+        match this with
+        | IA5String    _ -> true
+        | _              -> false
     member this.getParamType (l:ProgrammingLanguage) (c:Ast.Codec) =
         match l with
         | Ada   -> VALUE "val"

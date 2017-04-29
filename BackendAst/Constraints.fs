@@ -123,6 +123,32 @@ type FuncParamType =
         | C, VALUE x        -> ""
         | C, POINTER x      -> "*"
         | C, FIXARRAY x     -> ""
+    member this.getArrayItem (l:ProgrammingLanguage) (idx:string) (childTypeIsString: bool) =
+        match l with
+        | Ada   -> 
+            let newPath = sprintf "%s.Data(%s)" this.p idx
+            if childTypeIsString then (FIXARRAY newPath) else (VALUE newPath)
+        | C     -> 
+            let newPath = sprintf "%s%sarr[%s]" this.p (this.getAcces l) idx
+            if childTypeIsString then (FIXARRAY newPath) else (VALUE newPath)
+    member this.getSeqChild (l:ProgrammingLanguage) (childName:string) (childTypeIsString: bool) =
+        match l with
+        | Ada   -> 
+            let newPath = sprintf "%s.%s" this.p childName
+            if childTypeIsString then (FIXARRAY newPath) else (VALUE newPath)
+        | C     -> 
+            let newPath = sprintf "%s%s%s" this.p (this.getAcces l) childName
+            if childTypeIsString then (FIXARRAY newPath) else (VALUE newPath)
+
+    member this.getChChild (l:ProgrammingLanguage) (childName:string) (childTypeIsString: bool) =
+        match l with
+        | Ada   -> 
+            let newPath = sprintf "%s.%s" this.p childName
+            if childTypeIsString then (FIXARRAY newPath) else (VALUE newPath)
+        | C     -> 
+            let newPath = sprintf "%s%su.%s" this.p (this.getAcces l) childName
+            if childTypeIsString then (FIXARRAY newPath) else (VALUE newPath)
+        
 
 
 type Asn1TypeName = {

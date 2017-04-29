@@ -98,8 +98,15 @@ type ErroCode = {
 }
 
         
-            
-
+(*
+Generates initialization statement(s) that inititalize the type with the given Asn1GeneticValue.
+*)            
+type InitFunction = {
+    initFuncName            : string option               // the name of the function
+    initFunc                : string option               // the body of the function
+    initFuncDef             : string option               // function definition in header file
+    initFuncBody            : FuncParamType  -> Asn1GenericValue -> string                      // returns the statement(s) that initialize this type
+}
 
 
 type IsEqualBody =
@@ -172,6 +179,8 @@ type Integer = {
 
     //DAst properties
     typeDefinition      : TypeDefinitionCommon
+    initialValue        : IntegerValue
+    initFunction        : InitFunction
     equalFunction       : EqualFunction
     isValidFunction     : IsValidFunction option      // it is optional because some types do not require an IsValid function (e.g. an unconstraint integer)
     uperEncFunction     : UPerFunction
@@ -209,6 +218,8 @@ type Enumerated = {
 
     //DAst properties
     typeDefinition      : TypeDefinitionCommon
+    initialValue        : EnumValue
+    initFunction        : InitFunction
     equalFunction       : EqualFunction
     isValidFunction     : IsValidFunction option      // it is optional because some types do not require an IsValid function (e.g. an unconstraint integer)
     uperEncFunction     : UPerFunction
@@ -244,6 +255,8 @@ type Real = {
 
     //DAst properties
     typeDefinition      : TypeDefinitionCommon
+    initialValue        : RealValue
+    initFunction        : InitFunction
     equalFunction       : EqualFunction
     isValidFunction     : IsValidFunction option      // it is optional because some types do not require an IsValid function (e.g. an unconstraint integer)
     uperEncFunction     : UPerFunction
@@ -278,6 +291,8 @@ type Boolean = {
 
     //DAst properties
     typeDefinition      : TypeDefinitionCommon
+    initialValue        : BooleanValue
+    initFunction        : InitFunction
     equalFunction       : EqualFunction
     isValidFunction     : IsValidFunction option      // it is optional because some types do not require an IsValid function (e.g. an unconstraint integer)
     uperEncFunction     : UPerFunction
@@ -310,6 +325,8 @@ type NullType = {
 
     //DAst properties
     typeDefinition      : TypeDefinitionCommon
+    initialValue        : NullValue
+    initFunction        : InitFunction
     equalFunction       : EqualFunction
     uperEncFunction     : UPerFunction
     uperDecFunction     : UPerFunction
@@ -343,6 +360,8 @@ type StringType = {
 
     //DAst properties
     typeDefinition      : TypeDefinitionCommon
+    initialValue        : StringValue
+    initFunction        : InitFunction
     equalFunction       : EqualFunction
     isValidFunction     : IsValidFunction option      // it is optional because some types do not require an IsValid function (e.g. an unconstraint integer)
     uperEncFunction     : UPerFunction
@@ -379,6 +398,8 @@ type OctetString = {
 
     //DAst properties
     typeDefinition      : TypeDefinitionCommon
+    initialValue        : OctetStringValue
+    initFunction        : InitFunction
     equalFunction       : EqualFunction
     isValidFunction     : IsValidFunction option      // it is optional because some types do not require an IsValid function (e.g. an unconstraint integer)
 
@@ -415,6 +436,8 @@ type BitString = {
 
     //DAst properties
     typeDefinition      : TypeDefinitionCommon
+    initialValue        : BitStringValue
+    initFunction        : InitFunction
     equalFunction       : EqualFunction
     isValidFunction     : IsValidFunction option      // it is optional because some types do not require an IsValid function (e.g. an unconstraint integer)
 
@@ -451,6 +474,8 @@ type SequenceOf = {
 
     //DAst properties
     typeDefinition      : TypeDefinitionCommon
+    initialValue        : SeqOfValue
+    initFunction        : InitFunction
     equalFunction       : EqualFunction
     isValidFunction     : IsValidFunction option      
 
@@ -505,6 +530,8 @@ and Sequence = {
 
     //DAst properties
     typeDefinition      : TypeDefinitionCommon
+    initialValue        : SeqValue
+    initFunction        : InitFunction
     equalFunction       : EqualFunction
     isValidFunction     : IsValidFunction option      // it is optional because some types do not require an IsValid function (e.g. an unconstraint integer)
 
@@ -554,6 +581,8 @@ and Choice = {
 
     //DAst properties
     typeDefinition      : TypeDefinitionCommon
+    initialValue        : ChValue
+    initFunction        : InitFunction
     equalFunction       : EqualFunction
     isValidFunction     : IsValidFunction option      
 
@@ -661,8 +690,34 @@ with
         | SequenceOf   t -> t.acnMaxSizeInBits
         | Sequence     t -> t.acnMaxSizeInBits
         | Choice       t -> t.acnMaxSizeInBits
+    member this.initialValue =
+        match this with
+        | Integer      t -> IntegerValue t.initialValue
+        | Real         t -> RealValue t.initialValue
+        | IA5String    t -> StringValue t.initialValue
+        | OctetString  t -> OctetStringValue t.initialValue
+        | NullType     t -> NullValue t.initialValue
+        | BitString    t -> BitStringValue t.initialValue
+        | Boolean      t -> BooleanValue t.initialValue
+        | Enumerated   t -> EnumValue t.initialValue
+        | SequenceOf   t -> SeqOfValue t.initialValue
+        | Sequence     t -> SeqValue t.initialValue
+        | Choice       t -> ChValue t.initialValue
 
-   
+    member this.initFunction =
+        match this with
+        | Integer      t -> t.initFunction
+        | Real         t -> t.initFunction
+        | IA5String    t -> t.initFunction
+        | OctetString  t -> t.initFunction
+        | NullType     t -> t.initFunction
+        | BitString    t -> t.initFunction
+        | Boolean      t -> t.initFunction
+        | Enumerated   t -> t.initFunction
+        | SequenceOf   t -> t.initFunction
+        | Sequence     t -> t.initFunction
+        | Choice       t -> t.initFunction
+
     member this.equalFunction =
         match this with
         | Integer      t -> t.equalFunction
@@ -757,6 +812,10 @@ with
         | Sequence     t -> t.tasInfo
         | Choice       t -> t.tasInfo
 
+    member this.isIA5String =
+        match this with
+        | IA5String    _ -> true
+        | _              -> false
 
     member this.asn1Name = 
         match this.id with

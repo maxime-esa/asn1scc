@@ -1,0 +1,184 @@
+﻿module DAstInitialize
+open System
+open System.Numerics
+open System.Globalization
+open System.IO
+
+open FsUtils
+open Constraints
+open DAst
+
+let getFuncName (r:CAst.AstRoot) (l:ProgrammingLanguage) (tasInfo:BAst.TypeAssignmentInfo option) =
+    tasInfo |> Option.map (fun x -> ToC2(r.TypePrefix + x.tasName + "_Initialize"))
+
+let createInitFunctionCommon (r:CAst.AstRoot) (l:ProgrammingLanguage)  (o:CAst.Asn1Type) (typeDefinition:TypeDefinitionCommon) funcBody iv =
+    let funcName            = getFuncName r l o.tasInfo
+    let p = o.getParamType l Ast.Codec.Decode
+    let initTypeAssignment = match l with C -> init_c.initTypeAssignment | Ada -> init_a.initTypeAssignment
+    let initTypeAssignment_def = match l with C -> init_c.initTypeAssignment_def | Ada -> init_a.initTypeAssignment_def
+    let varName = p.p
+    let sStar = p.getStar l
+
+    let  func  = 
+            match funcName  with
+            | None              -> None
+            | Some funcName     -> 
+                let content = funcBody p iv
+                Some(initTypeAssignment varName sStar funcName  typeDefinition.name content )
+    let  funcDef  = 
+            match funcName with
+            | None              -> None
+            | Some funcName     -> 
+                Some(initTypeAssignment_def varName sStar funcName  typeDefinition.name)
+
+
+    {
+        initFuncName            = funcName
+        initFunc                = func
+        initFuncDef             = funcDef
+        initFuncBody            = funcBody
+    }
+
+let createIntegerInitFunc (r:CAst.AstRoot) (l:ProgrammingLanguage) (o:CAst.Integer) (typeDefinition:TypeDefinitionCommon) iv =
+    let initInteger = match l with C -> init_c.initInteger | Ada -> init_a.initInteger
+    let funcBody (p:FuncParamType) v = 
+        let vl = 
+            match v with
+            | IntegerValue iv   -> iv.Value
+            | _                 -> raise(BugErrorException "UnexpectedValue")
+        initInteger (p.getValue l) vl
+    createInitFunctionCommon r l (CAst.Integer o) typeDefinition funcBody iv 
+
+let createRealInitFunc (r:CAst.AstRoot) (l:ProgrammingLanguage) (o :CAst.Real) (typeDefinition:TypeDefinitionCommon) iv = 
+    let initReal = match l with C -> init_c.initReal | Ada -> init_a.initReal
+    let funcBody (p:FuncParamType) v = 
+        let vl = 
+            match v with
+            | RealValue iv   -> iv.Value
+            | _                 -> raise(BugErrorException "UnexpectedValue")
+        initReal (p.getValue l) vl
+    createInitFunctionCommon r l (CAst.Real o) typeDefinition funcBody iv 
+
+let createIA5StringInitFunc (r:CAst.AstRoot) (l:ProgrammingLanguage) (o :CAst.StringType   ) (typeDefinition:TypeDefinitionCommon) iv = 
+    let initIA5String = match l with C -> init_c.initIA5String | Ada -> init_a.initIA5String
+    let funcBody (p:FuncParamType) v = 
+        let vl = 
+            match v with
+            | StringValue iv   -> iv.Value
+            | _                 -> raise(BugErrorException "UnexpectedValue")
+        initIA5String (p.getPointer l) vl
+    createInitFunctionCommon r l (CAst.IA5String o) typeDefinition funcBody iv 
+
+let createOctetStringInitFunc (r:CAst.AstRoot) (l:ProgrammingLanguage) (o :CAst.OctetString ) (typeDefinition:TypeDefinitionCommon) iv = 
+    let initFixSizeBitOrOctString_bytei = match l with C -> init_c.initFixSizeBitOrOctString_bytei  | Ada -> init_a.initFixSizeBitOrOctString_bytei
+    let initFixSizeBitOrOctString       = match l with C -> init_c.initFixSizeBitOrOctString        | Ada -> init_a.initFixSizeBitOrOctString
+    let initFixVarSizeBitOrOctString    = match l with C -> init_c.initFixVarSizeBitOrOctString     | Ada -> init_a.initFixVarSizeBitOrOctString
+
+    let funcBody (p:FuncParamType) v = 
+        let bytes = 
+            match v with
+            | OctetStringValue iv -> iv.Value 
+            | BitStringValue iv   -> bitStringValueToByteArray (StringLoc.ByValue iv.Value) |> Seq.toList
+            | _                 -> raise(BugErrorException "UnexpectedValue")
+        let arrsBytes = bytes |> List.mapi(fun i b -> initFixSizeBitOrOctString_bytei p.p (p.getAcces l) (i.ToString()) (sprintf "%x" b))
+        match o.minSize = o.maxSize with
+        | true  -> initFixSizeBitOrOctString p.p (p.getAcces l) arrsBytes
+        | false -> initFixVarSizeBitOrOctString p.p (p.getAcces l) (BigInteger arrsBytes.Length) arrsBytes
+    createInitFunctionCommon r l (CAst.OctetString o) typeDefinition funcBody iv 
+
+let createNullTypeInitFunc (r:CAst.AstRoot) (l:ProgrammingLanguage) (o :CAst.NullType    ) (typeDefinition:TypeDefinitionCommon) iv = 
+    let initNull = match l with C -> init_c.initNull | Ada -> init_a.initNull
+    let funcBody (p:FuncParamType) v = initNull (p.getValue l) 
+    createInitFunctionCommon r l (CAst.NullType o) typeDefinition funcBody iv 
+
+let createBitStringInitFunc (r:CAst.AstRoot) (l:ProgrammingLanguage) (o :CAst.BitString   ) (typeDefinition:TypeDefinitionCommon) iv = 
+    let initFixSizeBitOrOctString_bytei = match l with C -> init_c.initFixSizeBitOrOctString_bytei  | Ada -> init_a.initFixSizeBitOrOctString_bytei
+    let initFixSizeBitOrOctString       = match l with C -> init_c.initFixSizeBitOrOctString        | Ada -> init_a.initFixSizeBitOrOctString
+    let initFixVarSizeBitOrOctString    = match l with C -> init_c.initFixVarSizeBitOrOctString     | Ada -> init_a.initFixVarSizeBitOrOctString
+
+    let funcBody (p:FuncParamType) v = 
+        let bytes = 
+            match v with
+            | BitStringValue iv     -> bitStringValueToByteArray (StringLoc.ByValue iv.Value) |> Seq.toList
+            | OctetStringValue iv   -> iv.Value
+            | _                     -> raise(BugErrorException "UnexpectedValue")
+        let arrsBytes = bytes |> List.mapi(fun i b -> initFixSizeBitOrOctString_bytei p.p (p.getAcces l) (i.ToString()) (sprintf "%x" b))
+        match o.minSize = o.maxSize with
+        | true  -> initFixSizeBitOrOctString p.p (p.getAcces l) arrsBytes
+        | false -> initFixVarSizeBitOrOctString p.p (p.getAcces l) (BigInteger arrsBytes.Length) arrsBytes
+    createInitFunctionCommon r l (CAst.BitString o) typeDefinition funcBody iv 
+
+let createBooleanInitFunc (r:CAst.AstRoot) (l:ProgrammingLanguage) (o :CAst.Boolean     ) (typeDefinition:TypeDefinitionCommon) iv = 
+    let initBoolean = match l with C -> init_c.initBoolean | Ada -> init_a.initBoolean
+    let funcBody (p:FuncParamType) v = 
+        let vl = 
+            match v with
+            | BooleanValue iv   -> iv.Value
+            | _                 -> raise(BugErrorException "UnexpectedValue")
+        initBoolean (p.getValue l) vl
+    createInitFunctionCommon r l (CAst.Boolean o) typeDefinition funcBody iv 
+
+let createEnumeratedInitFunc (r:CAst.AstRoot) (l:ProgrammingLanguage) (o :CAst.Enumerated  ) (typeDefinition:TypeDefinitionCommon) iv = 
+    let initEnumerated = match l with C -> init_c.initEnumerated | Ada -> init_a.initEnumerated
+    let funcBody (p:FuncParamType) v = 
+        let vl = 
+            match v with
+            | EnumValue iv      -> o.items |> Seq.find(fun x -> x.name = iv.Value)
+            | _                 -> raise(BugErrorException "UnexpectedValue")
+        initEnumerated (p.getValue l) (vl.getBackendName l)
+    createInitFunctionCommon r l (CAst.Enumerated o) typeDefinition funcBody iv 
+
+let createSequenceOfInitFunc (r:CAst.AstRoot) (l:ProgrammingLanguage) (o :CAst.SequenceOf  ) (typeDefinition:TypeDefinitionCommon) (childType:Asn1Type) iv = 
+    let initFixedSequenceOf = match l with C -> init_c.initFixedSequenceOf | Ada -> init_a.initFixedSequenceOf
+    let initVarSizeSequenceOf = match l with C -> init_c.initVarSizeSequenceOf | Ada -> init_a.initVarSizeSequenceOf
+    let funcBody (p:FuncParamType) v = 
+        let vl = 
+            match v with
+            | SeqOfValue iv     -> iv.Value |> List.mapi(fun i chv -> childType.initFunction.initFuncBody (p.getArrayItem l (i.ToString()) childType.isIA5String) chv)
+            | _                 -> raise(BugErrorException "UnexpectedValue")
+        match o.minSize = o.maxSize with
+        | true  -> initFixedSequenceOf vl
+        | false -> initVarSizeSequenceOf p.p (p.getAcces l) (BigInteger vl.Length) vl
+    createInitFunctionCommon r l (CAst.SequenceOf o) typeDefinition funcBody iv 
+
+let createSequenceInitFunc (r:CAst.AstRoot) (l:ProgrammingLanguage) (o :CAst.Sequence) (typeDefinition:TypeDefinitionCommon) (children:SeqChildInfo list) iv = 
+    let initSequence                = match l with C -> init_c.initSequence | Ada -> init_a.initSequence
+    let initSequence_optionalChild  = match l with C -> init_c.initSequence_optionalChild | Ada -> init_a.initSequence_optionalChild
+    let funcBody (p:FuncParamType) v = 
+        let childrenRet = 
+            match v with
+            | SeqValue iv     -> 
+                children |>
+                List.choose(fun seqChild ->
+                    match iv.Value |> Seq.tryFind(fun chv -> chv.name = seqChild.name) with
+                    | None  ->
+                        match seqChild.optionality with
+                        | None      -> None
+                        | Some _    -> Some (initSequence_optionalChild p.p (p.getAcces l) seqChild.c_name "0" "")
+                    | Some chv  ->
+                        let chContent = seqChild.chType.initFunction.initFuncBody (p.getSeqChild l seqChild.c_name seqChild.chType.isIA5String) chv.Value
+                        match seqChild.optionality with
+                        | None      -> Some chContent
+                        | Some _    -> Some (initSequence_optionalChild p.p (p.getAcces l) seqChild.c_name "1" chContent))
+            | _               -> raise(BugErrorException "UnexpectedValue")
+        initSequence childrenRet
+    createInitFunctionCommon r l (CAst.Sequence o) typeDefinition funcBody iv 
+
+let createChoiceInitFunc (r:CAst.AstRoot) (l:ProgrammingLanguage) (o :CAst.Choice) (typeDefinition:TypeDefinitionCommon) (children:ChChildInfo list) iv =     
+    let initChoice = match l with C -> init_c.initChoice | Ada -> init_a.initChoice
+    let funcBody (p:FuncParamType) v = 
+        let children = 
+            match v with
+            | ChValue iv     -> 
+                children |> 
+                List.choose(fun chChild -> 
+                    match chChild.name = iv.Value.name with
+                    | false -> None
+                    | true  ->
+                        let chContent = chChild.chType.initFunction.initFuncBody (p.getChChild l chChild.c_name chChild.chType.isIA5String) iv.Value.Value
+                        Some (initChoice p.p (p.getAcces l) chContent chChild.presentWhenName) ) 
+
+            | _               -> raise(BugErrorException "UnexpectedValue")
+        children |> Seq.head
+
+    createInitFunctionCommon r l (CAst.Choice o) typeDefinition funcBody iv 

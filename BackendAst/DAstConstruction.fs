@@ -15,8 +15,20 @@ let getTypeDefinitionName (r:CAst.AstRoot) (l:ProgrammingLanguage) (tasInfo:BAst
 let getEqualFuncName (r:CAst.AstRoot) (l:ProgrammingLanguage) (tasInfo:BAst.TypeAssignmentInfo option) =
     tasInfo |> Option.map (fun x -> ToC2(r.TypePrefix + x.tasName + "_Equal"))
 
+let getValueByUperRange (r:uperRange<'T>) (z:'T) = 
+    match r with
+    | Concrete (a,b)    -> if a <= z && z <= b then z else a
+    | NegInf  b         -> if z <= b then z else b              //(-inf, b]
+    | PosInf a          -> if a <= z then z else a               //[a, +inf)
+    | Full              -> z
+
+
 let createInteger (r:CAst.AstRoot) (l:ProgrammingLanguage) (o:CAst.Integer)  (newBase:Integer option) (us:State) =
     let typeDefinition      = createIntegerTypeDefinition r l o  (newBase |> Option.map(fun x -> x.typeDefinition)) us
+    let initialValue        =
+        let v = getValueByUperRange o.uperRange 0I
+        {IntegerValue.id = (ReferenceToValue (o.id.ToScopeNodeList, [GenericFold2.IMG 0])); litOrRef=Literal; childValue = o.tasInfo.IsNone; refToType = o.id; Value = v; }
+    let initFunction        = DAstInitialize.createIntegerInitFunc r l o typeDefinition (IntegerValue initialValue)
     let baseTypeEqFunc  = newBase |> Option.map(fun x -> x.equalFunction)
     let baseTypeValFunc = match newBase with None -> None | Some x -> x.isValidFunction
     let isValidFunction, s1     = DAstValidate.createIntegerFunction r l o typeDefinition baseTypeValFunc us
@@ -40,6 +52,8 @@ let createInteger (r:CAst.AstRoot) (l:ProgrammingLanguage) (o:CAst.Integer)  (ne
                 alignment           = o.alignment
                 acnEncodingClass    = o.acnEncodingClass
                 typeDefinition      = typeDefinition
+                initialValue        = initialValue
+                initFunction        = initFunction
                 equalFunction       = DAstEqual.createIntegerEqualFunction r l o typeDefinition baseTypeEqFunc
                 isValidFunction     = isValidFunction
                 uperEncFunction     = uperEncFunction
@@ -55,6 +69,10 @@ let createInteger (r:CAst.AstRoot) (l:ProgrammingLanguage) (o:CAst.Integer)  (ne
 
 let createReal (r:CAst.AstRoot) (l:ProgrammingLanguage) (o:CAst.Real)  (newBase:Real option) (us:State) : (Real*State) =
     let typeDefinition      = createRealTypeDefinition r l o  (newBase |> Option.map(fun x -> x.typeDefinition)) us
+    let initialValue        =
+        let v = getValueByUperRange o.uperRange 0.0
+        {RealValue.id = (ReferenceToValue (o.id.ToScopeNodeList, [GenericFold2.IMG 0])); litOrRef=Literal; childValue = o.tasInfo.IsNone; refToType = o.id; Value = v; }    
+    let initFunction        = DAstInitialize.createRealInitFunc r l o typeDefinition (RealValue initialValue)
     let baseTypeValFunc = match newBase with None -> None | Some x -> x.isValidFunction
     let baseTypeEqFunc  = newBase |> Option.map(fun x -> x.equalFunction)
     let isValidFunction, s1     = DAstValidate.createRealFunction r l o typeDefinition baseTypeValFunc us
@@ -79,6 +97,8 @@ let createReal (r:CAst.AstRoot) (l:ProgrammingLanguage) (o:CAst.Real)  (newBase:
                 alignment           = o.alignment
                 acnEncodingClass    = o.acnEncodingClass
                 typeDefinition      = typeDefinition
+                initialValue        = initialValue
+                initFunction        = initFunction
                 equalFunction       = DAstEqual.createRealEqualFunction r l o typeDefinition baseTypeEqFunc
                 isValidFunction     = isValidFunction
                 uperEncFunction     = uperEncFunction
@@ -92,6 +112,14 @@ let createReal (r:CAst.AstRoot) (l:ProgrammingLanguage) (o:CAst.Real)  (newBase:
 
 let createString (r:CAst.AstRoot) (l:ProgrammingLanguage) (o:CAst.StringType)  (newBase:StringType option) (us:State) : (StringType*State) =
     let typeDefinition      = createStringTypeDefinition r l o  (newBase |> Option.map(fun x -> x.typeDefinition)) us
+    let initialValue        =
+        let ch = 
+            match o.charSet |> Seq.exists((=) ' ') with
+            | true  -> ' '
+            | false -> o.charSet |> Seq.find(fun c -> not (Char.IsControl c))
+        let v = System.String(ch, o.minSize)
+        {StringValue.id = (ReferenceToValue (o.id.ToScopeNodeList, [GenericFold2.IMG 0])); litOrRef=Literal; childValue = o.tasInfo.IsNone; refToType = o.id; Value = v; }
+    let initFunction        = DAstInitialize.createIA5StringInitFunc r l o typeDefinition (StringValue initialValue)
     let baseTypeEqFunc  = newBase |> Option.map(fun x -> x.equalFunction)
     let baseTypeValFunc = match newBase with None -> None | Some x -> x.isValidFunction
     let isValidFunction, s1     = DAstValidate.createStringFunction r l o typeDefinition baseTypeValFunc us
@@ -117,6 +145,8 @@ let createString (r:CAst.AstRoot) (l:ProgrammingLanguage) (o:CAst.StringType)  (
                 alignment           = o.alignment
                 acnEncodingClass    = o.acnEncodingClass
                 typeDefinition      = typeDefinition
+                initialValue        = initialValue
+                initFunction        = initFunction
                 equalFunction       = DAstEqual.createStringEqualFunction r l o typeDefinition baseTypeEqFunc
                 isValidFunction     = isValidFunction
                 uperEncFunction     = uperEncFunction
@@ -130,6 +160,10 @@ let createString (r:CAst.AstRoot) (l:ProgrammingLanguage) (o:CAst.StringType)  (
 
 let createOctet (r:CAst.AstRoot) (l:ProgrammingLanguage) (o:CAst.OctetString)  (newBase:OctetString option) (us:State) : (OctetString*State) =
     let typeDefinition          = createOctetTypeDefinition r l o  (newBase |> Option.map(fun x -> x.typeDefinition)) us
+    let initialValue        =
+        let v = [1 .. o.minSize] |> List.map(fun i -> 0uy)
+        {OctetStringValue.id = (ReferenceToValue (o.id.ToScopeNodeList, [GenericFold2.IMG 0])); litOrRef=Literal; childValue = o.tasInfo.IsNone; refToType = o.id; Value = v; }
+    let initFunction        = DAstInitialize.createOctetStringInitFunc r l o typeDefinition (OctetStringValue initialValue)
     let baseTypeEqFunc  = newBase |> Option.map(fun x -> x.equalFunction)
     let equalFunction       = DAstEqual.createOctetStringEqualFunction r l o typeDefinition baseTypeEqFunc
     let baseTypeValFunc = match newBase with None -> None | Some x -> x.isValidFunction
@@ -151,6 +185,8 @@ let createOctet (r:CAst.AstRoot) (l:ProgrammingLanguage) (o:CAst.OctetString)  (
                 alignment           = o.alignment
                 acnEncodingClass    = o.acnEncodingClass
                 typeDefinition      = typeDefinition
+                initialValue        = initialValue
+                initFunction        = initFunction
                 equalFunction       = equalFunction
                 isValidFunction     = isValidFunction
                 encodeFuncName      = None
@@ -162,6 +198,10 @@ let createOctet (r:CAst.AstRoot) (l:ProgrammingLanguage) (o:CAst.OctetString)  (
 
 let createBitString (r:CAst.AstRoot) (l:ProgrammingLanguage) (o:CAst.BitString)  (newBase:BitString option) (us:State) : (BitString*State) =
     let typeDefinition      = createBitStringTypeDefinition r l o  (newBase |> Option.map(fun x -> x.typeDefinition)) us
+    let initialValue        =
+        let v = System.String('0', o.minSize)
+        {BitStringValue.id = (ReferenceToValue (o.id.ToScopeNodeList, [GenericFold2.IMG 0])); litOrRef=Literal; childValue = o.tasInfo.IsNone; refToType = o.id; Value = v; }
+    let initFunction        = DAstInitialize.createBitStringInitFunc r l o typeDefinition (BitStringValue initialValue)
     let baseTypeEqFunc  = newBase |> Option.map(fun x -> x.equalFunction)
     let baseTypeValFunc = match newBase with None -> None | Some x -> x.isValidFunction
     let equalFunction = DAstEqual.createBitStringEqualFunction r l o typeDefinition baseTypeEqFunc
@@ -183,6 +223,8 @@ let createBitString (r:CAst.AstRoot) (l:ProgrammingLanguage) (o:CAst.BitString) 
                 alignment           = o.alignment
                 acnEncodingClass    = o.acnEncodingClass
                 typeDefinition      = typeDefinition
+                initialValue        = initialValue
+                initFunction        = initFunction
                 equalFunction       = DAstEqual.createBitStringEqualFunction r l o typeDefinition baseTypeEqFunc
                 isValidFunction     = isValidFunction
                 encodeFuncName      = None
@@ -194,6 +236,9 @@ let createBitString (r:CAst.AstRoot) (l:ProgrammingLanguage) (o:CAst.BitString) 
 
 let createNullType (r:CAst.AstRoot) (l:ProgrammingLanguage) (o:CAst.NullType)  (newBase:NullType option) (us:State) : (NullType*State) =
     let typeDefinition      = createNullTypeDefinition r l o  (newBase |> Option.map(fun x -> x.typeDefinition)) us
+    let initialValue        =
+        {NullValue.id = (ReferenceToValue (o.id.ToScopeNodeList, [GenericFold2.IMG 0])); litOrRef=Literal; childValue = o.tasInfo.IsNone; refToType = o.id; Value = (); }
+    let initFunction        = DAstInitialize.createNullTypeInitFunc r l o typeDefinition (NullValue initialValue)
     let baseTypeEqFunc  = newBase |> Option.map(fun x -> x.equalFunction)
     let baseTypeEncUperFunc     = newBase |> Option.map(fun x -> x.uperEncFunction)
     let baseTypeDecUperFunc     = newBase |> Option.map(fun x -> x.uperDecFunction)
@@ -212,6 +257,8 @@ let createNullType (r:CAst.AstRoot) (l:ProgrammingLanguage) (o:CAst.NullType)  (
                 alignment           = o.alignment
                 acnEncodingClass    = o.acnEncodingClass
                 typeDefinition      = typeDefinition 
+                initialValue        = initialValue
+                initFunction        = initFunction
                 equalFunction       = DAstEqual.createNullTypeEqualFunction r l o 
                 uperEncFunction     = uperEncFunction
                 uperDecFunction     = uperDecFunction
@@ -225,6 +272,9 @@ let createNullType (r:CAst.AstRoot) (l:ProgrammingLanguage) (o:CAst.NullType)  (
 
 let createBoolean (r:CAst.AstRoot) (l:ProgrammingLanguage) (o:CAst.Boolean)  (newBase:Boolean option) (us:State) : (Boolean*State) =
     let typeDefinition      = createBooleanTypeDefinition r l o  (newBase |> Option.map(fun x -> x.typeDefinition)) us
+    let initialValue        =
+        {BooleanValue.id = (ReferenceToValue (o.id.ToScopeNodeList, [GenericFold2.IMG 0])); litOrRef=Literal; childValue = o.tasInfo.IsNone; refToType = o.id; Value = false; }
+    let initFunction        = DAstInitialize.createBooleanInitFunc r l o typeDefinition (BooleanValue initialValue)
     let baseTypeEqFunc  = newBase |> Option.map(fun x -> x.equalFunction)
     let baseTypeValFunc = match newBase with None -> None | Some x -> x.isValidFunction
     let isValidFunction, s1     = DAstValidate.createBoolFunction r l o typeDefinition baseTypeValFunc us
@@ -247,6 +297,8 @@ let createBoolean (r:CAst.AstRoot) (l:ProgrammingLanguage) (o:CAst.Boolean)  (ne
                 alignment           = o.alignment
                 acnEncodingClass    = o.acnEncodingClass
                 typeDefinition      = typeDefinition
+                initialValue        = initialValue
+                initFunction        = initFunction
                 equalFunction       = DAstEqual.createBooleanEqualFunction r l o typeDefinition baseTypeEqFunc
                 isValidFunction     = isValidFunction
                 uperEncFunction     = uperEncFunction
@@ -265,6 +317,9 @@ let createEnumerated (r:CAst.AstRoot) (l:ProgrammingLanguage) (o:CAst.Enumerated
         | true  -> o.items |> List.map( fun i -> header_c.PrintNamedItem (i.getBackendName l) i.Value)
         | false ->o.items |> List.map( fun i -> i.getBackendName l)
     let typeDefinition      = createEnumeratedTypeDefinition r l o  (newBase |> Option.map(fun x -> x.typeDefinition)) us
+    let initialValue =
+        {EnumValue.id = (ReferenceToValue (o.id.ToScopeNodeList, [GenericFold2.IMG 0])); litOrRef=Literal; childValue = o.tasInfo.IsNone; refToType = o.id; Value = o.items.Head.name; }
+    let initFunction        = DAstInitialize.createEnumeratedInitFunc r l o typeDefinition (EnumValue initialValue)
     let baseTypeEqFunc  = newBase |> Option.map(fun x -> x.equalFunction)
     let baseTypeValFunc = match newBase with None -> None | Some x -> x.isValidFunction
     let isValidFunction, s1     = DAstValidate.createEnumeratedFunction r l o typeDefinition baseTypeValFunc us
@@ -290,6 +345,8 @@ let createEnumerated (r:CAst.AstRoot) (l:ProgrammingLanguage) (o:CAst.Enumerated
                 alignment           = o.alignment
                 enumEncodingClass    = o.enumEncodingClass
                 typeDefinition      = typeDefinition
+                initialValue        = initialValue
+                initFunction        = initFunction
                 equalFunction       = DAstEqual.createEnumeratedEqualFunction r l o typeDefinition baseTypeEqFunc
                 isValidFunction     = isValidFunction
                 uperEncFunction     = uperEncFunction
@@ -305,6 +362,10 @@ let createEnumerated (r:CAst.AstRoot) (l:ProgrammingLanguage) (o:CAst.Enumerated
 
 let createSequenceOf (r:CAst.AstRoot) (l:ProgrammingLanguage) (childType:Asn1Type) (o:CAst.SequenceOf)  (newBase:SequenceOf option) (us:State) : (SequenceOf*State) =
     let typeDefinition      = createSequenceOfTypeDefinition r l o  (newBase |> Option.map(fun x -> x.typeDefinition)) childType.typeDefinition us
+    let initialValue =
+        let v = [1 .. o.minSize] |> List.map(fun i -> childType.initialValue)
+        {SeqOfValue.id = (ReferenceToValue (o.id.ToScopeNodeList, [GenericFold2.IMG 0])); litOrRef=Literal; childValue = o.tasInfo.IsNone; refToType = o.id; Value = v; }
+    let initFunction        = DAstInitialize.createSequenceOfInitFunc r l o typeDefinition childType (SeqOfValue initialValue)
     let baseTypeEqFunc  = newBase |> Option.map(fun x -> x.equalFunction)
     let baseTypeValFunc = match newBase with None -> None | Some x -> x.isValidFunction
     let isValidFunction, s1     = DAstValidate.createSequenceOfFunction r l o typeDefinition childType baseTypeValFunc us
@@ -325,6 +386,8 @@ let createSequenceOf (r:CAst.AstRoot) (l:ProgrammingLanguage) (childType:Asn1Typ
                 alignment           = o.alignment
                 acnEncodingClass    = o.acnEncodingClass
                 typeDefinition      = typeDefinition
+                initialValue        = initialValue
+                initFunction        = initFunction
                 equalFunction       = DAstEqual.createSequenceOfEqualFunction r l o typeDefinition childType baseTypeEqFunc
                 isValidFunction     = isValidFunction
                 childType           = childType
@@ -351,6 +414,10 @@ let createSequenceChild (r:CAst.AstRoot) (l:ProgrammingLanguage)  (o:CAst.SeqChi
 
 let createSequence (r:CAst.AstRoot) (l:ProgrammingLanguage) (children:SeqChildInfo list) (o:CAst.Sequence)  (newBase:Sequence option) (us:State) : (Sequence*State) =
     let typeDefinition          = createSequenceTypeDefinition r l o  (newBase |> Option.map(fun x -> x.typeDefinition)) children us
+    let initialValue =
+        let childValues = children |> List.map(fun o -> {NamedValue.name = o.name; Value=o.chType.initialValue})
+        {SeqValue.id = (ReferenceToValue (o.id.ToScopeNodeList, [GenericFold2.IMG 0])); litOrRef=Literal; childValue = o.tasInfo.IsNone; refToType = o.id; Value = childValues }
+    let initFunction        = DAstInitialize.createSequenceInitFunc r l o typeDefinition children (SeqValue initialValue)
     let baseTypeEqFunc  = newBase |> Option.map(fun x -> x.equalFunction)
     let baseTypeValFunc = match newBase with None -> None | Some x -> x.isValidFunction
     let isValidFunction, s1     = DAstValidate.createSequenceFunction r l o typeDefinition children baseTypeValFunc us
@@ -369,6 +436,8 @@ let createSequence (r:CAst.AstRoot) (l:ProgrammingLanguage) (children:SeqChildIn
                 acnMaxSizeInBits    = o.acnMaxSizeInBits
                 acnMinSizeInBits    = o.acnMinSizeInBits
                 alignment           = o.alignment
+                initialValue        = initialValue
+                initFunction        = initFunction
                 typeDefinition      = createSequenceTypeDefinition r l o  (newBase |> Option.map(fun x -> x.typeDefinition)) children us
                 equalFunction       = DAstEqual.createSequenceEqualFunction r l o typeDefinition children baseTypeEqFunc
                 isValidFunction     = isValidFunction
@@ -400,6 +469,10 @@ let createChoiceChild (r:CAst.AstRoot) (l:ProgrammingLanguage)  (o:CAst.ChChildI
 
 let createChoice (r:CAst.AstRoot) (l:ProgrammingLanguage) (children:ChChildInfo list) (o:CAst.Choice)  (newBase:Choice option) (us:State) : (Choice*State) =
     let typeDefinition = createChoiceTypeDefinition r l o  (newBase |> Option.map(fun x -> x.typeDefinition)) children us
+    let initialValue =
+        let firstChildVal =  children |> Seq.map(fun o -> {NamedValue.name = o.name; Value=o.chType.initialValue}) |> Seq.head
+        {ChValue.id = (ReferenceToValue (o.id.ToScopeNodeList, [GenericFold2.IMG 0])); litOrRef=Literal; childValue = o.tasInfo.IsNone; refToType = o.id; Value = firstChildVal}
+    let initFunction        = DAstInitialize.createChoiceInitFunc r l o typeDefinition children (ChValue initialValue)
     let baseTypeEqFunc  = newBase |> Option.map(fun x -> x.equalFunction)
     let baseTypeValFunc = match newBase with None -> None | Some x -> x.isValidFunction
     let isValidFunction, s1     = DAstValidate.createChoiceFunction r l o typeDefinition children baseTypeValFunc us
@@ -421,6 +494,8 @@ let createChoice (r:CAst.AstRoot) (l:ProgrammingLanguage) (children:ChChildInfo 
                 alignment           = o.alignment
 
                 typeDefinition      = typeDefinition
+                initialValue        = initialValue
+                initFunction        = initFunction
                 equalFunction       = DAstEqual.createChoiceEqualFunction r l o typeDefinition children baseTypeEqFunc
                 isValidFunction     = isValidFunction
                 encodeFuncName      = None

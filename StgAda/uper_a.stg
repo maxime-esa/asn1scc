@@ -26,7 +26,7 @@ procedure <sFuncName>(val:in <sTypeDefName>; Stream : OUT <sTypeDefName>_uPER_St
 
 EmitTypeAssignment_def_decode(sVarName, sStar, sFuncName, sTypeDefName, arrsErrcodes, bEmptyEncodingSpace, nMaxBytesInPER, nMaxBitsInPER) ::= <<
 <arrsErrcodes; separator="\n">
-procedure <sFuncName>(<sVarName>:in out <sTypeDefName>; Stream : IN <sTypeDefName>_uPER_Stream; result : OUT <rtlModuleName()>.ASN1_RESULT);
+procedure <sFuncName>(<sVarName>:out <sTypeDefName>; Stream : IN <sTypeDefName>_uPER_Stream; result : OUT <rtlModuleName()>.ASN1_RESULT);
 >>
 
 TasEncodeMain(sVarName, sFuncName, sTypeDefName) ::= /*nogen*/<<
@@ -38,7 +38,7 @@ begin
 end <sFuncName>;
 >>
 
-EmitTypeAssignment_encode(sVarName, sStar, sFuncName, soIValidFuncName, sTypeDefName, arrsLocalVariables, sContent, soSparkAnnotations) ::= <<
+EmitTypeAssignment_encode(sVarName, sStar, sFuncName, soIValidFuncName, sTypeDefName, arrsLocalVariables, sContent, soSparkAnnotations, sInitilialExp) ::= <<
 procedure <sFuncName>_aux(<sVarName>:in <sTypeDefName>; S : in out <rtlModuleName()>.BitArray; K : in out Natural; result : OUT <rtlModuleName()>.ASN1_RESULT)
 <soSparkAnnotations>
 IS
@@ -58,18 +58,19 @@ end <sFuncName>_aux;
 <TasEncodeMain(sVarName=sVarName, sFuncName=sFuncName, sTypeDefName=sTypeDefName)>
 >>
 
-TasDecodeMain(sVarName, sFuncName, sTypeDefName) ::= /*nogen*/<<
-procedure <sFuncName>(<sVarName>:in out <sTypeDefName>; Stream : IN <sTypeDefName>_uPER_Stream; result : OUT <rtlModuleName()>.ASN1_RESULT)
+TasDecodeMain(sVarName, sFuncName, sTypeDefName, sInitilialExp) ::= /*nogen*/<<
+procedure <sFuncName>(<sVarName>:out <sTypeDefName>; Stream : IN <sTypeDefName>_uPER_Stream; result : OUT <rtlModuleName()>.ASN1_RESULT)
 IS
     iter:<rtlModuleName()>.DECODE_PARAMS;
 begin
     iter := <rtlModuleName()>.DECODE_PARAMS'(K => 0, DataLen => Stream.DataLen);
+    <sVarName> := <sInitilialExp>;
     <sFuncName>_aux(<sVarName>, Stream.Data, iter, result);
     result.Success := result.Success AND iter.K\<=iter.DataLen;
 end <sFuncName>;
 >>
 
-EmitTypeAssignment_decode(sVarName, sStar, sFuncName, soIValidFuncName, sTypeDefName, arrsLocalVariables, sContent, soSparkAnnotations) ::= <<
+EmitTypeAssignment_decode(sVarName, sStar, sFuncName, soIValidFuncName, sTypeDefName, arrsLocalVariables, sContent, soSparkAnnotations, sInitilialExp) ::= <<
 procedure <sFuncName>_aux(<sVarName>:in out <sTypeDefName>; S : in <rtlModuleName()>.BitArray; K : in out <rtlModuleName()>.DECODE_PARAMS; result : OUT <rtlModuleName()>.ASN1_RESULT)
 <soSparkAnnotations>
 IS
@@ -78,7 +79,7 @@ begin
     <sContent>
 end <sFuncName>_aux;
 
-<TasDecodeMain(sVarName=sVarName, sFuncName=sFuncName, sTypeDefName=sTypeDefName)>
+<TasDecodeMain(sVarName=sVarName, sFuncName=sFuncName, sTypeDefName=sTypeDefName; sInitilialExp=sInitilialExp)>
 >>
 
 

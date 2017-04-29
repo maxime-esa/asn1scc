@@ -73,10 +73,11 @@ Define_Type(sTypeOrSubsType, sTypeDefinitionName, sTypeDefinitionBody, arrsChild
 
 
 
-Define_TAS(sTypeDefinition, arrsEqualFunc, soIsValid, soUperEncFunc, soUperDecFunc, soAcnEncFunc, soAcnDecFunc) ::= <<
+Define_TAS(sTypeDefinition, arrsEqualFunc, soInitialize, soIsValid, soUperEncFunc, soUperDecFunc, soAcnEncFunc, soAcnDecFunc) ::= <<
 <sTypeDefinition>
 
 <arrsEqualFunc; separator="\n">
+<soInitialize>
 <soIsValid>
 <soUperEncFunc>
 <soUperDecFunc>
