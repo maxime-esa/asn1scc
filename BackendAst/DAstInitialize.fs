@@ -8,6 +8,11 @@ open FsUtils
 open Constraints
 open DAst
 
+(*
+create c and Ada procedures that initialize an ASN.1 type.
+Currently this code is not used since it is no longer required (it was originally written to handle the 'data might not be initialized' errors of spark
+However, now with the 'pragma Annotate (GNATprove, False_Positive)' we can handle this case.
+*)
 let getFuncName (r:CAst.AstRoot) (l:ProgrammingLanguage) (tasInfo:BAst.TypeAssignmentInfo option) =
     tasInfo |> Option.map (fun x -> ToC2(r.TypePrefix + x.tasName + "_Initialize"))
 
@@ -64,9 +69,11 @@ let createIA5StringInitFunc (r:CAst.AstRoot) (l:ProgrammingLanguage) (o :CAst.St
     let funcBody (p:FuncParamType) v = 
         let vl = 
             match v with
-            | StringValue iv   -> iv.Value
+            | StringValue iv   -> 
+                iv.Value
             | _                 -> raise(BugErrorException "UnexpectedValue")
-        initIA5String (p.getPointer l) vl
+        let arrNuls = [0 .. (o.maxSize- vl.Length)]|>Seq.map(fun x -> variables_a.PrintStringValueNull())
+        initIA5String (p.getPointer l) (vl.Replace("\"","\"\"")) arrNuls
     createInitFunctionCommon r l (CAst.IA5String o) typeDefinition funcBody iv 
 
 let createOctetStringInitFunc (r:CAst.AstRoot) (l:ProgrammingLanguage) (o :CAst.OctetString ) (typeDefinition:TypeDefinitionCommon) iv = 
@@ -80,7 +87,7 @@ let createOctetStringInitFunc (r:CAst.AstRoot) (l:ProgrammingLanguage) (o :CAst.
             | OctetStringValue iv -> iv.Value 
             | BitStringValue iv   -> bitStringValueToByteArray (StringLoc.ByValue iv.Value) |> Seq.toList
             | _                 -> raise(BugErrorException "UnexpectedValue")
-        let arrsBytes = bytes |> List.mapi(fun i b -> initFixSizeBitOrOctString_bytei p.p (p.getAcces l) (i.ToString()) (sprintf "%x" b))
+        let arrsBytes = bytes |> List.mapi(fun i b -> initFixSizeBitOrOctString_bytei p.p (p.getAcces l) ((i+l.ArrayStartIndex).ToString()) (sprintf "%x" b))
         match o.minSize = o.maxSize with
         | true  -> initFixSizeBitOrOctString p.p (p.getAcces l) arrsBytes
         | false -> initFixVarSizeBitOrOctString p.p (p.getAcces l) (BigInteger arrsBytes.Length) arrsBytes
@@ -102,7 +109,7 @@ let createBitStringInitFunc (r:CAst.AstRoot) (l:ProgrammingLanguage) (o :CAst.Bi
             | BitStringValue iv     -> bitStringValueToByteArray (StringLoc.ByValue iv.Value) |> Seq.toList
             | OctetStringValue iv   -> iv.Value
             | _                     -> raise(BugErrorException "UnexpectedValue")
-        let arrsBytes = bytes |> List.mapi(fun i b -> initFixSizeBitOrOctString_bytei p.p (p.getAcces l) (i.ToString()) (sprintf "%x" b))
+        let arrsBytes = bytes |> List.mapi(fun i b -> initFixSizeBitOrOctString_bytei p.p (p.getAcces l) ((i+l.ArrayStartIndex).ToString()) (sprintf "%x" b))
         match o.minSize = o.maxSize with
         | true  -> initFixSizeBitOrOctString p.p (p.getAcces l) arrsBytes
         | false -> initFixVarSizeBitOrOctString p.p (p.getAcces l) (BigInteger arrsBytes.Length) arrsBytes
@@ -134,7 +141,18 @@ let createSequenceOfInitFunc (r:CAst.AstRoot) (l:ProgrammingLanguage) (o :CAst.S
     let funcBody (p:FuncParamType) v = 
         let vl = 
             match v with
-            | SeqOfValue iv     -> iv.Value |> List.mapi(fun i chv -> childType.initFunction.initFuncBody (p.getArrayItem l (i.ToString()) childType.isIA5String) chv)
+            | SeqOfValue iv     -> 
+                iv.Value |> 
+                List.mapi(fun i chv -> 
+                    let ret = childType.initFunction.initFuncBody (p.getArrayItem l ((i+l.ArrayStartIndex).ToString()) childType.isIA5String) chv
+                    match l with
+                    | C     -> ret
+                    | Ada   when i>0 -> ret
+                    | Ada   -> 
+                        // in the first array we have to emit a pragma Annotate false_positive, otherwise gnatprove emit an error
+                        let pragma = init_a.initSequence_pragma p.p
+                        ret + pragma
+                    )
             | _                 -> raise(BugErrorException "UnexpectedValue")
         match o.minSize = o.maxSize with
         | true  -> initFixedSequenceOf vl
@@ -165,7 +183,7 @@ let createSequenceInitFunc (r:CAst.AstRoot) (l:ProgrammingLanguage) (o :CAst.Seq
     createInitFunctionCommon r l (CAst.Sequence o) typeDefinition funcBody iv 
 
 let createChoiceInitFunc (r:CAst.AstRoot) (l:ProgrammingLanguage) (o :CAst.Choice) (typeDefinition:TypeDefinitionCommon) (children:ChChildInfo list) iv =     
-    let initChoice = match l with C -> init_c.initChoice | Ada -> init_a.initChoice
+    //let initChoice = match l with C -> init_c.initChoice | Ada -> init_a.initChoice
     let funcBody (p:FuncParamType) v = 
         let children = 
             match v with
@@ -175,8 +193,18 @@ let createChoiceInitFunc (r:CAst.AstRoot) (l:ProgrammingLanguage) (o :CAst.Choic
                     match chChild.name = iv.Value.name with
                     | false -> None
                     | true  ->
-                        let chContent = chChild.chType.initFunction.initFuncBody (p.getChChild l chChild.c_name chChild.chType.isIA5String) iv.Value.Value
-                        Some (initChoice p.p (p.getAcces l) chContent chChild.presentWhenName) ) 
+                        match l with
+                        | C ->
+                            let chContent = chChild.chType.initFunction.initFuncBody (p.getChChild l chChild.c_name chChild.chType.isIA5String) iv.Value.Value
+                            Some (init_c.initChoice p.p (p.getAcces l) chContent chChild.presentWhenName) 
+                        | Ada ->
+                            let sChildTempVarName = chChild.chType.typeDefinition.name.L1 + "_tmp"
+                            let sChildTypeName = chChild.chType.typeDefinition.typeDefinitionBodyWithinSeq
+                            let sChoiceTypeName = typeDefinition.name
+                            let sChildName = chChild.c_name
+                            let chContent = chChild.chType.initFunction.initFuncBody (VALUE sChildTempVarName) iv.Value.Value
+                            Some (init_a.initChoice p.p (p.getAcces l) chContent chChild.presentWhenName sChildTempVarName sChildTypeName sChoiceTypeName sChildName) 
+                        ) 
 
             | _               -> raise(BugErrorException "UnexpectedValue")
         children |> Seq.head

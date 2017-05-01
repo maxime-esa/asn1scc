@@ -26,20 +26,8 @@ END <sPackageName>;
 
 
 
-printTass(arrsEqualFunc, soInitialize, soIsValidFunc, soUperEncFunc, soUperDecFunc, soAcnEncFunc, soAcnDecFunc) ::= <<
+printTass(arrsAllProcs) ::= <<
 
-<soInitialize>
-
-<arrsEqualFunc; separator="\n">
-
-<soIsValidFunc> 
-
-<soUperEncFunc>
-
-<soUperDecFunc>
-
-<soAcnEncFunc>
-
-<soAcnDecFunc>
+<arrsAllProcs; separator="\n\n">
 
 >>

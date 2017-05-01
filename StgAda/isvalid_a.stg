@@ -9,7 +9,7 @@ ret := <rtlModuleName()>.ASN1_RESULT'(Success => true, ErrorCode => 0);
 
 JoinTwoIfFirstOk(sStr1,sStr2) ::=<<
 <sStr1>
-if ret.Success then then
+if ret.Success then
     <sStr2>
 end if;
 >>
@@ -65,7 +65,9 @@ EmitTypeAssignment_composite(sFuncName, sTypeDefName, sContent, arrsAlphaFuncs, 
 <arrsAlphaFuncs; separator="\n">
 FUNCTION <sFuncName>(val : in <sTypeDefName>) return <rtlModuleName()>.ASN1_RESULT
 IS
+    pragma Warnings (Off, "initialization of ret has no effect");        
     ret : <rtlModuleName()>.ASN1_RESULT := <rtlModuleName()>.ASN1_RESULT'(Success => true, ErrorCode => 0);
+    pragma Warnings (On, "initialization of ret has no effect");        
     <arrsLocalVars; separator="\n">
 BEGIN
     <sContent>

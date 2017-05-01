@@ -1,6 +1,8 @@
 ﻿
 group a_variables;
 
+rtlModuleName() ::= "adaasn1rtl"
+
 PrintIntValue(nValue) ::= "<nValue>"
 
 PrintRealValue(dValue)	::= "<dValue>"

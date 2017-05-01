@@ -26,7 +26,7 @@ procedure <sFuncName>(val:in <sTypeDefName>; Stream : OUT <sTypeDefName>_uPER_St
 
 EmitTypeAssignment_def_decode(sVarName, sStar, sFuncName, sTypeDefName, arrsErrcodes, bEmptyEncodingSpace, nMaxBytesInPER, nMaxBitsInPER) ::= <<
 <arrsErrcodes; separator="\n">
-procedure <sFuncName>(<sVarName>:out <sTypeDefName>; Stream : IN <sTypeDefName>_uPER_Stream; result : OUT <rtlModuleName()>.ASN1_RESULT);
+procedure <sFuncName>(<sVarName>:in out <sTypeDefName>; Stream : IN <sTypeDefName>_uPER_Stream; result : OUT <rtlModuleName()>.ASN1_RESULT);
 >>
 
 TasEncodeMain(sVarName, sFuncName, sTypeDefName) ::= /*nogen*/<<
@@ -59,18 +59,18 @@ end <sFuncName>_aux;
 >>
 
 TasDecodeMain(sVarName, sFuncName, sTypeDefName, sInitilialExp) ::= /*nogen*/<<
-procedure <sFuncName>(<sVarName>:out <sTypeDefName>; Stream : IN <sTypeDefName>_uPER_Stream; result : OUT <rtlModuleName()>.ASN1_RESULT)
+procedure <sFuncName>(<sVarName>:in out <sTypeDefName>; Stream : IN <sTypeDefName>_uPER_Stream; result : OUT <rtlModuleName()>.ASN1_RESULT)
 IS
     iter:<rtlModuleName()>.DECODE_PARAMS;
 begin
     iter := <rtlModuleName()>.DECODE_PARAMS'(K => 0, DataLen => Stream.DataLen);
-    <sVarName> := <sInitilialExp>;
+    --<sVarName> := <sInitilialExp>;
     <sFuncName>_aux(<sVarName>, Stream.Data, iter, result);
     result.Success := result.Success AND iter.K\<=iter.DataLen;
 end <sFuncName>;
 >>
-
 EmitTypeAssignment_decode(sVarName, sStar, sFuncName, soIValidFuncName, sTypeDefName, arrsLocalVariables, sContent, soSparkAnnotations, sInitilialExp) ::= <<
+pragma Warnings (Off, "unused initial value of ""val""");
 procedure <sFuncName>_aux(<sVarName>:in out <sTypeDefName>; S : in <rtlModuleName()>.BitArray; K : in out <rtlModuleName()>.DECODE_PARAMS; result : OUT <rtlModuleName()>.ASN1_RESULT)
 <soSparkAnnotations>
 IS
@@ -78,8 +78,8 @@ IS
 begin
     <sContent>
 end <sFuncName>_aux;
-
-<TasDecodeMain(sVarName=sVarName, sFuncName=sFuncName, sTypeDefName=sTypeDefName; sInitilialExp=sInitilialExp)>
+pragma Warnings (On, "unused initial value of ""val""");
+<TasDecodeMain(sVarName=sVarName, sFuncName=sFuncName, sTypeDefName=sTypeDefName, sInitilialExp=sInitilialExp)>
 >>
 
 
@@ -420,21 +420,7 @@ end loop;
 
 
 
-InternalItem_oct_str_encode(p, i) ::=<<
-<rtlModuleName()>.BitStream_AppendByte(S, K, <p>.Data(<i>), FALSE);
->>
 
-InternalItem_oct_str_decode(p, i) ::=<<
-<rtlModuleName()>.BitStream_DecodeByte(S, K, <p>.Data(<i>), result.Success);
->>
-
-InternalItem_bit_str_encode(p, i) ::=<<
-<rtlModuleName()>.BitStream_AppendBit(S, K, <p>.Data(<i>));
->>
-
-InternalItem_bit_str_decode(p, i) ::=<<
-<rtlModuleName()>.BitStream_ReadBit(S, K, <p>.Data(<i>), result.Success);
->>
 
 
 oct_sqf_FixedSize_encode(p, i, sInternalItem, nFixedSize, sTasName, nIntItemMinSize, nIntItemMaxSize, nAlignSize) ::= <<
@@ -530,6 +516,63 @@ result.ErrorCode := <rtlModuleName()>.ERR_INSUFFICIENT_DATA;
 
 str_length(p) ::= "<rtlModuleName()>.getStringSize(<p>)"
 bit_oct_sqof_length(p) ::= "<p>.Length"
+
+
+/* OCTET AND BIT STRING*/
+
+InternalItem_bit_str_encode(p, i, sErrCode) ::=<<
+<rtlModuleName()>.BitStream_AppendBit(S, K, <p>.Data(<i>));
+>>
+
+InternalItem_bit_str_decode(p, i, sErrCode) ::=<<
+<rtlModuleName()>.BitStream_ReadBit(S, K, <p>.Data(<i>), result.Success);
+if not result.Success then
+    result.errorcode := <sErrCode>;
+end if;
+>>
+
+InternalItem_oct_str_encode(p, sAcc, i, sErrCode) ::=<<
+<rtlModuleName()>.BitStream_AppendByte(S, K, <p>.Data(<i>), FALSE);
+>>
+
+InternalItem_oct_str_decode(p, sAcc, i, sErrCode) ::=<<
+<rtlModuleName()>.BitStream_DecodeByte(S, K, <p>.Data(<i>), result.Success);
+if not result.Success then
+    result.errorcode := <sErrCode>;
+end if;
+>>
+
+octect_FixedSize_encode(p, sTasName, i, sInternalItem, nFixedSize, nIntItemMinSize, nIntItemMaxSize, nAlignSize) ::= <<
+<i> := <sTasName>_index'First; 
+<loopFixedItem_enc(i=i, sInternalItem=sInternalItem, fixedSize=nFixedSize, nfixedSizeUperLimit = nFixedSize, nCurOffset="0", nAlignSize=nAlignSize, nIntItemMinSize=nIntItemMinSize, nIntItemMaxSize=nIntItemMaxSize)>
+>>
+
+octect_FixedSize_decode(p, sTasName, i, sInternalItem, nFixedSize, nIntItemMinSize, nIntItemMaxSize, nAlignSize) ::= <<
+result := <rtlModuleName()>.ASN1_RESULT'(Success => TRUE, ErrorCode => 0);
+<i> := <sTasName>_index'First; 
+<loopFixedItem_dec(i=i, sInternalItem=sInternalItem, fixedSize=nFixedSize, nfixedSizeUperLimit = nFixedSize, nCurOffset="0", nAlignSize=nAlignSize, nIntItemMinSize=nIntItemMinSize, nIntItemMaxSize=nIntItemMaxSize)>
+>>
+
+octect_VarSize_encode(p, sAcc, sTasName, i, sInternalItem, nSizeMin, nSizeMax, nSizeInBits, nIntItemMinSize, nIntItemMaxSize, nAlignSize, sErrCode) ::= <<
+nStringLength := <p><sAcc>Length;
+result.Success := nStringLength >= <nSizeMin> AND nStringLength \<= <nSizeMax>;
+result.errorCode := <sErrCode>;
+<i> := <sTasName>_index'First; 
+if result.Success THEN
+    <rtlModuleName()>.UPER_Enc_ConstraintWholeNumber(S, K, <rtlModuleName()>.Asn1Int(nStringLength), <nSizeMin>, <nSizeInBits>);
+    <loopFixedItem_enc(i=i, sInternalItem=sInternalItem, fixedSize="nStringLength", nfixedSizeUperLimit = nSizeMax, nCurOffset=nSizeInBits, nAlignSize=nAlignSize, nIntItemMinSize=nIntItemMinSize, nIntItemMaxSize=nIntItemMaxSize)>
+end if;
+>>
+
+octect_VarSize_decode(p, sAcc, sTasName, i, sInternalItem, nSizeMin, nSizeMax, nSizeInBits, nIntItemMinSize, nIntItemMaxSize, nAlignSize, sErrCode) ::= <<
+<rtlModuleName()>.UPER_Dec_ConstraintWholeNumberInt(S, K, nStringLength, <nSizeMin>, <nSizeMax>, <nSizeInBits>, result.Success);
+result.errorCode := <sErrCode>;
+<i> := <sTasName>_index'First; 
+<loopFixedItem_dec(i=i, sInternalItem=sInternalItem, fixedSize="nStringLength", nfixedSizeUperLimit = nSizeMax, nCurOffset=nSizeInBits, nAlignSize=nAlignSize, nIntItemMinSize=nIntItemMinSize, nIntItemMaxSize=nIntItemMaxSize)>
+>>
+
+
+
 
 
 Declare_nCount()::="nCount:Integer;"

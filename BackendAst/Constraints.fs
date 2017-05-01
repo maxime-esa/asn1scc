@@ -77,6 +77,10 @@ with
         match this with
         |C      -> isvalid_c.ArrayLen exp sAcc
         |Ada    -> isvalid_a.ArrayLen exp sAcc
+    member this.ArrayStartIndex =
+        match this with
+        |C      -> 0
+        |Ada    -> 1
 
 
 
@@ -85,6 +89,8 @@ type FuncParamType =
   | POINTER     of string
   | FIXARRAY    of string
   with 
+    member this.toPointer (l:ProgrammingLanguage) =
+        POINTER (this.getPointer l)
     member this.getPointer (l:ProgrammingLanguage) =
         match l, this with
         | Ada, VALUE x      -> x

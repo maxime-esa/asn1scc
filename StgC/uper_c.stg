@@ -99,7 +99,7 @@ flag <sFuncName>(const <sTypeDefName><sStar> <sVarName>, BitStream* pBitStrm, in
     flag ret = TRUE;
 	<arrsLocalVariables:{lv|<lv>}; separator="\n">
     <if(soIValidFuncName)>
-	ret = bCheckConstraints ? <soIValidFuncName>(val, pErrCode) : TRUE ;
+	ret = bCheckConstraints ? <soIValidFuncName>(<sVarName>, pErrCode) : TRUE ;
 	if (ret) {
 	    <sContent>
     }
@@ -167,13 +167,13 @@ flag <sName>_Decode(<sName><sStar> pVal, BitStream* pBitStrm, int* pErrCode)
 
 
 
-InternalItem_oct_str_encode(p, i, sErrInsufficientData) ::=<<
-BitStream_AppendByte0(pBitStrm, <p>arr[<i>]);
+InternalItem_oct_str_encode(p, sAcc, i, sErrCode) ::=<<
+BitStream_AppendByte0(pBitStrm, <p><sAcc>arr[<i>]);
 >>
 
-InternalItem_oct_str_decode(p, i, sErrInsufficientData) ::=<<
-ret = BitStream_ReadByte(pBitStrm, &<p>arr[<i>]); 
-*pErrCode = ret ? 0 : ERR_INSUFFICIENT_DATA;
+InternalItem_oct_str_decode(p, sAcc, i, sErrCode) ::=<<
+ret = BitStream_ReadByte(pBitStrm, &(<p><sAcc>arr[<i>])); 
+*pErrCode = ret ? 0 : <sErrCode>;
 >>
 
 PrintAlphabet2(arrnCharSet) ::= <<
@@ -320,8 +320,8 @@ ret = BitStream_ReadBit(pBitStrm, <p>);
 
 Real_encode(p, sErrCode) ::= "BitStream_EncodeReal(pBitStrm, <p>);"
 Real_decode(p, sErrCode) ::= <<
-BitStream_DecodeReal(pBitStrm, <p>);
-*pErrCode = ret ? 0 : ERR_INSUFFICIENT_DATA;
+ret = BitStream_DecodeReal(pBitStrm, <p>);
+*pErrCode = ret ? 0 : <sErrCode>;
 >>
 
 
@@ -418,47 +418,52 @@ if (ret) {
 
 
 /* SEQUENCE START */
-uper_Sequence_optChild_encode(p, sChName) ::= "BitStream_AppendBit(pBitStrm,<p>exist.<sChName>);"
-uper_Sequence_optChild_decode(p, sChName) ::= ""
+sequence_presence_bit_encode(p, sAcc, sChName, sErrCode) ::= "BitStream_AppendBit(pBitStrm,<p><sAcc>exist.<sChName>);"
+sequence_presence_bit_decode(p, sAcc, sChName, sErrCode) ::= <<
+ret = BitStream_ReadBit(pBitStrm, &presenceBit);
+<p><sAcc>exist.<sChName> = presenceBit == 0 ? 0 : 1;
+*pErrCode = ret ? 0 : <sErrCode>;
+>>
 
-uper_Sequence_optChild_always_present_encode(p, sChName) ::= "BitStream_AppendBit(pBitStrm,1);"
-uper_Sequence_optChild_always_present_decode(p, sChName) ::= ""
+sequence_presence_bit_fix_encode(p, sAcc, sChName, sErrCode, sVal) ::= "BitStream_AppendBit(pBitStrm, <sVal>);"
+
+sequence_presence_bit_fix_decode(p, sAcc, sChName, sErrCode, sVal) ::= <<
+<sequence_presence_bit_decode(p=p, sAcc=sAcc, sChName=sChName, sErrCode=sErrCode)>
+>>
 
 
-uper_Sequence_mandatory_child_encode(sChName, sChildContent) ::= <<
+sequence_mandatory_child_encode(sChName, sChildContent) ::= <<
 /*Encode <sChName> */
 <sChildContent>
 >>
 
-uper_Sequence_mandatory_child_decode(sChName, sChildContent) ::= <<
+sequence_mandatory_child_decode(sChName, sChildContent) ::= <<
 /*Decode <sChName> */
 <sChildContent>
 >>
 
 
-uper_Sequence_optional_child_encode(p, sChName, sChildContent, sBitMaskName, nByteIndex, sAndMask) ::= <<
+sequence_optional_child_encode(p, sAcc, sChName, sChildContent) ::= <<
 /*Encode <sChName> */
-if (<p>exist.<sChName>) {
+if (<p><sAcc>exist.<sChName>) {
 	<sChildContent>
 }
 >>
 
-uper_Sequence_optional_child_decode(p, sChName, sChildContent, sBitMaskName, nByteIndex, sAndMask) ::= <<
+sequence_optional_child_decode(p, sAcc, sChName, sChildContent) ::= <<
 /*Decode <sChName> */
-<p>exist.<sChName> = 0;
-if ((<sBitMaskName>[<nByteIndex>] & 0x<sAndMask>) != 0 ) {
-	<p>exist.<sChName> = 1;
+if (<p><sAcc>exist.<sChName>) {
 	<sChildContent>
 }
 >>
 
 
-uper_Sequence_default_child_encode(p, sChName, sChildContent, sBitMaskName, nByteIndex, sAndMask, sChildTypeDeclaration, sDefaultValue) ::= <<
-<uper_Sequence_optional_child_encode(p=p, sChName=sChName, sChildContent=sChildContent, sBitMaskName=sBitMaskName, nByteIndex=nByteIndex, sAndMask=sAndMask)>
+sequence_default_child_encode(p, sAcc, sChName, sChildContent, sDefaultValue) ::= <<
+<sequence_optional_child_encode(p=p, sAcc=sAcc, sChName=sChName, sChildContent=sChildContent)>
 >>
 
 
-uper_Sequence_default_child_decode(p, sChName, sChildContent, sBitMaskName, nByteIndex, sAndMask, sChildTypeDeclaration, sDefaultValue) ::= <<
+sequence_default_child_decode(p, sAcc, sChName, sChildContent, sDefaultValue) ::= <<
 /*Decode <sChName> */
 {
     static <sChildTypeDeclaration> defValue = <sDefaultValue>;
@@ -529,6 +534,49 @@ ret = BitStream_DecodeConstraintWholeNumber(pBitStrm, &nStringLength, <nSizeMin>
 
 
 
+/* OCTET STRING*/
+octect_FixedSize_encode(p, sTasName, i, sInternalItem, nFixedSize, nIntItemMinSize, nIntItemMaxSize, nAlignSize) ::= <<
+<loopFixedItem(i=i, sInternalItem=sInternalItem, fixedSize=nFixedSize)>
+>>
+
+octect_FixedSize_decode(p, sTasName, i, sInternalItem, nFixedSize, nIntItemMinSize, nIntItemMaxSize, nAlignSize) ::= <<
+<loopFixedItem(i=i, sInternalItem=sInternalItem, fixedSize=nFixedSize)>
+>>
+
+octect_VarSize_encode(p, sAcc, sTasName, i, sInternalItem, nSizeMin, nSizeMax, nSizeInBits, nIntItemMinSize, nIntItemMaxSize, nAlignSize, sErrCode) ::= <<
+BitStream_EncodeConstraintWholeNumber(pBitStrm, <p><sAcc>nCount, <nSizeMin>, <nSizeMax>);
+<loopFixedItem(i=i, sInternalItem=sInternalItem, fixedSize=[p, sAcc, "nCount"])>
+>>
+
+octect_VarSize_decode(p, sAcc, sTasName, i, sInternalItem, nSizeMin, nSizeMax, nSizeInBits, nIntItemMinSize, nIntItemMaxSize, nAlignSize, sErrCode) ::= <<
+ret = BitStream_DecodeConstraintWholeNumber(pBitStrm, &nCount, <nSizeMin>, <nSizeMax>);
+*pErrCode = ret ? 0 : <sErrCode>;
+<p><sAcc>nCount = (long)nCount;
+<loopFixedItem(i=i, sInternalItem=sInternalItem, fixedSize="nCount")>
+>>
+
+
+
+/* BIT STRING*/
+bitString_FixSize_encode(p, sAcc, nFixedSize, sErrCode) ::= "BitStream_AppendBits(pBitStrm, <p><sAcc>arr, <nFixedSize>);"
+bitString_FixSize_decode(p, sAcc, nFixedSize, sErrCode) ::= <<
+ret = BitStream_ReadBits(pBitStrm, <p><sAcc>arr, <nFixedSize>);
+*pErrCode = ret ? 0 : <sErrCode>;
+>>
+
+bitString_VarSize_encode(p, sAcc, nSizeMin, nSizeMax, sErrCode) ::= <<
+BitStream_EncodeConstraintWholeNumber(pBitStrm, <p><sAcc>nCount, <nSizeMin>, <nSizeMax>);
+<bitString_FixSize_encode(p=p, sAcc=sAcc, nFixedSize=[p, sAcc,"nCount"], sErrCode=sErrCode)>
+>>
+
+bitString_VarSize_decode(p, sAcc, nSizeMin, nSizeMax, sErrCode) ::= <<
+ret = BitStream_DecodeConstraintWholeNumber(pBitStrm, &nCount, <nSizeMin>, <nSizeMax>);
+<p><sAcc>nCount = (long)nCount;
+<bitString_FixSize_decode(p=p, sAcc=sAcc, nFixedSize=[p,sAcc, "nCount"], sErrCode=sErrCode)>
+>>
+
+
+
 /* SEQUENCE OF & OCTET STRING*/
 
 oct_sqf_FixedSize_encode(p, i, sInternalItem, nFixedSize) ::= <<
@@ -554,22 +602,6 @@ ret = BitStream_DecodeConstraintWholeNumber(pBitStrm, &nCount, <nSizeMin>, <nSiz
 
 
 
-uper_bitString_FixSize_encode(p, nFixedSize) ::= "BitStream_AppendBits(pBitStrm, <p>arr, <nFixedSize>);"
-uper_bitString_FixSize_decode(p, nFixedSize) ::= <<
-ret = BitStream_ReadBits(pBitStrm, <p>arr, <nFixedSize>);
-*pErrCode = ret ? 0 : ERR_INSUFFICIENT_DATA;
->>
-
-uper_bitString_VarSize_encode(p, nSizeMin, nSizeMax) ::= <<
-BitStream_EncodeConstraintWholeNumber(pBitStrm, <p>nCount, <nSizeMin>, <nSizeMax>);
-<uper_bitString_FixSize_encode(p=p, nFixedSize=[p,"nCount"])>
->>
-
-uper_bitString_VarSize_decode(p, nSizeMin, nSizeMax) ::= <<
-ret = BitStream_DecodeConstraintWholeNumber(pBitStrm, &nCount, <nSizeMin>, <nSizeMax>);
-<p>nCount = (long)nCount;
-<uper_bitString_FixSize_decode(p=p, nFixedSize=[p,"nCount"])>
->>
 
 
 

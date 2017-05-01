@@ -73,10 +73,10 @@ let printUnit (r:DAst.AstRoot) (l:ProgrammingLanguage) outDir (pu:ProgramUnit) =
                 match t.acnFunction with
                 | None    -> None
                 | Some a  -> a.funcDef codec
-                     
+            let allProcs = equal_defs@([(*init_def;*) isValid;uPerEncFunc;uPerDecFunc;(ancEncDec Ast.Encode); (ancEncDec Ast.Decode)] |> List.choose id)
             match l with
-            |C     -> header_c.Define_TAS type_defintion equal_defs init_def isValid uPerEncFunc uPerDecFunc (ancEncDec Ast.Encode) (ancEncDec Ast.Decode)
-            |Ada   -> header_a.Define_TAS type_defintion equal_defs init_def isValid uPerEncFunc uPerDecFunc (ancEncDec Ast.Encode) (ancEncDec Ast.Decode)
+            |C     -> header_c.Define_TAS type_defintion allProcs 
+            |Ada   -> header_a.Define_TAS type_defintion allProcs 
         )
     let arrsValues = 
         vases |>
@@ -115,10 +115,10 @@ let printUnit (r:DAst.AstRoot) (l:ProgrammingLanguage) outDir (pu:ProgramUnit) =
                 match t.acnFunction with
                 | None    -> None
                 | Some a  -> a.func codec
+            let allProcs = eqFuncs@([(*initialize;*) isValid;(uperEncDec Ast.Encode); (uperEncDec Ast.Decode);(ancEncDec Ast.Encode); (ancEncDec Ast.Decode)] |> List.choose id)
             match l with
-            | C     ->  body_c.printTass eqFuncs initialize isValid (uperEncDec Ast.Encode) (uperEncDec Ast.Decode) (ancEncDec Ast.Encode) (ancEncDec Ast.Decode)
-            | Ada   ->  
-                body_a.printTass eqFuncs initialize isValid (uperEncDec Ast.Encode) (uperEncDec Ast.Decode) (ancEncDec Ast.Encode) (ancEncDec Ast.Decode))
+            | C     ->  body_c.printTass allProcs 
+            | Ada   ->  body_a.printTass allProcs )
     let eqContntent = 
         match l with
         | C     ->

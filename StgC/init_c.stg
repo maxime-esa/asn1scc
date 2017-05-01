@@ -17,7 +17,7 @@ void <sFuncName>(<sTypeDefName><sStar> <sVarName>)
 initInteger(sVal, nValue) ::= "<sVal> = <nValue>;"
 initReal(sVal, dValue) ::= "<sVal> = <dValue>;"
 initBoolean(sVal, bValue) ::= "<sVal> = <if(bValue)>TRUE<else>FALSE<endif>;"
-initIA5String(sPtr, sValue) ::= "strcpy(<sPtr>,\"<sValue>\");"
+initIA5String(sPtr, sValue, arrsNullChars) ::= "strcpy(<sPtr>,\"<sValue>\");"
 initEnumerated(sVal, sValue) ::= "<sVal> = <sValue>;"
 initNull(sVal)    ::= "<sVal> =NULL;"
 
@@ -34,6 +34,9 @@ initFixVarSizeBitOrOctString(p, sAcc, nSize, arrsBytes) ::= <<
 
 
 /*SEQUENCE OF */
+
+/*dummy in C*/
+initSequence_pragma(p) ::= ""
 
 
 initFixedSequenceOf(arrsInnerValues) ::= <<

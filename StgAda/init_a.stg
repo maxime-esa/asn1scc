@@ -1,38 +1,43 @@
 group a_init;
 
+rtlModuleName() ::= "adaasn1rtl"
 
 
 initInteger(p, nValue) ::= "<p> := <nValue>;"
 initReal(p, dValue) ::= "<p> := <dValue>;"
 initBoolean(p, bValue) ::= "<p> := <if(bValue)>TRUE<else>FALSE<endif>;"
 
-initIA5String(sPtr, sValue) ::= "strcpy(<sPtr>,\"<sValue>\");"
+PrintStringValue(sValue, arrsNullChars)	::= "\"<sValue>\"<if(arrsNullChars)> & <arrsNullChars; wrap, anchor, separator=\" & \"><endif>"
+initIA5String(sPtr, sValue, arrsNullChars) ::= "<sPtr> := \"<sValue>\"<if(arrsNullChars)> & <arrsNullChars; wrap, anchor, separator=\" & \"><endif>;" 
 initEnumerated(sVal, sValue) ::= "<sVal> := <sValue>;"
-initNull(sVal)    ::= "<sVal> =NULL;"
+initNull(sVal)    ::= "<sVal> := 0;"
 
 
 /* BIT AND OCTET STRINGS */
-initFixSizeBitOrOctString_bytei(p, sAcc, sI, sByteHexVal) ::= "<p><sAcc>arr[<sI>] := 0x<sByteHexVal>;"
+initFixSizeBitOrOctString_bytei(p, sAcc, sI, sByteHexVal) ::= "<p><sAcc>Data(<sI>) := 16#<sByteHexVal>#;"
 initFixSizeBitOrOctString(p, sAcc,arrsBytes) ::= <<
-<arrsBytes>
+<arrsBytes; separator="\n">
 >>
 initFixVarSizeBitOrOctString(p, sAcc, nSize, arrsBytes) ::= <<
-<p><sAcc><nCount> = <nSize>;
-<arrsBytes>
+<p><sAcc>Length := <nSize>;
+<arrsBytes; separator="\n">
 >>
 
 
 /*SEQUENCE OF */
 
+initSequence_pragma(p) ::= <<
+pragma Annotate (GNATprove, False_Positive,"""<p>.Data"" might not be initialized", "Data are reserved by caller");
+>>
 
 initFixedSequenceOf(arrsInnerValues) ::= <<
-<arrsInnerValues; separator=",\n">        
+<arrsInnerValues; separator="\n">        
 >>
 
 
 initVarSizeSequenceOf(p, sAcc, nSize, arrsInnerValues) ::= <<
 <p><sAcc>Length := <nSize>;
-<arrsInnerValues; separator=",\n">        
+<arrsInnerValues; separator="\n">        
 >>
 
 /*SEQUENCE*/
@@ -43,24 +48,29 @@ initSequence_optionalChild(p, sAcc, sChName, sPresentFlag, sChildContent) ::=<<
 >>
 
 initSequence(arrsInnerValues) ::= <<
-<arrsInnerValues; separator=",\n">        
+<arrsInnerValues; separator="\n">        
 >>
 
-initChoice(p1, sAccess, sChildContent, sChildKind) ::= <<
-<p1><sAccess>kind := <sChildKind>;
-<sChildContent>        
+initChoice(p1, sAccess, sChildContent, sChildKind, sChildTempVarName, sChildTypeName, sChoiceTypeName, sChildName) ::= <<
+declare
+   <sChildTempVarName> : <sChildTypeName>;
+begin
+    <sChildContent>        
+    <p1> := <sChoiceTypeName>'(kind => <sChildKind>, <sChildName> => <sChildTempVarName>);
+    pragma Annotate (GNATprove, False_Positive,"discriminant check might fail", "reviewed by GM");
+end;
 >>
 
 
 initTypeAssignment_def(sVarName, sStar, sFuncName, sTypeDefName) ::= <<
-procedure <sFuncName>(<sVarName>:out <sTypeDefName>);
+procedure <sFuncName>(<sVarName>:in out <sTypeDefName>);
 >>
 
 initTypeAssignment(sVarName, sStar, sFuncName, sTypeDefName, sContent) ::= <<
-procedure <sFuncName>(<sVarName>:out <sTypeDefName>)
+procedure <sFuncName>(<sVarName>:in out <sTypeDefName>)
 IS
 begin
-	<sContent>
+    <sContent>
 end <sFuncName>;
 >>
 
