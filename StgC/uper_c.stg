@@ -375,45 +375,46 @@ ReferenceType1_decode(p, sName) ::= "ret = <sName>_Decode(<p>, pBitStrm, pErrCod
 ReferenceType2_encode(p, sModName, sName) ::= "<ReferenceType1_encode(p=p, sName=sName)>"
 ReferenceType2_decode(p, sModName, sName) ::= "<ReferenceType1_decode(p=p, sName=sName)>"
 
+/* CHOICE START*/
 
-
-uper_Choice_child_encode(p, sChildID, nChildIndex, nLastItemIndex, sChildContent) ::= <<
+choice_child_encode(p, sAcc, sChildID, nChildIndex, nLastItemIndex, sChildContent) ::= <<
 case <sChildID>:
 	BitStream_EncodeConstraintWholeNumber(pBitStrm, <nChildIndex>, 0, <nLastItemIndex>);
 	<sChildContent>
 	break;
 >>
-uper_Choice_child_decode(p, sChildID, nChildIndex, nLastItemIndex, sChildContent) ::= <<
+choice_child_decode(p, sAcc, sChildID, nChildIndex, nLastItemIndex, sChildContent) ::= <<
 case <nChildIndex>:
-	<p>kind = <sChildID>;
+	<p><sAcc>kind = <sChildID>;
 	<sChildContent>
 	break;
 >>
 
-uper_Choice_encode(p, arrsChildren, nLastItemIndex, sErrCode) ::= <<
-switch(<p>kind) 
+choice_encode(p, sAcc, arrsChildren, nLastItemIndex, sChoiceIndexName, sErrCode) ::= <<
+switch(<p><sAcc>kind) 
 {
 <arrsChildren: {ch|<ch>}; separator="\n">
 default:
-    *pErrCode = ERR_INVALID_CHOICE_ALTERNATIVE;         //COVERAGE_IGNORE
-    ret = FALSE;                    //COVERAGE_IGNORE
+    *pErrCode = <sErrCode>;         /*COVERAGE_IGNORE*/
+    ret = FALSE;                    /*COVERAGE_IGNORE*/
 }
 >>
 
-uper_Choice_decode(p, arrsChildren, nLastItemIndex, sErrCode) ::= <<
-ret = BitStream_DecodeConstraintWholeNumber(pBitStrm, &nChoiceIndex, 0, <nLastItemIndex>);
-*pErrCode = ret ? 0 : ERR_INSUFFICIENT_DATA;
+choice_decode(p, sAcc, arrsChildren, nLastItemIndex, sChoiceIndexName, sErrCode) ::= <<
+ret = BitStream_DecodeConstraintWholeNumber(pBitStrm, &<sChoiceIndexName>, 0, <nLastItemIndex>);
+*pErrCode = ret ? 0 : <sErrCode>;
 if (ret) {
-    switch(nChoiceIndex) 
+    switch(<sChoiceIndexName>) 
     {
     <arrsChildren: {ch|<ch>}; separator="\n">
     default:
-        *pErrCode = ERR_INVALID_CHOICE_ALTERNATIVE;     //COVERAGE_IGNORE
-        ret = FALSE;                //COVERAGE_IGNORE
+        *pErrCode = <sErrCode>;     /*COVERAGE_IGNORE*/
+        ret = FALSE;                /*COVERAGE_IGNORE*/
     }
 }
 >>
 
+/* CHOICE END*/
 
 
 
@@ -458,20 +459,17 @@ if (<p><sAcc>exist.<sChName>) {
 >>
 
 
-sequence_default_child_encode(p, sAcc, sChName, sChildContent, sDefaultValue) ::= <<
+sequence_default_child_encode(p, sAcc, sChName, sChildContent, sInitWithDefaultValue) ::= <<
 <sequence_optional_child_encode(p=p, sAcc=sAcc, sChName=sChName, sChildContent=sChildContent)>
 >>
 
 
-sequence_default_child_decode(p, sAcc, sChName, sChildContent, sDefaultValue) ::= <<
+sequence_default_child_decode(p, sAcc, sChName, sChildContent, sInitWithDefaultValue) ::= <<
 /*Decode <sChName> */
-{
-    static <sChildTypeDeclaration> defValue = <sDefaultValue>;
-    <p>exist.<sChName> = 1;
-    <p><sChName> = defValue;
-    if ((<sBitMaskName>[<nByteIndex>] & 0x<sAndMask>) != 0 ) {
-	    <sChildContent>
-    }
+if (<p><sAcc>exist.<sChName>) {
+	<sChildContent>
+} else {
+    <sInitWithDefaultValue>
 }
 >>
 
@@ -534,7 +532,7 @@ ret = BitStream_DecodeConstraintWholeNumber(pBitStrm, &nStringLength, <nSizeMin>
 
 
 
-/* OCTET STRING*/
+/* SEQUENCE OF & OCTET STRING*/
 octect_FixedSize_encode(p, sTasName, i, sInternalItem, nFixedSize, nIntItemMinSize, nIntItemMaxSize, nAlignSize) ::= <<
 <loopFixedItem(i=i, sInternalItem=sInternalItem, fixedSize=nFixedSize)>
 >>
@@ -573,31 +571,6 @@ bitString_VarSize_decode(p, sAcc, nSizeMin, nSizeMax, sErrCode) ::= <<
 ret = BitStream_DecodeConstraintWholeNumber(pBitStrm, &nCount, <nSizeMin>, <nSizeMax>);
 <p><sAcc>nCount = (long)nCount;
 <bitString_FixSize_decode(p=p, sAcc=sAcc, nFixedSize=[p,sAcc, "nCount"], sErrCode=sErrCode)>
->>
-
-
-
-/* SEQUENCE OF & OCTET STRING*/
-
-oct_sqf_FixedSize_encode(p, i, sInternalItem, nFixedSize) ::= <<
-<loopFixedItem(i=i, sInternalItem=sInternalItem, fixedSize=nFixedSize)>
->>
-
-oct_sqf_FixedSize_decode(p, i, sInternalItem, nFixedSize) ::= <<
-<loopFixedItem(i=i, sInternalItem=sInternalItem, fixedSize=nFixedSize)>
->>
-
-
-oct_sqf_VarSize_encode(p, i, sInternalItem, nSizeMin, nSizeMax, sCount) ::= <<
-BitStream_EncodeConstraintWholeNumber(pBitStrm, <sCount>, <nSizeMin>, <nSizeMax>);
-<loopFixedItem(i=i, sInternalItem=sInternalItem, fixedSize=sCount)>
->>
-
-oct_sqf_VarSize_decode(p, i, sInternalItem, nSizeMin, nSizeMax, sCount) ::= <<
-ret = BitStream_DecodeConstraintWholeNumber(pBitStrm, &nCount, <nSizeMin>, <nSizeMax>);
-*pErrCode = ret ? 0 : ERR_INSUFFICIENT_DATA;
-<sCount> = (long)nCount;
-<loopFixedItem(i=i, sInternalItem=sInternalItem, fixedSize=sCount)>
 >>
 
 

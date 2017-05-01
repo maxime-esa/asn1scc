@@ -381,6 +381,10 @@ let createSequenceOf (r:CAst.AstRoot) (l:ProgrammingLanguage) (childType:Asn1Typ
     let baseTypeEqFunc  = newBase |> Option.map(fun x -> x.equalFunction)
     let baseTypeValFunc = match newBase with None -> None | Some x -> x.isValidFunction
     let isValidFunction, s1     = DAstValidate.createSequenceOfFunction r l o typeDefinition childType baseTypeValFunc us
+    let baseTypeEncUperFunc     = newBase |> Option.map(fun x -> x.uperEncFunction)
+    let baseTypeDecUperFunc     = newBase |> Option.map(fun x -> x.uperDecFunction)
+    let uperEncFunction, s2     = DAstUPer.createSequenceOfFunction r l Ast.Codec.Encode o typeDefinition baseTypeEncUperFunc isValidFunction childType s1
+    let uperDecFunction, s3     = DAstUPer.createSequenceOfFunction r l Ast.Codec.Decode o typeDefinition baseTypeDecUperFunc isValidFunction childType s2
     let ret : SequenceOf = 
             {
                 SequenceOf.id       = o.id
@@ -402,6 +406,8 @@ let createSequenceOf (r:CAst.AstRoot) (l:ProgrammingLanguage) (childType:Asn1Typ
                 initFunction        = initFunction
                 equalFunction       = DAstEqual.createSequenceOfEqualFunction r l o typeDefinition childType baseTypeEqFunc
                 isValidFunction     = isValidFunction
+                uperEncFunction     = uperEncFunction
+                uperDecFunction     = uperDecFunction
                 childType           = childType
                 encodeFuncName      = None
                 encodeFuncBody      = fun x -> x
@@ -409,7 +415,7 @@ let createSequenceOf (r:CAst.AstRoot) (l:ProgrammingLanguage) (childType:Asn1Typ
                 decodeFuncBody      = fun x -> x
 
             }
-    ret, s1
+    ret, s3
 
 
 let createSequenceChild (r:CAst.AstRoot) (l:ProgrammingLanguage)  (o:CAst.SeqChildInfo)  (newChild:Asn1Type) (us:State) : (SeqChildInfo*State) =
@@ -494,6 +500,10 @@ let createChoice (r:CAst.AstRoot) (l:ProgrammingLanguage) (children:ChChildInfo 
     let baseTypeEqFunc  = newBase |> Option.map(fun x -> x.equalFunction)
     let baseTypeValFunc = match newBase with None -> None | Some x -> x.isValidFunction
     let isValidFunction, s1     = DAstValidate.createChoiceFunction r l o typeDefinition children baseTypeValFunc us
+    let baseTypeEncUperFunc     = newBase |> Option.map(fun x -> x.uperEncFunction)
+    let baseTypeDecUperFunc     = newBase |> Option.map(fun x -> x.uperDecFunction)
+    let uperEncFunction, s2     = DAstUPer.createChoiceFunction r l Ast.Codec.Encode o typeDefinition baseTypeEncUperFunc isValidFunction children s1
+    let uperDecFunction, s3     = DAstUPer.createChoiceFunction r l Ast.Codec.Decode o typeDefinition baseTypeDecUperFunc isValidFunction children s2
     let ret : Choice= 
             {
                 Choice.id           = o.id
@@ -516,13 +526,15 @@ let createChoice (r:CAst.AstRoot) (l:ProgrammingLanguage) (children:ChChildInfo 
                 initFunction        = initFunction
                 equalFunction       = DAstEqual.createChoiceEqualFunction r l o typeDefinition children baseTypeEqFunc
                 isValidFunction     = isValidFunction
+                uperEncFunction     = uperEncFunction
+                uperDecFunction     = uperDecFunction
                 encodeFuncName      = None
                 encodeFuncBody      = fun x -> x
                 decodeFuncName      = None
                 decodeFuncBody      = fun x -> x
 
             }
-    ret, s1
+    ret, s3
 
 
 let mapCTypeToDType (r:CAst.AstRoot) (l:ProgrammingLanguage) (t:CAst.Asn1Type)  (initialSate:State) =

@@ -487,6 +487,8 @@ type SequenceOf = {
     initFunction        : InitFunction
     equalFunction       : EqualFunction
     isValidFunction     : IsValidFunction option      
+    uperEncFunction     : UPerFunction
+    uperDecFunction     : UPerFunction
 
     encodeFuncName      : string option               // has value only for top level asn1 types (i.e. TypeAssignments (TAS))
     encodeFuncBody      : string -> string            // an stg macro according the acnEncodingClass
@@ -596,6 +598,8 @@ and Choice = {
     initFunction        : InitFunction
     equalFunction       : EqualFunction
     isValidFunction     : IsValidFunction option      
+    uperEncFunction     : UPerFunction
+    uperDecFunction     : UPerFunction
 
     encodeFuncName      : string option               // has value only for top level asn1 types (i.e. TypeAssignments (TAS))
     encodeFuncBody      : string -> string            // an stg macro according the acnEncodingClass
@@ -770,9 +774,9 @@ with
          | BitString    t -> Some(t.uperEncFunction)
          | Boolean      t -> Some(t.uperEncFunction)
          | Enumerated   t -> Some(t.uperEncFunction)
-         | SequenceOf   t -> None
+         | SequenceOf   t -> Some(t.uperEncFunction)
          | Sequence     t -> Some(t.uperEncFunction)
-         | Choice       t -> None
+         | Choice       t -> Some(t.uperEncFunction)
     member this.uperDecFunction =
          match this with
          | Integer      t -> Some(t.uperDecFunction)
@@ -783,9 +787,9 @@ with
          | BitString    t -> Some(t.uperDecFunction)
          | Boolean      t -> Some(t.uperDecFunction)
          | Enumerated   t -> Some(t.uperDecFunction)
-         | SequenceOf   t -> None
+         | SequenceOf   t -> Some(t.uperDecFunction)
          | Sequence     t -> Some(t.uperDecFunction)
-         | Choice       t -> None
+         | Choice       t -> Some(t.uperDecFunction)
     member this.acnFunction : AcnFunction option =
         match this with
         | Integer      t -> None //Some (t.acnFunction)
