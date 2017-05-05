@@ -5,11 +5,8 @@
 
 #include "asn1crt.h"
 
-#ifndef __unix__
-#ifndef __windows__
+#if !defined(__unix__) && !defined(_WIN32) && !defined(WIN32)
 // Handle embedded platforms that miss strlen via GCC builtin
-#define strlen __builtin_strlen
-#endif
 #endif
 
 static byte masks[] = { 0x80, 0x40, 0x20, 0x10, 0x08, 0x04, 0x02, 0x01 };
