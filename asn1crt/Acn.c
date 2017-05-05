@@ -6,12 +6,10 @@
 #include "asn1crt.h"
 
 #ifndef __unix__
-int strlen(const char *t)
-{
-    int cnt = 0;
-    while(*t++) cnt++;
-    return cnt;
-}
+#ifndef __windows__
+// Handle embedded platforms that miss strlen via GCC builtin
+#define strlen __builtin_strlen
+#endif
 #endif
 
 static byte masks[] = { 0x80, 0x40, 0x20, 0x10, 0x08, 0x04, 0x02, 0x01 };
