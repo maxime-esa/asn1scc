@@ -11,6 +11,8 @@ open DAst
 let getFuncName (r:CAst.AstRoot) (l:ProgrammingLanguage) (codec:Ast.Codec) (tasInfo:BAst.TypeAssignmentInfo option) =
     tasInfo |> Option.map (fun x -> ToC2(r.TypePrefix + x.tasName + codec.suffix))
 
+let callBaseTypeFunc l = match l with C -> uper_c.call_base_type_func | Ada -> uper_a.call_base_type_func
+
 //TODO
 //1.Decode functions (and perhaps encode function) muct check if the decode value is within the constraints (currently, implemented only for Integers and for case IntUnconstraintMax )
 
@@ -264,8 +266,6 @@ let createBitStringFunction (r:CAst.AstRoot) (l:ProgrammingLanguage) (codec:Ast.
 let createSequenceOfFunction (r:CAst.AstRoot) (l:ProgrammingLanguage) (codec:Ast.Codec) (o:CAst.SequenceOf) (typeDefinition:TypeDefinitionCommon) (baseTypeUperFunc : UPerFunction option) (isValidFunc: IsValidFunction option) (child:Asn1Type) (us:State)  =
     let localVariables = [child] |> List.choose(fun x -> x.getUperFunction codec) |> List.collect(fun x -> x.localVariables)
     let childErrCodes =  [child]|> List.choose(fun x -> x.getUperFunction codec) |> List.collect(fun x -> x.errCodes)
-    let i = sprintf "i%d" (o.id.SeqeuenceOfLevel + 1)
-    let lv = SequenceOfIndex (o.id.SeqeuenceOfLevel + 1, None)
     let nStringLength =
         match o.minSize = o.maxSize with
         | true  -> []
@@ -273,29 +273,36 @@ let createSequenceOfFunction (r:CAst.AstRoot) (l:ProgrammingLanguage) (codec:Ast
             match l with
             | Ada  -> [IntegerLocalVariable ("nStringLength", None)]
             | C    -> [Asn1SIntLocalVariable ("nCount", None)]
+    let baseFuncName =  match baseTypeUperFunc  with None -> None | Some baseFunc -> baseFunc.funcName
+    let i = sprintf "i%d" (o.id.SeqeuenceOfLevel + 1)
+    let lv = SequenceOfIndex (o.id.SeqeuenceOfLevel + 1, None)
     let funcBody (errCode:ErroCode) (p:FuncParamType) = 
-        let fixedSize       = match l with C -> uper_c.octect_FixedSize        | Ada -> uper_a.octect_FixedSize
-        let varSize         = match l with C -> uper_c.octect_VarSize          | Ada -> uper_a.octect_VarSize
+        match baseFuncName with
+        | None ->
+            let fixedSize       = match l with C -> uper_c.octect_FixedSize        | Ada -> uper_a.octect_FixedSize
+            let varSize         = match l with C -> uper_c.octect_VarSize          | Ada -> uper_a.octect_VarSize
 
-        let chFunc = child.getUperFunction codec
-        let internalItem = 
-            match chFunc with
-            | None  -> None
-            | Some chFunc ->chFunc.funcBody (p.getArrayItem l i child.isIA5String)
-        match internalItem with
-        | None  -> 
-                match o.minSize with
-                | _ when o.maxSize < 65536 && o.maxSize=o.minSize  -> None
-                | _ when o.maxSize < 65536 && o.maxSize<>o.minSize -> Some "Encode only length"
-                | _                                                -> raise(Exception "fragmentation not implemented yet")
-        | Some internalItem -> 
-            let nSizeInBits = GetNumberOfBitsForNonNegativeInteger (BigInteger (o.maxSize - o.minSize))
-            let ret = 
-                match o.minSize with
-                | _ when o.maxSize < 65536 && o.maxSize=o.minSize  -> fixedSize p.p typeDefinition.name i internalItem (BigInteger o.minSize) (BigInteger child.uperMinSizeInBits) (BigInteger child.uperMinSizeInBits) 0I codec 
-                | _ when o.maxSize < 65536 && o.maxSize<>o.minSize  -> varSize p.p (p.getAcces l)  typeDefinition.name i internalItem (BigInteger o.minSize) (BigInteger o.maxSize) nSizeInBits (BigInteger child.uperMinSizeInBits) (BigInteger child.uperMinSizeInBits) 0I errCode.errCodeName codec 
-                | _                                                -> raise(Exception "fragmentation not implemented yet")
-            Some ret
+            let chFunc = child.getUperFunction codec
+            let internalItem = 
+                match chFunc with
+                | None  -> None
+                | Some chFunc ->chFunc.funcBody (p.getArrayItem l i child.isIA5String)
+            match internalItem with
+            | None  -> 
+                    match o.minSize with
+                    | _ when o.maxSize < 65536 && o.maxSize=o.minSize  -> None
+                    | _ when o.maxSize < 65536 && o.maxSize<>o.minSize -> Some "Encode only length"
+                    | _                                                -> raise(Exception "fragmentation not implemented yet")
+            | Some internalItem -> 
+                let nSizeInBits = GetNumberOfBitsForNonNegativeInteger (BigInteger (o.maxSize - o.minSize))
+                let ret = 
+                    match o.minSize with
+                    | _ when o.maxSize < 65536 && o.maxSize=o.minSize  -> fixedSize p.p typeDefinition.name i internalItem (BigInteger o.minSize) (BigInteger child.uperMinSizeInBits) (BigInteger child.uperMaxSizeInBits) 0I codec 
+                    | _ when o.maxSize < 65536 && o.maxSize<>o.minSize  -> varSize p.p (p.getAcces l)  typeDefinition.name i internalItem (BigInteger o.minSize) (BigInteger o.maxSize) nSizeInBits (BigInteger child.uperMinSizeInBits) (BigInteger child.uperMaxSizeInBits) 0I errCode.errCodeName codec 
+                    | _                                                -> raise(Exception "fragmentation not implemented yet")
+                Some ret
+        | Some baseFuncName ->
+            Some (callBaseTypeFunc l (p.getPointer l) baseFuncName codec)
     let soSparkAnnotations = None
     createPrimitiveFunction r l codec (CAst.SequenceOf o) typeDefinition baseTypeUperFunc  isValidFunc  funcBody (lv::(nStringLength@localVariables)) childErrCodes soSparkAnnotations  us
 
@@ -307,7 +314,7 @@ let nestChildItems (l:ProgrammingLanguage) (codec:Ast.Codec) children =
         | Some c-> 
             match l with
             | C        -> equal_c.JoinItems content sNestedContent
-            | Ada      -> equal_a.JoinItems content sNestedContent
+            | Ada      -> uper_a.JoinItems content sNestedContent
     let rec printChildren children : Option<string> = 
         match children with
         |[]     -> None
@@ -319,11 +326,12 @@ let nestChildItems (l:ProgrammingLanguage) (codec:Ast.Codec) children =
 
 let createSequenceFunction (r:CAst.AstRoot) (l:ProgrammingLanguage) (codec:Ast.Codec) (o:CAst.Sequence) (typeDefinition:TypeDefinitionCommon) (baseTypeUperFunc : UPerFunction option) (isValidFunc: IsValidFunction option) (children:SeqChildInfo list) (us:State)  =
     // stg macros
-    let sequence_presence_bit       = match l with C -> uper_c.sequence_presence_bit | Ada -> uper_c.sequence_presence_bit
-    let sequence_presence_bit_fix   = match l with C -> uper_c.sequence_presence_bit_fix | Ada -> uper_c.sequence_presence_bit_fix
-    let sequence_mandatory_child    = match l with C -> uper_c.sequence_mandatory_child | Ada -> uper_c.sequence_mandatory_child
-    let sequence_optional_child     = match l with C -> uper_c.sequence_optional_child | Ada -> uper_c.sequence_optional_child
-    let sequence_default_child      = match l with C -> uper_c.sequence_default_child | Ada -> uper_c.sequence_default_child
+    let sequence_presence_bit       = match l with C -> uper_c.sequence_presence_bit        | Ada -> uper_a.sequence_presence_bit
+    let sequence_presence_bit_fix   = match l with C -> uper_c.sequence_presence_bit_fix    | Ada -> uper_a.sequence_presence_bit_fix
+    let sequence_mandatory_child    = match l with C -> uper_c.sequence_mandatory_child     | Ada -> uper_a.sequence_mandatory_child
+    let sequence_optional_child     = match l with C -> uper_c.sequence_optional_child      | Ada -> uper_a.sequence_optional_child
+    let sequence_default_child      = match l with C -> uper_c.sequence_default_child       | Ada -> uper_a.sequence_default_child
+    let baseFuncName =  match baseTypeUperFunc  with None -> None | Some baseFunc -> baseFunc.funcName
 
     let nonAcnChildren = children |> List.filter(fun c -> not c.acnInsertetField)
     let localVariables = nonAcnChildren |> List.choose(fun x -> x.chType.getUperFunction codec) |> List.collect(fun x -> x.localVariables)
@@ -334,35 +342,39 @@ let createSequenceFunction (r:CAst.AstRoot) (l:ProgrammingLanguage) (codec:Ast.C
         
     let childErrCodes = nonAcnChildren |> List.choose(fun x -> x.chType.getUperFunction codec) |> List.collect(fun x -> x.errCodes)
     let funcBody (errCode:ErroCode) (p:FuncParamType) = 
-        let printPresenceBit (child:SeqChildInfo) =
-            match child.optionality with
-            | None                       -> None
-            | Some CAst.AlwaysAbsent     -> Some (sequence_presence_bit_fix p.p (p.getAcces l) child.c_name "0" errCode.errCodeName codec)    // please note that in decode, macro uper_sequence_presence_bit_fix
-            | Some CAst.AlwaysPresent    -> Some (sequence_presence_bit_fix p.p (p.getAcces l) child.c_name "1" errCode.errCodeName codec)    // calls macro uper_sequence_presence_bit (i.e. behaves like optional)
-            | Some (CAst.Optional opt)   -> Some (sequence_presence_bit p.p (p.getAcces l) child.c_name  errCode.errCodeName codec)
-        let printChild (child:SeqChildInfo) =
-            let chFunc = child.chType.getUperFunction codec
-            match chFunc with
-            | None  -> None
-            | Some chFunc ->
-                let childContent = chFunc.funcBody (p.getSeqChild l child.c_name child.chType.isIA5String)
-                match childContent with
-                | None              -> None
-                | Some childContent ->
-                    match child.optionality with
-                    | None                       -> Some (sequence_mandatory_child child.c_name childContent codec) 
-                    | Some CAst.AlwaysAbsent     -> match codec with Ast.Encode -> None               | Ast.Decode -> Some (sequence_optional_child p.p (p.getAcces l) child.c_name childContent codec) 
-                    | Some CAst.AlwaysPresent    -> match codec with Ast.Encode -> Some childContent  | Ast.Decode -> Some (sequence_optional_child p.p (p.getAcces l) child.c_name childContent codec)
-                    | Some (CAst.Optional opt)   -> 
-                        match opt.defaultValue with
-                        | None                   -> Some (sequence_optional_child p.p (p.getAcces l) child.c_name childContent codec)
-                        | Some v                 -> 
-                            let defInit= child.chType.initFunction.initFuncBody (p.getSeqChild l child.c_name child.chType.isIA5String) v
-                            Some (sequence_default_child p.p (p.getAcces l) child.c_name childContent defInit codec) 
-        let presenseBits = nonAcnChildren |> List.choose printPresenceBit
-        let childrenStatements = nonAcnChildren |> List.choose printChild
-        (presenseBits@childrenStatements) |> nestChildItems l codec 
-
+        match baseFuncName with
+        | None ->
+            let printPresenceBit (child:SeqChildInfo) =
+                match child.optionality with
+                | None                       -> None
+                | Some CAst.AlwaysAbsent     -> Some (sequence_presence_bit_fix p.p (p.getAcces l) child.c_name "0" errCode.errCodeName codec)    // please note that in decode, macro uper_sequence_presence_bit_fix
+                | Some CAst.AlwaysPresent    -> Some (sequence_presence_bit_fix p.p (p.getAcces l) child.c_name "1" errCode.errCodeName codec)    // calls macro uper_sequence_presence_bit (i.e. behaves like optional)
+                | Some (CAst.Optional opt)   -> Some (sequence_presence_bit p.p (p.getAcces l) child.c_name  errCode.errCodeName codec)
+            let printChild (child:SeqChildInfo) =
+                let chFunc = child.chType.getUperFunction codec
+                match chFunc with
+                | None  -> None
+                | Some chFunc ->
+                    let childContent = chFunc.funcBody (p.getSeqChild l child.c_name child.chType.isIA5String)
+                    match childContent with
+                    | None              -> None
+                    | Some childContent ->
+                        match child.optionality with
+                        | None                       -> Some (sequence_mandatory_child child.c_name childContent codec) 
+                        | Some CAst.AlwaysAbsent     -> match codec with Ast.Encode -> None               | Ast.Decode -> Some (sequence_optional_child p.p (p.getAcces l) child.c_name childContent codec) 
+                        | Some CAst.AlwaysPresent    -> match codec with Ast.Encode -> Some childContent  | Ast.Decode -> Some (sequence_optional_child p.p (p.getAcces l) child.c_name childContent codec)
+                        | Some (CAst.Optional opt)   -> 
+                            match opt.defaultValue with
+                            | None                   -> Some (sequence_optional_child p.p (p.getAcces l) child.c_name childContent codec)
+                            | Some v                 -> 
+                                let defInit= child.chType.initFunction.initFuncBody (p.getSeqChild l child.c_name child.chType.isIA5String) v
+                                Some (sequence_default_child p.p (p.getAcces l) child.c_name childContent defInit codec) 
+            let presenseBits = nonAcnChildren |> List.choose printPresenceBit
+            let childrenStatements = nonAcnChildren |> List.choose printChild
+            (presenseBits@childrenStatements) |> nestChildItems l codec 
+        | Some baseFuncName ->
+            Some (callBaseTypeFunc l (p.getPointer l) baseFuncName codec)
+            
     let soSparkAnnotations = 
         match l with
         | C     -> None
@@ -377,6 +389,7 @@ let createChoiceFunction (r:CAst.AstRoot) (l:ProgrammingLanguage) (codec:Ast.Cod
     let choice   = match l with C -> uper_c.choice | Ada -> uper_c.choice
 
     let childErrCodes = children |> List.choose(fun x -> x.chType.getUperFunction codec) |> List.collect(fun x -> x.errCodes)
+    let baseFuncName =  match baseTypeUperFunc  with None -> None | Some baseFunc -> baseFunc.funcName
     
     let localVariables = children |> List.choose(fun x -> x.chType.getUperFunction codec) |> List.collect(fun x -> x.localVariables)
     let sChoiceIndexName = typeDefinition.name + "_index_tmp"
@@ -387,20 +400,24 @@ let createChoiceFunction (r:CAst.AstRoot) (l:ProgrammingLanguage) (codec:Ast.Cod
 
 
     let funcBody (errCode:ErroCode) (p:FuncParamType) = 
-        let childrenContent =
-            children |> 
-            List.mapi(fun i child ->
-                let chFunc = child.chType.getUperFunction codec
-                match chFunc with
-                | None  -> ""
-                | Some chFunc ->
-                    let childContent = 
-                        match chFunc.funcBody (p.getChChild l child.c_name child.chType.isIA5String) with
-                        | None              -> "/*no encoding/decoding is required*/"
-                        | Some childContent -> childContent
-                    choice_child p.p (p.getAcces l) child.presentWhenName (BigInteger i) (BigInteger (children.Length - 1)) childContent codec)
-        Some (choice p.p (p.getAcces l) childrenContent (BigInteger (children.Length - 1)) sChoiceIndexName errCode.errCodeName codec) 
-    
+        match baseFuncName with
+        | None ->
+            let childrenContent =
+                children |> 
+                List.mapi(fun i child ->
+                    let chFunc = child.chType.getUperFunction codec
+                    match chFunc with
+                    | None  -> ""
+                    | Some chFunc ->
+                        let childContent = 
+                            match chFunc.funcBody (p.getChChild l child.c_name child.chType.isIA5String) with
+                            | None              -> "/*no encoding/decoding is required*/"
+                            | Some childContent -> childContent
+                        choice_child p.p (p.getAcces l) child.presentWhenName (BigInteger i) (BigInteger (children.Length - 1)) childContent codec)
+            Some (choice p.p (p.getAcces l) childrenContent (BigInteger (children.Length - 1)) sChoiceIndexName errCode.errCodeName codec) 
+        | Some baseFuncName ->
+            Some (callBaseTypeFunc l (p.getPointer l) baseFuncName codec)
+
     let soSparkAnnotations = None
 
     createPrimitiveFunction r l codec (CAst.Choice o) typeDefinition baseTypeUperFunc  isValidFunc  funcBody localVariables childErrCodes soSparkAnnotations  us

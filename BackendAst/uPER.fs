@@ -246,3 +246,11 @@ let getSrtingAlphaUperRange (cons:IA5StringConstraint list) (defaultCharSet: cha
 
 
 
+let isUnsigned uperRange =
+        match uperRange with
+        | Concrete (a,b) when a >= 0I   -> true
+        | Concrete (a,b)                -> false
+        | NegInf   _                    -> false
+        | PosInf (a)     when a >= 0I   -> true
+        | PosInf (a)                    -> false
+        | Full                          -> false

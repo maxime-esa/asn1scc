@@ -103,6 +103,11 @@ type ErroCode = {
     errCodeName     : string
 }
 
+type BaseTypesEquivalence<'T> = {
+    typeDefinition  : 'T option
+    uper            : 'T option
+}
+    
         
 (*
 Generates initialization statement(s) that inititalize the type with the given Asn1GeneticValue.
@@ -148,6 +153,7 @@ type IsValidFunction = {
     localVariables      : LocalVariable list
 }
 
+//type UPERFuncBodyResult = {}
 type UPerFunction = {
     errCodes            : ErroCode list
     funcName            : string option               // the name of the function
@@ -183,6 +189,8 @@ type Integer = {
     acnEncodingClass    : CAst.IntEncodingClass
 
     //DAst properties
+    baseTypeEquivalence: BaseTypesEquivalence<Integer>
+
     typeDefinition      : TypeDefinitionCommon
     initialValue        : IntegerValue
     initFunction        : InitFunction
@@ -202,6 +210,7 @@ with
     member this.Cons     = this.cons
     member this.WithCons = this.withcons
     member this.AllCons  = this.cons@this.withcons
+    member this.IsUnsigned = isUnsigned this.uperRange
 
 type Enumerated = {
     id                  : ReferenceToType
@@ -222,6 +231,7 @@ type Enumerated = {
     enumEncodingClass   : CAst.EnumAcnEncodingClass
 
     //DAst properties
+    baseTypeEquivalence: BaseTypesEquivalence<Enumerated>
     typeDefinition      : TypeDefinitionCommon
     initialValue        : EnumValue
     initFunction        : InitFunction
@@ -259,6 +269,7 @@ type Real = {
     acnEncodingClass    : CAst.RealEncodingClass
 
     //DAst properties
+    baseTypeEquivalence: BaseTypesEquivalence<Real>
     typeDefinition      : TypeDefinitionCommon
     initialValue        : RealValue
     initFunction        : InitFunction
@@ -295,6 +306,7 @@ type Boolean = {
     acnEncodingClass    : CAst.BolleanAcnEncodingClass
 
     //DAst properties
+    baseTypeEquivalence: BaseTypesEquivalence<Boolean>
     typeDefinition      : TypeDefinitionCommon
     initialValue        : BooleanValue
     initFunction        : InitFunction
@@ -329,6 +341,7 @@ type NullType = {
     acnEncodingClass    : CAst.NullAcnEncodingClass
 
     //DAst properties
+    baseTypeEquivalence: BaseTypesEquivalence<NullType>
     typeDefinition      : TypeDefinitionCommon
     initialValue        : NullValue
     initFunction        : InitFunction
@@ -364,6 +377,7 @@ type StringType = {
     acnEncodingClass    : CAst.StringAcnEncodingClass
 
     //DAst properties
+    baseTypeEquivalence: BaseTypesEquivalence<StringType>
     typeDefinition      : TypeDefinitionCommon
     initialValue        : StringValue
     initFunction        : InitFunction
@@ -402,6 +416,7 @@ type OctetString = {
     acnEncodingClass    : CAst.SizeableAcnEncodingClass
 
     //DAst properties
+    baseTypeEquivalence: BaseTypesEquivalence<OctetString>
     typeDefinition      : TypeDefinitionCommon
     initialValue        : OctetStringValue
     initFunction        : InitFunction
@@ -442,6 +457,7 @@ type BitString = {
     //acnArguments        : IntArgument list
 
     //DAst properties
+    baseTypeEquivalence: BaseTypesEquivalence<BitString>
     typeDefinition      : TypeDefinitionCommon
     initialValue        : BitStringValue
     initFunction        : InitFunction
@@ -482,6 +498,7 @@ type SequenceOf = {
     //acnArguments        : GenericArgument list
 
     //DAst properties
+    baseTypeEquivalence: BaseTypesEquivalence<SequenceOf>
     typeDefinition      : TypeDefinitionCommon
     initialValue        : SeqOfValue
     initFunction        : InitFunction
@@ -540,6 +557,7 @@ and Sequence = {
     alignment           : CAst.AcnAligment option
 
     //DAst properties
+    baseTypeEquivalence: BaseTypesEquivalence<Sequence>
     typeDefinition      : TypeDefinitionCommon
     initialValue        : SeqValue
     initFunction        : InitFunction
@@ -593,6 +611,7 @@ and Choice = {
     alignment           : CAst.AcnAligment option
 
     //DAst properties
+    baseTypeEquivalence: BaseTypesEquivalence<Choice>
     typeDefinition      : TypeDefinitionCommon
     initialValue        : ChValue
     initFunction        : InitFunction

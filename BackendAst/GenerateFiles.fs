@@ -24,27 +24,27 @@ let collectEqualDeffinitions (t:Asn1Type)  =
     DastFold.foldAsn1Type2
         t
         0
-        (fun o bs us -> match bs with Some _ ->(CT_REFTYPE,[o.equalFunction]), us | None -> (CT_NOREFTYPE,[o.equalFunction]), us )
-        (fun o bs us -> match bs with Some _ ->(CT_REFTYPE,[o.equalFunction]), us | None -> (CT_NOREFTYPE,[o.equalFunction]), us )
-        (fun o bs us -> match bs with Some _ ->(CT_REFTYPE,[o.equalFunction]), us | None -> (CT_NOREFTYPE,[o.equalFunction]), us )
-        (fun o bs us -> match bs with Some _ ->(CT_REFTYPE,[o.equalFunction]), us | None -> (CT_NOREFTYPE,[o.equalFunction]), us )
-        (fun o bs us -> match bs with Some _ ->(CT_REFTYPE,[o.equalFunction]), us | None -> (CT_NOREFTYPE,[o.equalFunction]), us )
-        (fun o bs us -> match bs with Some _ ->(CT_REFTYPE,[o.equalFunction]), us | None -> (CT_NOREFTYPE,[o.equalFunction]), us )
-        (fun o bs us -> match bs with Some _ ->(CT_REFTYPE,[o.equalFunction]), us | None -> (CT_NOREFTYPE,[o.equalFunction]), us )
-        (fun o bs us -> match bs with Some _ ->(CT_REFTYPE,[o.equalFunction]), us | None -> (CT_NOREFTYPE,[o.equalFunction]), us )
+        (fun o bs us -> match o.baseTypeEquivalence.typeDefinition with Some _ ->(CT_REFTYPE,[o.equalFunction]), us | None -> (CT_NOREFTYPE,[o.equalFunction]), us )
+        (fun o bs us -> match o.baseTypeEquivalence.typeDefinition with Some _ ->(CT_REFTYPE,[o.equalFunction]), us | None -> (CT_NOREFTYPE,[o.equalFunction]), us )
+        (fun o bs us -> match o.baseTypeEquivalence.typeDefinition with Some _ ->(CT_REFTYPE,[o.equalFunction]), us | None -> (CT_NOREFTYPE,[o.equalFunction]), us )
+        (fun o bs us -> match o.baseTypeEquivalence.typeDefinition with Some _ ->(CT_REFTYPE,[o.equalFunction]), us | None -> (CT_NOREFTYPE,[o.equalFunction]), us )
+        (fun o bs us -> match o.baseTypeEquivalence.typeDefinition with Some _ ->(CT_REFTYPE,[o.equalFunction]), us | None -> (CT_NOREFTYPE,[o.equalFunction]), us )
+        (fun o bs us -> match o.baseTypeEquivalence.typeDefinition with Some _ ->(CT_REFTYPE,[o.equalFunction]), us | None -> (CT_NOREFTYPE,[o.equalFunction]), us )
+        (fun o bs us -> match o.baseTypeEquivalence.typeDefinition with Some _ ->(CT_REFTYPE,[o.equalFunction]), us | None -> (CT_NOREFTYPE,[o.equalFunction]), us )
+        (fun o bs us -> match o.baseTypeEquivalence.typeDefinition with Some _ ->(CT_REFTYPE,[o.equalFunction]), us | None -> (CT_NOREFTYPE,[o.equalFunction]), us )
         (fun (refType, childDefs) o bs us ->
             let childCollects = match refType with CT_REFTYPE -> [] | CT_NOREFTYPE -> childDefs 
-            match bs with Some _ -> (CT_REFTYPE,childCollects@[o.equalFunction]), us | None -> (CT_NOREFTYPE,childCollects@[o.equalFunction]),us)
+            match o.baseTypeEquivalence.typeDefinition with Some _ -> (CT_REFTYPE,childCollects@[o.equalFunction]), us | None -> (CT_NOREFTYPE,childCollects@[o.equalFunction]),us)
         //sequence
         (fun o (refType, childDefs) us -> match refType with CT_REFTYPE -> [],us | CT_NOREFTYPE -> childDefs , us)
         (fun children o bs us -> 
             let childrenCollects = children |> List.collect id
-            match bs with Some _ -> (CT_REFTYPE,childrenCollects@[o.equalFunction]), us | None -> (CT_NOREFTYPE,childrenCollects@[o.equalFunction]), us )
+            match o.baseTypeEquivalence.typeDefinition with Some _ -> (CT_REFTYPE,childrenCollects@[o.equalFunction]), us | None -> (CT_NOREFTYPE,childrenCollects@[o.equalFunction]), us )
         //Choice
         (fun o (refType, childDefs) us -> match refType with CT_REFTYPE -> [],us | CT_NOREFTYPE -> childDefs , us)
         (fun children o bs us -> 
             let childrenCollects = children |> List.collect id
-            match bs with Some _ -> (CT_REFTYPE,childrenCollects@[o.equalFunction]), us | None -> (CT_NOREFTYPE,childrenCollects@[o.equalFunction]), us )
+            match o.baseTypeEquivalence.typeDefinition with Some _ -> (CT_REFTYPE,childrenCollects@[o.equalFunction]), us | None -> (CT_NOREFTYPE,childrenCollects@[o.equalFunction]), us )
     |> fst |> snd
 
 let printUnit (r:DAst.AstRoot) (l:ProgrammingLanguage) outDir (pu:ProgramUnit) =

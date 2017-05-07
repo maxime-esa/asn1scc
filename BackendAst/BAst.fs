@@ -14,6 +14,12 @@ type TypeAssignmentInfo = {
     tasName : string
 }
 
+(*
+typedefBaseType
+uperBaseType
+acnBaseType
+*)
+
 type Integer = {
     id                  : ReferenceToType
     tasInfo             : TypeAssignmentInfo option

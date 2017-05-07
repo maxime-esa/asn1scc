@@ -39,7 +39,6 @@ type IntEncodingClass =
     |BCD_VarSize_NullTerminated of byte
 
 
-
 type Integer = {
     //bast inherrited properties
     id                  : ReferenceToType
@@ -52,24 +51,18 @@ type Integer = {
     baseType            : Integer option
     Location            : SrcLoc   
 
+
     //cast new properties
     acnMaxSizeInBits    : int
     acnMinSizeInBits    : int
-    alignment            : AcnAligment option
+    alignment           : AcnAligment option
     acnEncodingClass    : IntEncodingClass
 }
 with 
     member this.Cons     = this.cons
     member this.WithCons = this.withcons
     member this.AllCons  = this.cons@this.withcons
-    member this.IsUnsigned =
-        match this.uperRange with
-        | Concrete (a,b) when a >= 0I   -> true
-        | Concrete (a,b)                -> false
-        | NegInf   _                    -> false
-        | PosInf (a)     when a >= 0I   -> true
-        | PosInf (a)                    -> false
-        | Full                          -> false
+    member this.IsUnsigned = isUnsigned this.uperRange
 
 
 type EnumAcnEncodingClass =

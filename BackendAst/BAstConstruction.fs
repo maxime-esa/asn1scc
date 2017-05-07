@@ -1,4 +1,5 @@
 ﻿module BAstConstruction
+open System
 open System.Numerics
 open Antlr.Runtime.Tree
 open Antlr.Runtime
@@ -11,9 +12,27 @@ type State = {
     anonymousTypes : Asn1Type list
     anonymousValues : Asn1GenericValue list
 }
-with 
-    member this.add (other:State) =
-        {State.anonymousTypes = this.anonymousTypes@other.anonymousTypes; anonymousValues = this.anonymousValues@other.anonymousValues}
+//with 
+//    member this.add (other:State) =
+//        {State.anonymousTypes = this.anonymousTypes@other.anonymousTypes; anonymousValues = this.anonymousValues@other.anonymousValues}
+
+
+let tryGetType (s:State) typeId = s.anonymousTypes |> Seq.tryFind (fun x -> x.id = typeId )
+
+let getAsInteger       (t:Asn1Type option) = match t with None -> None | Some(Integer      i) -> Some i | _  -> raise(Exception "unexpected type")
+let getAsReal          (t:Asn1Type option) = match t with None -> None | Some(Real         i) -> Some i | _  -> raise(Exception "unexpected type")
+let getAsIA5String     (t:Asn1Type option) = match t with None -> None | Some(IA5String    i) -> Some i | _  -> raise(Exception "unexpected type")
+let getAsOctetString   (t:Asn1Type option) = match t with None -> None | Some(OctetString  i) -> Some i | _  -> raise(Exception "unexpected type")
+let getAsNullType      (t:Asn1Type option) = match t with None -> None | Some(NullType     i) -> Some i | _  -> raise(Exception "unexpected type")
+let getAsBitString     (t:Asn1Type option) = match t with None -> None | Some(BitString    i) -> Some i | _  -> raise(Exception "unexpected type")
+let getAsBoolean       (t:Asn1Type option) = match t with None -> None | Some(Boolean      i) -> Some i | _  -> raise(Exception "unexpected type")
+let getAsEnumerated    (t:Asn1Type option) = match t with None -> None | Some(Enumerated   i) -> Some i | _  -> raise(Exception "unexpected type")
+let getAsSequenceOf    (t:Asn1Type option) = match t with None -> None | Some(SequenceOf   i) -> Some i | _  -> raise(Exception "unexpected type")
+let getAsSequence      (t:Asn1Type option) = match t with None -> None | Some(Sequence     i) -> Some i | _  -> raise(Exception "unexpected type")
+let getAsChoice        (t:Asn1Type option) = match t with None -> None | Some(Choice       i) -> Some i | _  -> raise(Exception "unexpected type")
+
+
+
 
 
 type InterimTypeKind =
@@ -30,8 +49,8 @@ type InterimTypeKind =
     |InterimSequence          of (Sequence option) * (ChildInfo list)
     |InterimChoice            of (Choice option) * (ChildInfo list)
 
-let combineStates (states:State list)= 
-    states |> List.fold (fun s c -> {State.anonymousTypes = s.anonymousTypes@c.anonymousTypes; anonymousValues = s.anonymousValues@c.anonymousValues}) {State.anonymousTypes =[]; anonymousValues = []}
+//let combineStates (states:State list)= 
+//    states |> List.fold (fun s c -> {State.anonymousTypes = s.anonymousTypes@c.anonymousTypes; anonymousValues = s.anonymousValues@c.anonymousValues}) {State.anonymousTypes =[]; anonymousValues = []}
 
 let addValue (s:State) (v:Asn1GenericValue)=
     {s with anonymousValues=s.anonymousValues@[v]}
@@ -112,130 +131,133 @@ let createChoiceChildInfo (st:State) s (ch:Ast.ChildInfo) (newType:Asn1Type) =
 
 
 let createType (s:State) (ts:GenericFold2.UserDefinedTypeScope) (oldType:Ast.Asn1Type) (newCons:((Asn1AnyConstraint) option ) list, fromWithComps:((Asn1AnyConstraint) option ) list)  (newKind:InterimTypeKind) integerSizeInBytes =
-    let numericStringDefaultConstraint = 
-        let zeroToNine = Constraints.RangeContraint (('0',Literal), ('9',Literal),true,true)
-        let space      = Constraints.RangeSingleValueConstraint (" ", Literal)
-        let numericCon = Constraints.AlphabetContraint (Constraints.RangeUnionConstraint (zeroToNine, space, true))
-        numericCon
-    let rec inheritedCons f1 f2 par = 
-        match par with
-        | None      -> []
-        | Some p    -> (f1 p)@(inheritedCons f1 f2 (f2 p))
-    let getSizeMinAndMaxValue sizeUperRange =
-        match sizeUperRange with
-        | Concrete(a,b) -> int a, int b
-        | _             -> raise(SemanticError(oldType.Location,"Declared type may have infinite size. Use size constraints to limit the upper bound"))
-    let getRequiredBitsForIntUperEncoding  uperRange =
-        match uperRange with
-        | Concrete(a,b)                   -> int32 (GetNumberOfBitsForNonNegativeInteger(b-a)), int32 (GetNumberOfBitsForNonNegativeInteger(b-a))
-        | Full | PosInf(_) |  NegInf(_)   -> 8, (integerSizeInBytes+1)*8
-    let getSizeableTypeSize a b internalSize =
-        let lenSize (a:int) (b:int) = int32 (GetNumberOfBitsForNonNegativeInteger(BigInteger(b)-BigInteger(a)))
-        match a with
-        | _ when a=b  && b<65536 -> a*internalSize                , b*internalSize
-        | _ when a<>b && b<65536 -> a*internalSize + (lenSize a b), b*internalSize + (lenSize a b)
-        | _                      -> a*internalSize + (lenSize a b), b*internalSize + (b / 65536 + 3) * 8
     let newTypeId = ReferenceToType ts 
-    let tasInfo = newTypeId.Asn1TypeName |> Option.map(fun x -> {TypeAssignmentInfo.modName = x.moduName; tasName = x.tasName})
-    let ret = 
-        match newKind with
-        | InterimInteger baseType -> 
-            let cons     = newCons       |> List.choose id |> List.map ConstraintsMapping.getIntegerTypeConstraint 
-            let withcons = fromWithComps |> List.choose id |> List.map ConstraintsMapping.getIntegerTypeConstraint 
-            let inhCons  = inheritedCons (fun (x:Integer) -> x.cons) (fun x -> x.baseType) baseType
-            let uperCons, rootCons = cons@inhCons |> List.split(fun c -> match c with RangeRootConstraint _  | RangeRootConstraint2 _ -> false | _ -> true)
-            let uperR    = getIntTypeConstraintUperRange uperCons  oldType.Location
-            let uperMinSizeInBits, uperMaxSizeInBits = 
-                match rootCons with
-                | []  -> getRequiredBitsForIntUperEncoding uperR
-                | _   -> 
-                    let mn,mx = getRequiredBitsForIntUperEncoding uperR
-                    1 + mn, 1 + mx
-            Integer      {Integer.baseType = baseType; cons = cons; withcons = withcons; uperRange = uperR; Location=oldType.Location; id=newTypeId; tasInfo= tasInfo; uperMaxSizeInBits=uperMaxSizeInBits; uperMinSizeInBits=uperMinSizeInBits}
-        | InterimReal      baseType                  -> 
-            let cons     = newCons       |> List.choose id |> List.map ConstraintsMapping.getRealTypeConstraint 
-            let withcons = fromWithComps |> List.choose id |> List.map ConstraintsMapping.getRealTypeConstraint 
-            let inhCons  = inheritedCons (fun (x:Real) -> x.cons) (fun x -> x.baseType) baseType
-            let uperR    = getRealTypeConstraintUperRange (cons@inhCons) oldType.Location
-            Real         {Real.baseType = baseType; cons = cons; withcons = withcons; uperRange = uperR; Location=oldType.Location; id=newTypeId; tasInfo= tasInfo; uperMaxSizeInBits=(5+integerSizeInBytes)*8; uperMinSizeInBits=8}
-        | InterimIA5String     baseType              -> 
-            let defaultCharSet = [|for i in 0..127 -> System.Convert.ToChar(i) |]
-            let cons     = newCons       |> List.choose id |> List.map ConstraintsMapping.getIA5StringConstraint
-            let withcons = fromWithComps |> List.choose id |> List.map ConstraintsMapping.getIA5StringConstraint
-            let inhCons  = inheritedCons (fun (x:StringType) -> x.cons) (fun x -> x.baseType) baseType
-            let sizeUperRange = getSrtingSizeUperRange (cons@inhCons) oldType.Location
-            let charSet = getSrtingAlphaUperRange (cons@inhCons) defaultCharSet oldType.Location
-            let minSize, maxSize = getSizeMinAndMaxValue sizeUperRange
-            let charSize =  int (GetNumberOfBitsForNonNegativeInteger (BigInteger (charSet.Length-1)))
-            let uperMinSizeInBits, uperMaxSizeInBits = getSizeableTypeSize minSize maxSize charSize
+    match tryGetType s newTypeId with
+    | Some t    -> t,s
+    | None      ->
+        let numericStringDefaultConstraint = 
+            let zeroToNine = Constraints.RangeContraint (('0',Literal), ('9',Literal),true,true)
+            let space      = Constraints.RangeSingleValueConstraint (" ", Literal)
+            let numericCon = Constraints.AlphabetContraint (Constraints.RangeUnionConstraint (zeroToNine, space, true))
+            numericCon
+        let rec inheritedCons f1 f2 par = 
+            match par with
+            | None      -> []
+            | Some p    -> (f1 p)@(inheritedCons f1 f2 (f2 p))
+        let getSizeMinAndMaxValue sizeUperRange =
+            match sizeUperRange with
+            | Concrete(a,b) -> int a, int b
+            | _             -> raise(SemanticError(oldType.Location,"Declared type may have infinite size. Use size constraints to limit the upper bound"))
+        let getRequiredBitsForIntUperEncoding  uperRange =
+            match uperRange with
+            | Concrete(a,b)                   -> int32 (GetNumberOfBitsForNonNegativeInteger(b-a)), int32 (GetNumberOfBitsForNonNegativeInteger(b-a))
+            | Full | PosInf(_) |  NegInf(_)   -> 8, (integerSizeInBytes+1)*8
+        let getSizeableTypeSize a b internalSize =
+            let lenSize (a:int) (b:int) = int32 (GetNumberOfBitsForNonNegativeInteger(BigInteger(b)-BigInteger(a)))
+            match a with
+            | _ when a=b  && b<65536 -> a*internalSize                , b*internalSize
+            | _ when a<>b && b<65536 -> a*internalSize + (lenSize a b), b*internalSize + (lenSize a b)
+            | _                      -> a*internalSize + (lenSize a b), b*internalSize + (b / 65536 + 3) * 8
+        let tasInfo = newTypeId.Asn1TypeName |> Option.map(fun x -> {TypeAssignmentInfo.modName = x.moduName; tasName = x.tasName})
+        let ret = 
+            match newKind with
+            | InterimInteger baseType -> 
+                let cons     = newCons       |> List.choose id |> List.map ConstraintsMapping.getIntegerTypeConstraint 
+                let withcons = fromWithComps |> List.choose id |> List.map ConstraintsMapping.getIntegerTypeConstraint 
+                let inhCons  = inheritedCons (fun (x:Integer) -> x.cons) (fun x -> x.baseType) baseType
+                let uperCons, rootCons = cons@inhCons |> List.split(fun c -> match c with RangeRootConstraint _  | RangeRootConstraint2 _ -> false | _ -> true)
+                let uperR    = getIntTypeConstraintUperRange uperCons  oldType.Location
+                let uperMinSizeInBits, uperMaxSizeInBits = 
+                    match rootCons with
+                    | []  -> getRequiredBitsForIntUperEncoding uperR
+                    | _   -> 
+                        let mn,mx = getRequiredBitsForIntUperEncoding uperR
+                        1 + mn, 1 + mx
+                Integer      {Integer.baseType = baseType; cons = cons; withcons = withcons; uperRange = uperR; Location=oldType.Location; id=newTypeId; tasInfo= tasInfo; uperMaxSizeInBits=uperMaxSizeInBits; uperMinSizeInBits=uperMinSizeInBits}
+            | InterimReal      baseType                  -> 
+                let cons     = newCons       |> List.choose id |> List.map ConstraintsMapping.getRealTypeConstraint 
+                let withcons = fromWithComps |> List.choose id |> List.map ConstraintsMapping.getRealTypeConstraint 
+                let inhCons  = inheritedCons (fun (x:Real) -> x.cons) (fun x -> x.baseType) baseType
+                let uperR    = getRealTypeConstraintUperRange (cons@inhCons) oldType.Location
+                Real         {Real.baseType = baseType; cons = cons; withcons = withcons; uperRange = uperR; Location=oldType.Location; id=newTypeId; tasInfo= tasInfo; uperMaxSizeInBits=(5+integerSizeInBytes)*8; uperMinSizeInBits=8}
+            | InterimIA5String     baseType              -> 
+                let defaultCharSet = [|for i in 0..127 -> System.Convert.ToChar(i) |]
+                let cons     = newCons       |> List.choose id |> List.map ConstraintsMapping.getIA5StringConstraint
+                let withcons = fromWithComps |> List.choose id |> List.map ConstraintsMapping.getIA5StringConstraint
+                let inhCons  = inheritedCons (fun (x:StringType) -> x.cons) (fun x -> x.baseType) baseType
+                let sizeUperRange = getSrtingSizeUperRange (cons@inhCons) oldType.Location
+                let charSet = getSrtingAlphaUperRange (cons@inhCons) defaultCharSet oldType.Location
+                let minSize, maxSize = getSizeMinAndMaxValue sizeUperRange
+                let charSize =  int (GetNumberOfBitsForNonNegativeInteger (BigInteger (charSet.Length-1)))
+                let uperMinSizeInBits, uperMaxSizeInBits = getSizeableTypeSize minSize maxSize charSize
 
 
-            IA5String    {StringType.baseType=baseType; cons = cons; withcons = withcons; minSize=minSize; maxSize=maxSize; charSet=charSet; Location=oldType.Location; id=newTypeId; tasInfo= tasInfo; uperMaxSizeInBits=uperMaxSizeInBits; uperMinSizeInBits=uperMinSizeInBits}
-        | InterimNumericString baseType              -> 
-            let defaultCharSet = [| ' ';'0';'1';'2';'3';'4';'5';'6';'7';'8';'9'|]
-            let cons     = newCons       |> List.choose id |> List.map ConstraintsMapping.getIA5StringConstraint
-            let cons = match baseType with None -> numericStringDefaultConstraint::cons | Some _ -> cons
-            let withcons = fromWithComps |> List.choose id |> List.map ConstraintsMapping.getIA5StringConstraint
-            let inhCons  = inheritedCons (fun (x:StringType) -> x.cons) (fun x -> x.baseType) baseType
-            let sizeUperRange = getSrtingSizeUperRange (cons@inhCons) oldType.Location
-            let charSet = getSrtingAlphaUperRange (cons@inhCons) defaultCharSet oldType.Location
-            let minSize, maxSize = getSizeMinAndMaxValue sizeUperRange
-            let charSize =  int (GetNumberOfBitsForNonNegativeInteger (BigInteger (charSet.Length-1)))
-            let uperMinSizeInBits, uperMaxSizeInBits = getSizeableTypeSize minSize maxSize charSize
+                IA5String    {StringType.baseType=baseType; cons = cons; withcons = withcons; minSize=minSize; maxSize=maxSize; charSet=charSet; Location=oldType.Location; id=newTypeId; tasInfo= tasInfo; uperMaxSizeInBits=uperMaxSizeInBits; uperMinSizeInBits=uperMinSizeInBits}
+            | InterimNumericString baseType              -> 
+                let defaultCharSet = [| ' ';'0';'1';'2';'3';'4';'5';'6';'7';'8';'9'|]
+                let cons     = newCons       |> List.choose id |> List.map ConstraintsMapping.getIA5StringConstraint
+                let cons = match baseType with None -> numericStringDefaultConstraint::cons | Some _ -> cons
+                let withcons = fromWithComps |> List.choose id |> List.map ConstraintsMapping.getIA5StringConstraint
+                let inhCons  = inheritedCons (fun (x:StringType) -> x.cons) (fun x -> x.baseType) baseType
+                let sizeUperRange = getSrtingSizeUperRange (cons@inhCons) oldType.Location
+                let charSet = getSrtingAlphaUperRange (cons@inhCons) defaultCharSet oldType.Location
+                let minSize, maxSize = getSizeMinAndMaxValue sizeUperRange
+                let charSize =  int (GetNumberOfBitsForNonNegativeInteger (BigInteger (charSet.Length-1)))
+                let uperMinSizeInBits, uperMaxSizeInBits = getSizeableTypeSize minSize maxSize charSize
 
-            IA5String    {StringType.baseType=baseType; cons = cons; withcons = withcons; minSize=minSize; maxSize=maxSize; charSet=charSet; Location=oldType.Location; id=newTypeId; tasInfo= tasInfo; uperMaxSizeInBits=uperMaxSizeInBits; uperMinSizeInBits=uperMinSizeInBits}
-        | InterimOctetString   baseType              -> 
-            let cons     = newCons       |> List.choose id |> List.map ConstraintsMapping.getOctetStringConstraint
-            let withcons = fromWithComps |> List.choose id |> List.map ConstraintsMapping.getOctetStringConstraint
-            let inhCons  = inheritedCons (fun (x:OctetString) -> x.cons) (fun x -> x.baseType) baseType
-            let sizeUperRange = getOctetStringUperRange (cons@inhCons) oldType.Location
-            let minSize, maxSize = getSizeMinAndMaxValue sizeUperRange
-            let uperMinSizeInBits, uperMaxSizeInBits = getSizeableTypeSize minSize maxSize 8
-            OctetString  {OctetString.baseType=baseType; cons = cons; withcons = withcons; minSize=minSize; maxSize=maxSize; Location=oldType.Location; id=newTypeId; tasInfo= tasInfo; uperMaxSizeInBits=uperMaxSizeInBits; uperMinSizeInBits=uperMinSizeInBits}
-        | InterimNullType     baseType              -> NullType {NullType.baseType=baseType; Location=oldType.Location; id=newTypeId; tasInfo= tasInfo; uperMaxSizeInBits=0; uperMinSizeInBits=0}
-        | InterimBitString    baseType               -> 
-            let cons     = newCons       |> List.choose id |> List.map ConstraintsMapping.getBitStringConstraint 
-            let withcons = fromWithComps |> List.choose id |> List.map ConstraintsMapping.getBitStringConstraint
-            let inhCons  = inheritedCons (fun (x:BitString) -> x.cons) (fun x -> x.baseType) baseType
-            let sizeUperRange = getBitStringUperRange (cons@inhCons) oldType.Location
-            let minSize, maxSize = getSizeMinAndMaxValue sizeUperRange
-            let uperMinSizeInBits, uperMaxSizeInBits = getSizeableTypeSize minSize maxSize 1
-            BitString    {BitString.baseType=baseType; cons = cons; withcons = withcons; minSize=minSize; maxSize=maxSize; Location=oldType.Location; id=newTypeId; tasInfo= tasInfo; uperMaxSizeInBits=uperMaxSizeInBits; uperMinSizeInBits=uperMinSizeInBits}
-        | InterimBoolean      baseType               -> 
-            let cons     = newCons       |> List.choose id |> List.map ConstraintsMapping.getBoolConstraint
-            let withcons = fromWithComps |> List.choose id |> List.map ConstraintsMapping.getBoolConstraint
-            Boolean    {Boolean.baseType=baseType; cons=cons; withcons = withcons; Location=oldType.Location; id=newTypeId; tasInfo= tasInfo; uperMaxSizeInBits=1; uperMinSizeInBits=1}
-        | InterimEnumerated   (baseType, items, userDefinedValues) -> 
-            let cons     = newCons       |> List.choose id |> List.map ConstraintsMapping.getEnumConstraint
-            let withcons = fromWithComps |> List.choose id |> List.map ConstraintsMapping.getEnumConstraint
-            let uperSizeInBits = int32(GetNumberOfBitsForNonNegativeInteger(BigInteger((Seq.length items) - 1)))
-            Enumerated  {Enumerated.baseType=baseType; items=items;userDefinedValues=userDefinedValues; cons = cons; withcons = withcons;  Location=oldType.Location; id=newTypeId; tasInfo= tasInfo; uperMaxSizeInBits=uperSizeInBits; uperMinSizeInBits=uperSizeInBits}
-        | InterimSequenceOf    (baseType,childType)        -> 
-            let cons     = newCons       |> List.choose id |> List.map ConstraintsMapping.getSequenceOfConstraint
-            let withcons = fromWithComps |> List.choose id |> List.map ConstraintsMapping.getSequenceOfConstraint
-            let inhCons  = inheritedCons (fun (x:SequenceOf) -> x.cons) (fun x -> x.baseType) baseType
-            let sizeUperRange = getSequenceOfUperRange (cons@inhCons) oldType.Location
-            let minSize, maxSize = getSizeMinAndMaxValue sizeUperRange
-            let uperMinSizeInBits, _ = getSizeableTypeSize minSize maxSize childType.uperMinSizeInBits
-            let _, uperMaxSizeInBits = getSizeableTypeSize minSize maxSize childType.uperMaxSizeInBits
-            SequenceOf  {SequenceOf.baseType=baseType; childType=childType; cons=cons; withcons = withcons; minSize=minSize; maxSize=maxSize; Location=oldType.Location; id=newTypeId; tasInfo= tasInfo; uperMaxSizeInBits=uperMaxSizeInBits; uperMinSizeInBits=uperMinSizeInBits}
-        | InterimSequence      (baseType,children)             -> 
-            let optionalChildren = children |> Seq.filter(fun c -> c.Optionality.IsSome)
-            let bitMaskSize = Seq.length optionalChildren
-            let maxChildrenSize = children |> List.map(fun x -> x.chType.uperMaxSizeInBits) |> Seq.sum
-            let minChildrenSize = children |> List.filter(fun x -> x.Optionality.IsNone) |> List.map(fun x -> x.chType.uperMinSizeInBits) |> Seq.sum
-            let cons     = newCons       |> List.choose id |> List.map ConstraintsMapping.getSequenceConstraint 
-            let withcons = fromWithComps |> List.choose id |> List.map ConstraintsMapping.getSequenceConstraint
-            Sequence    {Sequence.baseType = baseType; children=children; cons=cons; withcons = withcons;  Location=oldType.Location; id=newTypeId; tasInfo= tasInfo; uperMaxSizeInBits=bitMaskSize+maxChildrenSize; uperMinSizeInBits=bitMaskSize+minChildrenSize }
-        | InterimChoice        (baseType,children)             -> 
-            let indexSize = int (GetNumberOfBitsForNonNegativeInteger(BigInteger(Seq.length children)))
-            let minChildSize = children  |> List.map(fun x -> x.chType.uperMinSizeInBits) |> Seq.min
-            let maxChildSize = children  |> List.map(fun x -> x.chType.uperMaxSizeInBits) |> Seq.max
-            let cons     = newCons       |> List.choose id |> List.map ConstraintsMapping.getChoiceConstraint
-            let withcons = fromWithComps |> List.choose id |> List.map ConstraintsMapping.getChoiceConstraint
-            Choice      {Choice.baseType = baseType; children=children; cons=cons; withcons = withcons; Location=oldType.Location; id=newTypeId; tasInfo= tasInfo; uperMaxSizeInBits=indexSize+maxChildSize; uperMinSizeInBits=indexSize+minChildSize }
+                IA5String    {StringType.baseType=baseType; cons = cons; withcons = withcons; minSize=minSize; maxSize=maxSize; charSet=charSet; Location=oldType.Location; id=newTypeId; tasInfo= tasInfo; uperMaxSizeInBits=uperMaxSizeInBits; uperMinSizeInBits=uperMinSizeInBits}
+            | InterimOctetString   baseType              -> 
+                let cons     = newCons       |> List.choose id |> List.map ConstraintsMapping.getOctetStringConstraint
+                let withcons = fromWithComps |> List.choose id |> List.map ConstraintsMapping.getOctetStringConstraint
+                let inhCons  = inheritedCons (fun (x:OctetString) -> x.cons) (fun x -> x.baseType) baseType
+                let sizeUperRange = getOctetStringUperRange (cons@inhCons) oldType.Location
+                let minSize, maxSize = getSizeMinAndMaxValue sizeUperRange
+                let uperMinSizeInBits, uperMaxSizeInBits = getSizeableTypeSize minSize maxSize 8
+                OctetString  {OctetString.baseType=baseType; cons = cons; withcons = withcons; minSize=minSize; maxSize=maxSize; Location=oldType.Location; id=newTypeId; tasInfo= tasInfo; uperMaxSizeInBits=uperMaxSizeInBits; uperMinSizeInBits=uperMinSizeInBits}
+            | InterimNullType     baseType              -> NullType {NullType.baseType=baseType; Location=oldType.Location; id=newTypeId; tasInfo= tasInfo; uperMaxSizeInBits=0; uperMinSizeInBits=0}
+            | InterimBitString    baseType               -> 
+                let cons     = newCons       |> List.choose id |> List.map ConstraintsMapping.getBitStringConstraint 
+                let withcons = fromWithComps |> List.choose id |> List.map ConstraintsMapping.getBitStringConstraint
+                let inhCons  = inheritedCons (fun (x:BitString) -> x.cons) (fun x -> x.baseType) baseType
+                let sizeUperRange = getBitStringUperRange (cons@inhCons) oldType.Location
+                let minSize, maxSize = getSizeMinAndMaxValue sizeUperRange
+                let uperMinSizeInBits, uperMaxSizeInBits = getSizeableTypeSize minSize maxSize 1
+                BitString    {BitString.baseType=baseType; cons = cons; withcons = withcons; minSize=minSize; maxSize=maxSize; Location=oldType.Location; id=newTypeId; tasInfo= tasInfo; uperMaxSizeInBits=uperMaxSizeInBits; uperMinSizeInBits=uperMinSizeInBits}
+            | InterimBoolean      baseType               -> 
+                let cons     = newCons       |> List.choose id |> List.map ConstraintsMapping.getBoolConstraint
+                let withcons = fromWithComps |> List.choose id |> List.map ConstraintsMapping.getBoolConstraint
+                Boolean    {Boolean.baseType=baseType; cons=cons; withcons = withcons; Location=oldType.Location; id=newTypeId; tasInfo= tasInfo; uperMaxSizeInBits=1; uperMinSizeInBits=1}
+            | InterimEnumerated   (baseType, items, userDefinedValues) -> 
+                let cons     = newCons       |> List.choose id |> List.map ConstraintsMapping.getEnumConstraint
+                let withcons = fromWithComps |> List.choose id |> List.map ConstraintsMapping.getEnumConstraint
+                let uperSizeInBits = int32(GetNumberOfBitsForNonNegativeInteger(BigInteger((Seq.length items) - 1)))
+                Enumerated  {Enumerated.baseType=baseType; items=items;userDefinedValues=userDefinedValues; cons = cons; withcons = withcons;  Location=oldType.Location; id=newTypeId; tasInfo= tasInfo; uperMaxSizeInBits=uperSizeInBits; uperMinSizeInBits=uperSizeInBits}
+            | InterimSequenceOf    (baseType,childType)        -> 
+                let cons     = newCons       |> List.choose id |> List.map ConstraintsMapping.getSequenceOfConstraint
+                let withcons = fromWithComps |> List.choose id |> List.map ConstraintsMapping.getSequenceOfConstraint
+                let inhCons  = inheritedCons (fun (x:SequenceOf) -> x.cons) (fun x -> x.baseType) baseType
+                let sizeUperRange = getSequenceOfUperRange (cons@inhCons) oldType.Location
+                let minSize, maxSize = getSizeMinAndMaxValue sizeUperRange
+                let uperMinSizeInBits, _ = getSizeableTypeSize minSize maxSize childType.uperMinSizeInBits
+                let _, uperMaxSizeInBits = getSizeableTypeSize minSize maxSize childType.uperMaxSizeInBits
+                SequenceOf  {SequenceOf.baseType=baseType; childType=childType; cons=cons; withcons = withcons; minSize=minSize; maxSize=maxSize; Location=oldType.Location; id=newTypeId; tasInfo= tasInfo; uperMaxSizeInBits=uperMaxSizeInBits; uperMinSizeInBits=uperMinSizeInBits}
+            | InterimSequence      (baseType,children)             -> 
+                let optionalChildren = children |> Seq.filter(fun c -> c.Optionality.IsSome)
+                let bitMaskSize = Seq.length optionalChildren
+                let maxChildrenSize = children |> List.map(fun x -> x.chType.uperMaxSizeInBits) |> Seq.sum
+                let minChildrenSize = children |> List.filter(fun x -> x.Optionality.IsNone) |> List.map(fun x -> x.chType.uperMinSizeInBits) |> Seq.sum
+                let cons     = newCons       |> List.choose id |> List.map ConstraintsMapping.getSequenceConstraint 
+                let withcons = fromWithComps |> List.choose id |> List.map ConstraintsMapping.getSequenceConstraint
+                Sequence    {Sequence.baseType = baseType; children=children; cons=cons; withcons = withcons;  Location=oldType.Location; id=newTypeId; tasInfo= tasInfo; uperMaxSizeInBits=bitMaskSize+maxChildrenSize; uperMinSizeInBits=bitMaskSize+minChildrenSize }
+            | InterimChoice        (baseType,children)             -> 
+                let indexSize = int (GetNumberOfBitsForNonNegativeInteger(BigInteger(Seq.length children)))
+                let minChildSize = children  |> List.map(fun x -> x.chType.uperMinSizeInBits) |> Seq.min
+                let maxChildSize = children  |> List.map(fun x -> x.chType.uperMaxSizeInBits) |> Seq.max
+                let cons     = newCons       |> List.choose id |> List.map ConstraintsMapping.getChoiceConstraint
+                let withcons = fromWithComps |> List.choose id |> List.map ConstraintsMapping.getChoiceConstraint
+                Choice      {Choice.baseType = baseType; children=children; cons=cons; withcons = withcons; Location=oldType.Location; id=newTypeId; tasInfo= tasInfo; uperMaxSizeInBits=indexSize+maxChildSize; uperMinSizeInBits=indexSize+minChildSize }
 
-    ret, {s with anonymousTypes = s.anonymousTypes@[ret]}
+        ret, {s with anonymousTypes = s.anonymousTypes@[ret]}
 
 let createValue (us:State) (asn1ValName:(StringLoc*StringLoc) option) (ts:GenericFold2.UserDefinedTypeScope) (vs:GenericFold2.UserDefinedVarScope) (v:Asn1GenericValue) =
     (*let ret = 
@@ -294,6 +316,7 @@ let createValidationAst (lang:Ast.ProgrammingLanguage) (app:Ast.AstRoot) (acn:Ac
             createType ustate s t (newCons,fromWithComps)  newTypeKind app.integerSizeInBytes)
 
         //7. refTypeFunc s mdName tasName tabularized 
+        (*
         (fun ustate  mdName tasName tabularized newBaseType -> 
             let retKind = 
                 match newBaseType with
@@ -309,33 +332,34 @@ let createValidationAst (lang:Ast.ProgrammingLanguage) (app:Ast.AstRoot) (acn:Ac
                 | Sequence     ti   -> InterimSequence     (Some ti, ti.children)
                 | Choice       ti   -> InterimChoice       (Some ti, ti.children)
             retKind, ustate)
+         *)
 
         //8 integerFunc s 
-        (fun ustate  ->  InterimInteger None,ustate)
+        (fun newBaseType ustate  ->  InterimInteger (getAsInteger newBaseType),ustate)
 
         //9 realFunc s 
-        (fun ustate  -> InterimReal None, ustate)
+        (fun newBaseType ustate  -> InterimReal (getAsReal newBaseType), ustate)
 
         //10 ia5StringFunc s 
-        (fun ustate  -> InterimIA5String None, ustate)
+        (fun newBaseType ustate  -> InterimIA5String (getAsIA5String newBaseType), ustate)
 
         //11 numericStringFunc s
-        (fun ustate  -> InterimNumericString None, ustate)
+        (fun newBaseType ustate  -> InterimNumericString (getAsIA5String newBaseType), ustate)
 
         //12 octetStringFunc
-        (fun ustate -> InterimOctetString None, ustate)
+        (fun newBaseType ustate -> InterimOctetString (getAsOctetString newBaseType), ustate)
 
         //13 nullTypeFunc
-        (fun ustate -> InterimNullType None, ustate)
+        (fun newBaseType ustate -> InterimNullType (getAsNullType newBaseType), ustate)
 
         //14 bitStringFunc
-        (fun ustate -> InterimBitString None, ustate)
+        (fun newBaseType ustate -> InterimBitString (getAsBitString newBaseType), ustate)
 
         //15 booleanFunc
-        (fun ustate -> InterimBoolean None, ustate)
+        (fun newBaseType ustate -> InterimBoolean (getAsBoolean newBaseType), ustate)
 
         //16 enumeratedFunc 
-        (fun ustate (enmItems : Ast.NamedItem list)-> 
+        (fun ustate newBaseType (enmItems : Ast.NamedItem list)-> 
             let newEnmItems, userDefinedValues = 
                 match enmItems |> Seq.exists (fun nm -> nm._value.IsSome) with
                 | false ->
@@ -343,19 +367,19 @@ let createValidationAst (lang:Ast.ProgrammingLanguage) (app:Ast.AstRoot) (acn:Ac
                 | true  ->
                     let withVals = RemoveNumericStringsAndFixEnums.allocatedValuesToAllEnumItems enmItems app 
                     withVals |> List.mapi(fun i x -> {EnumItem.name = x.Name.Value; c_name = x.c_name; ada_name = x.ada_name;  Value = BigInteger i; comments = x.Comments|> Seq.toList} ), true
-            InterimEnumerated (None, newEnmItems, userDefinedValues), ustate)
+            InterimEnumerated ((getAsEnumerated newBaseType), newEnmItems, userDefinedValues), ustate)
 
         //17 enmItemFunc
         (fun ustate ni newVal -> 0, ustate)
 
         //18 seqOfTypeFunc 
-        (fun ustate newInnerType -> InterimSequenceOf (None, newInnerType), ustate)
+        (fun ustate newInnerType newBaseType -> InterimSequenceOf ((getAsSequenceOf newBaseType), newInnerType), ustate)
 
         //19 seqTypeFunc 
-        (fun ustate newChildren ->  InterimSequence (None, newChildren) , ustate)
+        (fun ustate newChildren newBaseType ->  InterimSequence ((getAsSequence newBaseType), newChildren) , ustate)
 
         //20 chTypeFunc 
-        (fun ustate newChildren -> InterimChoice (None, newChildren), ustate)
+        (fun ustate newChildren newBaseType -> InterimChoice ((getAsChoice newBaseType), newChildren), ustate)
 
         //21 sequenceChildFunc 
         createChildInfo
@@ -561,6 +585,11 @@ let createValidationAst (lang:Ast.ProgrammingLanguage) (app:Ast.AstRoot) (acn:Ac
         //60 getTypeKind
         (fun newT -> Asn1typeToInterimType newT)
 
+        (fun us s -> 
+            let newTypeId = ReferenceToType s 
+            match tryGetType us newTypeId with
+            | Some t    -> Some(t,us)
+            | None      -> None  )
 
 
         app {State.anonymousTypes =[]; anonymousValues = []}

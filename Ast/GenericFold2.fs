@@ -179,7 +179,7 @@ let foldAstRoot
     tasFunc 
     vasFunc 
     typeFunc
-    refTypeFunc
+//    refTypeFunc
     integerFunc 
     realFunc
     ia5StringFunc
@@ -233,8 +233,10 @@ let foldAstRoot
     getChoiceTypeChild
     getSequenceTypeChild
     getTypeKind
+    getTypeFromStateFunc
     (r:AstRoot) 
-    (us:'UserState) =
+    (us:'UserState) 
+    =
     
     let rec loopAstRoot (r:AstRoot) (us:'UserState) =
         let files, nus = r.Files |> foldMap (loopFile r) us
@@ -265,16 +267,18 @@ let foldAstRoot
             vasFunc nus2 r f m vas newAsn1Type asn1Value
         | _                     -> raise (SemanticError (vas.Name.Location, "Unnamed types are not currently supported."))
     and loopType (us:'UserState) (s:UserDefinedTypeScope, t:Asn1Type) (witchCompsCons:Asn1Constraint list) =
-        let conScope = visitConstraint []
-        let withCompCons = (t.Constraints@witchCompsCons) |> List.choose(fun c -> match c with WithComponentConstraint _ -> Some c| WithComponentsConstraint _ -> Some c | _ -> None)
-
-        match t.Kind with
-        | ReferenceType (mdName,tasName, tabularized) when not (withCompCons.IsEmpty) -> 
-            let oldBaseType = Ast.GetBaseType t r
-            let oldBaseType = {oldBaseType with Constraints = oldBaseType.Constraints@t.Constraints@witchCompsCons}
-            loopType us (s, oldBaseType) []
-        | _     ->
-            let newTypeKind, nus = loopTypeKind us s t.Kind  withCompCons
+        match getTypeFromStateFunc us s with
+        | None  ->
+            let conScope = visitConstraint []
+            let withCompCons = (t.Constraints@witchCompsCons) |> List.choose(fun c -> match c with WithComponentConstraint _ -> Some c| WithComponentsConstraint _ -> Some c | _ -> None)
+            (*
+            match t.Kind with
+            | ReferenceType (mdName,tasName, tabularized) when not (withCompCons.IsEmpty) -> 
+                let oldBaseType = Ast.GetBaseType t r
+                let oldBaseType = {oldBaseType with Constraints = oldBaseType.Constraints@t.Constraints@witchCompsCons}
+                loopType us (s, oldBaseType) []
+            | _     ->*)
+            let newTypeKind, nus = loopTypeKind us s t.Kind  withCompCons None
             let newCons, (retScope, nus1) = t.Constraints |> foldMap  (fun (ss, uds) c -> 
                                                                                     let lc, uds2 = loopConstraint uds (s, newTypeKind,t) CheckContent (ss,c)
                                                                                     lc, (visitSilbingConstraint ss,uds2)) (conScope, nus)
@@ -282,25 +286,26 @@ let foldAstRoot
                                                                             let lc, uds2 = loopConstraint uds (s, newTypeKind,t) CheckContent (ss,c)
                                                                             lc, (visitSilbingConstraint ss, uds2)) (retScope, nus1)
             typeFunc nus2 s t newTypeKind (newCons,fromWithComps) 
+        | Some res ->
+            res
 
-    and loopTypeKind (us:'UserState) (s:UserDefinedTypeScope) (asn1TypeKind:Asn1TypeKind)  (witchCompsCons:Asn1Constraint list) =
+    and loopTypeKind (us:'UserState) (s:UserDefinedTypeScope) (asn1TypeKind:Asn1TypeKind)  (witchCompsCons:Asn1Constraint list) (newBaseType) =
         match asn1TypeKind with
-        | Integer       ->  integerFunc us
-        | Real          ->  realFunc us
-        | IA5String     ->  ia5StringFunc us
-        | NumericString    -> numericStringFunc us
-        | OctetString    -> octetStringFunc us
-        | NullType    -> nullTypeFunc us
-        | BitString    -> bitStringFunc us 
-        | Boolean           ->booleanFunc us
+        | Integer       -> integerFunc newBaseType us
+        | Real          -> realFunc    newBaseType us
+        | IA5String     -> ia5StringFunc newBaseType us
+        | NumericString -> numericStringFunc newBaseType us
+        | OctetString   -> octetStringFunc newBaseType us
+        | NullType      -> nullTypeFunc newBaseType us
+        | BitString     -> bitStringFunc newBaseType us 
+        | Boolean       -> booleanFunc newBaseType us
         | Enumerated (enmItems) ->  
-            enumeratedFunc us enmItems 
+            enumeratedFunc us newBaseType enmItems 
         | SequenceOf (innerType)  ->
             let childScope = visitSeqOfChild s
             let withCompCons = witchCompsCons |> List.choose(fun c -> match c with WithComponentConstraint wc -> Some wc | _ -> None)
-            let newInnerType, nus = 
-                loopType us (childScope, innerType) withCompCons
-            seqOfTypeFunc nus newInnerType 
+            let newInnerType, nus = loopType us (childScope, innerType) withCompCons
+            seqOfTypeFunc nus newInnerType newBaseType
         | Sequence (children)     ->
             let withCompCons = witchCompsCons |> List.choose(fun c -> match c with WithComponentsConstraint wc -> Some wc | _ -> None) |> List.collect id
             let newChildren, fus = 
@@ -308,7 +313,7 @@ let foldAstRoot
                     let childScope = visitSeqOrChoiceChild s chInfo
                     let chidlWithComps = withCompCons |> List.filter(fun x -> x.Name.Value = chInfo.Name.Value)
                     loopSequenceChild cs childScope chInfo chidlWithComps) us
-            seqTypeFunc fus newChildren 
+            seqTypeFunc fus newChildren newBaseType
         | Choice (children)       ->
             let withCompCons = witchCompsCons |> List.choose(fun c -> match c with WithComponentsConstraint wc -> Some wc | _ -> None) |> List.collect id
             let newChildren, fus = 
@@ -316,8 +321,15 @@ let foldAstRoot
                     let childScope = visitSeqOrChoiceChild s chInfo
                     let chidlWithComps = withCompCons |> List.filter(fun x -> x.Name.Value = chInfo.Name.Value)
                     loopChoiceChild cs childScope chInfo chidlWithComps) us
-            chTypeFunc fus newChildren 
+            chTypeFunc fus newChildren newBaseType
         | ReferenceType (mdName,tasName, tabularized) -> 
+            let oldBaseType = GetBaseTypeByName mdName tasName r
+            let refTypeScope = [MD mdName.Value; TA tasName.Value]
+            let newBaseType, nus = loopType us (refTypeScope, oldBaseType) []
+            let extraWithCompCons = (oldBaseType.Constraints) |> List.choose(fun c -> match c with WithComponentConstraint _ -> Some c| WithComponentsConstraint _ -> Some c | _ -> None)
+            loopTypeKind nus s oldBaseType.Kind  (extraWithCompCons@witchCompsCons) (Some newBaseType)
+
+        (*
             match witchCompsCons with
             | []    ->
                 let oldBaseType = GetBaseTypeByName mdName tasName r
@@ -329,6 +341,7 @@ let foldAstRoot
                 let extraWithCompCons = (oldBaseType.Constraints) |> List.choose(fun c -> match c with WithComponentConstraint _ -> Some c| WithComponentsConstraint _ -> Some c | _ -> None)
                 loopTypeKind us s oldBaseType.Kind  (extraWithCompCons@witchCompsCons)
                 //loopType us (s, oldBaseType)
+        *)
     and loopNamedItem (us:'UserState) (s:UserDefinedTypeScope) (ni:NamedItem) =
             match ni._value with
             | Some v    ->
