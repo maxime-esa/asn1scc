@@ -378,20 +378,20 @@ ReferenceType2_decode(p, sModName, sName) ::= "<ReferenceType1_decode(p=p, sName
 
 /* CHOICE START*/
 
-choice_child_encode(p, sAcc, sChildID, nChildIndex, nLastItemIndex, sChildContent) ::= <<
+choice_child_encode(p, sAcc, sChildID, nChildIndex, nLastItemIndex, sChildContent, sChildName, sChildTypeDef, sChoiceTypeName) ::= <<
 case <sChildID>:
 	BitStream_EncodeConstraintWholeNumber(pBitStrm, <nChildIndex>, 0, <nLastItemIndex>);
 	<sChildContent>
 	break;
 >>
-choice_child_decode(p, sAcc, sChildID, nChildIndex, nLastItemIndex, sChildContent) ::= <<
+choice_child_decode(p, sAcc, sChildID, nChildIndex, nLastItemIndex, sChildContent, sChildName, sChildTypeDef, sChoiceTypeName) ::= <<
 case <nChildIndex>:
 	<p><sAcc>kind = <sChildID>;
 	<sChildContent>
 	break;
 >>
 
-choice_encode(p, sAcc, arrsChildren, nLastItemIndex, sChoiceIndexName, sErrCode) ::= <<
+choice_encode(p, sAcc, arrsChildren, nLastItemIndex, sChoiceIndexName, sErrCode, sTasName, nIndexSizeInBits) ::= <<
 switch(<p><sAcc>kind) 
 {
 <arrsChildren: {ch|<ch>}; separator="\n">
@@ -401,7 +401,7 @@ default:
 }
 >>
 
-choice_decode(p, sAcc, arrsChildren, nLastItemIndex, sChoiceIndexName, sErrCode) ::= <<
+choice_decode(p, sAcc, arrsChildren, nLastItemIndex, sChoiceIndexName, sErrCode, sTasName, nIndexSizeInBits) ::= <<
 ret = BitStream_DecodeConstraintWholeNumber(pBitStrm, &<sChoiceIndexName>, 0, <nLastItemIndex>);
 *pErrCode = ret ? 0 : <sErrCode>;
 if (ret) {

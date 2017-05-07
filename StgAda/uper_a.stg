@@ -353,40 +353,52 @@ end if;
 
 
 
+/* CHOICE START*/
 
-ChoiceChild_encode(sTasName, sName, sChildBody, nIndex, nIndexSizeInBits, sNamePresent) ::= <<
-when <sNamePresent> =>
-    <rtlModuleName()>.UPER_Enc_ConstraintWholeNumber(S, K, <nIndex>, 0, <nIndexSizeInBits>);
-    <sChildBody>
+choice_child_encode(p, sAcc, sChildID, nChildIndex, nLastItemIndex, sChildContent, sChildName, sChildTypeDef, sChoiceTypeName) ::= <<
+when <sChildID> =>
+    <rtlModuleName()>.UPER_Enc_ConstraintWholeNumber(S, K, <nChildIndex>, 0, <nLastItemIndex>);
+    <sChildContent>
 >>
 
-ChoiceChild_decode(sTasName, sName, sChildBody, nIndex, nIndexSizeInBits, sNamePresent) ::= <<
-when <nIndex> =>
-    <sChildBody>
+choice_child_decode(p, sAcc, sChildID, nChildIndex, nLastItemIndex, sChildContent, sChildName, sChildTypeDef, sChoiceTypeName) ::= <<
+when <nChildIndex> =>
+  declare
+     <sChildName>_tmp:<sChildTypeDef>;
+  begin
+    <sChildContent>
     if result.Success THEN
-        val := <sTasName>_<sName>_set(<sName>_tmp);
+        <p> := <sChoiceTypeName>'(kind => <sChildID>, <sChildName> => <sChildName>_tmp);
+        pragma Annotate (GNATprove, False_Positive,"discriminant check might fail", "reviewed by GM");
     end if;
+  end;
 >>
 
-ChoiceChild_tmpVar(sName, sTypeDecl) ::= "<sName>_tmp:<sTypeDecl>;"
 
-Choice_encode(sTasName, arrsChildren, nIndexMax, nIndexSizeInBits) ::= <<
-case <sTasName>_kind(val) IS
+choice_encode(p, sAcc, arrsChildren, nLastItemIndex, sChoiceIndexName, sErrCode, sChoiceTypeDef, nIndexSizeInBits) ::= <<
+case <p><sAcc>kind IS
     <arrsChildren; separator="\n">
 end case;
 >>
 
-Declare_ChoiceIndex()::="index:<rtlModuleName()>.Asn1Int;"
-Choice_decode(sTasName, arrsChildren, nIndexMax, nIndexSizeInBits) ::= <<
-val := <sTasName>_Init;
-result.ErrorCode := <rtlModuleName()>.ERR_INSUFFICIENT_DATA;
-<rtlModuleName()>.UPER_Dec_ConstraintWholeNumber(S, K, index, 0, <nIndexMax>, <nIndexSizeInBits>, result.Success);
-if result.Success THEN
-    case <sTasName>_index_range(index) IS
+choice_decode(p, sAcc, arrsChildren, nLastItemIndex, sChoiceIndexName, sErrCode, sChoiceTypeDef, nIndexSizeInBits) ::= <<
+result.ErrorCode := <sErrCode>;
+<rtlModuleName()>.UPER_Dec_ConstraintWholeNumber(S, K, <sChoiceIndexName>, 0, <nLastItemIndex>, <nIndexSizeInBits>, result.Success);
+if result.Success AND <sChoiceIndexName> \>= 0 AND  <sChoiceIndexName> \<= <nLastItemIndex> THEN
+    case <sChoiceTypeDef>_index_range(<sChoiceIndexName>) IS
         <arrsChildren; separator="\n">
     end case;
 end if;
 >>
+
+/* CHOICE END*/
+
+
+
+ChoiceChild_tmpVar(sName, sTypeDecl) ::= "<sName>_tmp:<sTypeDecl>;"
+
+
+Declare_ChoiceIndex()::="index:<rtlModuleName()>.Asn1Int;"
 
 
 ReferenceType1_encode(p, sName, bAcnEncodeFuncRequiresResult) ::= "<sName>_uPER_Encode_aux(<p>, S, K<if(bAcnEncodeFuncRequiresResult)>, result<endif>);"

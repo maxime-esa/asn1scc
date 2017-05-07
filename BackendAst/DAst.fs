@@ -153,14 +153,16 @@ type IsValidFunction = {
     localVariables      : LocalVariable list
 }
 
-//type UPERFuncBodyResult = {}
-type UPerFunction = {
+type UPERFuncBodyResult = {
+    funcBody            : string
     errCodes            : ErroCode list
+    localVariables      : LocalVariable list
+}
+type UPerFunction = {
     funcName            : string option               // the name of the function
     func                : string option               // the body of the function
     funcDef             : string option               // function definition in header file
-    funcBody            : FuncParamType -> (string option)            // returns a list of validations statements
-    localVariables      : LocalVariable list
+    funcBody            : FuncParamType -> (UPERFuncBodyResult option)            // returns a list of validations statements
 }
 
 type AcnFunction = {
