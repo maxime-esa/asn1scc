@@ -24,11 +24,13 @@ let getInteger (t:CAst.Integer) (bo:Integer option) =
             match t.cons with
             | []            -> typedefBase
             | _             -> None
+    
+            
 
-    {BaseTypesEquivalence.typeDefinition = typedefBase; uper = uper}
+    {BaseTypesEquivalence.typeDefinition = typedefBase; uper = uper; acn = None}
 
 let getReal (t:CAst.Real) (bo:Real option) =
-    {BaseTypesEquivalence.typeDefinition = bo; uper = bo}
+    {BaseTypesEquivalence.typeDefinition = bo; uper = bo; acn = None}
 
 let getIA5String (t:CAst.StringType) (bo:StringType option) =
     let typedefBase  =
@@ -43,7 +45,7 @@ let getIA5String (t:CAst.StringType) (bo:StringType option) =
         | Some bo   when t.maxSize = bo.maxSize  && t.minSize = bo.minSize  && t.charSet = bo.charSet
             -> Some bo
         | Some _                                        -> None
-    {BaseTypesEquivalence.typeDefinition = typedefBase; uper = uperBase}
+    {BaseTypesEquivalence.typeDefinition = typedefBase; uper = uperBase; acn = None}
 
 
 let getOctetString (t:CAst.OctetString) (bo:OctetString option) =
@@ -53,7 +55,7 @@ let getOctetString (t:CAst.OctetString) (bo:OctetString option) =
         | Some bo   when t.maxSize = bo.maxSize  && t.minSize = bo.minSize    -> Some bo
         | Some _                                        -> None
     let uperBase  = typedefBase
-    {BaseTypesEquivalence.typeDefinition = typedefBase; uper = uperBase}
+    {BaseTypesEquivalence.typeDefinition = typedefBase; uper = uperBase; acn = None}
 
 
 
@@ -64,17 +66,17 @@ let getBitString (t:CAst.BitString) (bo:BitString option) =
         | Some bo   when t.maxSize = bo.maxSize  && t.minSize = bo.minSize    -> Some bo
         | Some _                                        -> None
     let uperBase  = typedefBase
-    {BaseTypesEquivalence.typeDefinition = typedefBase; uper = uperBase}
+    {BaseTypesEquivalence.typeDefinition = typedefBase; uper = uperBase; acn = None}
 
 
 let getBoolean  (t: CAst.Boolean    ) (bo:Boolean    option) = 
-    {BaseTypesEquivalence.typeDefinition = bo; uper = bo}
+    {BaseTypesEquivalence.typeDefinition = bo; uper = bo; acn = None}
 
 let getNullType      (t:CAst.NullType   ) (bo:NullType   option) = 
-    {BaseTypesEquivalence.typeDefinition = bo; uper = bo}
+    {BaseTypesEquivalence.typeDefinition = bo; uper = bo; acn = None}
 
 let getEnumerated    (t:CAst.Enumerated ) (bo:Enumerated option) = 
-    {BaseTypesEquivalence.typeDefinition = bo; uper = bo}
+    {BaseTypesEquivalence.typeDefinition = bo; uper = bo; acn = None}
 
 let getSequenceOf    (t:CAst.SequenceOf ) (bo:SequenceOf option) = 
     let typedefBase  =
@@ -83,11 +85,11 @@ let getSequenceOf    (t:CAst.SequenceOf ) (bo:SequenceOf option) =
         | Some bo   when t.maxSize = bo.maxSize  && t.minSize = bo.minSize    -> Some bo
         | Some _                                        -> None
     let uperBase  = typedefBase
-    {BaseTypesEquivalence.typeDefinition = typedefBase; uper = uperBase}
+    {BaseTypesEquivalence.typeDefinition = typedefBase; uper = uperBase; acn = None}
 
 let getSequence      (t:CAst.Sequence   ) (bo:Sequence   option) = 
-    {BaseTypesEquivalence.typeDefinition = bo; uper = bo}
+    {BaseTypesEquivalence.typeDefinition = bo; uper = bo; acn = None}
 
 let getChoice        (t:CAst.Choice     ) (bo:Choice     option) = 
-    {BaseTypesEquivalence.typeDefinition = bo; uper = bo}
+    {BaseTypesEquivalence.typeDefinition = bo; uper = bo; acn = None}
 

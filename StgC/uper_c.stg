@@ -475,25 +475,6 @@ if (<p><sAcc>exist.<sChName>) {
 >>
 
 
-uper_Sequence_encode(sChildren, bHasOptionalChildren, sBitMaskName, nOptionalChildrenLength) ::= <<
-<sChildren>
->>
-
-
-uper_Sequence_decode(sChildren, bHasOptionalChildren, sBitMaskName, nOptionalChildrenLength) ::= <<
-<if(bHasOptionalChildren)>
-/* Decode Bit Mask for optional and default fields*/
-ret = BitStream_ReadBits(pBitStrm, <sBitMaskName>, <nOptionalChildrenLength>);
-*pErrCode = ret ? 0 : ERR_INSUFFICIENT_DATA;
-if (ret) {
-    <sChildren>
-}
-
-<else>
-<sChildren>
-
-<endif>
->>
 
 
 /* SEQUENCE END */

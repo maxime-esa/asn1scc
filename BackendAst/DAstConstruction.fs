@@ -37,6 +37,12 @@ let createInteger (r:CAst.AstRoot) (l:ProgrammingLanguage) (o:CAst.Integer)  (ne
     let baseTypeDecUperFunc     = baseTypeEq.uper |> Option.map(fun x -> x.uperDecFunction)
     let uperEncFunction, s2     = DAstUPer.createIntegerFunction r l Ast.Codec.Encode o typeDefinition baseTypeEncUperFunc isValidFunction s1
     let uperDecFunction, s3     = DAstUPer.createIntegerFunction r l Ast.Codec.Decode o typeDefinition baseTypeDecUperFunc isValidFunction s2
+    let baseTypeEncAcnFunc      = baseTypeEq.acn |> Option.map(fun x -> x.acnEncFunction)
+    let baseTypeDecAcnFunc      = baseTypeEq.acn |> Option.map(fun x -> x.acnDecFunction)
+    let acnEncFunction, s4      = DAstACN.createIntegerFunction r l Ast.Codec.Encode o typeDefinition baseTypeEncAcnFunc isValidFunction uperEncFunction s3
+    let acnDecFunction, s5      = DAstACN.createIntegerFunction r l Ast.Codec.Decode o typeDefinition baseTypeDecAcnFunc isValidFunction uperDecFunction s4
+
+
     let ret : Integer = 
             {
                 Integer.id          = o.id
@@ -59,15 +65,12 @@ let createInteger (r:CAst.AstRoot) (l:ProgrammingLanguage) (o:CAst.Integer)  (ne
                 isValidFunction     = isValidFunction
                 uperEncFunction     = uperEncFunction
                 uperDecFunction     = uperDecFunction
-                acnFunction         = DAstACN.createIntegerFunction r l o typeDefinition
+                acnEncFunction      = acnEncFunction
+                acnDecFunction      = acnDecFunction
                 baseTypeEquivalence = baseTypeEq
-                encodeFuncName      = None
-                encodeFuncBody      = fun x -> x
-                decodeFuncName      = None
-                decodeFuncBody      = fun x -> x
 
             }
-    ret, s3
+    ret, s5
 
 let createReal (r:CAst.AstRoot) (l:ProgrammingLanguage) (o:CAst.Real)  (newBase:Real option) (us:State) : (Real*State) =
     let baseTypeEq          = DAstBaseTypesEquivalence.getReal o newBase
@@ -307,6 +310,10 @@ let createBoolean (r:CAst.AstRoot) (l:ProgrammingLanguage) (o:CAst.Boolean)  (ne
     let baseTypeDecUperFunc     = baseTypeEq.uper |> Option.map(fun x -> x.uperDecFunction)
     let uperEncFunction, s2     = DAstUPer.createBooleanFunction r l Ast.Codec.Encode o typeDefinition baseTypeEncUperFunc isValidFunction s1
     let uperDecFunction, s3     = DAstUPer.createBooleanFunction r l Ast.Codec.Decode o typeDefinition baseTypeDecUperFunc isValidFunction s2
+    let baseTypeEncAcnFunc      = baseTypeEq.acn |> Option.map(fun x -> x.acnEncFunction)
+    let baseTypeDecAcnFunc      = baseTypeEq.acn |> Option.map(fun x -> x.acnDecFunction)
+    let acnEncFunction, s4      = DAstACN.createBooleanFunction r l Ast.Codec.Encode o typeDefinition baseTypeEncAcnFunc isValidFunction s3
+    let acnDecFunction, s5      = DAstACN.createBooleanFunction r l Ast.Codec.Decode o typeDefinition baseTypeDecAcnFunc isValidFunction s4
     let ret : Boolean= 
             {
                 Boolean.id          = o.id
@@ -329,13 +336,10 @@ let createBoolean (r:CAst.AstRoot) (l:ProgrammingLanguage) (o:CAst.Boolean)  (ne
                 isValidFunction     = isValidFunction
                 uperEncFunction     = uperEncFunction
                 uperDecFunction     = uperDecFunction
-                encodeFuncName      = None
-                encodeFuncBody      = fun x -> x
-                decodeFuncName      = None
-                decodeFuncBody      = fun x -> x
-
+                acnEncFunction      = acnEncFunction
+                acnDecFunction      = acnDecFunction
             }
-    ret, s3
+    ret, s5
 
 let createEnumerated (r:CAst.AstRoot) (l:ProgrammingLanguage) (o:CAst.Enumerated)  (newBase:Enumerated option) (us:State) : (Enumerated*State) =
     let baseTypeEq          = DAstBaseTypesEquivalence.getEnumerated o newBase
@@ -462,6 +466,10 @@ let createSequence (r:CAst.AstRoot) (l:ProgrammingLanguage) (children:SeqChildIn
     let baseTypeDecUperFunc     = baseTypeEq.uper |> Option.map(fun x -> x.uperDecFunction)
     let uperEncFunction, s2     = DAstUPer.createSequenceFunction r l Ast.Codec.Encode o typeDefinition baseTypeEncUperFunc isValidFunction children s1
     let uperDecFunction, s3     = DAstUPer.createSequenceFunction r l Ast.Codec.Decode o typeDefinition baseTypeDecUperFunc isValidFunction children s2
+    let baseTypeEncAcnFunc      = baseTypeEq.acn |> Option.map(fun x -> x.acnEncFunction)
+    let baseTypeDecAcnFunc      = baseTypeEq.acn |> Option.map(fun x -> x.acnDecFunction)
+    let acnEncFunction, s4      = DAstACN.createSequenceFunction r l Ast.Codec.Encode o typeDefinition baseTypeEncAcnFunc isValidFunction children  s3
+    let acnDecFunction, s5      = DAstACN.createSequenceFunction r l Ast.Codec.Decode o typeDefinition baseTypeDecAcnFunc isValidFunction children  s4
 
     let ret : Sequence= 
             {
@@ -485,14 +493,11 @@ let createSequence (r:CAst.AstRoot) (l:ProgrammingLanguage) (children:SeqChildIn
                 isValidFunction     = isValidFunction
                 uperEncFunction     = uperEncFunction
                 uperDecFunction     = uperDecFunction
-
-                encodeFuncName      = None
-                encodeFuncBody      = fun x -> x
-                decodeFuncName      = None
-                decodeFuncBody      = fun x -> x
+                acnEncFunction      = acnEncFunction
+                acnDecFunction      = acnDecFunction
 
             }
-    ret, s3
+    ret, s5
 
 
 let createChoiceChild (r:CAst.AstRoot) (l:ProgrammingLanguage)  (o:CAst.ChChildInfo)  (newChild:Asn1Type) (us:State) : (ChChildInfo*State) =

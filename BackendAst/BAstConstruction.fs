@@ -59,7 +59,7 @@ let smap = CloneTree.foldMap
 
 
 
-let createAstRoot (s:State) (sr:Ast.AstRoot) (dfiles: Asn1File list)  (acn:AcnTypes.AcnAst) =
+let createAstRoot (s:State) (sr:Ast.AstRoot) (dfiles: Asn1File list)  (*(acn:AcnTypes.AcnAst)*) =
     {
         AstRoot.Files = dfiles 
         Encodings = sr.Encodings
@@ -288,7 +288,7 @@ let Asn1typeToInterimType (t:Asn1Type) =
     | Choice       t     ->  InterimChoice      (t.baseType, t.children)
 
 
-let createValidationAst (lang:Ast.ProgrammingLanguage) (app:Ast.AstRoot) (acn:AcnTypes.AcnAst) =
+let createValidationAst (lang:Ast.ProgrammingLanguage) (app:Ast.AstRoot) (*(acn:AcnTypes.AcnAst)*) =
     let l_aux (asn1ValName: (StringLoc*StringLoc) option) = 
         match asn1ValName with
         | None          -> Literal
@@ -297,7 +297,7 @@ let createValidationAst (lang:Ast.ProgrammingLanguage) (app:Ast.AstRoot) (acn:Ac
         v, {us with anonymousValues=us.anonymousValues@[v]}
     GenericFold2.foldAstRoot
         //1. rootFunc r files
-        (fun s sr dfiles  -> createAstRoot s sr dfiles acn )
+        (fun s sr dfiles  -> createAstRoot s sr dfiles (*acn*) )
 
         //2. fileFunc r f modules
         createAsn1File

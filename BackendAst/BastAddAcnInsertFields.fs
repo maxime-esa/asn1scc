@@ -78,7 +78,7 @@ let mapBTypeToBType (r:BAst.AstRoot) (t:BAst.Asn1Type) (acn:AcnTypes.AcnAst) (ac
 
                     } |>Seq.toList
 
-            {Sequence.id = o.id; tasInfo = o.tasInfo; uperMaxSizeInBits= o.uperMaxSizeInBits; uperMinSizeInBits=o.uperMinSizeInBits; children = children; cons=o.cons; withcons = o.withcons; baseType = newBase; Location = o.Location}, us)
+            {Sequence.id = o.id; tasInfo = o.tasInfo; uperMaxSizeInBits= o.uperMaxSizeInBits; uperMinSizeInBits=o.uperMinSizeInBits; children = newChildren; cons=o.cons; withcons = o.withcons; baseType = newBase; Location = o.Location}, us)
         Sequence
 
         //Choice

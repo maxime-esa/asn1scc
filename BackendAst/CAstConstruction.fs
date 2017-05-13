@@ -18,51 +18,60 @@ let mapBTypeToCType (r:BAst.AstRoot) (t:BAst.Asn1Type) (acn:AcnTypes.AcnAst) (ac
 
         (fun o newBase us -> 
             let encClass, alignment, acnMinSizeInBits, acnMaxSizeInBits = GetIntEncodingClass acn acnTypes o.Location o
-            {Integer.id = o.id; tasInfo = o.tasInfo; uperMaxSizeInBits= o.uperMaxSizeInBits; uperMinSizeInBits=o.uperMinSizeInBits; cons=o.cons; withcons = o.withcons; uperRange=o.uperRange; baseType = newBase; Location = o.Location; acnMaxSizeInBits = acnMaxSizeInBits; acnMinSizeInBits = acnMinSizeInBits; acnEncodingClass = encClass; alignment = alignment}, us)
+            let ret= {Integer.id = o.id; tasInfo = o.tasInfo; uperMaxSizeInBits= o.uperMaxSizeInBits; uperMinSizeInBits=o.uperMinSizeInBits; cons=o.cons; withcons = o.withcons; uperRange=o.uperRange; baseType = newBase; Location = o.Location; acnMaxSizeInBits = acnMaxSizeInBits; acnMinSizeInBits = acnMinSizeInBits; acnEncodingClass = encClass; alignment = alignment}
+            ret, {us with currentTypes = (Integer ret)::us.currentTypes})
         Integer
 
         (fun o newBase us -> 
             let encClass, alignment, acnMinSizeInBits, acnMaxSizeInBits = GetRealEncodingClass acn acnTypes o.Location o
-            {Real.id = o.id; tasInfo = o.tasInfo; uperMaxSizeInBits= o.uperMaxSizeInBits; uperMinSizeInBits=o.uperMinSizeInBits; cons=o.cons; withcons = o.withcons; uperRange=o.uperRange; baseType = newBase; Location = o.Location; acnMaxSizeInBits = acnMaxSizeInBits; acnMinSizeInBits = acnMinSizeInBits; acnEncodingClass = encClass; alignment= alignment}, us)
+            let ret = {Real.id = o.id; tasInfo = o.tasInfo; uperMaxSizeInBits= o.uperMaxSizeInBits; uperMinSizeInBits=o.uperMinSizeInBits; cons=o.cons; withcons = o.withcons; uperRange=o.uperRange; baseType = newBase; Location = o.Location; acnMaxSizeInBits = acnMaxSizeInBits; acnMinSizeInBits = acnMinSizeInBits; acnEncodingClass = encClass; alignment= alignment}
+            ret, {us with currentTypes = (Real ret)::us.currentTypes})
         Real
 
         (fun o newBase us -> 
             let acnParams = getAcnParams o.id
             let encClass, alignment, acnMinSizeInBits, acnMaxSizeInBits, nus = GetStringEncodingClass acn acnTypes o.Location o acnParams us
-            {StringType.id = o.id; tasInfo = o.tasInfo; uperMaxSizeInBits= o.uperMaxSizeInBits; uperMinSizeInBits=o.uperMinSizeInBits; cons=o.cons; withcons = o.withcons; minSize = o.minSize; maxSize = o.maxSize; charSet = o.charSet; baseType = newBase; Location = o.Location; acnMaxSizeInBits = acnMaxSizeInBits; acnMinSizeInBits = acnMinSizeInBits; acnEncodingClass = encClass; alignment=alignment}, nus)
+            let ret = {StringType.id = o.id; tasInfo = o.tasInfo; uperMaxSizeInBits= o.uperMaxSizeInBits; uperMinSizeInBits=o.uperMinSizeInBits; cons=o.cons; withcons = o.withcons; minSize = o.minSize; maxSize = o.maxSize; charSet = o.charSet; baseType = newBase; Location = o.Location; acnMaxSizeInBits = acnMaxSizeInBits; acnMinSizeInBits = acnMinSizeInBits; acnEncodingClass = encClass; alignment=alignment} 
+            ret, {nus with currentTypes = (IA5String ret)::nus.currentTypes} )
         IA5String
 
         (fun o newBase us -> 
             let acnParams = getAcnParams o.id
             let encClass, alignment, acnMinSizeInBits, acnMaxSizeInBits, nus = GetOctetStringEncodingClass acn acnTypes o.Location o acnParams us
-            {OctetString.id = o.id; tasInfo = o.tasInfo; uperMaxSizeInBits= o.uperMaxSizeInBits; uperMinSizeInBits=o.uperMinSizeInBits; cons=o.cons; withcons = o.withcons; minSize = o.minSize; maxSize = o.maxSize; baseType = newBase; Location = o.Location; acnMaxSizeInBits = 0; acnMinSizeInBits = 0; acnEncodingClass = encClass; alignment=alignment}, nus)
+            let ret = {OctetString.id = o.id; tasInfo = o.tasInfo; uperMaxSizeInBits= o.uperMaxSizeInBits; uperMinSizeInBits=o.uperMinSizeInBits; cons=o.cons; withcons = o.withcons; minSize = o.minSize; maxSize = o.maxSize; baseType = newBase; Location = o.Location; acnMaxSizeInBits = 0; acnMinSizeInBits = 0; acnEncodingClass = encClass; alignment=alignment}
+            ret, {nus with currentTypes = (OctetString ret)::nus.currentTypes})
         OctetString
 
         (fun o newBase us -> 
             let encClass, alignment, acnMinSizeInBits, acnMaxSizeInBits = GetNullTypeEncodingClass acn acnTypes o.Location o
-            {NullType.id = o.id;  tasInfo = o.tasInfo; uperMaxSizeInBits= o.uperMaxSizeInBits; uperMinSizeInBits=o.uperMinSizeInBits; baseType = newBase; Location = o.Location; acnMaxSizeInBits = 0; acnMinSizeInBits = 0; acnEncodingClass = encClass; alignment = alignment}, us)
+            let ret = {NullType.id = o.id;  tasInfo = o.tasInfo; uperMaxSizeInBits= o.uperMaxSizeInBits; uperMinSizeInBits=o.uperMinSizeInBits; baseType = newBase; Location = o.Location; acnMaxSizeInBits = 0; acnMinSizeInBits = 0; acnEncodingClass = encClass; alignment = alignment}
+            ret, {us with currentTypes = (NullType ret)::us.currentTypes})
         NullType
 
         (fun o newBase us -> 
             let acnParams = getAcnParams o.id
             let encClass, alignment, acnMinSizeInBits, acnMaxSizeInBits, nus = GetBitStringEncodingClass acn acnTypes o.Location o acnParams us
-            {BitString.id = o.id; tasInfo = o.tasInfo; uperMaxSizeInBits= o.uperMaxSizeInBits; uperMinSizeInBits=o.uperMinSizeInBits; cons=o.cons; withcons = o.withcons; minSize = o.minSize; maxSize = o.maxSize; baseType = newBase; Location = o.Location; acnMaxSizeInBits = 0; acnMinSizeInBits = 0; acnEncodingClass = encClass; alignment = alignment}, nus)
+            let ret = {BitString.id = o.id; tasInfo = o.tasInfo; uperMaxSizeInBits= o.uperMaxSizeInBits; uperMinSizeInBits=o.uperMinSizeInBits; cons=o.cons; withcons = o.withcons; minSize = o.minSize; maxSize = o.maxSize; baseType = newBase; Location = o.Location; acnMaxSizeInBits = 0; acnMinSizeInBits = 0; acnEncodingClass = encClass; alignment = alignment}
+            ret, {nus with currentTypes = (BitString ret)::nus.currentTypes})
         BitString
 
         (fun o newBase us -> 
             let encClass, alignment, acnMinSizeInBits, acnMaxSizeInBits = GetBooleanTypeEncodingClass acn acnTypes o.Location o
-            {Boolean.id = o.id;  tasInfo = o.tasInfo; uperMaxSizeInBits= o.uperMaxSizeInBits; uperMinSizeInBits=o.uperMinSizeInBits; cons=o.cons; withcons = o.withcons; baseType = newBase; Location = o.Location; acnMaxSizeInBits = 0; acnMinSizeInBits = 0; acnEncodingClass = encClass; alignment = alignment}, us)
+            let ret = {Boolean.id = o.id;  tasInfo = o.tasInfo; uperMaxSizeInBits= o.uperMaxSizeInBits; uperMinSizeInBits=o.uperMinSizeInBits; cons=o.cons; withcons = o.withcons; baseType = newBase; Location = o.Location; acnMaxSizeInBits = 0; acnMinSizeInBits = 0; acnEncodingClass = encClass; alignment = alignment}
+            ret, {us with currentTypes = (Boolean ret)::us.currentTypes})
         Boolean
 
         (fun o newBase us -> 
             let encClass, alignment, acnMinSizeInBits, acnMaxSizeInBits = GetEnumeratedEncodingClass acn acnTypes o.Location o
-            {Enumerated.id = o.id;  tasInfo = o.tasInfo; uperMaxSizeInBits= o.uperMaxSizeInBits; uperMinSizeInBits=o.uperMinSizeInBits; userDefinedValues = o.userDefinedValues; items = o.items; cons=o.cons; withcons = o.withcons; baseType = newBase; Location = o.Location; acnMaxSizeInBits = 0; acnMinSizeInBits = 0; enumEncodingClass = encClass; alignment = alignment}, us)
+            let ret = {Enumerated.id = o.id;  tasInfo = o.tasInfo; uperMaxSizeInBits= o.uperMaxSizeInBits; uperMinSizeInBits=o.uperMinSizeInBits; userDefinedValues = o.userDefinedValues; items = o.items; cons=o.cons; withcons = o.withcons; baseType = newBase; Location = o.Location; acnMaxSizeInBits = 0; acnMinSizeInBits = 0; enumEncodingClass = encClass; alignment = alignment}
+            ret, {us with currentTypes = (Enumerated ret)::us.currentTypes})
         Enumerated
 
         (fun childType o newBase us -> 
             let acnParams = getAcnParams o.id
             let encClass, alignment, acnMinSizeInBits, acnMaxSizeInBits, nus = GetSequenceOfEncodingClass acn acnTypes o.Location  o childType.acnMinSizeInBits childType.acnMaxSizeInBits acnParams us
-            {SequenceOf.id = o.id; tasInfo = o.tasInfo; childType = childType; uperMaxSizeInBits= o.uperMaxSizeInBits; uperMinSizeInBits=o.uperMinSizeInBits; cons=o.cons; withcons = o.withcons; minSize = o.minSize; maxSize = o.maxSize; baseType = newBase; Location = o.Location; acnMaxSizeInBits = 0; acnMinSizeInBits = 0; acnEncodingClass = encClass; alignment = alignment}, nus)
+            let ret = {SequenceOf.id = o.id; tasInfo = o.tasInfo; childType = childType; uperMaxSizeInBits= o.uperMaxSizeInBits; uperMinSizeInBits=o.uperMinSizeInBits; cons=o.cons; withcons = o.withcons; minSize = o.minSize; maxSize = o.maxSize; baseType = newBase; Location = o.Location; acnMaxSizeInBits = 0; acnMinSizeInBits = 0; acnEncodingClass = encClass; alignment = alignment}
+            ret, {nus with currentTypes = (SequenceOf ret)::nus.currentTypes})
         SequenceOf
 
         //sequence
@@ -77,7 +86,8 @@ let mapBTypeToCType (r:BAst.AstRoot) (t:BAst.Asn1Type) (acn:AcnTypes.AcnAst) (ac
             let reqChildren = children |> List.filter(fun c -> match c.optionality with Some (Optional _) -> false | _ -> true)
             let acnMaxSizeInBits = alignmentSize + bitMaskSize + (children |> List.map(fun c -> c.chType.acnMaxSizeInBits) |> List.sum)
             let acnMinSizeInBits = alignmentSize + bitMaskSize + (reqChildren |> List.map(fun c -> c.chType.acnMinSizeInBits) |> List.sum)
-            {Sequence.id = o.id; tasInfo = o.tasInfo; uperMaxSizeInBits= o.uperMaxSizeInBits; uperMinSizeInBits=o.uperMinSizeInBits; children = children; cons=o.cons; withcons = o.withcons; baseType = newBase; Location = o.Location; acnMaxSizeInBits = acnMaxSizeInBits; acnMinSizeInBits = 0; alignment=alignment}, us)
+            let ret = {Sequence.id = o.id; tasInfo = o.tasInfo; uperMaxSizeInBits= o.uperMaxSizeInBits; uperMinSizeInBits=o.uperMinSizeInBits; children = children; cons=o.cons; withcons = o.withcons; baseType = newBase; Location = o.Location; acnMaxSizeInBits = acnMaxSizeInBits; acnMinSizeInBits = 0; alignment=alignment}
+            ret, {us with currentTypes = (Sequence ret)::us.currentTypes})
         Sequence
 
         //Choice
@@ -90,7 +100,8 @@ let mapBTypeToCType (r:BAst.AstRoot) (t:BAst.Asn1Type) (acn:AcnTypes.AcnAst) (ac
             let encClass, alignment, acnMinSizeInBits, acnMaxSizeInBits, nus = GetChoiceEncodingClass acn  acnTypes o.Location o children acnParams us
             let choiceIDForNone =  ToC (o.id.AcnAbsPath.Tail.StrJoin("_").Replace("#","elem")) + "_NONE"
 
-            {Choice.id = o.id; tasInfo = o.tasInfo; uperMaxSizeInBits= o.uperMaxSizeInBits; uperMinSizeInBits=o.uperMinSizeInBits; children = children; cons=o.cons; withcons = o.withcons; baseType = newBase; Location = o.Location; choiceIDForNone = choiceIDForNone; acnMaxSizeInBits = acnMaxSizeInBits; acnMinSizeInBits = acnMinSizeInBits; acnEncodingClass = encClass; alignment = alignment}, us)
+            let ret = {Choice.id = o.id; tasInfo = o.tasInfo; uperMaxSizeInBits= o.uperMaxSizeInBits; uperMinSizeInBits=o.uperMinSizeInBits; children = children; cons=o.cons; withcons = o.withcons; baseType = newBase; Location = o.Location; choiceIDForNone = choiceIDForNone; acnMaxSizeInBits = acnMaxSizeInBits; acnMinSizeInBits = acnMinSizeInBits; acnEncodingClass = encClass; alignment = alignment}
+            ret, {us with currentTypes = (Choice ret)::us.currentTypes})
         Choice
     
 

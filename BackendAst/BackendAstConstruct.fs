@@ -10,7 +10,7 @@ let DoWork (lang:Ast.ProgrammingLanguage) (app:Ast.AstRoot) (acn:AcnTypes.AcnAst
         | Ast.ProgrammingLanguage.Spark -> Ada
         | _                             -> raise(System.Exception "Unsupported programming language")
     
-    let bast = BAstConstruction.createValidationAst lang app acn
+    let bast = BAstConstruction.createValidationAst lang app 
 
     let bastWithAcnInsertedFields = BastAddAcnInsertFields.doWork bast acn
 

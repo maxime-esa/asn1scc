@@ -69,11 +69,10 @@ let printUnit (r:DAst.AstRoot) (l:ProgrammingLanguage) outDir (pu:ProgramUnit) =
                 | Some f    -> f.funcDef
             let uPerEncFunc = match t.uperEncFunction with None -> None | Some x -> x.funcDef
             let uPerDecFunc = match t.uperDecFunction with None -> None | Some x -> x.funcDef
-            let ancEncDec codec         = 
-                match t.acnFunction with
-                | None    -> None
-                | Some a  -> a.funcDef codec
-            let allProcs = equal_defs@([(*init_def;*) isValid;uPerEncFunc;uPerDecFunc;(ancEncDec Ast.Encode); (ancEncDec Ast.Decode)] |> List.choose id)
+            let acnEncFunc = match t.acnEncFunction with None -> None | Some x -> x.funcDef
+            let acnDecFunc = match t.acnDecFunction with None -> None | Some x -> x.funcDef
+
+            let allProcs = equal_defs@([(*init_def;*) isValid;uPerEncFunc;uPerDecFunc;acnEncFunc; acnDecFunc] |> List.choose id)
             match l with
             |C     -> header_c.Define_TAS type_defintion allProcs 
             |Ada   -> header_a.Define_TAS type_defintion allProcs 
@@ -112,9 +111,9 @@ let printUnit (r:DAst.AstRoot) (l:ProgrammingLanguage) outDir (pu:ProgramUnit) =
                 | Ast.Decode    -> match t.uperDecFunction with None -> None | Some x -> x.func
 
             let ancEncDec codec         = 
-                match t.acnFunction with
-                | None    -> None
-                | Some a  -> a.func codec
+                match codec with
+                | Ast.Encode    -> match t.acnEncFunction with None -> None | Some x -> x.func
+                | Ast.Decode    -> match t.acnDecFunction with None -> None | Some x -> x.func
             let allProcs = eqFuncs@([(*initialize;*) isValid;(uperEncDec Ast.Encode); (uperEncDec Ast.Decode);(ancEncDec Ast.Encode); (ancEncDec Ast.Decode)] |> List.choose id)
             match l with
             | C     ->  body_c.printTass allProcs 

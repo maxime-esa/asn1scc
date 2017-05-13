@@ -17,6 +17,7 @@ type LocalVariable =
     | Asn1SIntLocalVariable of string*int option     //variable name, initialValue
     | Asn1UIntLocalVariable of string*int option     //variable name, initialValue
     | FlagLocalVariable     of string*int option     //variable name, initialValue
+    | AcnInsertedChild      of string*string         //variable name, type 
 with
     member this.VarName =
         match this with
@@ -24,7 +25,8 @@ with
         | IntegerLocalVariable(name,_)    -> name
         | Asn1SIntLocalVariable(name,_)   -> name
         | Asn1UIntLocalVariable(name,_)   -> name
-        | FlagLocalVariable(name,_)   -> name
+        | FlagLocalVariable(name,_)       -> name
+        | AcnInsertedChild(name,_)        -> name
     member this.GetDeclaration (l:ProgrammingLanguage) =
         match l, this with
         | C,    SequenceOfIndex (i,None)                  -> sprintf "int i%d;" i
@@ -47,6 +49,8 @@ with
         | C,    FlagLocalVariable (name,Some iv)          -> sprintf "flag %s=%d;" name iv
         | Ada,  FlagLocalVariable (name,None)             -> sprintf "%s:adaasn1rtl.BIT;" name
         | Ada,  FlagLocalVariable (name,Some iv)          -> sprintf "%s:adaasn1rtl.BIT:=%d;" name iv
+        | C,    AcnInsertedChild(name, vartype)           -> sprintf "%s %s;" vartype name
+        | Ada,    AcnInsertedChild(name, vartype)         -> sprintf "%s:%s;" name vartype
 
 
 
@@ -106,6 +110,7 @@ type ErroCode = {
 type BaseTypesEquivalence<'T> = {
     typeDefinition  : 'T option
     uper            : 'T option
+    acn             : 'T option
 }
     
         
@@ -165,11 +170,17 @@ type UPerFunction = {
     funcBody            : FuncParamType -> (UPERFuncBodyResult option)            // returns a list of validations statements
 }
 
+type AcnFuncBodyResult = {
+    funcBody            : string
+    errCodes            : ErroCode list
+    localVariables      : LocalVariable list
+}
+
 type AcnFunction = {
-    funcName            : Ast.Codec -> string option               // the name of the function. Valid only for TASes)
-    func                : Ast.Codec -> string option               // the body of the function
-    funcDef             : Ast.Codec -> string option               // function definition
-    funcBody            : (string -> Ast.Codec -> (string*(LocalVariable list)) list)   //returns a list of encoding statements plus any variables required to declared locally
+    funcName            : string option               // the name of the function. Valid only for TASes)
+    func                : string option               // the body of the function
+    funcDef             : string option               // function definition
+    funcBody            : FuncParamType -> (AcnFuncBodyResult option)            // returns a list of validations statements
 }
 
 type Integer = {
@@ -200,12 +211,9 @@ type Integer = {
     isValidFunction     : IsValidFunction option      // it is optional because some types do not require an IsValid function (e.g. an unconstraint integer)
     uperEncFunction     : UPerFunction
     uperDecFunction     : UPerFunction
-    acnFunction         : AcnFunction
+    acnEncFunction      : AcnFunction
+    acnDecFunction      : AcnFunction
     
-    encodeFuncName      : string option               // has value only for top level asn1 types (i.e. TypeAssignments (TAS))
-    encodeFuncBody      : string -> string            // an stg macro according the acnEncodingClass
-    decodeFuncName      : string option               // has value only for top level asn1 types (i.e. TypeAssignments (TAS))
-    decodeFuncBody      : string -> string            // an stg macro according the acnEncodingClass
 
 }
 with 
@@ -316,11 +324,8 @@ type Boolean = {
     isValidFunction     : IsValidFunction option      // it is optional because some types do not require an IsValid function (e.g. an unconstraint integer)
     uperEncFunction     : UPerFunction
     uperDecFunction     : UPerFunction
-
-    encodeFuncName      : string option               // has value only for top level asn1 types (i.e. TypeAssignments (TAS))
-    encodeFuncBody      : string -> string            // an stg macro according the acnEncodingClass
-    decodeFuncName      : string option               // has value only for top level asn1 types (i.e. TypeAssignments (TAS))
-    decodeFuncBody      : string -> string            // an stg macro according the acnEncodingClass
+    acnEncFunction      : AcnFunction
+    acnDecFunction      : AcnFunction
 }
 with 
     member this.Cons     = this.cons
@@ -568,10 +573,8 @@ and Sequence = {
     uperEncFunction     : UPerFunction
     uperDecFunction     : UPerFunction
 
-    encodeFuncName      : string option               // has value only for top level asn1 types (i.e. TypeAssignments (TAS))
-    encodeFuncBody      : string -> string            // an stg macro according the acnEncodingClass
-    decodeFuncName      : string option               // has value only for top level asn1 types (i.e. TypeAssignments (TAS))
-    decodeFuncBody      : string -> string            // an stg macro according the acnEncodingClass
+    acnEncFunction      : AcnFunction
+    acnDecFunction      : AcnFunction
 }
 with 
     member this.Cons     = this.cons
@@ -811,18 +814,31 @@ with
          | SequenceOf   t -> Some(t.uperDecFunction)
          | Sequence     t -> Some(t.uperDecFunction)
          | Choice       t -> Some(t.uperDecFunction)
-    member this.acnFunction : AcnFunction option =
+    member this.acnEncFunction : AcnFunction option =
         match this with
-        | Integer      t -> None //Some (t.acnFunction)
+        | Integer      t -> Some (t.acnEncFunction)
         | Real         t -> None
         | IA5String    t -> None
         | OctetString  t -> None
         | NullType     t -> None
         | BitString    t -> None
-        | Boolean      t -> None
+        | Boolean      t -> Some (t.acnEncFunction)
         | Enumerated   t -> None
         | SequenceOf   t -> None
-        | Sequence     t -> None
+        | Sequence     t -> Some (t.acnEncFunction)
+        | Choice       t -> None
+    member this.acnDecFunction : AcnFunction option =
+        match this with
+        | Integer      t -> Some (t.acnDecFunction)
+        | Real         t -> None
+        | IA5String    t -> None
+        | OctetString  t -> None
+        | NullType     t -> None
+        | BitString    t -> None
+        | Boolean      t -> Some (t.acnDecFunction)
+        | Enumerated   t -> None
+        | SequenceOf   t -> None
+        | Sequence     t -> Some (t.acnDecFunction)
         | Choice       t -> None
 
     member this.typeDefinition =

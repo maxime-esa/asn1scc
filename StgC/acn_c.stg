@@ -605,121 +605,84 @@ ret = <sName>_ACN_Decode(<p>, pBitStrm, pErrCode<if(arrsArgs)>, <arrsLocalPrms; 
 /* SEQUENCE*/
 
 
-Sequence_presense_optChild_encode(p, sChName, sErrCode, sBitMaskName, nByteIndex, sAndMask) ::= "BitStream_AppendBit(pBitStrm,<p>exist.<sChName>);"
-Sequence_presense_optChild_decode(p, sChName, sErrCode, sBitMaskName, nByteIndex, sAndMask) ::= <<
-<p>exist.<sChName> = ((<sBitMaskName>[<nByteIndex>] & 0x<sAndMask>) != 0) ? 1 : 0;
+sequence_presense_optChild_encode(p, sAcc, sChName, sErrCode) ::= "BitStream_AppendBit(pBitStrm,<p><sAcc>exist.<sChName>);"
+sequence_presense_optChild_decode(p, sAcc, sChName, sErrCode) ::= <<
+ret = BitStream_ReadBit(pBitStrm, &presenceBit);
+<p><sAcc>exist.<sChName> = presenceBit == 0 ? 0 : 1;
+*pErrCode = ret ? 0 : <sErrCode>;
 >>
 
-Sequence_presense_optChild_pres_bool_encode(p, sChName, sExtFldName) ::= ""
-Sequence_presense_optChild_pres_bool_decode(p, sChName, sExtFldName) ::= <<
-<p>exist.<sChName> = <sExtFldName> ? 1 : 0;
+sequence_presense_optChild_pres_bool_encode(p, sAcc, sChName, sExtFldName) ::= ""
+sequence_presense_optChild_pres_bool_decode(p, sAcc, sChName, sExtFldName) ::= <<
+<p><sAcc>exist.<sChName> = <sExtFldName> ? 1 : 0;
 >>
 
-Sequence_presense_optChild_pres_int_encode(p, sChName, sExtFldName, nIntVal) ::= ""
-Sequence_presense_optChild_pres_int_decode(p, sChName, sExtFldName, nIntVal) ::= <<
-<p>exist.<sChName> = (<sExtFldName> == <nIntVal>) ? 1 : 0;
+sequence_presense_optChild_pres_int_encode(p, sAcc, sChName, sExtFldName, nIntVal) ::= ""
+sequence_presense_optChild_pres_int_decode(p, sAcc, sChName, sExtFldName, nIntVal) ::= <<
+<p><sAcc>exist.<sChName> = (<sExtFldName> == <nIntVal>) ? 1 : 0;
 >>
 
-Sequence_presense_optChild_pres_str_encode(p, sChName, sExtFldName, sVal) ::= ""
-Sequence_presense_optChild_pres_str_decode(p, sChName, sExtFldName, sVal) ::= <<
-<p>exist.<sChName> = (strcmp(<sExtFldName>, "<sVal>") == 0) ? 1 : 0;
+sequence_presense_optChild_pres_str_encode(p, sAcc, sChName, sExtFldName, sVal) ::= ""
+sequence_presense_optChild_pres_str_decode(p, sAcc, sChName, sExtFldName, sVal) ::= <<
+<p><sAcc>exist.<sChName> = (strcmp(<sExtFldName>, "<sVal>") == 0) ? 1 : 0;
 >>
 
 
-Sequence_mandatory_child_encode(sChName, sChildContent) ::= <<
+sequence_mandatory_child_encode(sChName, sChildContent) ::= <<
 /*Encode <sChName> */
 <sChildContent>
 >>
-Sequence_mandatory_child_decode(sChName, sChildContent) ::= <<
+sequence_mandatory_child_decode(sChName, sChildContent) ::= <<
 /*Decode <sChName> */
 <sChildContent>
 >>
 
-Sequence_optional_child_encode(p, sChName, sChildContent) ::= <<
+sequence_optional_child_encode(p, sAcc, sChName, sChildContent) ::= <<
 /*Encode <sChName> */
-if (<p>exist.<sChName>) {
+if (<p><sAcc>exist.<sChName>) {
 	<sChildContent>
 }
 >>
 
-Sequence_optional_child_decode(p, sChName, sChildContent) ::= <<
+sequence_optional_child_decode(p, sAcc, sChName, sChildContent) ::= <<
 /*Decode <sChName> */
-if (<p>exist.<sChName>) {
-	<sChildContent>
-}
->>
-
-
-Sequence_optional_always_present_child_encode(p, sChName, sChildContent) ::= <<
-/*Encode <sChName> */
-<sChildContent>
->>
-
-Sequence_optional_always_present_child_decode(p, sChName, sChildContent) ::= <<
-/*Decode <sChName> */
-<p>exist.<sChName> = 1;
-if (<p>exist.<sChName>) {
+if (<p><sAcc>exist.<sChName>) {
 	<sChildContent>
 }
 >>
 
 
-Sequence_default_child_encode(p, sChName, sChildContent, sChildTypeDeclaration, sDefaultValue) ::= <<
-<Sequence_optional_child_encode(p=p, sChName=sChName, sChildContent=sChildContent)>
+sequence_optional_always_present_child_encode(p, sAcc, sChName, sChildContent) ::= <<
+/*Encode <sChName> */
+<sChildContent>
 >>
 
-
-Sequence_default_child_decode(p, sChName, sChildContent, sChildTypeDeclaration, sDefaultValue) ::= <<
+sequence_optional_always_present_child_decode(p, sAcc, sChName, sChildContent) ::= <<
 /*Decode <sChName> */
-{
-    static <sChildTypeDeclaration> defValue = <sDefaultValue>;
-    <p><sChName> = defValue;
-    if (<p>exist.<sChName>) {
-	    <sChildContent>
-    }
-    <p>exist.<sChName> = 1;
+<p><sAcc>exist.<sChName> = 1;
+if (<p>exist.<sChName>) {
+	<sChildContent>
+}
+>>
+
+
+sequence_default_child_encode(p, sAcc, sChName, sChildContent, sInitWithDefaultValue) ::= <<
+<sequence_optional_child_encode(p=p, sAcc=sAcc, sChName=sChName, sChildContent=sChildContent)>
+>>
+
+
+sequence_default_child_decode(p, sAcc, sChName, sChildContent, sInitWithDefaultValue) ::= <<
+/*Decode <sChName> */
+if (<p><sAcc>exist.<sChName>) {
+	<sChildContent>
+} else {
+    <sInitWithDefaultValue>
 }
 >>
 
 
 
-
-Sequence_encode(sChildren, bHasUperOptionalChildren, nUperOptionalChildrenLength, sBitMaskName) ::= <<
-<sChildren>
->>
-
-
-
-Sequence_decode(sChildren, bHasUperOptionalChildren, nUperOptionalChildrenLength, sBitMaskName) ::= <<
-*pErrCode = 0;
-<if(bHasUperOptionalChildren)>
-/* Decode Bit Mask for optional and default fields*/
-ret = BitStream_ReadBits(pBitStrm, <sBitMaskName>, <nUperOptionalChildrenLength>);
-*pErrCode = ret ? 0 : ERR_INSUFFICIENT_DATA;
-if (ret) {
-    <sChildren>
-}
-
-<else>
-<sChildren>
-
-<endif>
->>
-
-
-
-JoinItems(sPart, sNestedPart) ::= <<
-<sPart>
-<if(sNestedPart)>
-if (ret) {
-    <sNestedPart>
-}
-
-<endif>
->>
-
-
-
+/* SEQUENCE END */
 
 
 /* Choice like uper*/
