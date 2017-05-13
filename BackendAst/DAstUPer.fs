@@ -11,10 +11,19 @@ open DAst
 let getFuncName (r:CAst.AstRoot) (l:ProgrammingLanguage) (codec:Ast.Codec) (tasInfo:BAst.TypeAssignmentInfo option) =
     tasInfo |> Option.map (fun x -> ToC2(r.TypePrefix + x.tasName + codec.suffix))
 
+let getTypeDefinitionName (tasInfo:BAst.TypeAssignmentInfo option) (typeDefinition:TypeDefinitionCommon) =
+    match tasInfo with
+    | Some _                -> typeDefinition.name
+    | None (*inner type*)   -> typeDefinition.typeDefinitionBodyWithinSeq
+
+
 let callBaseTypeFunc l = match l with C -> uper_c.call_base_type_func | Ada -> uper_a.call_base_type_func
+
+
 
 //TODO
 //1.Decode functions (and perhaps encode function) muct check if the decode value is within the constraints (currently, implemented only for Integers and for case IntUnconstraintMax )
+//2.Fragmentation
 
 
 let createPrimitiveFunction (r:CAst.AstRoot) (l:ProgrammingLanguage) (codec:Ast.Codec) (o:CAst.Asn1Type) (typeDefinition:TypeDefinitionCommon) (baseTypeUperFunc : UPerFunction option) (isValidFunc: IsValidFunction option)  (funcBody:ErroCode->FuncParamType -> (UPERFuncBodyResult option)) soSparkAnnotations (us:State)  =
@@ -143,7 +152,7 @@ let createEnumeratedFunction (r:CAst.AstRoot) (l:ProgrammingLanguage) (codec:Ast
         let pp = match codec with Ast.Encode -> p.getValue l | Ast.Decode -> p.getPointer l
         let Enumerated         = match l with C -> uper_c.Enumerated          | Ada -> uper_a.Enumerated
         let Enumerated_item    = match l with C -> uper_c.Enumerated_item          | Ada -> uper_a.Enumerated_item
-        
+        let typeDefinitionName = getTypeDefinitionName o.tasInfo typeDefinition
         let nMin = 0I
         let nMax = BigInteger(Seq.length o.items) - 1I
         let nLastItemIndex      = nMax
@@ -151,7 +160,7 @@ let createEnumeratedFunction (r:CAst.AstRoot) (l:ProgrammingLanguage) (codec:Ast
             o.items |> List.mapi(fun i itm -> Enumerated_item (p.getValue l) (itm.getBackendName l) (BigInteger i) nLastItemIndex codec) 
         let nBits = (GetNumberOfBitsForNonNegativeInteger (nMax-nMin))
         let sFirstItemName = o.items.Head.getBackendName l
-        let funcBodyContent = Enumerated (p.getValue l) typeDefinition.name items nMin nMax nBits errCode.errCodeName nLastItemIndex sFirstItemName codec
+        let funcBodyContent = Enumerated (p.getValue l) typeDefinitionName items nMin nMax nBits errCode.errCodeName nLastItemIndex sFirstItemName codec
         {UPERFuncBodyResult.funcBody = funcBodyContent; errCodes = [errCode]; localVariables = []}    
     let soSparkAnnotations = None
     createPrimitiveFunction r l codec (CAst.Enumerated o) typeDefinition baseTypeUperFunc  isValidFunc  (fun e p -> Some (funcBody e p)) soSparkAnnotations us
@@ -177,6 +186,7 @@ let createIA5StringFunction (r:CAst.AstRoot) (l:ProgrammingLanguage) (codec:Ast.
         let str_FixedSize       = match l with C -> uper_c.str_FixedSize        | Ada -> uper_a.str_FixedSize
         let str_VarSize         = match l with C -> uper_c.str_VarSize          | Ada -> uper_a.str_VarSize
         //let Fragmentation_sqf   = match l with C -> uper_c.Fragmentation_sqf    | Ada -> uper_a.Fragmentation_sqf
+        let typeDefinitionName = getTypeDefinitionName o.tasInfo typeDefinition
 
         let nBits = GetNumberOfBitsForNonNegativeInteger (BigInteger (o.charSet.Length-1))
         let internalItem =
@@ -189,8 +199,8 @@ let createIA5StringFunction (r:CAst.AstRoot) (l:ProgrammingLanguage) (codec:Ast.
         let nSizeInBits = GetNumberOfBitsForNonNegativeInteger (BigInteger (o.maxSize - o.minSize))
         let funcBodyContent = 
             match o.minSize with
-            | _ when o.maxSize < 65536 && o.maxSize=o.minSize  -> str_FixedSize p.p typeDefinition.name i internalItem (BigInteger o.minSize) nBits nBits 0I codec 
-            | _ when o.maxSize < 65536 && o.maxSize<>o.minSize  -> str_VarSize p.p typeDefinition.name i internalItem (BigInteger o.minSize) (BigInteger o.maxSize) nSizeInBits nBits nBits 0I codec 
+            | _ when o.maxSize < 65536 && o.maxSize=o.minSize  -> str_FixedSize p.p typeDefinitionName i internalItem (BigInteger o.minSize) nBits nBits 0I codec 
+            | _ when o.maxSize < 65536 && o.maxSize<>o.minSize  -> str_VarSize p.p typeDefinitionName i internalItem (BigInteger o.minSize) (BigInteger o.maxSize) nSizeInBits nBits nBits 0I codec 
             | _                                                -> raise(Exception "fragmentation not implemented yet")
         {UPERFuncBodyResult.funcBody = funcBodyContent; errCodes = [errCode]; localVariables = lv::charIndex@nStringLength}    
     let soSparkAnnotations = 
@@ -211,6 +221,8 @@ let createOctetStringFunction (r:CAst.AstRoot) (l:ProgrammingLanguage) (codec:As
             | Ada  -> [IntegerLocalVariable ("nStringLength", None)]
             | C    -> [Asn1SIntLocalVariable ("nCount", None)]
     let funcBody (errCode:ErroCode) (p:FuncParamType) = 
+        let typeDefinitionName = getTypeDefinitionName o.tasInfo typeDefinition
+
         let InternalItem_oct_str = match l with C -> uper_c.InternalItem_oct_str        | Ada -> uper_a.InternalItem_oct_str
         let fixedSize       = match l with C -> uper_c.octect_FixedSize        | Ada -> uper_a.octect_FixedSize
         let varSize         = match l with C -> uper_c.octect_VarSize          | Ada -> uper_a.octect_VarSize
@@ -220,8 +232,8 @@ let createOctetStringFunction (r:CAst.AstRoot) (l:ProgrammingLanguage) (codec:As
         let nSizeInBits = GetNumberOfBitsForNonNegativeInteger (BigInteger (o.maxSize - o.minSize))
         let funcBodyContent = 
             match o.minSize with
-            | _ when o.maxSize < 65536 && o.maxSize=o.minSize  ->  fixedSize p.p typeDefinition.name i internalItem (BigInteger o.minSize) nBits nBits 0I codec 
-            | _ when o.maxSize < 65536 && o.maxSize<>o.minSize  -> varSize p.p (p.getAcces l)  typeDefinition.name i internalItem (BigInteger o.minSize) (BigInteger o.maxSize) nSizeInBits nBits nBits 0I errCode.errCodeName codec 
+            | _ when o.maxSize < 65536 && o.maxSize=o.minSize  ->  fixedSize p.p typeDefinitionName i internalItem (BigInteger o.minSize) nBits nBits 0I codec 
+            | _ when o.maxSize < 65536 && o.maxSize<>o.minSize  -> varSize p.p (p.getAcces l)  typeDefinitionName i internalItem (BigInteger o.minSize) (BigInteger o.maxSize) nSizeInBits nBits nBits 0I errCode.errCodeName codec 
             | _                                                -> raise(Exception "fragmentation not implemented yet")
         {UPERFuncBodyResult.funcBody = funcBodyContent; errCodes = [errCode]; localVariables = lv::nStringLength}    
     let soSparkAnnotations = 
@@ -245,12 +257,13 @@ let createBitStringFunction (r:CAst.AstRoot) (l:ProgrammingLanguage) (codec:Ast.
         let funcBodyContent = 
             match l with
             | Ada ->
+                let typeDefinitionName = getTypeDefinitionName o.tasInfo typeDefinition
                 let nBits = 1I
                 let internalItem = uper_a.InternalItem_bit_str p.p i  errCode.errCodeName codec 
                 let nSizeInBits = GetNumberOfBitsForNonNegativeInteger (BigInteger (o.maxSize - o.minSize))
                 match o.minSize with
-                | _ when o.maxSize < 65536 && o.maxSize=o.minSize  -> uper_a.octect_FixedSize p.p typeDefinition.name i internalItem (BigInteger o.minSize) nBits nBits 0I codec 
-                | _ when o.maxSize < 65536 && o.maxSize<>o.minSize -> uper_a.octect_VarSize p.p (p.getAcces l)  typeDefinition.name i internalItem (BigInteger o.minSize) (BigInteger o.maxSize) nSizeInBits nBits nBits 0I errCode.errCodeName codec 
+                | _ when o.maxSize < 65536 && o.maxSize=o.minSize  -> uper_a.octect_FixedSize p.p typeDefinitionName i internalItem (BigInteger o.minSize) nBits nBits 0I codec 
+                | _ when o.maxSize < 65536 && o.maxSize<>o.minSize -> uper_a.octect_VarSize p.p (p.getAcces l)  typeDefinitionName i internalItem (BigInteger o.minSize) (BigInteger o.maxSize) nSizeInBits nBits nBits 0I errCode.errCodeName codec 
                 | _                                                -> raise(Exception "fragmentation not implemented yet")
             | C ->
                 match o.minSize with
@@ -299,11 +312,12 @@ let createSequenceOfFunction (r:CAst.AstRoot) (l:ProgrammingLanguage) (codec:Ast
                 let nSizeInBits = GetNumberOfBitsForNonNegativeInteger (BigInteger (o.maxSize - o.minSize))
                 let localVariables = internalItem.localVariables
                 let childErrCodes =  internalItem.errCodes
+                let typeDefinitionName = getTypeDefinitionName o.tasInfo typeDefinition
 
                 let ret = 
                     match o.minSize with
-                    | _ when o.maxSize < 65536 && o.maxSize=o.minSize  -> fixedSize p.p typeDefinition.name i internalItem.funcBody (BigInteger o.minSize) (BigInteger child.uperMinSizeInBits) (BigInteger child.uperMaxSizeInBits) 0I codec 
-                    | _ when o.maxSize < 65536 && o.maxSize<>o.minSize  -> varSize p.p (p.getAcces l)  typeDefinition.name i internalItem.funcBody (BigInteger o.minSize) (BigInteger o.maxSize) nSizeInBits (BigInteger child.uperMinSizeInBits) (BigInteger child.uperMaxSizeInBits) 0I errCode.errCodeName codec 
+                    | _ when o.maxSize < 65536 && o.maxSize=o.minSize  -> fixedSize p.p typeDefinitionName i internalItem.funcBody (BigInteger o.minSize) (BigInteger child.uperMinSizeInBits) (BigInteger child.uperMaxSizeInBits) 0I codec 
+                    | _ when o.maxSize < 65536 && o.maxSize<>o.minSize  -> varSize p.p (p.getAcces l)  typeDefinitionName i internalItem.funcBody (BigInteger o.minSize) (BigInteger o.maxSize) nSizeInBits (BigInteger child.uperMinSizeInBits) (BigInteger child.uperMaxSizeInBits) 0I errCode.errCodeName codec 
                     | _                                                -> raise(Exception "fragmentation not implemented yet")
                 Some ({UPERFuncBodyResult.funcBody = ret; errCodes = errCode::childErrCodes; localVariables = lv::(nStringLength@localVariables)})    
         | Some baseFuncName ->
@@ -409,6 +423,7 @@ let createChoiceFunction (r:CAst.AstRoot) (l:ProgrammingLanguage) (codec:Ast.Cod
         | Ast.Encode  -> []
         | Ast.Decode  -> [(Asn1SIntLocalVariable (sChoiceIndexName, None))]
 
+    let typeDefinitionName = getTypeDefinitionName o.tasInfo typeDefinition
 
     let funcBody (errCode:ErroCode) (p:FuncParamType) = 
         match baseFuncName with
@@ -430,14 +445,14 @@ let createChoiceFunction (r:CAst.AstRoot) (l:ProgrammingLanguage) (codec:Ast.Cod
                         | Some childContent ->  
                             let sChildName = child.c_name
                             let sChildTypeDef = child.chType.typeDefinition.typeDefinitionBodyWithinSeq
-                            let sChoiceTypeName = typeDefinition.name
+                            let sChoiceTypeName = typeDefinitionName
                             choice_child p.p (p.getAcces l) child.presentWhenName (BigInteger i) (BigInteger (children.Length - 1)) childContent.funcBody sChildName sChildTypeDef sChoiceTypeName codec, childContent.localVariables, childContent.errCodes )
             let childrenContent = childrenContent3 |> List.map(fun (s,_,_) -> s)
             let childrenLocalvars = childrenContent3 |> List.collect(fun (_,s,_) -> s)
             let childrenErrCodes = childrenContent3 |> List.collect(fun (_,_,s) -> s)
             let nBits = (GetNumberOfBitsForNonNegativeInteger (BigInteger (children.Length - 1)))
             
-            let ret = choice p.p (p.getAcces l) childrenContent (BigInteger (children.Length - 1)) sChoiceIndexName errCode.errCodeName typeDefinition.name nBits  codec
+            let ret = choice p.p (p.getAcces l) childrenContent (BigInteger (children.Length - 1)) sChoiceIndexName errCode.errCodeName typeDefinitionName nBits  codec
             Some ({UPERFuncBodyResult.funcBody = ret; errCodes = errCode::childrenErrCodes; localVariables = localVariables@childrenLocalvars})
         | Some baseFuncName ->
             let funcBodyContent = callBaseTypeFunc l (p.getPointer l) baseFuncName codec
