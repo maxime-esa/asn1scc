@@ -60,6 +60,18 @@ type AcnProperty =
     | Endianness        of endianness                   // used by int, real, enum
     | EnumeratorResetValue of string*BigInteger        // used by enum children to redefine values
     | MappingFunction   of StringLoc                    // used by int
+with
+    override this.ToString() =  
+        match this with
+        | Encoding          enc                       -> sprintf "encoding %A" enc
+        | SizeProperty      sz                        -> sprintf "size %A" sz
+        | Aligment          al                        -> sprintf "aligment %A" al
+        | EncodeValues                                -> "encode-values"
+        | BooleanEncoding   ben                       -> sprintf "pattern '%A'" ben
+        | NullValue         pattern                   -> sprintf "pattern '%s'" pattern.Value
+        | Endianness        endi                -> sprintf "endianness %A" endi
+        | EnumeratorResetValue (enChildName,vl)       -> enChildName + vl.ToString()
+        | MappingFunction   funcName                  -> funcName.Value
 
 and aligment = 
     | NextByte
@@ -98,6 +110,8 @@ type AcnType = {
     Location : SrcLoc
     Comments: string array
 }
+with 
+  override x.ToString() =  x.TypeID |> Seq.StrJoin "."
 and AcnTempType = {                // this type is not encoded decoded. It is declared locally at the tas level
                                     // and it is used for passing values
     ModName     : string
@@ -133,6 +147,12 @@ type LongReference = {
     Kind : LongReferenceKind
     Location : SrcLoc
 }
+with 
+  override x.ToString() =  
+    let decType = x.TypeID |> Seq.StrJoin "."
+    let determnant = x.LongRef |> Seq.StrJoin "."
+    sprintf "%s %s %s" decType (x.Kind.ToString() ) determnant
+
 
 and Point =
     | TypePoint  of AbsPath              // point is an encoded/decoded AcnType
@@ -160,7 +180,15 @@ and LongReferenceKind =
     | PresenceInt of acnIntegerConstant        // points to a SEQEUNCE or Choice child
     | PresenceStr of string
     | ChoiceDeteterminant       // points to Enumerated type acting as CHOICE determinant.
-
+with
+    override x.ToString() =  
+        match x with
+        | SizeDeterminant                   -> "size"
+        | RefTypeArgument argName           -> sprintf "RefArg<%s>" argName
+        | PresenceBool                      -> "present-when-bool"
+        | PresenceInt  vl                   -> sprintf "present-when-int %A" vl
+        | PresenceStr stVal                 -> sprintf "present-when-str %s" stVal
+        | ChoiceDeteterminant               -> "choice-determinant"
 
 type AcnAst = {
     Constants : list<AcnConstant>

@@ -203,9 +203,12 @@ and ReferenceToType =
         member this.AcnAbsPath =
             match this with
             | ReferenceToType path -> path |> List.map (fun i -> i.StrValue) 
-        member this.getSeqOrChildId (childName:string) =
+        member this.getSeqChildId (childName:string) =
             match this with
-            | ReferenceToType path -> ReferenceToType (path@[GenericFold2.CH childName])
+            | ReferenceToType path -> ReferenceToType (path@[GenericFold2.SEQ_CHILD childName])
+        member this.getChildId (childName:string) =
+            match this with
+            | ReferenceToType path -> ReferenceToType (path@[GenericFold2.CH_CHILD childName])
         member this.getParamId (paramName:string) =
             match this with
             | ReferenceToType ((GenericFold2.MD mdName)::(GenericFold2.TA tasName)::[]) -> ReferenceToType ((GenericFold2.MD mdName)::(GenericFold2.TA tasName)::[GenericFold2.PRM paramName])
@@ -220,15 +223,19 @@ and ReferenceToType =
             | ReferenceToType path -> 
                 let newTail = 
                     childRelativePath |> 
-                    List.map(fun s ->
-                        match s with
-                        | "#"   -> GenericFold2.SQF
-                        | _     -> GenericFold2.CH s)
+                    List.map(fun s ->GenericFold2.SEQ_CHILD s)
                 ReferenceToType (path@newTail)
         member this.beginsWith (md:string) (ts:string)= 
             match this with
             | ReferenceToType((GenericFold2.MD mdName)::(GenericFold2.TA tasName)::[])   -> mdName = md && tasName = ts
             | _                                                                          -> false
+        member this.lastItem =
+            match this with
+            | ReferenceToType path -> 
+                match path |> List.rev |> List.head with
+                | GenericFold2.SEQ_CHILD name   -> name
+                | GenericFold2.CH_CHILD name    -> name
+                | _                             -> raise (BugErrorException "error in lastitem")
         member this.parentTypeId =
             match this with
             | ReferenceToType path -> 
@@ -240,9 +247,12 @@ and ReferenceToType =
         member this.SeqeuenceOfLevel =
             match this with
             | ReferenceToType path -> path |> List.filter(fun n -> match n with GenericFold2.SQF -> true | _ -> false) |> Seq.length
-        static member createFromAcnAbsPath (absPath : AcnTypes.AbsPath) =
-            let tas = ReferenceToType((GenericFold2.MD absPath.Head)::(GenericFold2.TA absPath.Tail.Head)::[])
-            tas.appendLongChildId(absPath.Tail.Tail)
+        static member createFromModAndTasName (modName : string) ((tasName : string))=
+            ReferenceToType((GenericFold2.MD modName)::(GenericFold2.TA tasName)::[])
+
+        //static member createFromAcnAbsPath (absPath : AcnTypes.AbsPath) =
+        //    let tas = ReferenceToType((GenericFold2.MD absPath.Head)::(GenericFold2.TA absPath.Tail.Head)::[])
+        //    tas.appendLongChildId(absPath.Tail.Tail)
             
             
             

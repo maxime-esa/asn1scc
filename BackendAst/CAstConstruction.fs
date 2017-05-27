@@ -108,6 +108,35 @@ let mapBTypeToCType (r:BAst.AstRoot) (t:BAst.Asn1Type) (acn:AcnTypes.AcnAst) (ac
 
 let foldMap = CloneTree.foldMap
 
+
+
+let mapAcnPathToReferenceToType (newTypeAssignments:Asn1Type list) (absPath : AcnTypes.AbsPath) =
+    let rec createFromType (t:Asn1Type) (acnRestPath:string list) =
+        match acnRestPath with 
+        | []                -> t.id
+        | childName::rest       -> 
+            match t with
+            | Sequence sq   ->
+                match sq.children |> Seq.tryFind (fun x -> x.name = childName) with
+                | None          -> raise(BugErrorException(sprintf "invalid path %s. Broken part is '%s'" (absPath |> Seq.StrJoin ".") childName))
+                | Some child    -> createFromType child.chType rest
+            | Choice sq   ->
+                match sq.children |> Seq.tryFind (fun x -> x.name = childName) with
+                | None          -> raise(BugErrorException(sprintf "invalid path %s. Broken part is '%s'" (absPath |> Seq.StrJoin ".") childName))
+                | Some child    -> createFromType child.chType rest
+            | SequenceOf sqof  when childName = "#" -> createFromType sqof.childType rest
+            | SequenceOf sqof  ->  raise(BugErrorException(sprintf "invalid path %s. Sequence of cannot have child with name '%s' " (absPath |> Seq.StrJoin ".") childName ))
+            | _                 -> raise(BugErrorException(sprintf "Non composite types cannot have children" ))
+    match absPath with
+    | []
+    | _::[] -> raise(BugErrorException(sprintf "invalid path %s." (absPath |> Seq.StrJoin ".") ))
+    | mdname::tsname::rest  ->
+        let tas = ReferenceToType((GenericFold2.MD mdname)::(GenericFold2.TA tsname)::[])
+        match newTypeAssignments |> Seq.tryFind(fun x -> x.id = tas) with
+        | None      -> raise(BugErrorException(sprintf "invalid path %s." (absPath |> Seq.StrJoin ".") ))
+        | Some t    -> createFromType t rest
+    
+
 let mapBAstToCast (r:BAst.AstRoot) (acn:AcnTypes.AcnAst) : AstRoot=
     let initialState = {State.currentTypes = []}
     let acnConstants    = acn.Constants
@@ -124,7 +153,7 @@ let mapBAstToCast (r:BAst.AstRoot) (acn:AcnTypes.AcnAst) : AstRoot=
     let acnLinks    = 
         acn.References |>
         List.map(fun l ->
-            let decTypeId = ReferenceToType.createFromAcnAbsPath l.TypeID
+            let decTypeId = mapAcnPathToReferenceToType newTypeAssignments l.TypeID
             let acnParams = acnParameters |> List.filter(fun x -> x.ModName = l.TypeID.Head && x.TasName = l.TypeID.Tail.Head)
             let decType = 
                 match newTypesMap.TryFind decTypeId with
@@ -138,6 +167,26 @@ let mapBAstToCast (r:BAst.AstRoot) (acn:AcnTypes.AcnAst) : AstRoot=
                     match determinantId with
                     | None                  -> raise(SemanticError (l.Location, sprintf "Invalid Reference '%s'" (l.LongRef.ToString()) ))
                     | Some determinantId    -> determinantId
+
+                let rec determinantId2 (parentId: ReferenceToType option) (firstPartOfLongPath:string) (restPartOfLongPath:string list) = 
+                    //parentId |> Option.map (fun x -> x.appendLongChildId childRelPath)
+                    match parentId with
+                    | None                  -> raise(SemanticError (l.Location, sprintf "Invalid Reference '%s'" (l.LongRef.ToString()) ))
+                    | Some parentId    -> 
+                        match newTypesMap.TryFind parentId with
+                        | None  -> raise(SemanticError (l.Location, sprintf "Invalid Reference '%s'" (l.LongRef.ToString()) ))
+                        | Some parSq ->
+                            match parSq with
+                            | Sequence seq ->
+                                match seq.children |> Seq.tryFind(fun c -> c.name = firstPartOfLongPath) with
+                                | Some child    -> parentId.appendLongChildId (firstPartOfLongPath::restPartOfLongPath)
+                                | None  -> 
+                                    // no children found => Try my parents scope
+                                    determinantId2 (seq.id.parentTypeId) firstPartOfLongPath restPartOfLongPath
+                            | _     -> raise(SemanticError (l.Location, sprintf "Invalid Reference '%s'" (l.LongRef.ToString()) ))
+
+                
+
                 match l.LongRef with
                 | []            -> raise(SemanticError (l.Location,"Invalid Reference (empty path)" ))
                 | fldName::[]   ->
@@ -147,7 +196,7 @@ let mapBAstToCast (r:BAst.AstRoot) (acn:AcnTypes.AcnAst) : AstRoot=
                         | Some tasId    -> tasId.id.getParamId p.Name
                         | None          -> raise(SemanticError (l.Location,"Invalid type id" ))
                     | None      -> determinantId l.LongRef
-                | _             -> determinantId l.LongRef
+                | firstPartOfLongPath::restPartOfLongPath             -> determinantId2 parentId firstPartOfLongPath restPartOfLongPath
 
             match l.Kind with
             | AcnTypes.RefTypeArgument prmName   -> {AcnLink.decType = decType; determinant = determinantId ; linkType = RefTypeArgument  prmName}

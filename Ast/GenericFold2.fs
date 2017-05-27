@@ -41,7 +41,8 @@ type ScopeNode =
     | MD of string      //MODULE
     | TA of string      //TYPE ASSIGNMENT
     | VA of string      //VALUE ASSIGNMENT
-    | CH of string      //SEQUENCE OF CHOICE CHILD
+    | SEQ_CHILD of string      
+    | CH_CHILD of string      //SEQUENCE OF CHOICE CHILD
     | PRM of string     // ACN parameter
     | TMP of string     // ACN temp type
     | SQF               //SEQUENCE OF CHILD
@@ -52,7 +53,8 @@ type ScopeNode =
             | TA strVal
             | VA strVal
             | PRM strVal
-            | CH strVal
+            | SEQ_CHILD strVal
+            | CH_CHILD strVal
             | TMP strVal     -> strVal
             | SQF           -> "#"
         override this.ToString() = this.StrValue
@@ -74,8 +76,11 @@ let visitRefType (md:string) (ts:string) : UserDefinedTypeScope=
 //let visitRevValue (md:string) (vs:string) =
 //    {UserDefinedTypeScope.typeID=[MD md; VA vs]; asn1TypeName=None; asn1VarName=Some vs;varID=[]}
 
-let visitSeqOrChoiceChild (s:UserDefinedTypeScope) (ch:ChildInfo) : UserDefinedTypeScope=
-    s@[CH ch.Name.Value]
+let visitSeqChild (s:UserDefinedTypeScope) (ch:ChildInfo) : UserDefinedTypeScope=
+    s@[SEQ_CHILD ch.Name.Value]
+
+let visitChoiceChild (s:UserDefinedTypeScope) (ch:ChildInfo) : UserDefinedTypeScope=
+    s@[CH_CHILD ch.Name.Value]
 
 let visitSeqOfChild (s:UserDefinedTypeScope) : UserDefinedTypeScope =
     s@[SQF]
@@ -310,7 +315,7 @@ let foldAstRoot
             let withCompCons = witchCompsCons |> List.choose(fun c -> match c with WithComponentsConstraint wc -> Some wc | _ -> None) |> List.collect id
             let newChildren, fus = 
                 children |> foldMap  (fun cs chInfo -> 
-                    let childScope = visitSeqOrChoiceChild s chInfo
+                    let childScope = visitSeqChild s chInfo
                     let chidlWithComps = withCompCons |> List.filter(fun x -> x.Name.Value = chInfo.Name.Value)
                     loopSequenceChild cs childScope chInfo chidlWithComps) us
             seqTypeFunc fus newChildren newBaseType
@@ -318,7 +323,7 @@ let foldAstRoot
             let withCompCons = witchCompsCons |> List.choose(fun c -> match c with WithComponentsConstraint wc -> Some wc | _ -> None) |> List.collect id
             let newChildren, fus = 
                 children |> foldMap  (fun cs chInfo ->
-                    let childScope = visitSeqOrChoiceChild s chInfo
+                    let childScope = visitChoiceChild s chInfo
                     let chidlWithComps = withCompCons |> List.filter(fun x -> x.Name.Value = chInfo.Name.Value)
                     loopChoiceChild cs childScope chInfo chidlWithComps) us
             chTypeFunc fus newChildren newBaseType

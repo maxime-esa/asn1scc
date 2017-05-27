@@ -840,6 +840,10 @@ with
         | SequenceOf   t -> None
         | Sequence     t -> Some (t.acnDecFunction)
         | Choice       t -> None
+    member this.getAcnFunction (l:Ast.Codec) =
+        match l with
+        | Ast.Encode   -> this.acnEncFunction
+        | Ast.Decode   -> this.acnDecFunction
 
     member this.typeDefinition =
         match this with

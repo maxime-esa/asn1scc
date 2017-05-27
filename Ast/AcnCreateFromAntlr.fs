@@ -304,8 +304,12 @@ and CreateAcnChild (files:seq<ITree*string*array<IToken>>) (t:ITree)  (asn1Paren
         // Keep the existing comments from the ASN.1 module and add those of the ASN module
         let full_comments = Array.append asn1Child.Comments comments
         CreateAcnType files (t.GetChildByType acnParser.ENCODING_SPEC) asn1Child.Type newAbsPath RecordField loc {ast with References = ast.References@ args} r tokens full_comments
-
-    match asn1Parent.Kind with
+    let bast = System.Environment.GetCommandLineArgs() |> Seq.exists ((=) "-bast")
+    let typeKind = 
+        match bast with
+        | false -> asn1Parent.Kind
+        | true  -> (Ast.GetActualType asn1Parent r).Kind
+    match typeKind with
     | Sequence(children)    ->
         match t.Type with
         | acnParser.CHILD       ->            Handle_ExistingChild children
@@ -756,7 +760,13 @@ and CheckPresenceProperty (t:ITree) asn1Type absPath (props:List<ITree>) (ast:Ac
         let chName =  absPath |> List.rev |> List.head
         let ExcToThrow = SemanticError(loc, "'present-property can appear only within sequence components or choice alternatives")
         let parent = Ast.GetTypeByAbsPathEx parPath r ExcToThrow
-        match parent.Kind with
+        let bast = System.Environment.GetCommandLineArgs() |> Seq.exists ((=) "-bast")
+        let parentKind = 
+            match bast with
+            | false -> parent.Kind
+            | true  -> (Ast.GetActualType parent r).Kind
+
+        match parentKind with
         | Sequence(children)    -> 
             match conditions with
             | []        -> raise(BugErrorException "")

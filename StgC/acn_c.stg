@@ -2,6 +2,73 @@
 group c_acn;
 
 
+
+
+EmitTypeAssignment_def_err_code(sErrCode, nErrValue) ::= <<
+#define <sErrCode>		<nErrValue>  /**/
+>>
+
+EmitAcnParameter(sName, sType) ::= "<sType> <sName>"
+
+
+EmitTypeAssignment_primitive_def_encode(sVarName, sStar, sFuncName, sTypeDefName, arrsErrcodes, bEmptyEncodingSpace, nMaxBytesInPER, nMaxBitsInPER, arrsAcnPrms) ::= <<
+<arrsErrcodes; separator="\n">
+#define <sTypeDefName>_REQUIRED_BYTES_FOR_ENCODING       <nMaxBytesInPER> 
+#define <sTypeDefName>_REQUIRED_BITS_FOR_ENCODING        <nMaxBitsInPER>
+
+flag <sFuncName>(const <sTypeDefName><sStar> <sVarName>, BitStream* pBitStrm, int* pErrCode, flag bCheckConstraints);
+>>
+
+EmitTypeAssignment_primitive_encode(sVarName, sStar, sFuncName, soIValidFuncName, sTypeDefName, arrsLocalVariables, sContent, soSparkAnnotations, sInitilialExp, arrsAcnPrms) ::= <<
+flag <sFuncName>(const <sTypeDefName><sStar> <sVarName>, BitStream* pBitStrm, int* pErrCode, flag bCheckConstraints)
+{
+    flag ret = TRUE;
+	<arrsLocalVariables:{lv|<lv>}; separator="\n">
+    <if(soIValidFuncName)>
+	ret = bCheckConstraints ? <soIValidFuncName>(<sVarName>, pErrCode) : TRUE ;
+	if (ret) {
+	    <sContent>
+    }
+
+    <else>
+    *pErrCode = 0;
+    bCheckConstraints=bCheckConstraints;
+    <sContent>
+
+    <endif>
+	
+    return ret;
+}
+>>
+
+EmitTypeAssignment_primitive_def_decode(sVarName, sStar, sFuncName, sTypeDefName, arrsErrcodes, bEmptyEncodingSpace, nMaxBytesInPER, nMaxBitsInPER, arrsAcnPrms) ::= <<
+<arrsErrcodes; separator="\n">
+flag <sFuncName>(<sTypeDefName><sStar> <sVarName>, BitStream* pBitStrm, int* pErrCode<if(arrsAcnPrms)>, <arrsAcnPrms; separator=", "><endif>);
+>>
+
+EmitTypeAssignment_primitive_decode(sVarName, sStar, sFuncName, soIValidFuncName, sTypeDefName, arrsLocalVariables, sContent, soSparkAnnotations, sInitilialExp, arrsAcnPrms) ::= <<
+flag <sFuncName>(<sTypeDefName><sStar> <sVarName>, BitStream* pBitStrm, int* pErrCode<if(arrsAcnPrms)>, <arrsAcnPrms; separator=", "><endif>)
+{
+    flag ret = TRUE;
+	<arrsLocalVariables:{lv|<lv>}; separator="\n">
+
+	<sContent>
+
+	return ret;
+}
+>>
+
+
+
+
+
+
+
+
+
+
+
+
 A() ::= "*pErrCode = ret ? 0 : ERR_INSUFFICIENT_DATA;"
 
 MF(soMF) ::= <<
@@ -871,8 +938,9 @@ switch (pVal->kind) {
 >>
 
 
-PresenceDependency(v, sSeqPath, sChildName) ::= <<
-<v> = (<sSeqPath>exist.<sChildName> == 1);
+
+PresenceDependency(v, sSeqPath, sAcc, sChildName) ::= <<
+<v> = (<sSeqPath><sAcc>exist.<sChildName> == 1);
 >>
 
 ChoiceDependencyIntPres_child(v, sChildName, nChildRetVal) ::= <<

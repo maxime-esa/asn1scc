@@ -52,7 +52,7 @@ let mapBTypeToBType (r:BAst.AstRoot) (t:BAst.Asn1Type) (acn:AcnTypes.AcnAst) (ac
                             match children |> Seq.tryFind(fun x-> x.Name = acnChildName) with
                             |Some(asn1Child)    -> yield asn1Child
                             |None               ->
-                                let newTypeId = o.id.getSeqOrChildId acnChildName
+                                let newTypeId = o.id.getSeqChildId acnChildName
                                 yield {
                                         ChildInfo.Name = acnChildName
                                         chType =  

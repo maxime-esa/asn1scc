@@ -565,12 +565,26 @@ type AcnLinkKind =
     | PresenceInt of BigInteger                     // points to a SEQEUNCE or Choice child
     | PresenceStr of string
     | ChoiceDeteterminant                           // points to Enumerated type acting as CHOICE determinant.
+with
+    override x.ToString() =  
+        match x with
+        | SizeDeterminant                   -> "size"
+        | RefTypeArgument argName           -> sprintf "RefArg<%s>" argName
+        | PresenceBool                      -> "present-when-bool"
+        | PresenceInt  vl                   -> sprintf "present-when-int %A" vl
+        | PresenceStr stVal                 -> sprintf "present-when-str %s" stVal
+        | ChoiceDeteterminant               -> "choice-determinant"
 
 type AcnLink = {
     decType     : Asn1Type
     determinant : ReferenceToType
     linkType    : AcnLinkKind
 }
+with 
+  override x.ToString() =  
+    let decType = x.decType.id.ToString()
+    let determnant = x.determinant.ToString()
+    sprintf "%s %s %s" decType (x.linkType.ToString() ) determnant
 
 type AcnParameter = {
     ModName         : string
@@ -579,6 +593,8 @@ type AcnParameter = {
     Asn1Type        : AcnTypes.AcnAsn1Type
     Location        : SrcLoc
 }
+with 
+  member this.c_name = ToC this.Name
 
 
 //type AstRoot = AstRootTemplate<Asn1Type, BAst.AcnParameter>

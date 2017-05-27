@@ -65,9 +65,9 @@
     <Compile Include="BAstFold.fs" />
     <Compile Include="BastAddAcnInsertFields.fs" />
     <Compile Include="CAst.fs" />
+    <Compile Include="CAstFold.fs" />
     <Compile Include="CAstAcnEncodingClasses.fs" />
     <Compile Include="CAstConstruction.fs" />
-    <Compile Include="CAstFold.fs" />
     <Compile Include="DAst.fs" />
     <Compile Include="DastFold.fs" />
     <Compile Include="DAstBaseTypesEquivalence.fs" />

@@ -84,7 +84,7 @@ let createProgramUnits (files: Asn1File list) (typesMap : Map<ReferenceToType, A
 
             let importedTypes = 
                 importedModules |>
-                Seq.collect(fun imp -> imp.Types |> List.map (fun impType ->ReferenceToType.createFromAcnAbsPath [imp.Name.Value; impType.Value])) |> 
+                Seq.collect(fun imp -> imp.Types |> List.map (fun impType ->ReferenceToType.createFromModAndTasName imp.Name.Value impType.Value)) |> 
                 Seq.distinct |> Seq.toList
 
             let soretedTypes = sortTypes fileTypes importedTypes |> List.map(fun ref -> typesMap.[ref])
@@ -102,7 +102,7 @@ let createProgramUnits (files: Asn1File list) (typesMap : Map<ReferenceToType, A
             let valueAssignments = valueAssignments |> List.filter(fun x -> x.id.ModName = m.Name)
             let importedTypes = 
                 m.Imports |>
-                Seq.collect(fun imp -> imp.Types |> List.map (fun impType ->ReferenceToType.createFromAcnAbsPath [imp.Name.Value; impType.Value])) |> 
+                Seq.collect(fun imp -> imp.Types |> List.map (fun impType ->ReferenceToType.createFromModAndTasName imp.Name.Value impType.Value)) |> 
                 Seq.distinct |> Seq.toList        
             let soretedTypes = sortTypes moduTypes importedTypes |> List.map(fun ref -> typesMap.[ref])
             let specFileName = m.Name+"."+l.SpecExtention
