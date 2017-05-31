@@ -5,7 +5,7 @@ done
 set -e
 MAIN_FOLDER="$(pwd)"
 cd parseStg2/
-xbuild
+msbuild
 cd ../
 cd Backend.c.ST/
 mono ../parseStg2/bin/Debug/parseStg2.exe backends.xml
@@ -33,9 +33,9 @@ OEF
 fi
 grep PreBuildEvent Asn1f2.csproj >/dev/null && grep -v TargetFrameworkProfile Asn1f2.csproj | awk 'BEGIN{i=0} /<PreBuildEvent/{i=1;}  {if (i== 0) { print $0; }}  /<\/PreBuildEvent?/{i=0;}' > a && mv a Asn1f2.csproj
 cd ../Antlr
-xbuild || exit 1
+msbuild || exit 1
 cd "$MAIN_FOLDER"
-xbuild || exit 1
+msbuild || exit 1
 cd Asn1f2/
 mkdir -p bin/Debug/
 cp ../*/*.stg bin/Debug/
