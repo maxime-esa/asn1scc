@@ -14,6 +14,7 @@ module genericBackend
 open System.Numerics
 open System.Globalization
 open FsUtils
+open CommonTypes
 open Ast
 open System.IO
 open VisitTree

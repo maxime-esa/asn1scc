@@ -2,8 +2,7 @@
 open System
 open System.Numerics
 
-open Ast
-open Monads
+open Asn1Ast
 open FsUtils
 
 
@@ -11,29 +10,35 @@ let enumIntegerType =
     {
         Asn1Type.Kind = Integer
         Constraints = []
-        AcnProperties = []
         Location = FsUtils.emptyLocation
+        acnProperties = None
     }
 
 let stringType = 
     {
         Asn1Type.Kind = IA5String
         Constraints = []
-        AcnProperties = []
         Location = FsUtils.emptyLocation
+        acnProperties = None
     }
 
 let sizeIntegerType = 
     {
         Asn1Type.Kind = Integer
         Constraints = [RangeContraint_val_MAX ({Asn1Value.Kind = IntegerValue(FsUtils.IntLoc.ByValue 0I); Location=FsUtils.emptyLocation},true)]
-        AcnProperties = []
         Location = FsUtils.emptyLocation
+        acnProperties = None
     }
 
 
 
-let foldMap = CloneTree.foldMap
+let rec foldMap func state lst =
+    match lst with
+    | []        -> [],state
+    | h::tail   -> 
+        let procItem, newState = func state h
+        let restList, finalState = tail |> foldMap func newState
+        procItem::restList, finalState
 
 
 
@@ -260,9 +265,9 @@ let foldAstRoot
         tasFunc newUs r f m tas asn1Type
     and loopValueAssignments (s:UserDefinedTypeScope) (r:AstRoot) (f:Asn1File) (m:Asn1Module) (us:'UserState) (vas:ValueAssignment) =
         match vas.Type.Kind with
-        | ReferenceType(md,ts,_)  ->
+        | ReferenceType rf  ->
             let varScope = visitValueVas vas
-            let typeScope = visitRefType md.Value (ts.Value (*+ "_" + vas.Name.Value*))   //visitTypeVas s vas
+            let typeScope = visitRefType rf.modName.Value (rf.tasName.Value (*+ "_" + vas.Name.Value*))   //visitTypeVas s vas
             let actType = GetActualType vas.Type  r
             // We temporarily create the new type (state is ignored)
             let newAsn1Type, _ = loopType us (typeScope, vas.Type) []
@@ -327,9 +332,9 @@ let foldAstRoot
                     let chidlWithComps = withCompCons |> List.filter(fun x -> x.Name.Value = chInfo.Name.Value)
                     loopChoiceChild cs childScope chInfo chidlWithComps) us
             chTypeFunc fus newChildren newBaseType
-        | ReferenceType (mdName,tasName, tabularized) -> 
-            let oldBaseType = GetBaseTypeByName mdName tasName r
-            let refTypeScope = [MD mdName.Value; TA tasName.Value]
+        | ReferenceType rf -> 
+            let oldBaseType = GetBaseTypeByName rf.modName rf.tasName r
+            let refTypeScope = [MD rf.modName.Value; TA rf.tasName.Value]
             let newBaseType, nus = loopType us (refTypeScope, oldBaseType) []
             let extraWithCompCons = (oldBaseType.Constraints) |> List.choose(fun c -> match c with WithComponentConstraint _ -> Some c| WithComponentsConstraint _ -> Some c | _ -> None)
             loopTypeKind nus s oldBaseType.Kind  (extraWithCompCons@witchCompsCons) (Some newBaseType)

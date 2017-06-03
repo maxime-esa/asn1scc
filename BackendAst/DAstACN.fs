@@ -8,8 +8,8 @@ open FsUtils
 open Constraints
 open DAst
 
-let getFuncName (r:CAst.AstRoot) (l:ProgrammingLanguage) (codec:Ast.Codec) (tasInfo:BAst.TypeAssignmentInfo option)  =
-    tasInfo |> Option.map (fun x -> ToC2(r.TypePrefix + x.tasName + "_ACN" + codec.suffix), x )
+let getFuncName (r:CAst.AstRoot) (l:ProgrammingLanguage) (codec:CommonTypes.Codec) (tasInfo:BAst.TypeAssignmentInfo option)  =
+    tasInfo |> Option.map (fun x -> ToC2(r.args.TypePrefix + x.tasName + "_ACN" + codec.suffix), x )
 
 let getTypeDefinitionName (tasInfo:BAst.TypeAssignmentInfo option) (typeDefinition:TypeDefinitionCommon) =
     match tasInfo with
@@ -28,7 +28,7 @@ let getAcnDeterminantName (id : ReferenceToType) =
             ToC2(longName.Replace("#","elem"))
 
 
-let createPrimitiveFunction (r:CAst.AstRoot) (l:ProgrammingLanguage) (codec:Ast.Codec) (o:CAst.Asn1Type) (typeDefinition:TypeDefinitionCommon) (baseTypeUperFunc : AcnFunction option) (isValidFunc: IsValidFunction option)  (funcBody:ErroCode->FuncParamType -> (AcnFuncBodyResult option)) soSparkAnnotations (us:State)  =
+let createPrimitiveFunction (r:CAst.AstRoot) (l:ProgrammingLanguage) (codec:CommonTypes.Codec) (o:CAst.Asn1Type) (typeDefinition:TypeDefinitionCommon) (baseTypeUperFunc : AcnFunction option) (isValidFunc: IsValidFunction option)  (funcBody:ErroCode->FuncParamType -> (AcnFuncBodyResult option)) soSparkAnnotations (us:State)  =
     let funcNameAndtasInfo   = getFuncName r l codec o.tasInfo
     let errCodeName         = ToC ("ERR_ACN" + (codec.suffix.ToUpper()) + "_" + ((o.id.AcnAbsPath |> Seq.skip 1 |> Seq.StrJoin("-")).Replace("#","elm")))
     let errCodeValue        = us.currErrCode
@@ -82,7 +82,7 @@ let createPrimitiveFunction (r:CAst.AstRoot) (l:ProgrammingLanguage) (codec:Ast.
         }
     ret, {us with currErrCode = us.currErrCode + 1}
 
-let createIntegerFunction (r:CAst.AstRoot) (l:ProgrammingLanguage) (codec:Ast.Codec) (o:CAst.Integer) (typeDefinition:TypeDefinitionCommon) (baseTypeUperFunc : AcnFunction option) (isValidFunc: IsValidFunction option) (uperFunc: UPerFunction) (us:State)  =
+let createIntegerFunction (r:CAst.AstRoot) (l:ProgrammingLanguage) (codec:CommonTypes.Codec) (o:CAst.Integer) (typeDefinition:TypeDefinitionCommon) (baseTypeUperFunc : AcnFunction option) (isValidFunc: IsValidFunction option) (uperFunc: UPerFunction) (us:State)  =
 
     let PositiveInteger_ConstSize_8                  = match l with C -> acn_c.PositiveInteger_ConstSize_8                | Ada -> acn_c.PositiveInteger_ConstSize_8               
     let PositiveInteger_ConstSize_big_endian_16      = match l with C -> acn_c.PositiveInteger_ConstSize_big_endian_16    | Ada -> acn_c.PositiveInteger_ConstSize_big_endian_16   
@@ -108,7 +108,7 @@ let createIntegerFunction (r:CAst.AstRoot) (l:ProgrammingLanguage) (codec:Ast.Co
     let BCD_VarSize_NullTerminated                   = match l with C -> acn_c.BCD_VarSize_NullTerminated                 | Ada -> acn_c.BCD_VarSize_NullTerminated                
 
     let funcBody (errCode:ErroCode) (p:FuncParamType)        = 
-        let pp = match codec with Ast.Encode -> p.getValue l | Ast.Decode -> p.getPointer l
+        let pp = match codec with CommonTypes.Encode -> p.getValue l | CommonTypes.Decode -> p.getPointer l
         let funcBodyContent = 
             match o.acnEncodingClass with
             |CAst.Integer_uPER                                       ->  uperFunc.funcBody p |> Option.map(fun x -> x.funcBody, x.errCodes)
@@ -145,7 +145,7 @@ let createIntegerFunction (r:CAst.AstRoot) (l:ProgrammingLanguage) (codec:Ast.Co
 
 
 
-let nestChildItems (l:ProgrammingLanguage) (codec:Ast.Codec) children = 
+let nestChildItems (l:ProgrammingLanguage) (codec:CommonTypes.Codec) children = 
     let printChild (content:string) (sNestedContent:string option) = 
         match sNestedContent with
         | None  -> content
@@ -164,11 +164,11 @@ let nestChildItems (l:ProgrammingLanguage) (codec:Ast.Codec) children =
 
 
 
-let createBooleanFunction (r:CAst.AstRoot) (l:ProgrammingLanguage) (codec:Ast.Codec) (o:CAst.Boolean) (typeDefinition:TypeDefinitionCommon) (baseTypeUperFunc : AcnFunction option) (isValidFunc: IsValidFunction option) (us:State)  =
+let createBooleanFunction (r:CAst.AstRoot) (l:ProgrammingLanguage) (codec:CommonTypes.Codec) (o:CAst.Boolean) (typeDefinition:TypeDefinitionCommon) (baseTypeUperFunc : AcnFunction option) (isValidFunc: IsValidFunction option) (us:State)  =
     // todo use BolleanAcnEncodingClass
 
     let funcBody (errCode:ErroCode) (p:FuncParamType) = 
-        let pp = match codec with Ast.Encode -> p.getValue l | Ast.Decode -> p.getPointer l
+        let pp = match codec with CommonTypes.Encode -> p.getValue l | CommonTypes.Decode -> p.getPointer l
         let Boolean         = match l with C -> uper_c.Boolean          | Ada -> uper_a.Boolean
         let funcBodyContent = 
             Boolean pp errCode.errCodeName codec
@@ -177,7 +177,7 @@ let createBooleanFunction (r:CAst.AstRoot) (l:ProgrammingLanguage) (codec:Ast.Co
     createPrimitiveFunction r l codec (CAst.Boolean o) typeDefinition baseTypeUperFunc  isValidFunc  (fun e p -> Some (funcBody e p)) soSparkAnnotations us
 
 
-let getFuncParamTypeFromReferenceToType (r:CAst.AstRoot) (l:ProgrammingLanguage) (c:Ast.Codec) (ref:ReferenceToType) =
+let getFuncParamTypeFromReferenceToType (r:CAst.AstRoot) (l:ProgrammingLanguage) (c:CommonTypes.Codec) (ref:ReferenceToType) =
     let isString =
         match (r.typesMap.[ref]) with
         | CAst.IA5String  _ -> true
@@ -215,7 +215,7 @@ let getFuncParamTypeFromReferenceToType (r:CAst.AstRoot) (l:ProgrammingLanguage)
         
 
 
-let createSequenceFunction (r:CAst.AstRoot) (l:ProgrammingLanguage) (codec:Ast.Codec) (o:CAst.Sequence) (typeDefinition:TypeDefinitionCommon) (baseTypeUperFunc : AcnFunction option) (isValidFunc: IsValidFunction option) (children:SeqChildInfo list) (us:State)  =
+let createSequenceFunction (r:CAst.AstRoot) (l:ProgrammingLanguage) (codec:CommonTypes.Codec) (o:CAst.Sequence) (typeDefinition:TypeDefinitionCommon) (baseTypeUperFunc : AcnFunction option) (isValidFunc: IsValidFunction option) (children:SeqChildInfo list) (us:State)  =
     (*
         1. all Acn inserted children are declared as local variables in the encoded and decode functions (declaration step)
         2. all Acn inserted children must be initialized appropriatelly in the encoding phase
@@ -243,7 +243,7 @@ let createSequenceFunction (r:CAst.AstRoot) (l:ProgrammingLanguage) (codec:Ast.C
 
             let localVariables =
                 match children |> Seq.exists(fun x -> x.optionality.IsSome) with
-                | true  when l = C  && codec = Ast.Decode -> (FlagLocalVariable ("presenceBit", None))::acnlocalVariables
+                | true  when l = C  && codec = CommonTypes.Decode -> (FlagLocalVariable ("presenceBit", None))::acnlocalVariables
                 | _                                       -> acnlocalVariables
             let printPresenceBit (child:SeqChildInfo) =
                 match child.optionality with
@@ -270,7 +270,7 @@ let createSequenceFunction (r:CAst.AstRoot) (l:ProgrammingLanguage) (codec:Ast.C
                         | Some childContent ->
                             //in encoding acn inserted fields must first be update before been encoded
                             match codec with
-                            | Ast.Encode ->
+                            | CommonTypes.Encode ->
                                 match child.acnInsertetField with
                                 | false -> ()
                                 | true  -> 
@@ -288,7 +288,7 @@ let createSequenceFunction (r:CAst.AstRoot) (l:ProgrammingLanguage) (codec:Ast.C
                                         | CAst.RefTypeArgument prmName  ->
                                             yield (Some (sprintf "/*%s*/" prmName),[],[])
                                         | _                         -> raise(BugErrorException "Not implemented functionality")
-                            | Ast.Decode -> ()
+                            | CommonTypes.Decode -> ()
 
                             //handle present-when acn property
                             let acnPresenceStatement = 
@@ -314,8 +314,8 @@ let createSequenceFunction (r:CAst.AstRoot) (l:ProgrammingLanguage) (codec:Ast.C
                             let childBody = 
                                 match child.optionality with
                                 | None                       -> Some (sequence_mandatory_child child.c_name childContent.funcBody codec)
-                                | Some CAst.AlwaysAbsent     -> match codec with Ast.Encode -> None                        | Ast.Decode -> Some (sequence_optional_child p.p (p.getAcces l) child.c_name childContent.funcBody codec) 
-                                | Some CAst.AlwaysPresent    -> match codec with Ast.Encode -> Some childContent.funcBody  | Ast.Decode -> Some (sequence_optional_child p.p (p.getAcces l) child.c_name childContent.funcBody codec)
+                                | Some CAst.AlwaysAbsent     -> match codec with CommonTypes.Encode -> None                        | CommonTypes.Decode -> Some (sequence_optional_child p.p (p.getAcces l) child.c_name childContent.funcBody codec) 
+                                | Some CAst.AlwaysPresent    -> match codec with CommonTypes.Encode -> Some childContent.funcBody  | CommonTypes.Decode -> Some (sequence_optional_child p.p (p.getAcces l) child.c_name childContent.funcBody codec)
                                 | Some (CAst.Optional opt)   -> 
                                     match opt.defaultValue with
                                     | None                   -> Some (sequence_optional_child p.p (p.getAcces l) child.c_name childContent.funcBody codec)

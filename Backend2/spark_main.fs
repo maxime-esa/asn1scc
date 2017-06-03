@@ -18,7 +18,7 @@ open Ast
 open System.IO
 open uPER
 open spark_utils
-
+open CommonTypes
 
 
 let CreateMainFile (r:AstRoot) (acn:AcnTypes.AcnAstResolved) outDir vasName =

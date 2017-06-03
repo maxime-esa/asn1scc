@@ -14,6 +14,7 @@ module ParameterizedAsn1Ast
 open System.Numerics
 open Antlr.Runtime.Tree
 open Antlr.Runtime
+open CommonTypes
 
 open FsUtils
 
@@ -185,11 +186,6 @@ and NamedConstraintMark =
     | MarkAbsent
     | MarkOptional
 
-and Asn1Encoding =
-    | UPER
-    | ACN
-    | BER
-    | XER
 
 
 let getModuleByName (r:AstRoot) (mdName:StringLoc) =

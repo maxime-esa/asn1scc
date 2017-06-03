@@ -8,8 +8,8 @@ open FsUtils
 open Constraints
 open DAst
 
-let getFuncName (r:CAst.AstRoot) (l:ProgrammingLanguage) (codec:Ast.Codec) (tasInfo:BAst.TypeAssignmentInfo option) =
-    tasInfo |> Option.map (fun x -> ToC2(r.TypePrefix + x.tasName + codec.suffix))
+let getFuncName (r:CAst.AstRoot) (l:ProgrammingLanguage) (codec:CommonTypes.Codec) (tasInfo:BAst.TypeAssignmentInfo option) =
+    tasInfo |> Option.map (fun x -> ToC2(r.args.TypePrefix + x.tasName + codec.suffix))
 
 let getTypeDefinitionName (tasInfo:BAst.TypeAssignmentInfo option) (typeDefinition:TypeDefinitionCommon) =
     match tasInfo with
@@ -26,7 +26,7 @@ let callBaseTypeFunc l = match l with C -> uper_c.call_base_type_func | Ada -> u
 //2.Fragmentation
 
 
-let createPrimitiveFunction (r:CAst.AstRoot) (l:ProgrammingLanguage) (codec:Ast.Codec) (o:CAst.Asn1Type) (typeDefinition:TypeDefinitionCommon) (baseTypeUperFunc : UPerFunction option) (isValidFunc: IsValidFunction option)  (funcBody:ErroCode->FuncParamType -> (UPERFuncBodyResult option)) soSparkAnnotations (us:State)  =
+let createPrimitiveFunction (r:CAst.AstRoot) (l:ProgrammingLanguage) (codec:CommonTypes.Codec) (o:CAst.Asn1Type) (typeDefinition:TypeDefinitionCommon) (baseTypeUperFunc : UPerFunction option) (isValidFunc: IsValidFunction option)  (funcBody:ErroCode->FuncParamType -> (UPERFuncBodyResult option)) soSparkAnnotations (us:State)  =
     let funcName            = getFuncName r l codec o.tasInfo
     let errCodeName         = ToC ("ERR_UPER" + (codec.suffix.ToUpper()) + "_" + ((o.id.AcnAbsPath |> Seq.skip 1 |> Seq.StrJoin("-")).Replace("#","elm")))
     let errCodeValue        = us.currErrCode
@@ -71,9 +71,9 @@ let createPrimitiveFunction (r:CAst.AstRoot) (l:ProgrammingLanguage) (codec:Ast.
 
 
 
-let createIntegerFunction (r:CAst.AstRoot) (l:ProgrammingLanguage) (codec:Ast.Codec) (o:CAst.Integer) (typeDefinition:TypeDefinitionCommon) (baseTypeUperFunc : UPerFunction option) (isValidFunc: IsValidFunction option) (us:State)  =
+let createIntegerFunction (r:CAst.AstRoot) (l:ProgrammingLanguage) (codec:CommonTypes.Codec) (o:CAst.Integer) (typeDefinition:TypeDefinitionCommon) (baseTypeUperFunc : UPerFunction option) (isValidFunc: IsValidFunction option) (us:State)  =
     let funcBody (errCode:ErroCode) (p:FuncParamType) = 
-        let pp = match codec with Ast.Encode -> p.getValue l | Ast.Decode -> p.getPointer l
+        let pp = match codec with CommonTypes.Encode -> p.getValue l | CommonTypes.Decode -> p.getPointer l
         let IntNoneRequired         = match l with C -> uper_c.IntNoneRequired          | Ada -> (fun p min   errCode codec -> uper_a.IntFullyConstraint p min min 0I errCode codec)
         let IntFullyConstraintPos   = match l with C -> uper_c.IntFullyConstraintPos    | Ada -> uper_a.IntFullyConstraint
         let IntFullyConstraint      = match l with C -> uper_c.IntFullyConstraint       | Ada -> uper_a.IntFullyConstraint
@@ -124,32 +124,32 @@ let createIntegerFunction (r:CAst.AstRoot) (l:ProgrammingLanguage) (codec:Ast.Co
     createPrimitiveFunction r l codec (CAst.Integer o) typeDefinition baseTypeUperFunc  isValidFunc  (fun e p -> Some (funcBody e p)) soSparkAnnotations us
 
 
-let createBooleanFunction (r:CAst.AstRoot) (l:ProgrammingLanguage) (codec:Ast.Codec) (o:CAst.Boolean) (typeDefinition:TypeDefinitionCommon) (baseTypeUperFunc : UPerFunction option) (isValidFunc: IsValidFunction option) (us:State)  =
+let createBooleanFunction (r:CAst.AstRoot) (l:ProgrammingLanguage) (codec:CommonTypes.Codec) (o:CAst.Boolean) (typeDefinition:TypeDefinitionCommon) (baseTypeUperFunc : UPerFunction option) (isValidFunc: IsValidFunction option) (us:State)  =
     let funcBody (errCode:ErroCode) (p:FuncParamType) = 
-        let pp = match codec with Ast.Encode -> p.getValue l | Ast.Decode -> p.getPointer l
+        let pp = match codec with CommonTypes.Encode -> p.getValue l | CommonTypes.Decode -> p.getPointer l
         let Boolean         = match l with C -> uper_c.Boolean          | Ada -> uper_a.Boolean
         let funcBodyContent = Boolean pp errCode.errCodeName codec
         {UPERFuncBodyResult.funcBody = funcBodyContent; errCodes = [errCode]; localVariables = []}    
     let soSparkAnnotations = None
     createPrimitiveFunction r l codec (CAst.Boolean o) typeDefinition baseTypeUperFunc  isValidFunc  (fun e p -> Some (funcBody e p)) soSparkAnnotations us
 
-let createRealFunction (r:CAst.AstRoot) (l:ProgrammingLanguage) (codec:Ast.Codec) (o:CAst.Real) (typeDefinition:TypeDefinitionCommon) (baseTypeUperFunc : UPerFunction option) (isValidFunc: IsValidFunction option) (us:State)  =
+let createRealFunction (r:CAst.AstRoot) (l:ProgrammingLanguage) (codec:CommonTypes.Codec) (o:CAst.Real) (typeDefinition:TypeDefinitionCommon) (baseTypeUperFunc : UPerFunction option) (isValidFunc: IsValidFunction option) (us:State)  =
     let funcBody (errCode:ErroCode) (p:FuncParamType) = 
-        let pp = match codec with Ast.Encode -> p.getValue l | Ast.Decode -> p.getPointer l
+        let pp = match codec with CommonTypes.Encode -> p.getValue l | CommonTypes.Decode -> p.getPointer l
         let Real         = match l with C -> uper_c.Real          | Ada -> uper_a.Real
         let funcBodyContent = Real pp errCode.errCodeName codec
         {UPERFuncBodyResult.funcBody = funcBodyContent; errCodes = [errCode]; localVariables = []}    
     let soSparkAnnotations = None
     createPrimitiveFunction r l codec (CAst.Real o) typeDefinition baseTypeUperFunc  isValidFunc  (fun e p -> Some (funcBody e p)) soSparkAnnotations us
 
-let createNullTypeFunction (r:CAst.AstRoot) (l:ProgrammingLanguage) (codec:Ast.Codec) (o:CAst.NullType) (typeDefinition:TypeDefinitionCommon) (baseTypeUperFunc : UPerFunction option) (isValidFunc: IsValidFunction option) (us:State)  =
+let createNullTypeFunction (r:CAst.AstRoot) (l:ProgrammingLanguage) (codec:CommonTypes.Codec) (o:CAst.NullType) (typeDefinition:TypeDefinitionCommon) (baseTypeUperFunc : UPerFunction option) (isValidFunc: IsValidFunction option) (us:State)  =
     let soSparkAnnotations = None
     createPrimitiveFunction r l codec (CAst.NullType o) typeDefinition baseTypeUperFunc  isValidFunc  (fun e p -> None) soSparkAnnotations us
 
 
-let createEnumeratedFunction (r:CAst.AstRoot) (l:ProgrammingLanguage) (codec:Ast.Codec) (o:CAst.Enumerated) (typeDefinition:TypeDefinitionCommon) (baseTypeUperFunc : UPerFunction option) (isValidFunc: IsValidFunction option) (us:State)  =
+let createEnumeratedFunction (r:CAst.AstRoot) (l:ProgrammingLanguage) (codec:CommonTypes.Codec) (o:CAst.Enumerated) (typeDefinition:TypeDefinitionCommon) (baseTypeUperFunc : UPerFunction option) (isValidFunc: IsValidFunction option) (us:State)  =
     let funcBody (errCode:ErroCode) (p:FuncParamType) = 
-        let pp = match codec with Ast.Encode -> p.getValue l | Ast.Decode -> p.getPointer l
+        let pp = match codec with CommonTypes.Encode -> p.getValue l | CommonTypes.Decode -> p.getPointer l
         let Enumerated         = match l with C -> uper_c.Enumerated          | Ada -> uper_a.Enumerated
         let Enumerated_item    = match l with C -> uper_c.Enumerated_item          | Ada -> uper_a.Enumerated_item
         let typeDefinitionName = getTypeDefinitionName o.tasInfo typeDefinition
@@ -166,7 +166,7 @@ let createEnumeratedFunction (r:CAst.AstRoot) (l:ProgrammingLanguage) (codec:Ast
     createPrimitiveFunction r l codec (CAst.Enumerated o) typeDefinition baseTypeUperFunc  isValidFunc  (fun e p -> Some (funcBody e p)) soSparkAnnotations us
 
 
-let createIA5StringFunction (r:CAst.AstRoot) (l:ProgrammingLanguage) (codec:Ast.Codec) (o:CAst.StringType) (typeDefinition:TypeDefinitionCommon) (baseTypeUperFunc : UPerFunction option) (isValidFunc: IsValidFunction option) (us:State)  =
+let createIA5StringFunction (r:CAst.AstRoot) (l:ProgrammingLanguage) (codec:CommonTypes.Codec) (o:CAst.StringType) (typeDefinition:TypeDefinitionCommon) (baseTypeUperFunc : UPerFunction option) (isValidFunc: IsValidFunction option) (us:State)  =
     let i = sprintf "i%d" (o.id.SeqeuenceOfLevel + 1)
     let lv = SequenceOfIndex (o.id.SeqeuenceOfLevel + 1, None)
     let charIndex =
@@ -210,7 +210,7 @@ let createIA5StringFunction (r:CAst.AstRoot) (l:ProgrammingLanguage) (codec:Ast.
             Some(uper_a.annotations typeDefinition.name true isValidFunc.IsSome true true codec)
     createPrimitiveFunction r l codec (CAst.IA5String o) typeDefinition baseTypeUperFunc  isValidFunc  (fun e p -> Some (funcBody e p)) soSparkAnnotations  us
 
-let createOctetStringFunction (r:CAst.AstRoot) (l:ProgrammingLanguage) (codec:Ast.Codec) (o:CAst.OctetString) (typeDefinition:TypeDefinitionCommon) (baseTypeUperFunc : UPerFunction option) (isValidFunc: IsValidFunction option) (us:State)  =
+let createOctetStringFunction (r:CAst.AstRoot) (l:ProgrammingLanguage) (codec:CommonTypes.Codec) (o:CAst.OctetString) (typeDefinition:TypeDefinitionCommon) (baseTypeUperFunc : UPerFunction option) (isValidFunc: IsValidFunction option) (us:State)  =
     let i = sprintf "i%d" (o.id.SeqeuenceOfLevel + 1)
     let lv = SequenceOfIndex (o.id.SeqeuenceOfLevel + 1, None)
     let nStringLength =
@@ -243,7 +243,7 @@ let createOctetStringFunction (r:CAst.AstRoot) (l:ProgrammingLanguage) (codec:As
             Some(uper_a.annotations typeDefinition.name true isValidFunc.IsSome true true codec)
     createPrimitiveFunction r l codec (CAst.OctetString o) typeDefinition baseTypeUperFunc  isValidFunc  (fun e p -> Some (funcBody e p)) soSparkAnnotations  us
 
-let createBitStringFunction (r:CAst.AstRoot) (l:ProgrammingLanguage) (codec:Ast.Codec) (o:CAst.BitString) (typeDefinition:TypeDefinitionCommon) (baseTypeUperFunc : UPerFunction option) (isValidFunc: IsValidFunction option) (us:State)  =
+let createBitStringFunction (r:CAst.AstRoot) (l:ProgrammingLanguage) (codec:CommonTypes.Codec) (o:CAst.BitString) (typeDefinition:TypeDefinitionCommon) (baseTypeUperFunc : UPerFunction option) (isValidFunc: IsValidFunction option) (us:State)  =
     let i = sprintf "i%d" (o.id.SeqeuenceOfLevel + 1)
     let lv = SequenceOfIndex (o.id.SeqeuenceOfLevel + 1, None)
     let nStringLength =
@@ -279,7 +279,7 @@ let createBitStringFunction (r:CAst.AstRoot) (l:ProgrammingLanguage) (codec:Ast.
 
 
 
-let createSequenceOfFunction (r:CAst.AstRoot) (l:ProgrammingLanguage) (codec:Ast.Codec) (o:CAst.SequenceOf) (typeDefinition:TypeDefinitionCommon) (baseTypeUperFunc : UPerFunction option) (isValidFunc: IsValidFunction option) (child:Asn1Type) (us:State)  =
+let createSequenceOfFunction (r:CAst.AstRoot) (l:ProgrammingLanguage) (codec:CommonTypes.Codec) (o:CAst.SequenceOf) (typeDefinition:TypeDefinitionCommon) (baseTypeUperFunc : UPerFunction option) (isValidFunc: IsValidFunction option) (child:Asn1Type) (us:State)  =
     let nStringLength =
         match o.minSize = o.maxSize with
         | true  -> []
@@ -327,7 +327,7 @@ let createSequenceOfFunction (r:CAst.AstRoot) (l:ProgrammingLanguage) (codec:Ast
     createPrimitiveFunction r l codec (CAst.SequenceOf o) typeDefinition baseTypeUperFunc  isValidFunc  funcBody soSparkAnnotations  us
 
 
-let nestChildItems (l:ProgrammingLanguage) (codec:Ast.Codec) children = 
+let nestChildItems (l:ProgrammingLanguage) (codec:CommonTypes.Codec) children = 
     let printChild (content:string) (sNestedContent:string option) = 
         match sNestedContent with
         | None  -> content
@@ -344,7 +344,7 @@ let nestChildItems (l:ProgrammingLanguage) (codec:Ast.Codec) children =
             | Some childrenCont    -> Some (printChild x  (Some childrenCont))
     printChildren children
 
-let createSequenceFunction (r:CAst.AstRoot) (l:ProgrammingLanguage) (codec:Ast.Codec) (o:CAst.Sequence) (typeDefinition:TypeDefinitionCommon) (baseTypeUperFunc : UPerFunction option) (isValidFunc: IsValidFunction option) (children:SeqChildInfo list) (us:State)  =
+let createSequenceFunction (r:CAst.AstRoot) (l:ProgrammingLanguage) (codec:CommonTypes.Codec) (o:CAst.Sequence) (typeDefinition:TypeDefinitionCommon) (baseTypeUperFunc : UPerFunction option) (isValidFunc: IsValidFunction option) (children:SeqChildInfo list) (us:State)  =
     // stg macros
     let sequence_presence_bit       = match l with C -> uper_c.sequence_presence_bit        | Ada -> uper_a.sequence_presence_bit
     let sequence_presence_bit_fix   = match l with C -> uper_c.sequence_presence_bit_fix    | Ada -> uper_a.sequence_presence_bit_fix
@@ -359,7 +359,7 @@ let createSequenceFunction (r:CAst.AstRoot) (l:ProgrammingLanguage) (codec:Ast.C
             let nonAcnChildren = children |> List.filter(fun c -> not c.acnInsertetField)
             let localVariables =
                 match nonAcnChildren |> Seq.exists(fun x -> x.optionality.IsSome) with
-                | true  when l = C  && codec = Ast.Decode -> [(FlagLocalVariable ("presenceBit", None))]
+                | true  when l = C  && codec = CommonTypes.Decode -> [(FlagLocalVariable ("presenceBit", None))]
                 | _                                       -> []
             let printPresenceBit (child:SeqChildInfo) =
                 match child.optionality with
@@ -379,8 +379,8 @@ let createSequenceFunction (r:CAst.AstRoot) (l:ProgrammingLanguage) (codec:Ast.C
                         let childBody = 
                             match child.optionality with
                             | None                       -> Some (sequence_mandatory_child child.c_name childContent.funcBody codec) 
-                            | Some CAst.AlwaysAbsent     -> match codec with Ast.Encode -> None                        | Ast.Decode -> Some (sequence_optional_child p.p (p.getAcces l) child.c_name childContent.funcBody codec) 
-                            | Some CAst.AlwaysPresent    -> match codec with Ast.Encode -> Some childContent.funcBody  | Ast.Decode -> Some (sequence_optional_child p.p (p.getAcces l) child.c_name childContent.funcBody codec)
+                            | Some CAst.AlwaysAbsent     -> match codec with CommonTypes.Encode -> None                        | CommonTypes.Decode -> Some (sequence_optional_child p.p (p.getAcces l) child.c_name childContent.funcBody codec) 
+                            | Some CAst.AlwaysPresent    -> match codec with CommonTypes.Encode -> Some childContent.funcBody  | CommonTypes.Decode -> Some (sequence_optional_child p.p (p.getAcces l) child.c_name childContent.funcBody codec)
                             | Some (CAst.Optional opt)   -> 
                                 match opt.defaultValue with
                                 | None                   -> Some (sequence_optional_child p.p (p.getAcces l) child.c_name childContent.funcBody codec)
@@ -410,7 +410,7 @@ let createSequenceFunction (r:CAst.AstRoot) (l:ProgrammingLanguage) (codec:Ast.C
 
 
 
-let createChoiceFunction (r:CAst.AstRoot) (l:ProgrammingLanguage) (codec:Ast.Codec) (o:CAst.Choice) (typeDefinition:TypeDefinitionCommon) (baseTypeUperFunc : UPerFunction option) (isValidFunc: IsValidFunction option) (children:ChChildInfo list) (us:State)  =
+let createChoiceFunction (r:CAst.AstRoot) (l:ProgrammingLanguage) (codec:CommonTypes.Codec) (o:CAst.Choice) (typeDefinition:TypeDefinitionCommon) (baseTypeUperFunc : UPerFunction option) (isValidFunc: IsValidFunction option) (children:ChChildInfo list) (us:State)  =
     // stg macros
     let choice_child       = match l with C -> uper_c.choice_child | Ada -> uper_a.choice_child
     let choice             = match l with C -> uper_c.choice       | Ada -> uper_a.choice
@@ -420,8 +420,8 @@ let createChoiceFunction (r:CAst.AstRoot) (l:ProgrammingLanguage) (codec:Ast.Cod
     let sChoiceIndexName = typeDefinition.name + "_index_tmp"
     let localVariables =
         match codec with
-        | Ast.Encode  -> []
-        | Ast.Decode  -> [(Asn1SIntLocalVariable (sChoiceIndexName, None))]
+        | CommonTypes.Encode  -> []
+        | CommonTypes.Decode  -> [(Asn1SIntLocalVariable (sChoiceIndexName, None))]
 
     let typeDefinitionName = getTypeDefinitionName o.tasInfo typeDefinition
 
@@ -438,7 +438,7 @@ let createChoiceFunction (r:CAst.AstRoot) (l:ProgrammingLanguage) (codec:Ast.Cod
                         let uperChildRes = 
                             match l with
                             | C   -> chFunc.funcBody (p.getChChild l child.c_name child.chType.isIA5String)
-                            | Ada when codec = Ast.Decode -> chFunc.funcBody (VALUE (child.c_name + "_tmp"))
+                            | Ada when codec = CommonTypes.Decode -> chFunc.funcBody (VALUE (child.c_name + "_tmp"))
                             | Ada -> chFunc.funcBody (p.getChChild l child.c_name child.chType.isIA5String)
                         match uperChildRes with
                         | None              -> "/*no encoding/decoding is required*/",[],[]

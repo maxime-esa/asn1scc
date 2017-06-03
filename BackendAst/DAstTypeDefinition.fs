@@ -17,7 +17,7 @@ let createInnerTypes (l:ProgrammingLanguage) =
 
 let getTypeDefinitionName (r:CAst.AstRoot) (l:ProgrammingLanguage) (id : ReferenceToType) =
     let longName = id.AcnAbsPath.Tail |> Seq.StrJoin "_"
-    ToC2(r.TypePrefix + longName.Replace("#","elem"))
+    ToC2(r.args.TypePrefix + longName.Replace("#","elem"))
 
 let getCompleteDefinition l (typeOrSubsType:TypeOrSubsType) typeDefinitionBody typeDefinitionName (arraySize: int option) (childldrenCompleteDefintions:string list) =
     match l with

@@ -82,6 +82,11 @@
       <Name>Backend2</Name>
       <Project>{000896AE-1E52-4120-8394-0E5E07A8F194}</Project>
     </ProjectReference>
+    <ProjectReference Include="..\CommonTypes\CommonTypes.fsproj">
+      <Name>CommonTypes</Name>
+      <Project>{83f15fa6-7da0-4e47-9512-39ae3fdd28cf}</Project>
+      <Private>True</Private>
+    </ProjectReference>
   </ItemGroup>
   <Choose>
     <When Condition="'$(VisualStudioVersion)' == '11.0' Or $(OS) == 'Unix'">

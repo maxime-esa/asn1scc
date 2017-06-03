@@ -276,18 +276,13 @@ let MapFile (r:ParameterizedAsn1Ast.AstRoot) (f:ParameterizedAsn1Ast.Asn1File) :
         Modules = f.Modules |> List.map (MapModule r)
     }
 
-let MapAsn1Encoding = function
-    | ParameterizedAsn1Ast.UPER     -> Ast.UPER
-    | ParameterizedAsn1Ast.ACN      -> Ast.ACN
-    | ParameterizedAsn1Ast.BER      -> Ast.BER
-    | ParameterizedAsn1Ast.XER      -> Ast.XER
 
 
 let DoWork (r:ParameterizedAsn1Ast.AstRoot) : Ast.AstRoot =
     let r = RemoveParamterizedTypes.DoWork r
     {
         Ast.AstRoot.Files = r.Files |> List.map (MapFile r)
-        Encodings = r.Encodings |> List.map MapAsn1Encoding
+        Encodings = r.Encodings 
         GenerateEqualFunctions = r.GenerateEqualFunctions
         TypePrefix = r.TypePrefix
         AstXmlAbsFileName = r.AstXmlAbsFileName

@@ -12,6 +12,7 @@
 module c_equal
 
 open System.Numerics
+open CommonTypes
 open FsUtils
 open Ast
 open System.IO

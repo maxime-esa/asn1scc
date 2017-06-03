@@ -22,7 +22,7 @@ open DAst
 
 
 let getFuncName (r:CAst.AstRoot) (l:ProgrammingLanguage) (tasInfo:BAst.TypeAssignmentInfo option) =
-    tasInfo |> Option.map (fun x -> ToC2(r.TypePrefix + x.tasName + "_IsConstraintValid"))
+    tasInfo |> Option.map (fun x -> ToC2(r.args.TypePrefix + x.tasName + "_IsConstraintValid"))
 
 let Lte (l:ProgrammingLanguage) eqIsInc  e1 e2 =
     match eqIsInc with
@@ -379,7 +379,7 @@ let createSequenceFunction (r:CAst.AstRoot) (l:ProgrammingLanguage) (o:CAst.Sequ
             let childrenConent, finalErrCode =   
                 children |> 
                 List.filter(fun c -> not c.acnInsertetField) |> 
-                CloneTree.foldMap (fun errCode cc -> cc.isValidBodyStats errCode) us.currErrCode
+                GenericFold2.foldMap (fun errCode cc -> cc.isValidBodyStats errCode) us.currErrCode
             let childrenConent = childrenConent |> List.choose id
             let deltaErrCode = finalErrCode - us.currErrCode
 
@@ -483,7 +483,7 @@ let createChoiceFunction (r:CAst.AstRoot) (l:ProgrammingLanguage) (o:CAst.Choice
 
             let childrenConent, finalErrCode =   
                 children |> 
-                CloneTree.foldMap (fun errCode cc -> 
+                GenericFold2.foldMap (fun errCode cc -> 
                     let (vc,erc) = cc.isValidBodyStats errCode
                     ((cc,vc),erc)) (us.currErrCode+1)
             let deltaErrCode = finalErrCode - us.currErrCode

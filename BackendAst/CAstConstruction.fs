@@ -106,7 +106,7 @@ let mapBTypeToCType (r:BAst.AstRoot) (t:BAst.Asn1Type) (acn:AcnTypes.AcnAst) (ac
     
 
 
-let foldMap = CloneTree.foldMap
+let foldMap = GenericFold2.foldMap
 
 
 
@@ -208,19 +208,11 @@ let mapBAstToCast (r:BAst.AstRoot) (acn:AcnTypes.AcnAst) : AstRoot=
 
     {
         AstRoot.Files = r.Files
-        Encodings = r.Encodings
-        GenerateEqualFunctions = r.GenerateEqualFunctions
-        TypePrefix = r.TypePrefix
-        AstXmlAbsFileName = r.AstXmlAbsFileName
-        IcdUperHtmlFileName = r.IcdUperHtmlFileName
-        IcdAcnHtmlFileName = r.IcdAcnHtmlFileName
-        CheckWithOss = r.CheckWithOss
-        mappingFunctionsModule = r.mappingFunctionsModule
+        args = r.args
         valsMap  = r.valsMap
         typesMap = newTypesMap
         TypeAssignments = newTypeAssignments
         ValueAssignments = r.ValueAssignments
-        integerSizeInBytes = r.integerSizeInBytes
         acnParameters = acnParameters
         acnConstants = acnConstants
         acnLinks = acnLinks

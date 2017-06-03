@@ -55,7 +55,6 @@
     <Reference Include="System.Numerics" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="FsUtils.fs" />
     <Compile Include="ParameterizedAsn1Ast.fs" />
     <Compile Include="CreateAsn1AstFromAntlrTree.fs" />
     <Compile Include="AcnTypes.fs" />
@@ -78,12 +77,16 @@
     <Compile Include="EnsureUniqueEnumNames.fs" />
     <Compile Include="Monads.fs" />
     <Compile Include="GenericFold.fs" />
-    <Compile Include="GenericFold2.fs" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\Antlr\Antlr.csproj">
       <Name>Antlr</Name>
       <Project>{A1882F1D-5185-407C-8227-1E2B69BAADE9}</Project>
+    </ProjectReference>
+    <ProjectReference Include="..\CommonTypes\CommonTypes.fsproj">
+      <Name>CommonTypes</Name>
+      <Project>{83f15fa6-7da0-4e47-9512-39ae3fdd28cf}</Project>
+      <Private>True</Private>
     </ProjectReference>
   </ItemGroup>
   <Choose>

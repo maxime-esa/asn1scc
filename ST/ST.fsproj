@@ -76,9 +76,10 @@
     <Reference Include="System.Numerics" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\Ast\Ast.fsproj">
-      <Name>Ast</Name>
-      <Project>{3B67372A-65C7-439E-849F-CE1A1D2FCC69}</Project>
+    <ProjectReference Include="..\CommonTypes\CommonTypes.fsproj">
+      <Name>CommonTypes</Name>
+      <Project>{83f15fa6-7da0-4e47-9512-39ae3fdd28cf}</Project>
+      <Private>True</Private>
     </ProjectReference>
   </ItemGroup>
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 

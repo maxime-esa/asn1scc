@@ -155,24 +155,24 @@ namespace parseStg2
             var outFileName = Path.Combine(curDir, run.Element("output").Value);
             var modName = run.Element("modName").Value;
             var UseAttr = run.Attribute("uses");
-            var Uses = UseAttr == null ? new List<string>() { "Ast" } : new List<string>(UseAttr.Value.Split(';').Where(c => c.Trim() != ""));
+            var Uses = UseAttr == null ? new List<string>() { "CommonTypes" } : new List<string>(UseAttr.Value.Split(';').Where(c => c.Trim() != ""));
             string lng = "";
             switch (run.Element("lang").Value.ToUpper())
             {
                 case "SPARK":
-                    lng = "ST.lang <- Ast.ProgrammingLanguage.Spark";
+                    lng = "ST.lang <- CommonTypes.ProgrammingLanguage.Spark";
                     break;
                 case "C":
-                    lng = "ST.lang <- Ast.ProgrammingLanguage.C";
+                    lng = "ST.lang <- CommonTypes.ProgrammingLanguage.C";
                     break;
                 case "ADA":
-                    lng = "ST.lang <- Ast.ProgrammingLanguage.Ada";
+                    lng = "ST.lang <- CommonTypes.ProgrammingLanguage.Ada";
                     break;
                 case "HTML":
-                    lng = "ST.lang <- Ast.ProgrammingLanguage.Html";
+                    lng = "ST.lang <- CommonTypes.ProgrammingLanguage.Html";
                     break;
                 default:
-                    lng = "ST.lang <- Ast.ProgrammingLanguage.Unknown";
+                    lng = "ST.lang <- CommonTypes.ProgrammingLanguage.Unknown";
                     break;
             }
 

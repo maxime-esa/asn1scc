@@ -13,6 +13,7 @@ module c_XER
 
 open System.Numerics
 open FsUtils
+open CommonTypes
 open Ast
 open System.IO
 open VisitTree

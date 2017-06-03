@@ -13,6 +13,7 @@ module Acn
 
 open System.Numerics
 open FsUtils
+open CommonTypes
 open AcnTypes
 open Ast
 open VisitTree

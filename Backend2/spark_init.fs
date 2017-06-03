@@ -13,6 +13,7 @@ module spark_init
 
 open System.Numerics
 open FsUtils
+open CommonTypes
 open Ast
 open System.IO
 open VisitTree

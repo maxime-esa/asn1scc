@@ -14,6 +14,7 @@ module spark_body
 open System.Numerics
 open FsUtils
 open Ast
+open CommonTypes
 open System.IO
 open VisitTree
 open uPER

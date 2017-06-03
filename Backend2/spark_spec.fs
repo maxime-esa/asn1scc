@@ -12,6 +12,7 @@
 module spark_spec
 open System.Numerics
 open FsUtils
+open CommonTypes
 open Ast
 open System.IO
 open VisitTree

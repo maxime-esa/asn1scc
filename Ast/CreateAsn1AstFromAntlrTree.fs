@@ -15,6 +15,7 @@ module CreateAsn1AstFromAntlrTree
 open System
 open System.Numerics
 open FsUtils
+open CommonTypes
 open ParameterizedAsn1Ast
 open Antlr.Asn1
 open Antlr.Runtime.Tree

@@ -13,6 +13,7 @@ module c_h
 
 
 open System.Numerics
+open CommonTypes
 open FsUtils
 open Ast
 open System.IO

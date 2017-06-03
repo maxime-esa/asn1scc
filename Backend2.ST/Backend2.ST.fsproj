@@ -132,6 +132,11 @@
     </None>
   </ItemGroup>
   <ItemGroup>
+    <ProjectReference Include="..\CommonTypes\CommonTypes.fsproj">
+      <Name>CommonTypes</Name>
+      <Project>{83f15fa6-7da0-4e47-9512-39ae3fdd28cf}</Project>
+      <Private>True</Private>
+    </ProjectReference>
     <ProjectReference Include="..\ST\ST.fsproj">
       <Name>ST</Name>
       <Project>{94495D92-B615-4745-B26B-A5EC73A6A462}</Project>

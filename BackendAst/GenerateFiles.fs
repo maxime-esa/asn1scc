@@ -107,14 +107,14 @@ let printUnit (r:DAst.AstRoot) (l:ProgrammingLanguage) outDir (pu:ProgramUnit) =
 
             let uperEncDec codec         =  
                 match codec with
-                | Ast.Encode    -> match t.uperEncFunction with None -> None | Some x -> x.func
-                | Ast.Decode    -> match t.uperDecFunction with None -> None | Some x -> x.func
+                | CommonTypes.Encode    -> match t.uperEncFunction with None -> None | Some x -> x.func
+                | CommonTypes.Decode    -> match t.uperDecFunction with None -> None | Some x -> x.func
 
             let ancEncDec codec         = 
                 match codec with
-                | Ast.Encode    -> match t.acnEncFunction with None -> None | Some x -> x.func
-                | Ast.Decode    -> match t.acnDecFunction with None -> None | Some x -> x.func
-            let allProcs = eqFuncs@([(*initialize;*) isValid;(uperEncDec Ast.Encode); (uperEncDec Ast.Decode);(ancEncDec Ast.Encode); (ancEncDec Ast.Decode)] |> List.choose id)
+                | CommonTypes.Encode    -> match t.acnEncFunction with None -> None | Some x -> x.func
+                | CommonTypes.Decode    -> match t.acnDecFunction with None -> None | Some x -> x.func
+            let allProcs = eqFuncs@([(*initialize;*) isValid;(uperEncDec CommonTypes.Encode); (uperEncDec CommonTypes.Decode);(ancEncDec CommonTypes.Encode); (ancEncDec CommonTypes.Decode)] |> List.choose id)
             match l with
             | C     ->  body_c.printTass allProcs 
             | Ada   ->  body_a.printTass allProcs )

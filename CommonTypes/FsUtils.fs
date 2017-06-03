@@ -13,7 +13,6 @@ module FsUtils
 
 open System
 open System.Numerics
-open Antlr.Asn1
 open Antlr.Runtime.Tree
 open Antlr.Runtime
 
@@ -95,6 +94,7 @@ type System.String with
         System.String.Equals(s1, s2, System.StringComparison.CurrentCultureIgnoreCase);;
 
 exception SemanticError of SrcLoc*string
+exception UserException of string
 exception BugErrorException of string
 
 let dict = System.Collections.Generic.Dictionary<ITree,string>()

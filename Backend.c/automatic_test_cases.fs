@@ -19,6 +19,7 @@ open VisitTree
 open uPER
 open CloneTree
 open c_utils
+open CommonTypes
 
 
 let GetEncodingString = function    

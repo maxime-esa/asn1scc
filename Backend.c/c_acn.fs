@@ -19,7 +19,7 @@ open VisitTree
 open uPER
 open CloneTree
 open c_utils
-
+open CommonTypes
 
 (*
 Main update function.

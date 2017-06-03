@@ -15,6 +15,7 @@ open FsUtils
 open Ast
 open System
 open CloneTree
+open CommonTypes
 
 
 type State =  string list

@@ -1,5 +1,6 @@
 ﻿module BAstConstruction
 open System
+open CommonTypes
 open System.Numerics
 open Antlr.Runtime.Tree
 open Antlr.Runtime
@@ -55,21 +56,14 @@ type InterimTypeKind =
 let addValue (s:State) (v:Asn1GenericValue)=
     {s with anonymousValues=s.anonymousValues@[v]}
 
-let smap = CloneTree.foldMap
+let smap = GenericFold2.foldMap
 
 
 
 let createAstRoot (s:State) (sr:Ast.AstRoot) (dfiles: Asn1File list)  (*(acn:AcnTypes.AcnAst)*) =
     {
         AstRoot.Files = dfiles 
-        Encodings = sr.Encodings
-        GenerateEqualFunctions = sr.GenerateEqualFunctions
-        TypePrefix = sr.TypePrefix
-        AstXmlAbsFileName = sr.AstXmlAbsFileName
-        IcdUperHtmlFileName = sr.IcdUperHtmlFileName
-        IcdAcnHtmlFileName = sr.IcdAcnHtmlFileName
-        CheckWithOss = sr.CheckWithOss
-        mappingFunctionsModule = sr.mappingFunctionsModule
+        args = sr.args
         TypeAssignments = s.anonymousTypes |> List.filter (fun x -> x.asn1Name.IsSome)
         ValueAssignments = s.anonymousValues 
         valsMap = 
@@ -80,8 +74,6 @@ let createAstRoot (s:State) (sr:Ast.AstRoot) (dfiles: Asn1File list)  (*(acn:Acn
             let aa = s.anonymousTypes |> List.map(fun v -> v.id, v)
             aa |> Seq.groupBy(fun (id,t) -> id) |> Seq.filter(fun (id, gr) -> gr |> (*Seq.distinct |>*) Seq.length > 1) |> Seq.iter (fun x -> printfn "%A" x)
             aa |> Map.ofList
-        integerSizeInBytes = sr.integerSizeInBytes
-
     }
 
 let createAsn1File (s:State) (r:Ast.AstRoot) (f:Ast.Asn1File) (newMods:Asn1Module list)  = 
@@ -288,7 +280,7 @@ let Asn1typeToInterimType (t:Asn1Type) =
     | Choice       t     ->  InterimChoice      (t.baseType, t.children)
 
 
-let createValidationAst (lang:Ast.ProgrammingLanguage) (app:Ast.AstRoot) (*(acn:AcnTypes.AcnAst)*) =
+let createValidationAst (lang:ProgrammingLanguage) (app:Ast.AstRoot) (*(acn:AcnTypes.AcnAst)*) =
     let l_aux (asn1ValName: (StringLoc*StringLoc) option) = 
         match asn1ValName with
         | None          -> Literal
@@ -313,7 +305,7 @@ let createValidationAst (lang:Ast.ProgrammingLanguage) (app:Ast.AstRoot) (*(acn:
 
         //6. typeFunc s t newTypeKind baseTypeId (newCons,fromWithComps)
         (fun ustate s t newTypeKind (newCons,fromWithComps) -> 
-            createType ustate s t (newCons,fromWithComps)  newTypeKind app.integerSizeInBytes)
+            createType ustate s t (newCons,fromWithComps)  newTypeKind app.args.integerSizeInBytes)
 
         //7. refTypeFunc s mdName tasName tabularized 
         (*
@@ -365,7 +357,7 @@ let createValidationAst (lang:Ast.ProgrammingLanguage) (app:Ast.AstRoot) (*(acn:
                 | false ->
                     enmItems |> List.mapi(fun i x -> {EnumItem.name = x.Name.Value; c_name = x.c_name; ada_name = x.ada_name;  Value = BigInteger i; comments = x.Comments|> Seq.toList} ), false
                 | true  ->
-                    let withVals = RemoveNumericStringsAndFixEnums.allocatedValuesToAllEnumItems enmItems app 
+                    let withVals = Ast.allocatedValuesToAllEnumItems enmItems app 
                     withVals |> List.mapi(fun i x -> {EnumItem.name = x.Name.Value; c_name = x.c_name; ada_name = x.ada_name;  Value = BigInteger i; comments = x.Comments|> Seq.toList} ), true
             InterimEnumerated ((getAsEnumerated newBaseType), newEnmItems, userDefinedValues), ustate)
 

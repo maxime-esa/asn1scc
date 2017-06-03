@@ -3,7 +3,7 @@ open System
 open System.Numerics
 open Antlr.Runtime.Tree
 open Antlr.Runtime
-
+open CommonTypes
 open FsUtils
 open Constraints
 open uPER2
@@ -511,12 +511,12 @@ with
         match this with
         | IA5String    _ -> true
         | _              -> false
-    member this.getParamType (l:ProgrammingLanguage) (c:Ast.Codec) =
+    member this.getParamType (l:ProgrammingLanguage) (c:CommonTypes.Codec) =
         match l with
         | Ada   -> VALUE "val"
         | C     ->
             match c with
-            | Ast.Encode  ->
+            | CommonTypes.Encode  ->
                 match this with
                 | Integer      _ -> VALUE "val"
                 | Real         _ -> VALUE "val"
@@ -529,7 +529,7 @@ with
                 | SequenceOf   _ -> POINTER "pVal"
                 | Sequence     _ -> POINTER "pVal"
                 | Choice       _ -> POINTER "pVal"
-            | Ast.Decode  ->
+            | CommonTypes.Decode  ->
                 match this with
                 | Integer      _ -> POINTER "pVal"
                 | Real         _ -> POINTER "pVal"
@@ -600,19 +600,12 @@ with
 //type AstRoot = AstRootTemplate<Asn1Type, BAst.AcnParameter>
 type AstRoot = {
     Files: list<Asn1File>
-    Encodings:list<Ast.Asn1Encoding>
-    GenerateEqualFunctions:bool
-    TypePrefix:string
-    AstXmlAbsFileName:string
-    IcdUperHtmlFileName:string
-    IcdAcnHtmlFileName:string
-    CheckWithOss:bool
-    mappingFunctionsModule : string option
+    args:CommandLineSettings
+
     valsMap : Map<ReferenceToValue, Asn1GenericValue>
     typesMap : Map<ReferenceToType, Asn1Type>
     TypeAssignments : list<Asn1Type>
     ValueAssignments : list<Asn1GenericValue>
-    integerSizeInBytes : int
     acnConstants    : AcnTypes.AcnConstant list
     acnParameters   : AcnParameter list
     acnLinks        : AcnLink list

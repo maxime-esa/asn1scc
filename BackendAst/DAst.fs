@@ -4,9 +4,9 @@ open System
 open System.Numerics
 
 open FsUtils
+open CommonTypes
 open Constraints
 open uPER2
-
 type ExpOrStatement =
     | Expression 
     | Statement  
@@ -27,7 +27,7 @@ with
         | Asn1UIntLocalVariable(name,_)   -> name
         | FlagLocalVariable(name,_)       -> name
         | AcnInsertedChild(name,_)        -> name
-    member this.GetDeclaration (l:ProgrammingLanguage) =
+    member this.GetDeclaration (l:Constraints.ProgrammingLanguage) =
         match l, this with
         | C,    SequenceOfIndex (i,None)                  -> sprintf "int i%d;" i
         | C,    SequenceOfIndex (i,Some iv)               -> sprintf "int i%d=%d;" i iv
@@ -784,10 +784,10 @@ with
         | SequenceOf   t -> t.isValidFunction
         | Sequence     t -> t.isValidFunction
         | Choice       t -> t.isValidFunction
-    member this.getUperFunction (l:Ast.Codec) =
+    member this.getUperFunction (l:CommonTypes.Codec) =
         match l with
-        | Ast.Encode   -> this.uperEncFunction
-        | Ast.Decode   -> this.uperDecFunction
+        | CommonTypes.Encode   -> this.uperEncFunction
+        | CommonTypes.Decode   -> this.uperDecFunction
     member this.uperEncFunction =
          match this with
          | Integer      t -> Some(t.uperEncFunction)
@@ -840,10 +840,10 @@ with
         | SequenceOf   t -> None
         | Sequence     t -> Some (t.acnDecFunction)
         | Choice       t -> None
-    member this.getAcnFunction (l:Ast.Codec) =
+    member this.getAcnFunction (l:CommonTypes.Codec) =
         match l with
-        | Ast.Encode   -> this.acnEncFunction
-        | Ast.Decode   -> this.acnDecFunction
+        | CommonTypes.Encode   -> this.acnEncFunction
+        | CommonTypes.Decode   -> this.acnDecFunction
 
     member this.typeDefinition =
         match this with
@@ -902,20 +902,12 @@ type ProgramUnit = {
 
 type AstRoot = {
     Files                   : Asn1File list
-    Encodings               : Ast.Asn1Encoding list
-    GenerateEqualFunctions  : bool
-    TypePrefix              : string
-    AstXmlAbsFileName       : string
-    IcdUperHtmlFileName     : string
-    IcdAcnHtmlFileName      : string
-    CheckWithOss            : bool
-    mappingFunctionsModule  : string option
+    args:CommandLineSettings
     valsMap                 : Map<ReferenceToValue, Asn1GenericValue>
     typesMap                : Map<ReferenceToType, Asn1Type>
     TypeAssignments         : Asn1Type list
     ValueAssignments        : Asn1GenericValue list
     programUnits            : ProgramUnit list
-    integerSizeInBytes      : int
     acnConstants            : AcnTypes.AcnConstant list
     acnParameters           : CAst.AcnParameter list
     acnLinks                : CAst.AcnLink list

@@ -15,6 +15,7 @@ open Antlr.Runtime.Tree
 open Antlr.Runtime
 
 open FsUtils
+open CommonTypes
 
 type AstRoot = {
     Files: list<Asn1File>
@@ -175,11 +176,6 @@ and NamedConstraintMark =
     | MarkAbsent
     | MarkOptional
 
-and Asn1Encoding =
-    | UPER
-    | ACN
-    | BER
-    | XER
 
 
 type uperRange<'a> =
@@ -193,14 +189,6 @@ type Asn1Size<'a> =
     | Bounded of   'a
     | Infinite
 
-type Codec =
-    |Encode
-    |Decode
- with
-    member this.suffix =
-        match this with
-        | Encode    -> "_Encode"
-        | Decode    -> "_Decode"
 
 
 type INTTYPE =
@@ -221,37 +209,6 @@ let c_keyworkds =  [ "auto"; "break"; "case"; "char"; "const"; "continue"; "defa
 
 let ada_keyworkds =  [ "abort"; "else"; "new"; "return"; "abs"; "elsif"; "not"; "reverse"; "abstract"; "end"; "null"; "accept"; "entry"; "select"; "access"; "exception"; "of"; "separate"; "aliased"; "exit"; "or"; "some"; "all"; "others"; "subtype"; "and"; "for"; "out"; "synchronized"; "array"; "function"; "overriding"; "at"; "tagged"; "generic"; "package"; "task"; "begin"; "goto"; "pragma"; "terminate"; "body"; "private"; "then"; "if"; "procedure"; "type"; "case"; "in"; "protected"; "constant"; "interface"; "until"; "is"; "raise"; "use"; "declare"; "range"; "delay"; "limited"; "record"; "when"; "delta"; "loop"; "rem"; "while"; "digits"; "renames"; "with"; "do"; "mod"; "requeue"; "xor" ]
 
-type ProgrammingLanguage =
-    |C
-    |Ada
-    |Spark
-    |Html
-    |Unknown
-    with 
-        member l.cmp (s1:string) (s2:string) =
-            match l with
-            |C          -> s1 = s2
-            |Ada
-            |Spark      -> s1.icompare s2
-            |Html       -> s1 = s2
-            |Unknown    -> s1 = s2
-        member l.DefinitionsFileExt = 
-            match l with
-            |C          -> ".h"
-            |Ada
-            |Spark      -> ".ads"
-            |Html       -> ""
-            |Unknown    -> ""
-
-
-        member l.keywords = 
-            match l with
-            |C          -> c_keyworkds
-            |Ada
-            |Spark      -> ada_keyworkds
-            |Html       -> []
-            |Unknown    -> []
-        
 
 type AstRoot with
     member r.Modules = seq { for f in r.Files do yield! f.Modules} |> Seq.toList

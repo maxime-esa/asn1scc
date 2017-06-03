@@ -21,7 +21,7 @@ open System.IO
 type dummy = 
     | Dummy1 
 
-let mutable lang:Ast.ProgrammingLanguage = Ast.ProgrammingLanguage.Unknown
+let mutable lang:CommonTypes.ProgrammingLanguage = CommonTypes.ProgrammingLanguage.Unknown
 type StrHelper =
     StrHelper of string
     with 
@@ -76,7 +76,7 @@ type RealFormatRenderer() =
             let v = o :?> double
             let result = 
                 match lang with
-                | Ast.Html  -> v.ToString()
+                | CommonTypes.Html  -> v.ToString()
                 | _         -> v.ToString("E20", NumberFormatInfo.InvariantInfo)
 //            String.Format(NumberFormatInfo.InvariantInfo, "{0}", o)
 //            if ((v%1.0) = 0.0) && not(result.Contains("E")) then
@@ -101,7 +101,7 @@ type BigIntegerFormatRenderer() =
             obj.ToString();
         else
             match lang with
-            | Ast.ProgrammingLanguage.C -> 
+            | CommonTypes.ProgrammingLanguage.C -> 
                 if obj = (BigInteger System.Int64.MinValue) then
                     "LLONG_MIN"
                 else

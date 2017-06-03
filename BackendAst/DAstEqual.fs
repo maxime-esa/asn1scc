@@ -163,7 +163,7 @@ let isEqualBodyChoice  (typeDefinition:TypeDefinitionCommon) (l:ProgrammingLangu
 
 
 let getEqualFuncName (r:CAst.AstRoot) (l:ProgrammingLanguage) (tasInfo:BAst.TypeAssignmentInfo option) =
-    tasInfo |> Option.map (fun x -> ToC2(r.TypePrefix + x.tasName + "_Equal"))
+    tasInfo |> Option.map (fun x -> ToC2(r.args.TypePrefix + x.tasName + "_Equal"))
 
 let createNullTypeEqualFunction (r:CAst.AstRoot) (l:ProgrammingLanguage) (o:CAst.NullType) =
     {

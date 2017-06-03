@@ -19,6 +19,7 @@ open VisitTree
 open uPER
 open CloneTree
 open spark_utils
+open CommonTypes
 
 
 let GetEncodingString = function    
@@ -28,7 +29,7 @@ let GetEncodingString = function
     | XER   -> "XER"
 
 
-let PrintModuleSpec outDir (m:Asn1Module) r (acn:AcnTypes.AcnAstResolved) =
+let PrintModuleSpec outDir (m:Asn1Module) (r:Ast.AstRoot) (acn:AcnTypes.AcnAstResolved) =
     let packageName = ToC m.Name.Value
     let PrintCodec (t:TypeAssignment)  = 
         let sTasName = GetTasCName t.Name.Value r.TypePrefix
@@ -51,7 +52,7 @@ type StatementKind =
     |Validate_output
     |Compare_input_output
 
-let PrintModuleBody outDir (m:Asn1Module) r (acn:AcnTypes.AcnAstResolved) =
+let PrintModuleBody outDir (m:Asn1Module) (r:Ast.AstRoot) (acn:AcnTypes.AcnAstResolved) =
     let packageName = ToC m.Name.Value
     let PrintCodec (t:TypeAssignment)  = 
         let PrintCodeAux (enc:Asn1Encoding) =

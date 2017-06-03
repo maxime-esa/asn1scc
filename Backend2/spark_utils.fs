@@ -14,6 +14,7 @@ open System.Numerics
 open FsUtils
 open Ast
 open System.IO
+open CommonTypes
 open VisitTree
 open uPER
 open CloneTree

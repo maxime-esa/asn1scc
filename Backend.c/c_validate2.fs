@@ -13,6 +13,7 @@ module c_validate2
 
 open System.Numerics
 open FsUtils
+open CommonTypes
 open Ast
 open System.IO
 open VisitTree
@@ -115,7 +116,7 @@ and ValidatedContraintExpression =
 
 
 
-let createValidationAst (lang:Ast.ProgrammingLanguage) (app:AstRoot) =
+let createValidationAst (lang:ProgrammingLanguage) (app:AstRoot) =
     GenericFold.foldAstRoot
         //1. roorFunc r files
         (fun r files -> files)

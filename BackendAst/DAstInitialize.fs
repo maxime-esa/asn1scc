@@ -14,11 +14,11 @@ Currently this code is not used since it is no longer required (it was originall
 However, now with the 'pragma Annotate (GNATprove, False_Positive)' we can handle this case.
 *)
 let getFuncName (r:CAst.AstRoot) (l:ProgrammingLanguage) (tasInfo:BAst.TypeAssignmentInfo option) =
-    tasInfo |> Option.map (fun x -> ToC2(r.TypePrefix + x.tasName + "_Initialize"))
+    tasInfo |> Option.map (fun x -> ToC2(r.args.TypePrefix + x.tasName + "_Initialize"))
 
 let createInitFunctionCommon (r:CAst.AstRoot) (l:ProgrammingLanguage)  (o:CAst.Asn1Type) (typeDefinition:TypeDefinitionCommon) funcBody iv =
     let funcName            = getFuncName r l o.tasInfo
-    let p = o.getParamType l Ast.Codec.Decode
+    let p = o.getParamType l CommonTypes.Codec.Decode
     let initTypeAssignment = match l with C -> init_c.initTypeAssignment | Ada -> init_a.initTypeAssignment
     let initTypeAssignment_def = match l with C -> init_c.initTypeAssignment_def | Ada -> init_a.initTypeAssignment_def
     let varName = p.p

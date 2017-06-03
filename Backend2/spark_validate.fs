@@ -19,6 +19,7 @@ open VisitTree
 open uPER
 open CloneTree
 open spark_utils
+open CommonTypes
 
 type State = spark_init.State
 

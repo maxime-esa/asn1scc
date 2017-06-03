@@ -4,7 +4,7 @@ open System
 open System.Numerics
 open FsUtils
 open Antlr.Runtime
-
+open CommonTypes
 type ProgrammingLanguage =
     |C
     |Ada
@@ -402,19 +402,11 @@ with
 
 type AstRootTemplate<'ASN1TYPE> = {
     Files: list<Asn1File>
-    Encodings:list<Ast.Asn1Encoding>
-    GenerateEqualFunctions:bool
-    TypePrefix:string
-    AstXmlAbsFileName:string
-    IcdUperHtmlFileName:string
-    IcdAcnHtmlFileName:string
-    CheckWithOss:bool
-    mappingFunctionsModule : string option
+    args:CommandLineSettings
     valsMap : Map<ReferenceToValue, Asn1GenericValue>
     typesMap : Map<ReferenceToType, 'ASN1TYPE>
     TypeAssignments : list<'ASN1TYPE>
     ValueAssignments : list<Asn1GenericValue>
-    integerSizeInBytes : int
 }
 
 

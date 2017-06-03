@@ -4,9 +4,9 @@ open System.Numerics
 open FsUtils
 open Ast
 open System.IO
-open VisitTree
-open uPER
-open CloneTree
+//open VisitTree
+//open uPER
+//open CloneTree
 //open c_utils
 
 type LOCAL_VARIABLE =

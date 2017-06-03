@@ -53,9 +53,9 @@
     <Compile Include="stg_ASN.stg.fs" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\Ast\Ast.fsproj">
-      <Name>Ast</Name>
-      <Project>{3b67372a-65c7-439e-849f-ce1a1d2fcc69}</Project>
+    <ProjectReference Include="..\CommonTypes\CommonTypes.fsproj">
+      <Name>CommonTypes</Name>
+      <Project>{83f15fa6-7da0-4e47-9512-39ae3fdd28cf}</Project>
       <Private>True</Private>
     </ProjectReference>
     <ProjectReference Include="..\ST\ST.fsproj">
@@ -91,8 +91,6 @@
       </PropertyGroup>
     </Otherwise>
   </Choose>
-  
-  
   <Import Project="$(FSharpTargetsPath)" />
   <PropertyGroup>
     <PreBuildEvent>

@@ -90,7 +90,7 @@ type State = {
     currentTypes : Asn1Type list
 }
 
-let foldMap = CloneTree.foldMap
+let foldMap = GenericFold2.foldMap
 
 let doWork (r:BAst.AstRoot) (acn:AcnTypes.AcnAst) : AstRoot=
     let initialState = {State.currentTypes = []}
@@ -103,17 +103,9 @@ let doWork (r:BAst.AstRoot) (acn:AcnTypes.AcnAst) : AstRoot=
         ) initialState  
     {
         AstRoot.Files = r.Files
-        Encodings = r.Encodings
-        GenerateEqualFunctions = r.GenerateEqualFunctions
-        TypePrefix = r.TypePrefix
-        AstXmlAbsFileName = r.AstXmlAbsFileName
-        IcdUperHtmlFileName = r.IcdUperHtmlFileName
-        IcdAcnHtmlFileName = r.IcdAcnHtmlFileName
-        CheckWithOss = r.CheckWithOss
-        mappingFunctionsModule = r.mappingFunctionsModule
+        args = r.args
         valsMap  = r.valsMap
         typesMap = newTypes |> List.map(fun t -> t.id, t) |> Map.ofList
         TypeAssignments = newTypes
         ValueAssignments = r.ValueAssignments
-        integerSizeInBytes = r.integerSizeInBytes
     }
