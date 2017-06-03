@@ -18,6 +18,13 @@ open CommonTypes
 
 open FsUtils
 
+type AntlrParserResult = {
+    rootItem    : ITree
+    fileName    : string
+    tokens      : IToken array
+}
+
+
 type AstRoot = {
     Files: Asn1File list
     args:CommandLineSettings

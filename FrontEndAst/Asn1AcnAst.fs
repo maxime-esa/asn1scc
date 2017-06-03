@@ -35,12 +35,12 @@ type AcnPresentWhenConditionSeqChild =
     | PresenceBool  of RelativePath                         
 
 type AcnPresentWhenConditionChoiceChild =
-    | PresenceInt   of RelativePath*BigInteger              
-    | PresenceStr   of RelativePath*string                  
+    | PresenceInt   of RelativePath*IntLoc
+    | PresenceStr   of RelativePath*StringLoc
 
 // Integer acn properties
 type AcnIntSizeProperty =
-    | Fixed                 of BigInteger
+    | Fixed                 of IntLoc
     | IntNullTerminated     of byte      //termination character when encoding is ASCII
 
 type AcnIntEncoding =
@@ -56,18 +56,7 @@ type IntegerAcnProperties = {
     endiannessProp  : AcnEndianness         option
 }
 
-type EnumeratedRedefinedValue = {
-    enumName    : string
-    enumValue   : BigInteger
-}
 
-type EnumeratedAcnProperties = {
-    encodingProp    : AcnIntEncoding            option
-    sizeProp        : AcnIntSizeProperty        option
-    endiannessProp  : AcnEndianness             option
-    encodeValues    : bool                      option
-    redefinedValues : (EnumeratedRedefinedValue  list) option
-}
 
 
 // Real acn properties
@@ -116,41 +105,19 @@ type ChoiceAcnProperties = {
 }
 
 
-(*
-type GenericTypeAcnProperties =
-    | IntegerAcnProperties          of IntegerAcnProperties    
-    | EnumeratedAcnProperties       of EnumeratedAcnProperties
-    | RealAcnProperties             of RealAcnProperties
-    | StringAcnProperties           of StringAcnProperties
-    | OctetStringAcnProperties      of SizeableAcnProperties
-    | BitStringAcnProperties        of SizeableAcnProperties
-    | NullTypeAcnProperties         of NullTypeAcnProperties
-    | BooleanAcnProperties          of BooleanAcnProperties
-    | SequenceOfAcnProperties       of SizeableAcnProperties
-    | ChoiceAcnProperties           of ChoiceAcnProperties
-    | SequenceAcnProperties         of SequenceAcnProperties
-    | ReferenceTypeAcnProperties    of GenericTypeAcnProperties*(ChildInfoAcnProperties list)
-
-and ChildInfoAcnProperties = {
-    name                : string
-    presentWhen         : AcnPresentWhenCondition   list
-    prop                : GenericTypeAcnProperties
-}     
-*)
-
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////// ACN PARAMETERS DEFINITION ////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-type AcnAsn1Type =
-    | AcnInteger    of SrcLoc
-    | AcnBoolean    of SrcLoc
-    | AcnNullType   of SrcLoc
-    | AcnRefType    of StringLoc*StringLoc
+type AcnParamType =
+    | AcnPrmInteger    of SrcLoc
+    | AcnPrmBoolean    of SrcLoc
+    | AcnPrmNullType   of SrcLoc
+    | AcnPrmRefType    of StringLoc*StringLoc
 
 type AcnParameter = {
     name        : string
-    asn1Type    : AcnAsn1Type
+    asn1Type    : AcnParamType
     loc         : SrcLoc
 }
 
@@ -158,34 +125,7 @@ type AcnParameter = {
 ////// ASN1 VALUES DEFINITION    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-type Asn1Value = {
-    Kind:Asn1ValueKind
-    Location: SrcLoc
-}
-
-
-and Asn1ValueKind =
-    |   IntegerValue        of IntLoc
-    |   RealValue           of DoubleLoc
-    |   StringValue         of StringLoc
-    |   BooleanValue        of BoolLoc
-    |   BitStringValue      of StringLoc
-    |   OctetStringValue    of list<ByteLoc>
-    |   RefValue            of StringLoc*StringLoc
-    |   SeqOfValue          of list<Asn1Value>
-    |   SeqValue            of list<StringLoc*Asn1Value>
-    |   ChValue             of StringLoc*Asn1Value
-    |   NullValue
-
-
-
-
-type NamedConstraintMark =
-    | NoMark
-    | MarkPresent
-    | MarkAbsent
-    | MarkOptional
-
+type Asn1Value = Asn1Ast.Asn1Value
 
 type Asn1Constraint = 
     | SingleValueContraint              of Asn1Value             
@@ -202,19 +142,19 @@ type Asn1Constraint =
     | RootConstraint                    of Asn1Constraint
     | RootConstraint2                   of Asn1Constraint*Asn1Constraint
 
+
 type NamedItem = {
     Name:StringLoc
     c_name:string
     ada_name:string
-    _value:Asn1Value option
+    definitionValue : BigInteger          // the value in the header file
+    
+    // the value encoded by ACN. It can (a) the named item index (i.e. like uper), (b) The definition value, (c) The redefined value from acn properties
+    acnEncodeValue  : BigInteger                
     Comments: string array
 }
 
-type Asn1Optionality = 
-    | AlwaysAbsent
-    | AlwaysPresent
-    | Optional  
-    | Default   of Asn1Value
+type Asn1Optionality = Asn1Ast.Asn1Optionality
 
 
 
@@ -222,42 +162,65 @@ type Asn1Optionality =
 ////// ASN1 WITH ACN INFORMATION  DEFINITION    /////////////////////////////////////////////////////////////////////////////////////////////////
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+
+
+
 type Integer = {
     acnProperties   : IntegerAcnProperties
+    constraints     : Asn1Constraint list
 }
 
 type Real = {
     acnProperties   : RealAcnProperties
+    constraints     : Asn1Constraint list
 }
 
-type IA5String = {
+type StringType = {
     acnProperties   : StringAcnProperties
+    constraints     : Asn1Constraint list
 }
 
-type NumericString = {
-    acnProperties   : StringAcnProperties
-}
 
 type OctetString = {
     acnProperties   : SizeableAcnProperties
+    constraints     : Asn1Constraint list
 }
 
 type BitString = {
     acnProperties   : SizeableAcnProperties
+    constraints     : Asn1Constraint list
 }
 
 type NullType = {
     acnProperties   : NullTypeAcnProperties
+    constraints     : Asn1Constraint list
 }
 
 type Boolean = {    
     acnProperties   : BooleanAcnProperties
+    constraints     : Asn1Constraint list
 }
 
+type Enumerated = {
+    items           : NamedItem list
+    acnProperties   : IntegerAcnProperties
+    constraints     : Asn1Constraint list
+}
+
+type AcnInsertedType = 
+    | AcnInteger           of IntegerAcnProperties   *(AcnAligment option)
+    | AcnNullType          of NullTypeAcnProperties  *(AcnAligment option)
+    | AcnBoolean           of BooleanAcnProperties   *(AcnAligment option)
+
+type AcnChild = {
+    Name                        : StringLoc
+    Type                        : AcnInsertedType
+}
+
+
 type Asn1Type = {
-    Kind            : Asn1TypeKind;
-    Constraints     : Asn1Constraint list
-    acnAligment     : AcnAligment           option
+    Kind            : Asn1TypeKind
+    acnAligment     : AcnAligment option
     Location        : SrcLoc //Line no, Char pos
 }
 
@@ -265,40 +228,51 @@ type Asn1Type = {
 and Asn1TypeKind =
     | Integer           of Integer
     | Real              of Real
-    | IA5String         of IA5String
-    | NumericString     of NumericString
+    | IA5String         of StringType
+    | NumericString     of StringType
     | OctetString       of OctetString
     | NullType          of NullType
     | BitString         of BitString
     | Boolean           of Boolean
-    | Enumerated        of list<NamedItem>
-    | SequenceOf        of Asn1Type
-    | Sequence          of SeqChildInfo list
-    | Choice            of ChChildInfo list
+    | Enumerated        of Enumerated
+    | SequenceOf        of SequenceOf
+    | Sequence          of Sequence
+    | Choice            of Choice
     | ReferenceType     of ReferenceType
 
 and SequenceOf = {
     child           : Asn1Type
     acnProperties   : SizeableAcnProperties
+    constraints     : Asn1Constraint list
 }
 
 and Sequence = {
     children        : SeqChildInfo list
+    constraints     : Asn1Constraint list
 }
 
-and SeqChildInfo = {
+
+and SeqChildInfo = 
+    | Asn1Child of Asn1Child
+    | AcnChild  of AcnChild
+
+and Asn1Child = {
     Name                        : StringLoc
     c_name                      : string
     ada_name                    : string                     
     Type                        : Asn1Type
     Optionality                 : Asn1Optionality option
     acnPresentWhenConditions    : AcnPresentWhenConditionSeqChild list
-    AcnInsertedField            : bool
     Comments                    : string array
 }
 
+
+
+
 and Choice = {
+    children        : ChChildInfo list
     acnProperties   : ChoiceAcnProperties
+    constraints     : Asn1Constraint list
 }
 
 and ChChildInfo = {
@@ -330,30 +304,13 @@ type TypeAssignment = {
 
 }
 
-type ValueAssignment = {
-    Name:StringLoc
-    c_name:string
-    ada_name:string
-    Type:Asn1Type
-    Value:Asn1Value
-}
-
-type Exports =
-    | All
-    | OnlySome of list<string>
-
-type  ImportedModule = {
-    Name:StringLoc
-    Types:list<StringLoc>
-    Values:list<StringLoc>
-}
 
 type Asn1Module = {
     Name : StringLoc
     TypeAssignments : list<TypeAssignment>
-    ValueAssignments : list<ValueAssignment>
-    Imports : list<ImportedModule>
-    Exports : Exports
+    ValueAssignments : list<Asn1Ast.ValueAssignment>
+    Imports : list<Asn1Ast.ImportedModule>
+    Exports : Asn1Ast.Exports
     Comments : string array
 }
 

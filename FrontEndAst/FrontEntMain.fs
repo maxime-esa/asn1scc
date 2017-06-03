@@ -15,7 +15,7 @@ let antlrParse lexer parser treeParser (fileName:string) =
     let stream = new CommonTokenStream(lexer(new ANTLRFileStream(fileName)));
     let tokens = stream.GetTokens().Cast<IToken>() |> Seq.toArray
     let tree = treeParser(parser(stream));
-    (tree, fileName, tokens)
+    {ParameterizedAsn1Ast.AntlrParserResult.fileName = fileName; ParameterizedAsn1Ast.AntlrParserResult.rootItem=tree; ParameterizedAsn1Ast.AntlrParserResult.tokens=tokens}
 
 let constructAst (args:CommandLineSettings) =
     let asn1ParseTrees = args.asn1Files |> List.map (antlrParse (fun f -> new asn1Lexer(f)) (fun ts -> new asn1Parser(ts))  (fun p -> p.moduleDefinitions().Tree :?> ITree)  )

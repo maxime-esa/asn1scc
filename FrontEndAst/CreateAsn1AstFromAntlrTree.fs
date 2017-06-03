@@ -535,11 +535,11 @@ let rootCheckCyclicDeps (astRoot:list<ITree>) =
     let comparer (m1:StringLoc, t1:StringLoc) (m2:StringLoc, t2:StringLoc) = m1.Value = m2.Value && t1.Value=t2.Value
     DoTopologicalSort2 independentNodes dependentNodes comparer excToThrow |> ignore
 
-let CreateAstRoot (list:(ITree*string*array<IToken>) list) (args:CommandLineSettings) =  
-    let astRoot = list |> Seq.toList |> List.map (fun (a,_,_) -> a)
-    ITree.RegisterFiles(list |> Seq.map (fun (a,b,_) -> (a,b)))
+let CreateAstRoot (list:ParameterizedAsn1Ast.AntlrParserResult list) (args:CommandLineSettings) =  
+    let astRoot = list |> List.map (fun r -> r.rootItem)
+    ITree.RegisterFiles(list |> Seq.map (fun x -> (x.rootItem, x.fileName)))
     {
-        AstRoot.Files = list |> Seq.toList  |> List.map(fun (t,f, ar) -> CreateAsn1File astRoot (t,f, ar))
+        AstRoot.Files = list |> Seq.toList  |> List.map(fun x -> CreateAsn1File astRoot (x.rootItem,x.fileName, x.tokens))
         args = args
     }
 
