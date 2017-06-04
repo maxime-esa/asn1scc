@@ -22,7 +22,7 @@ open spark_utils
 
 
 let rec EmitInternalItem_min_max (t:Asn1Type) (sTasName:string) (path:list<string>)  (m:Asn1Module) (r:AstRoot)  codec =
-    let sTasName = GetTasCName (path |> Seq.nth 1) r.TypePrefix
+    let sTasName = GetTasCName (path |> Seq.item 1) r.TypePrefix
     let p = GetAccessFld path (Same t) r 
     match t.Kind with
     | SequenceOf(_) | OctetString | BitString->
@@ -51,7 +51,7 @@ let rec EmitInternalItem_min_max (t:Asn1Type) (sTasName:string) (path:list<strin
     | _     ->raise(BugErrorException "")
 
 and  EmitTypeBody (t:Asn1Type) (sTasName:string) (path:list<string>, pName:string option)  (m:Asn1Module) (r:AstRoot)  codec =
-    //let sTasName = GetTasCName (path |> Seq.nth 1) r.TypePrefix
+    //let sTasName = GetTasCName (path |> Seq.item 1) r.TypePrefix
     let p = match pName with
             | Some(nm)  -> nm
             | None      -> GetAccessFld path (Same t) r 
