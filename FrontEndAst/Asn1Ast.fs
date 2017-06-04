@@ -17,7 +17,6 @@ open Antlr.Runtime
 open FsUtils
 open CommonTypes
 
-
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////// ASN1 VALUES DEFINITION    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -327,3 +326,20 @@ let GetActualTypeByNameAllConsIncluded modName tasName (r:AstRoot) =
     let mdl = r.GetModuleByName(modName)
     let tas = mdl.GetTypeAssignmentByName tasName r
     GetActualTypeAllConsIncluded tas.Type r
+
+
+let rec getASN1Name (r:AstRoot) (t:Asn1Type) =
+    match t.Kind with
+    | Integer         -> "INTEGER"
+    | Real            -> "REAL"
+    | IA5String       -> "IA5String"
+    | NumericString   -> "NumericString"
+    | OctetString     -> "OCTET STRING"
+    | NullType        -> "NULL"
+    | BitString       -> "BIT STRING"
+    | Boolean         -> "BOOLEAN"
+    | Enumerated   _  -> "ENUMERATED"
+    | SequenceOf   _  -> "SEQUENCE OF"
+    | Sequence     _  -> "SEQUENCE"
+    | Choice       _  -> "CHOICE"
+    | ReferenceType _ -> getASN1Name r (GetActualType t r)

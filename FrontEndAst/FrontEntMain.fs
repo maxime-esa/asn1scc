@@ -56,11 +56,10 @@ let constructAst (args:CommandLineSettings) =
 
 
     (*
-        * Creates an ACN ast taking as INPUT ANTLR parse trees and the ASN1 AST.
-        * 
-        *)
-    //todo : check for commented code with uPER.
-    //let acnAstUnresolved = AcnCreateFromAntlr.CreateAcnAst acnParseTrees asn1Ast0
+        - Updates ASN.1 AST with ASN.1 information
+        - Creates the expanded tree (i.e reference types are now resolved)
+    *)
+    let acnAst = AcnCreateFromAntlr.mergeAsn1WithAcnAst asn1Ast0 acnParseTrees
 
-    (asn1Ast0, 0)
+    acnAst
 

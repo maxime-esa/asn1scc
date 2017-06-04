@@ -13,6 +13,8 @@ type CliArguments =
     | [<AltCommandLine("-o")>]Out of dir:string
     | [<AltCommandLine("-equal")>]Equal_Func 
     | [<AltCommandLine("-typePrefix")>]Type_Prefix of prefix:string
+    | [<AltCommandLine("-x")>] Xml_Ast of xmlFilename:string
+
     | [<MainCommand; ExactlyOnce; Last>] Files of files:string list
 with
     interface IArgParserTemplate with
@@ -27,7 +29,7 @@ with
             | Files (_)        -> "List of ASN.1 and ACN files to process."
             | Type_Prefix _    -> "adds 'prefix' to all generated C or Ada/SPARK data types."
             | Equal_Func       -> "generate functions for testing type equality."
-
+            | Xml_Ast _        -> "dump internal AST in an xml file"
 
 
 let checkArguement arg =
@@ -38,6 +40,7 @@ let checkArguement arg =
     | ACN_enc          -> ()
     | Auto_test_cases  -> ()
     | Equal_Func       -> ()
+    | Xml_Ast _        -> ()
     | Out outDir       -> 
         match System.IO.Directory.Exists outDir with
         | true  -> ()
@@ -64,7 +67,7 @@ let constructCommandLineSettings args (parserResults: ParseResults<CliArguments>
         GenerateEqualFunctions = parserResults.Contains<@ Equal_Func @> || parserResults.Contains<@ Auto_test_cases @>
         TypePrefix = parserResults.GetResult(<@ Type_Prefix@>, defaultValue = "")
         CheckWithOss = false
-        AstXmlAbsFileName = ""
+        AstXmlAbsFileName = parserResults.GetResult(<@Xml_Ast@>, defaultValue = "")
         IcdUperHtmlFileName = ""
         IcdAcnHtmlFileName = ""
         mappingFunctionsModule = None
@@ -81,6 +84,9 @@ let main argv =
         cliArgs |> Seq.iter checkArguement 
         let args = constructCommandLineSettings cliArgs parserResults
         let frontEntAst = FrontEntMain.constructAst args
+        match args.AstXmlAbsFileName with
+        | ""    -> ()
+        | _     -> ExportToXml.exportFile frontEntAst args.AstXmlAbsFileName
         0
     with
         | :? Argu.ArguParseException as ex -> 

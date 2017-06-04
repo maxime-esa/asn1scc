@@ -88,11 +88,6 @@
       <Project>{a1882f1d-5185-407c-8227-1e2b69baade9}</Project>
       <Private>True</Private>
     </ProjectReference>
-    <ProjectReference Include="..\BackendAst\BackendAst.fsproj">
-      <Name>BackendAst</Name>
-      <Project>{2f960476-565f-4282-90b3-606dbac5eff2}</Project>
-      <Private>True</Private>
-    </ProjectReference>
     <ProjectReference Include="..\CommonTypes\CommonTypes.fsproj">
       <Name>CommonTypes</Name>
       <Project>{83f15fa6-7da0-4e47-9512-39ae3fdd28cf}</Project>
