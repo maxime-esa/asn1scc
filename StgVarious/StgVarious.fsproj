@@ -47,8 +47,9 @@
     <Compile Include="AssemblyInfo.fs" />
     <Compile Include="Library1.fs" />
     <None Include="Script.fsx" />
-    <None Include="*.stg" />
+    <None Include="stg_ACN.stg" />
     <Compile Include="stg_ACN.stg.fs" />
+    <None Include="stg_ASN.stg" />
     <Compile Include="stg_ASN.stg.fs" />
   </ItemGroup>
   <ItemGroup>
