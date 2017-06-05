@@ -42,7 +42,9 @@ Install:
 
 1. Install the [Mono MDK](http://www.mono-project.com).
 
-2. Execute ASN1SCC's `./build.sh` - and the compiler will be built.
+2. Execute `xbuild` (or `msbuild` in Mono 5.0 and newer) in ASN1SCC's directory.
+
+3. Built compiler will be available in `Asn1f2/bin/Debug` folder.
 
 ## Under Linux
 
@@ -82,9 +84,15 @@ Install:
 Depending on the version of Mono that you are using, you may need to specify
 a specific target .NET framework version:
 
+    ```
     xbuild /p:TargetFrameworkVersion="v4.5"
+    ```
 
-4. Run tests (if you want to):
+On Mono version 5.0 and newer use `msbuild` instead of `xbuild`.
+
+4. Built compiler will be available in `Asn1f2/bin/Debug/` folder.
+
+5. Run tests (if you want to):
 
     ```
     cd Tests
