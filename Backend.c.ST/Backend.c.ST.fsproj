@@ -92,6 +92,10 @@
       <Name>Ast</Name>
       <Project>{3B67372A-65C7-439E-849F-CE1A1D2FCC69}</Project>
     </ProjectReference>
+    <ProjectReference Include="..\parseStg2\parseStg2.csproj">
+      <Project>{4112E7C9-0E9C-41DB-88C3-D5911C1D89D5}</Project>
+      <ReferenceOutputAssembly>false</ReferenceOutputAssembly>
+    </ProjectReference>
     <ProjectReference Include="..\ST\ST.fsproj">
       <Name>ST</Name>
       <Project>{94495D92-B615-4745-B26B-A5EC73A6A462}</Project>
