@@ -10,6 +10,8 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution 
 		TraceAndTestImpact.testsettings = TraceAndTestImpact.testsettings
 	EndProjectSection
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "parseStg2", "parseStg2\parseStg2.csproj", "{4112E7C9-0E9C-41DB-88C3-D5911C1D89D5}"
+EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Antlr", "Antlr\Antlr.csproj", "{A1882F1D-5185-407C-8227-1E2B69BAADE9}"
 EndProject
 Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "Ast", "Ast\Ast.fsproj", "{3B67372A-65C7-439E-849F-CE1A1D2FCC69}"
@@ -17,26 +19,12 @@ EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Asn1f2", "Asn1f2\Asn1f2.csproj", "{9FC95EBA-A745-4C0D-BF4E-53497E066D1C}"
 EndProject
 Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "Backend2.ST", "Backend2.ST\Backend2.ST.fsproj", "{D451F135-4104-4441-99C1-5C1A6B7C2F91}"
-	ProjectSection(ProjectDependencies) = postProject
-		{4112E7C9-0E9C-41DB-88C3-D5911C1D89D5} = {4112E7C9-0E9C-41DB-88C3-D5911C1D89D5}
-	EndProjectSection
-EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "parseStg2", "parseStg2\parseStg2.csproj", "{4112E7C9-0E9C-41DB-88C3-D5911C1D89D5}"
 EndProject
 Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "Backend2", "Backend2\Backend2.fsproj", "{000896AE-1E52-4120-8394-0E5E07A8F194}"
-	ProjectSection(ProjectDependencies) = postProject
-		{4112E7C9-0E9C-41DB-88C3-D5911C1D89D5} = {4112E7C9-0E9C-41DB-88C3-D5911C1D89D5}
-	EndProjectSection
 EndProject
 Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "Backend.c", "Backend.c\Backend.c.fsproj", "{62BFC3E2-6DC8-4EEE-BCD6-F5634369E57B}"
-	ProjectSection(ProjectDependencies) = postProject
-		{4112E7C9-0E9C-41DB-88C3-D5911C1D89D5} = {4112E7C9-0E9C-41DB-88C3-D5911C1D89D5}
-	EndProjectSection
 EndProject
 Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "Backend.c.ST", "Backend.c.ST\Backend.c.ST.fsproj", "{821BE302-634C-465E-9F9A-19DDCA139C9F}"
-	ProjectSection(ProjectDependencies) = postProject
-		{4112E7C9-0E9C-41DB-88C3-D5911C1D89D5} = {4112E7C9-0E9C-41DB-88C3-D5911C1D89D5}
-	EndProjectSection
 EndProject
 Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "ST", "ST\ST.fsproj", "{94495D92-B615-4745-B26B-A5EC73A6A462}"
 EndProject

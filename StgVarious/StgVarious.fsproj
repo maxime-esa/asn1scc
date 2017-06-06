@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
+﻿<?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="14.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <Import Project="$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props" Condition="Exists('$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props')" />
   <PropertyGroup>
@@ -58,6 +58,10 @@
       <Project>{3b67372a-65c7-439e-849f-ce1a1d2fcc69}</Project>
       <Private>True</Private>
     </ProjectReference>
+    <ProjectReference Include="..\parseStg2\parseStg2.csproj">
+      <Project>{4112E7C9-0E9C-41DB-88C3-D5911C1D89D5}</Project>
+      <ReferenceOutputAssembly>false</ReferenceOutputAssembly>
+    </ProjectReference>
     <ProjectReference Include="..\ST\ST.fsproj">
       <Name>ST</Name>
       <Project>{94495d92-b615-4745-b26b-a5ec73a6a462}</Project>
@@ -91,8 +95,6 @@
       </PropertyGroup>
     </Otherwise>
   </Choose>
-  
-  
   <Import Project="$(FSharpTargetsPath)" />
   <PropertyGroup>
     <PreBuildEvent>
