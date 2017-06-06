@@ -661,13 +661,17 @@ namespace Asn1f2
             backendInvocation(stgFileName, outFileName);
         }
 
+        private static string GetVersionString()
+        {
+            return typeof(Program).Assembly.GetName().Version.ToString(3);
+        }
 
         static int Usage()
         {
             var procName = "asn1";
             Console.Error.WriteLine();
             Console.Error.WriteLine("Semantix ASN.1 Compiler");
-            Console.Error.WriteLine("Current Version is: 3.3.{0} ", Svn.Version);
+            Console.Error.WriteLine("Current Version is: {0} ", GetVersionString());
             Console.Error.WriteLine("Usage:");
             Console.Error.WriteLine();
             Console.Error.WriteLine("{0}  <OPTIONS> file1, file2, ..., fileN ", procName);
