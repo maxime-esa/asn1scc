@@ -11,9 +11,9 @@ INITIAL_FOLDER=$(pwd)
 SHARE_FOLDER=$INSTALL_ROOT/share/asn1scc
 BIN_FOLDER=$INSTALL_ROOT/bin
 cd ..
-VERSION=3.2.$(cat Asn1f2/SvnVersion.cs | cut -d \" -f 2)
+VERSION=$(grep AssemblyVersion Asn1f2/Properties/AssemblyInfo.cs | cut -d \" -f 2)
 echo Creating a Debian package for ASN1Scc version $VERSION
-test -f Asn1f2/bin/Debug/Asn1f2.exe || (echo 'Run ./build.sh first to build ASN1SCC' && false)
+test -f Asn1f2/bin/Debug/Asn1f2.exe || (echo 'Run xbuild first to build ASN1SCC' && false)
 rm -rf asn1scc
 mkdir -p asn1scc/DEBIAN
 mkdir -p asn1scc/$BIN_FOLDER
