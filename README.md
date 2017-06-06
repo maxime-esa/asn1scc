@@ -1,5 +1,7 @@
 [![Build and Test Status of ASN1SCC on Circle CI](https://circleci.com/gh/ttsiodras/asn1scc.svg?&style=shield&circle-token=fcc32f415742887faa6ad69826b1cf25426df086)](https://circleci.com/gh/ttsiodras/asn1scc/tree/master)
 
+[![Build and Test Status of ASN1SCC on AppVeyor](https://ci.appveyor.com/api/projects/status/github/ttsiodras/asn1scc)](https://ci.appveyor.com/project/ttsiodras/asn1scc)
+
 *For the impatient: if you already know what ASN.1 and ASN1SCC is, and
 just want to run the ASN1SCC compiler:*
 
