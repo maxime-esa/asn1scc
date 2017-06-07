@@ -905,7 +905,6 @@ type AstRoot = {
     Encodings               : Ast.Asn1Encoding list
     GenerateEqualFunctions  : bool
     TypePrefix              : string
-    AstXmlAbsFileName       : string
     IcdUperHtmlFileName     : string
     IcdAcnHtmlFileName      : string
     CheckWithOss            : bool

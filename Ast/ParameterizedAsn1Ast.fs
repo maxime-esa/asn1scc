@@ -22,7 +22,6 @@ type AstRoot = {
     Encodings:list<Asn1Encoding>
     GenerateEqualFunctions:bool
     TypePrefix:string
-    AstXmlAbsFileName:string
     IcdUperHtmlFileName:string
     IcdAcnHtmlFileName:string
     CheckWithOss:bool

@@ -223,7 +223,7 @@ namespace Asn1f2
             */
             var parameterized_ast = CreateAsn1AstFromAntlrTree.CreateAstRoot(asn1Files, encodings.ToArray(),
                     generateEqualFunctions, cmdArgs.GetOptionalArgument("typePrefix", ""), cmdArgs.HasArgument("oss"),
-                    astXmlFile, icdUperHtmlFileName, icdAcnHtmlFileName, mappingFunctionsModule, int.Parse(ws));
+                    icdUperHtmlFileName, icdAcnHtmlFileName, mappingFunctionsModule, int.Parse(ws));
 
             /*
              *  Removes parameterized types by resolving them. In the example above
@@ -250,7 +250,7 @@ namespace Asn1f2
                 var uniqueEnums = EnsureUniqueEnumNames.DoWork(asn1Ast0, renamePolicy);
                 //XmlAst.DoWork(uniqueEnums);
 
-                genericBackend.DoWork(uniqueEnums, "xml.stg", uniqueEnums.AstXmlAbsFileName);
+                genericBackend.DoWork(uniqueEnums, "xml.stg", astXmlFile);
 
                 return 0;
             }
