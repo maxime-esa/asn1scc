@@ -21,7 +21,6 @@ type AstRoot = {
     Encodings:list<Asn1Encoding>
     GenerateEqualFunctions:bool
     TypePrefix:string
-    IcdUperHtmlFileName:string
     IcdAcnHtmlFileName:string
     CheckWithOss:bool
     mappingFunctionsModule : string option

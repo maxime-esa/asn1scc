@@ -223,7 +223,7 @@ namespace Asn1f2
             */
             var parameterized_ast = CreateAsn1AstFromAntlrTree.CreateAstRoot(asn1Files, encodings.ToArray(),
                     generateEqualFunctions, cmdArgs.GetOptionalArgument("typePrefix", ""), cmdArgs.HasArgument("oss"),
-                    icdUperHtmlFileName, icdAcnHtmlFileName, mappingFunctionsModule, int.Parse(ws));
+                    icdAcnHtmlFileName, mappingFunctionsModule, int.Parse(ws));
 
             /*
              *  Removes parameterized types by resolving them. In the example above
@@ -585,7 +585,7 @@ namespace Asn1f2
                 if (cmdArgs.HasArgument("icdUper"))
                 {
                     var noInnerasn1Ast2 = ReplaceInnerTypes.DoWork(asn1Ast, acnAstResolved, true);
-                    var htmlFileName = Path.Combine(outDir, noInnerasn1Ast2.Item1.IcdUperHtmlFileName);
+                    var htmlFileName = Path.Combine(outDir, icdUperHtmlFileName);
                     icdUper.DoWork("icd_uper.stg", noInnerasn1Ast2.Item1, acnAst3, htmlFileName);
                 }
                 if (cmdArgs.HasArgument("icdAcn"))

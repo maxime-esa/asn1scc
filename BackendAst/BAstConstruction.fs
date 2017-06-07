@@ -65,7 +65,6 @@ let createAstRoot (s:State) (sr:Ast.AstRoot) (dfiles: Asn1File list)  (*(acn:Acn
         Encodings = sr.Encodings
         GenerateEqualFunctions = sr.GenerateEqualFunctions
         TypePrefix = sr.TypePrefix
-        IcdUperHtmlFileName = sr.IcdUperHtmlFileName
         IcdAcnHtmlFileName = sr.IcdAcnHtmlFileName
         CheckWithOss = sr.CheckWithOss
         mappingFunctionsModule = sr.mappingFunctionsModule

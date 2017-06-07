@@ -211,7 +211,6 @@ let mapBAstToCast (r:BAst.AstRoot) (acn:AcnTypes.AcnAst) : AstRoot=
         Encodings = r.Encodings
         GenerateEqualFunctions = r.GenerateEqualFunctions
         TypePrefix = r.TypePrefix
-        IcdUperHtmlFileName = r.IcdUperHtmlFileName
         IcdAcnHtmlFileName = r.IcdAcnHtmlFileName
         CheckWithOss = r.CheckWithOss
         mappingFunctionsModule = r.mappingFunctionsModule
