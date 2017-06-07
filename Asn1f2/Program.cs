@@ -223,7 +223,7 @@ namespace Asn1f2
             */
             var parameterized_ast = CreateAsn1AstFromAntlrTree.CreateAstRoot(asn1Files, encodings.ToArray(),
                     generateEqualFunctions, cmdArgs.GetOptionalArgument("typePrefix", ""), cmdArgs.HasArgument("oss"),
-                    astXmlFile, icdUperHtmlFileName, icdAcnHtmlFileName, mappingFunctionsModule, int.Parse(ws));
+                    mappingFunctionsModule, int.Parse(ws));
 
             /*
              *  Removes parameterized types by resolving them. In the example above
@@ -250,7 +250,7 @@ namespace Asn1f2
                 var uniqueEnums = EnsureUniqueEnumNames.DoWork(asn1Ast0, renamePolicy);
                 //XmlAst.DoWork(uniqueEnums);
 
-                genericBackend.DoWork(uniqueEnums, "xml.stg", uniqueEnums.AstXmlAbsFileName);
+                genericBackend.DoWork(uniqueEnums, "xml.stg", astXmlFile);
 
                 return 0;
             }
@@ -585,7 +585,7 @@ namespace Asn1f2
                 if (cmdArgs.HasArgument("icdUper"))
                 {
                     var noInnerasn1Ast2 = ReplaceInnerTypes.DoWork(asn1Ast, acnAstResolved, true);
-                    var htmlFileName = Path.Combine(outDir, noInnerasn1Ast2.Item1.IcdUperHtmlFileName);
+                    var htmlFileName = Path.Combine(outDir, icdUperHtmlFileName);
                     icdUper.DoWork("icd_uper.stg", noInnerasn1Ast2.Item1, acnAst3, htmlFileName);
                 }
                 if (cmdArgs.HasArgument("icdAcn"))
@@ -594,18 +594,10 @@ namespace Asn1f2
                     var renamePolicy = getRenamePolicy(cmdArgs, ParameterizedAsn1Ast.EnumRenamePolicy.NoRenamePolicy);
                     var astForBackend = EnsureUniqueEnumNames.DoWork(refTypesWithNoConstraints, renamePolicy);
 
-                    var htmlFileName = Path.Combine(outDir, astForBackend.IcdAcnHtmlFileName);
+                    var htmlFileName = Path.Combine(outDir, icdAcnHtmlFileName);
                     icdAcn.DoWork("icd_acn.stg", astForBackend, acnAst3, htmlFileName);
                     var cssFileName = Path.ChangeExtension(htmlFileName, ".css");
                     icdAcn.emitCss("icd_acn.stg", astForBackend, acnAst3, cssFileName);
-
-                    /*
-                    var noInnerasn1Ast2 = ReplaceInnerTypes.DoWork(asn1Ast, acnAstResolved, true);
-                    var htmlFileName = Path.Combine(outDir, noInnerasn1Ast2.Item1.IcdAcnHtmlFileName);
-                    icdAcn.DoWork("icd_acn.stg", noInnerasn1Ast2.Item1, acnAstResolved, htmlFileName);
-                    var cssFileName = Path.ChangeExtension(htmlFileName, ".css");
-                    icdAcn.emitCss("icd_acn.stg", noInnerasn1Ast2.Item1, acnAstResolved, cssFileName);
-                    */
                 }
 
             }

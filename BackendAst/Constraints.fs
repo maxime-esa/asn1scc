@@ -405,9 +405,6 @@ type AstRootTemplate<'ASN1TYPE> = {
     Encodings:list<Ast.Asn1Encoding>
     GenerateEqualFunctions:bool
     TypePrefix:string
-    AstXmlAbsFileName:string
-    IcdUperHtmlFileName:string
-    IcdAcnHtmlFileName:string
     CheckWithOss:bool
     mappingFunctionsModule : string option
     valsMap : Map<ReferenceToValue, Asn1GenericValue>
