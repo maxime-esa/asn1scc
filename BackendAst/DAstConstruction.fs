@@ -664,7 +664,6 @@ let DoWork (r:CAst.AstRoot) (l:ProgrammingLanguage) =
         Encodings = r.Encodings
         GenerateEqualFunctions = r.GenerateEqualFunctions
         TypePrefix = r.TypePrefix
-        IcdAcnHtmlFileName = r.IcdAcnHtmlFileName
         CheckWithOss = r.CheckWithOss
         mappingFunctionsModule = r.mappingFunctionsModule
         valsMap  = r.valsMap

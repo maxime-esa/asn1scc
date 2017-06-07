@@ -905,7 +905,6 @@ type AstRoot = {
     Encodings               : Ast.Asn1Encoding list
     GenerateEqualFunctions  : bool
     TypePrefix              : string
-    IcdAcnHtmlFileName      : string
     CheckWithOss            : bool
     mappingFunctionsModule  : string option
     valsMap                 : Map<ReferenceToValue, Asn1GenericValue>

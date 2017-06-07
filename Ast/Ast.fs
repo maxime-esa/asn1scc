@@ -21,7 +21,6 @@ type AstRoot = {
     Encodings:list<Asn1Encoding>
     GenerateEqualFunctions:bool
     TypePrefix:string
-    IcdAcnHtmlFileName:string
     CheckWithOss:bool
     mappingFunctionsModule : string option
     integerSizeInBytes : int            //currently only the value of 8 bytes (64 bits) is supported
