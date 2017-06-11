@@ -343,6 +343,7 @@ type Integer = {
     acnMaxSizeInBits    : int
     acnMinSizeInBits    : int
     acnEncodingClass    : IntEncodingClass
+    isUnsigned          : bool
 }
 
 type Real = {
@@ -433,6 +434,7 @@ type Enumerated = {
     acnMinSizeInBits    : int
     acnEncodingClass    : IntEncodingClass
     encodeValues        : bool
+    userDefinedValues   : bool      //if true, the user has associated at least one item with a value
 }
 
 type AcnInteger = {
@@ -485,12 +487,19 @@ type ScopeNode =
 type ReferenceToType = 
     | ReferenceToType of ScopeNode list
 
+type TypeAssignmentInfo = {
+    modName : string
+    tasName : string
+}
+
+
 type Asn1Type = {
     id              : ReferenceToType
     Kind            : Asn1TypeKind
     acnAligment     : AcnAligment option
     acnParameters   : AcnParameter list
     Location        : SrcLoc //Line no, Char pos
+    tasInfo         : TypeAssignmentInfo option
 }
 
 

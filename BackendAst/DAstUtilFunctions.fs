@@ -1,6 +1,11 @@
 ﻿module DAstUtilFunctions
+open System
+open System.Numerics
+open FsUtils
+open CommonTypes
 
 open Asn1AcnAst
+open Asn1AcnAstUtilFunctions
 open DAst
 
 
@@ -15,6 +20,15 @@ type VarScopNode with
         | CON idx   -> "c" + idx.ToString()
         | SQOV i     -> sprintf"[%d]" i
         | SQCHILD  s-> s
+
+type ReferenceToValue 
+    with
+        member this.ModName =
+            match this with
+            | ReferenceToValue (path,_) -> 
+                match path with
+                | (Asn1AcnAst.MD modName)::_    -> modName
+                | _                               -> raise(BugErrorException "Did not find module at the begining of the scope path")
 
 
 type ProgrammingLanguage with
@@ -196,141 +210,80 @@ type LocalVariable with
         | C,    AcnInsertedChild(name, vartype)           -> sprintf "%s %s;" vartype name
         | Ada,    AcnInsertedChild(name, vartype)         -> sprintf "%s:%s;" name vartype
 
+type Asn1AcnAst.NamedItem with
+    member this.getBackendName l = 
+        match l with
+        | C         -> ToC this.c_name
+        | Ada       -> ToC this.ada_name
 
 type Integer with
-    member this.Cons     = this.cons
-    member this.WithCons = this.withcons
-    member this.AllCons  = this.cons@this.withcons
+    member this.Cons     = this.baseInfo.cons
+    member this.WithCons = this.baseInfo.withcons
+    member this.AllCons  = this.baseInfo.cons@this.baseInfo.withcons
     //member this.IsUnsigned = isUnsigned this.uperRange
 
 type Enumerated with 
-    member this.Cons     = this.cons
-    member this.WithCons = this.withcons
-    member this.AllCons  = this.cons@this.withcons
+    member this.Cons     = this.baseInfo.cons
+    member this.WithCons = this.baseInfo.withcons
+    member this.AllCons  = this.baseInfo.cons@this.baseInfo.withcons
 
 type Real with 
-    member this.Cons     = this.cons
-    member this.WithCons = this.withcons
-    member this.AllCons  = this.cons@this.withcons
+    member this.Cons     = this.baseInfo.cons
+    member this.WithCons = this.baseInfo.withcons
+    member this.AllCons  = this.baseInfo.cons@this.baseInfo.withcons
 
 type Boolean with 
-    member this.Cons     = this.cons
-    member this.WithCons = this.withcons
-    member this.AllCons  = this.cons@this.withcons
+    member this.Cons     = this.baseInfo.cons
+    member this.WithCons = this.baseInfo.withcons
+    member this.AllCons  = this.baseInfo.cons@this.baseInfo.withcons
 
 type StringType with 
-    member this.Cons     = this.cons
-    member this.WithCons = this.withcons
-    member this.AllCons  = this.cons@this.withcons
+    member this.Cons     = this.baseInfo.cons
+    member this.WithCons = this.baseInfo.withcons
+    member this.AllCons  = this.baseInfo.cons@this.baseInfo.withcons
 
 type OctetString with 
-    member this.Cons     = this.cons
-    member this.WithCons = this.withcons
-    member this.AllCons = this.cons@this.withcons
+    member this.Cons     = this.baseInfo.cons
+    member this.WithCons = this.baseInfo.withcons
+    member this.AllCons  = this.baseInfo.cons@this.baseInfo.withcons
 
 type BitString with 
-    member this.Cons     = this.cons
-    member this.WithCons = this.withcons
-    member this.AllCons  = this.cons@this.withcons
+    member this.Cons     = this.baseInfo.cons
+    member this.WithCons = this.baseInfo.withcons
+    member this.AllCons  = this.baseInfo.cons@this.baseInfo.withcons
 
 type SequenceOf with 
-    member this.Cons     = this.cons
-    member this.WithCons = this.withcons
-    member this.AllCons = this.cons@this.withcons
+    member this.Cons     = this.baseInfo.cons
+    member this.WithCons = this.baseInfo.withcons
+    member this.AllCons  = this.baseInfo.cons@this.baseInfo.withcons
 
 type Sequence with 
-    member this.Cons     = this.cons
-    member this.WithCons = this.withcons
-    member this.AllCons = this.cons@this.withcons
+    member this.Cons     = this.baseInfo.cons
+    member this.WithCons = this.baseInfo.withcons
+    member this.AllCons  = this.baseInfo.cons@this.baseInfo.withcons
 
 type Choice with 
-    member this.Cons     = this.cons
-    member this.WithCons = this.withcons
-    member this.AllCons = this.cons@this.withcons
+    member this.Cons     = this.baseInfo.cons
+    member this.WithCons = this.baseInfo.withcons
+    member this.AllCons  = this.baseInfo.cons@this.baseInfo.withcons
+
+type SeqChildInfo with
+    member this.acnInsertetField =
+        match this.baseInfo with
+        | Asn1AcnAst.Asn1Child _    -> false
+        | Asn1AcnAst.AcnChild _     -> true
 
 type Asn1Type
 with
-    member this.id =
-        match this with
-        | Integer      t -> t.id
-        | Real         t -> t.id
-        | IA5String    t -> t.id
-        | OctetString  t -> t.id
-        | NullType     t -> t.id
-        | BitString    t -> t.id
-        | Boolean      t -> t.id
-        | Enumerated   t -> t.id
-        | SequenceOf   t -> t.id
-        | Sequence     t -> t.id
-        | Choice       t -> t.id
-    member this.baseType =
-        match this with
-        | Integer      t -> t.baseType |> Option.map Integer     
-        | Real         t -> t.baseType |> Option.map Real        
-        | IA5String    t -> t.baseType |> Option.map IA5String   
-        | OctetString  t -> t.baseType |> Option.map OctetString 
-        | NullType     t -> t.baseType |> Option.map NullType    
-        | BitString    t -> t.baseType |> Option.map BitString   
-        | Boolean      t -> t.baseType |> Option.map Boolean     
-        | Enumerated   t -> t.baseType |> Option.map Enumerated  
-        | SequenceOf   t -> t.baseType |> Option.map SequenceOf  
-        | Sequence     t -> t.baseType |> Option.map Sequence    
-        | Choice       t -> t.baseType |> Option.map Choice      
-    member this.uperMaxSizeInBits =
-        match this with
-        | Integer      t -> t.uperMaxSizeInBits
-        | Real         t -> t.uperMaxSizeInBits
-        | IA5String    t -> t.uperMaxSizeInBits
-        | OctetString  t -> t.uperMaxSizeInBits
-        | NullType     t -> t.uperMaxSizeInBits
-        | BitString    t -> t.uperMaxSizeInBits
-        | Boolean      t -> t.uperMaxSizeInBits
-        | Enumerated   t -> t.uperMaxSizeInBits
-        | SequenceOf   t -> t.uperMaxSizeInBits
-        | Sequence     t -> t.uperMaxSizeInBits
-        | Choice       t -> t.uperMaxSizeInBits
-    member this.uperMinSizeInBits =
-        match this with
-        | Integer      t -> t.uperMinSizeInBits
-        | Real         t -> t.uperMinSizeInBits
-        | IA5String    t -> t.uperMinSizeInBits
-        | OctetString  t -> t.uperMinSizeInBits
-        | NullType     t -> t.uperMinSizeInBits
-        | BitString    t -> t.uperMinSizeInBits
-        | Boolean      t -> t.uperMinSizeInBits
-        | Enumerated   t -> t.uperMinSizeInBits
-        | SequenceOf   t -> t.uperMinSizeInBits
-        | Sequence     t -> t.uperMinSizeInBits
-        | Choice       t -> t.uperMinSizeInBits
-    member this.acnMinSizeInBits =
-        match this with
-        | Integer      t -> t.acnMinSizeInBits
-        | Real         t -> t.acnMinSizeInBits
-        | IA5String    t -> t.acnMinSizeInBits
-        | OctetString  t -> t.acnMinSizeInBits
-        | NullType     t -> t.acnMinSizeInBits
-        | BitString    t -> t.acnMinSizeInBits
-        | Boolean      t -> t.acnMinSizeInBits
-        | Enumerated   t -> t.acnMinSizeInBits
-        | SequenceOf   t -> t.acnMinSizeInBits
-        | Sequence     t -> t.acnMinSizeInBits
-        | Choice       t -> t.acnMinSizeInBits
+    member this.id = this.baseInfo.id
 
-    member this.acnMaxSizeInBits =
-        match this with
-        | Integer      t -> t.acnMaxSizeInBits
-        | Real         t -> t.acnMaxSizeInBits
-        | IA5String    t -> t.acnMaxSizeInBits
-        | OctetString  t -> t.acnMaxSizeInBits
-        | NullType     t -> t.acnMaxSizeInBits
-        | BitString    t -> t.acnMaxSizeInBits
-        | Boolean      t -> t.acnMaxSizeInBits
-        | Enumerated   t -> t.acnMaxSizeInBits
-        | SequenceOf   t -> t.acnMaxSizeInBits
-        | Sequence     t -> t.acnMaxSizeInBits
-        | Choice       t -> t.acnMaxSizeInBits
+    member this.uperMaxSizeInBits = this.baseInfo.uperMaxSizeInBits
+    member this.uperMinSizeInBits = this.baseInfo.uperMinSizeInBits
+    member this.acnMinSizeInBits = this.baseInfo.acnMinSizeInBits
+    member this.acnMaxSizeInBits = this.baseInfo.acnMaxSizeInBits
+    
     member this.initialValue =
-        match this with
+        match this.Kind with
         | Integer      t -> IntegerValue t.initialValue
         | Real         t -> RealValue t.initialValue
         | IA5String    t -> StringValue t.initialValue
@@ -342,9 +295,10 @@ with
         | SequenceOf   t -> SeqOfValue t.initialValue
         | Sequence     t -> SeqValue t.initialValue
         | Choice       t -> ChValue t.initialValue
+        | ReferenceType t-> t.initialValue
 
     member this.initFunction =
-        match this with
+        match this.Kind with
         | Integer      t -> t.initFunction
         | Real         t -> t.initFunction
         | IA5String    t -> t.initFunction
@@ -356,9 +310,10 @@ with
         | SequenceOf   t -> t.initFunction
         | Sequence     t -> t.initFunction
         | Choice       t -> t.initFunction
+        | ReferenceType t-> t.initFunction
 
     member this.equalFunction =
-        match this with
+        match this.Kind with
         | Integer      t -> t.equalFunction
         | Real         t -> t.equalFunction
         | IA5String    t -> t.equalFunction
@@ -370,9 +325,10 @@ with
         | SequenceOf   t -> t.equalFunction
         | Sequence     t -> t.equalFunction
         | Choice       t -> t.equalFunction
+        | ReferenceType t-> t.equalFunction
 
     member this.isValidFunction =
-        match this with
+        match this.Kind with
         | Integer      t -> t.isValidFunction
         | Real         t -> t.isValidFunction
         | IA5String    t -> t.isValidFunction
@@ -384,12 +340,15 @@ with
         | SequenceOf   t -> t.isValidFunction
         | Sequence     t -> t.isValidFunction
         | Choice       t -> t.isValidFunction
+        | ReferenceType t-> t.isValidFunction
+    
     member this.getUperFunction (l:CommonTypes.Codec) =
         match l with
         | CommonTypes.Encode   -> this.uperEncFunction
         | CommonTypes.Decode   -> this.uperDecFunction
+    
     member this.uperEncFunction =
-         match this with
+         match this.Kind with
          | Integer      t -> Some(t.uperEncFunction)
          | Real         t -> Some(t.uperEncFunction)
          | IA5String    t -> Some(t.uperEncFunction)
@@ -401,8 +360,10 @@ with
          | SequenceOf   t -> Some(t.uperEncFunction)
          | Sequence     t -> Some(t.uperEncFunction)
          | Choice       t -> Some(t.uperEncFunction)
+         | ReferenceType t-> Some t.uperEncFunction
+
     member this.uperDecFunction =
-         match this with
+         match this.Kind with
          | Integer      t -> Some(t.uperDecFunction)
          | Real         t -> Some(t.uperDecFunction)
          | IA5String    t -> Some(t.uperDecFunction)
@@ -414,8 +375,10 @@ with
          | SequenceOf   t -> Some(t.uperDecFunction)
          | Sequence     t -> Some(t.uperDecFunction)
          | Choice       t -> Some(t.uperDecFunction)
+         | ReferenceType t-> Some t.uperDecFunction
+
     member this.acnEncFunction : AcnFunction option =
-        match this with
+        match this.Kind with
         | Integer      t -> Some (t.acnEncFunction)
         | Real         t -> None
         | IA5String    t -> None
@@ -427,8 +390,10 @@ with
         | SequenceOf   t -> None
         | Sequence     t -> Some (t.acnEncFunction)
         | Choice       t -> None
+        | ReferenceType t-> None
+
     member this.acnDecFunction : AcnFunction option =
-        match this with
+        match this.Kind with
         | Integer      t -> Some (t.acnDecFunction)
         | Real         t -> None
         | IA5String    t -> None
@@ -440,13 +405,15 @@ with
         | SequenceOf   t -> None
         | Sequence     t -> Some (t.acnDecFunction)
         | Choice       t -> None
+        | ReferenceType t-> None
+
     member this.getAcnFunction (l:CommonTypes.Codec) =
         match l with
         | CommonTypes.Encode   -> this.acnEncFunction
         | CommonTypes.Decode   -> this.acnDecFunction
 
     member this.typeDefinition =
-        match this with
+        match this.Kind with
         | Integer      t -> t.typeDefinition
         | Real         t -> t.typeDefinition
         | IA5String    t -> t.typeDefinition
@@ -458,22 +425,12 @@ with
         | SequenceOf   t -> t.typeDefinition
         | Sequence     t -> t.typeDefinition
         | Choice       t -> t.typeDefinition
-    member this.tasInfo =
-        match this with
-        | Integer      t -> t.tasInfo
-        | Real         t -> t.tasInfo
-        | IA5String    t -> t.tasInfo
-        | OctetString  t -> t.tasInfo
-        | NullType     t -> t.tasInfo
-        | BitString    t -> t.tasInfo
-        | Boolean      t -> t.tasInfo
-        | Enumerated   t -> t.tasInfo
-        | SequenceOf   t -> t.tasInfo
-        | Sequence     t -> t.tasInfo
-        | Choice       t -> t.tasInfo
+        | ReferenceType t-> t.typeDefinition
+
+    member this.tasInfo = this.baseInfo.tasInfo
 
     member this.isIA5String =
-        match this with
+        match this.Kind with
         | IA5String    _ -> true
         | _              -> false
 

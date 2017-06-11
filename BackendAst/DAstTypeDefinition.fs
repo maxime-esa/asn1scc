@@ -3,9 +3,11 @@
 open System
 open System.Numerics
 open FsUtils
-open Constraints
-open uPER2
+open Asn1AcnAstUtilFunctions
+open Asn1AcnAst
 open DAst
+open DAstUtilFunctions
+open Asn1Fold
 
 
 
@@ -15,7 +17,7 @@ let createInnerTypes (l:ProgrammingLanguage) =
     | C    -> true
 
 
-let getTypeDefinitionName (r:CAst.AstRoot) (l:ProgrammingLanguage) (id : ReferenceToType) =
+let getTypeDefinitionName (r:Asn1AcnAst.AstRoot) (l:ProgrammingLanguage) (id : ReferenceToType) =
     let longName = id.AcnAbsPath.Tail |> Seq.StrJoin "_"
     ToC2(r.args.TypePrefix + longName.Replace("#","elem"))
 
@@ -35,7 +37,7 @@ let hasSingleValueConstraint (c:SizableTypeConstraint<'v>) =
         (fun e1 e2 s        -> e1 || e2, s)
         (fun e s            -> e, s)
         (fun e1 e2 s        -> e1 || e2, s)
-        (fun v rv s         -> true ,s)
+        (fun v  s           -> true ,s)
         (fun intCon s       -> false,s)
         c
         0 |> fst
@@ -44,8 +46,8 @@ let hasSingleValueConstraint (c:SizableTypeConstraint<'v>) =
 
 //let ds = {dummy=0}
 
-let createIntegerTypeDefinition (r:CAst.AstRoot) (l:ProgrammingLanguage) (o:CAst.Integer)  (baseDefinition:TypeDefinitionCommon option) (us:State) =
-    let typeDefinitionName = getTypeDefinitionName r l o.id
+let createIntegerTypeDefinition (r:Asn1AcnAst.AstRoot) (l:ProgrammingLanguage) (t:Asn1AcnAst.Asn1Type)  (o:Asn1AcnAst.Integer)  (baseDefinition:TypeDefinitionCommon option) (us:State) =
+    let typeDefinitionName = getTypeDefinitionName r l t.id
 
     let completeDefintion, typeDefinitionBodyWithinSeq, completeDefinitionWithinSeq =
         match l with
@@ -54,7 +56,7 @@ let createIntegerTypeDefinition (r:CAst.AstRoot) (l:ProgrammingLanguage) (o:CAst
                 match baseDefinition with 
                 | Some baseType     -> baseType.name
                 | _    ->
-                    match o.IsUnsigned with
+                    match o.isUnsigned with
                     | true  -> header_c.Declare_PosInteger ()
                     | false -> header_c.Declare_Integer ()
             getCompleteDefinition l SUBTYPE typeDefinitionBody typeDefinitionName None [], typeDefinitionBody, None
@@ -88,8 +90,8 @@ let createIntegerTypeDefinition (r:CAst.AstRoot) (l:ProgrammingLanguage) (o:CAst
 
     }
 
-let createBooleanTypeDefinition (r:CAst.AstRoot) (l:ProgrammingLanguage) (o:CAst.Boolean)  (baseDefinition:TypeDefinitionCommon option) (us:State) =
-    let typeDefinitionName = getTypeDefinitionName r l o.id
+let createBooleanTypeDefinition (r:Asn1AcnAst.AstRoot) (l:ProgrammingLanguage) (t:Asn1AcnAst.Asn1Type) (o:Asn1AcnAst.Boolean)  (baseDefinition:TypeDefinitionCommon option) (us:State) =
+    let typeDefinitionName = getTypeDefinitionName r l t.id
 
     let typeDefinitionBody                       =
                     match baseDefinition with 
@@ -111,8 +113,8 @@ let createBooleanTypeDefinition (r:CAst.AstRoot) (l:ProgrammingLanguage) (o:CAst
 
     }
 
-let createRealTypeDefinition (r:CAst.AstRoot) (l:ProgrammingLanguage) (o:CAst.Real)  (baseDefinition:TypeDefinitionCommon option) (us:State) =
-    let typeDefinitionName = getTypeDefinitionName r l o.id
+let createRealTypeDefinition (r:Asn1AcnAst.AstRoot) (l:ProgrammingLanguage) (t:Asn1AcnAst.Asn1Type) (o:Asn1AcnAst.Real)  (baseDefinition:TypeDefinitionCommon option) (us:State) =
+    let typeDefinitionName = getTypeDefinitionName r l t.id
     let typeDefinitionBody                       =
                     match baseDefinition with 
                     | Some baseType     -> baseType.name
@@ -131,8 +133,8 @@ let createRealTypeDefinition (r:CAst.AstRoot) (l:ProgrammingLanguage) (o:CAst.Re
 
     }
 
-let createStringTypeDefinition (r:CAst.AstRoot) (l:ProgrammingLanguage) (o:CAst.StringType)  (baseDefinition:TypeDefinitionCommon option) (us:State) =
-    let typeDefinitionName = getTypeDefinitionName r l o.id
+let createStringTypeDefinition (r:Asn1AcnAst.AstRoot) (l:ProgrammingLanguage) (t:Asn1AcnAst.Asn1Type) (o:Asn1AcnAst.StringType)  (baseDefinition:TypeDefinitionCommon option) (us:State) =
+    let typeDefinitionName = getTypeDefinitionName r l t.id
     let arraySize = Some(o.maxSize+1)
     let completeDefintion, typeDefinitionBodyWithinSeq, completeDefinitionWithinSeq =
         match l with
@@ -145,7 +147,7 @@ let createStringTypeDefinition (r:CAst.AstRoot) (l:ProgrammingLanguage) (o:CAst.
         | Ada                    -> 
             match baseDefinition with
             | None  ->
-                let completeDefintion = header_a.IA5STRING_OF_tas_decl typeDefinitionName (BigInteger o.minSize) (BigInteger o.maxSize) (BigInteger (o.maxSize + 1)) (o.charSet |> Array.map(fun c -> (BigInteger (int c))))
+                let completeDefintion = header_a.IA5STRING_OF_tas_decl typeDefinitionName (BigInteger o.minSize) (BigInteger o.maxSize) (BigInteger (o.maxSize + 1)) (o.uperCharSet |> Array.map(fun c -> (BigInteger (int c))))
                 completeDefintion, typeDefinitionName, (Some completeDefintion) 
             | Some baseTypeName     ->
                 let typeDefinitionBody = baseTypeName.name
@@ -162,8 +164,8 @@ let createStringTypeDefinition (r:CAst.AstRoot) (l:ProgrammingLanguage) (o:CAst.
 
     }
 
-let createOctetTypeDefinition (r:CAst.AstRoot) (l:ProgrammingLanguage) (o:CAst.OctetString)  (baseDefinition:TypeDefinitionCommon option) (us:State) =
-    let typeDefinitionName = getTypeDefinitionName r l o.id
+let createOctetTypeDefinition (r:Asn1AcnAst.AstRoot) (l:ProgrammingLanguage) (t:Asn1AcnAst.Asn1Type) (o:Asn1AcnAst.OctetString)  (baseDefinition:TypeDefinitionCommon option) (us:State) =
+    let typeDefinitionName = getTypeDefinitionName r l t.id
     let completeDefintion, typeDefinitionBodyWithinSeq, completeDefinitionWithinSeq =
         match l with
         | C                      -> 
@@ -194,8 +196,8 @@ let createOctetTypeDefinition (r:CAst.AstRoot) (l:ProgrammingLanguage) (o:CAst.O
 
     }
 
-let createBitStringTypeDefinition (r:CAst.AstRoot) (l:ProgrammingLanguage) (o:CAst.BitString)  (baseDefinition:TypeDefinitionCommon option) (us:State) =
-    let typeDefinitionName = getTypeDefinitionName r l o.id
+let createBitStringTypeDefinition (r:Asn1AcnAst.AstRoot) (l:ProgrammingLanguage) (t:Asn1AcnAst.Asn1Type) (o:Asn1AcnAst.BitString)  (baseDefinition:TypeDefinitionCommon option) (us:State) =
+    let typeDefinitionName = getTypeDefinitionName r l t.id
     let completeDefintion, typeDefinitionBodyWithinSeq, completeDefinitionWithinSeq =
         match l with
         | C                      -> 
@@ -226,8 +228,8 @@ let createBitStringTypeDefinition (r:CAst.AstRoot) (l:ProgrammingLanguage) (o:CA
 
     }
 
-let createNullTypeDefinition (r:CAst.AstRoot) (l:ProgrammingLanguage) (o:CAst.NullType)  (baseDefinition:TypeDefinitionCommon option) (us:State) =
-    let typeDefinitionName = getTypeDefinitionName r l o.id
+let createNullTypeDefinition (r:Asn1AcnAst.AstRoot) (l:ProgrammingLanguage) (t:Asn1AcnAst.Asn1Type) (o:Asn1AcnAst.NullType)  (baseDefinition:TypeDefinitionCommon option) (us:State) =
+    let typeDefinitionName = getTypeDefinitionName r l t.id
     let typeDefinitionBody                       =
                     match baseDefinition with 
                     | Some baseType     -> baseType.name
@@ -249,15 +251,15 @@ let createNullTypeDefinition (r:CAst.AstRoot) (l:ProgrammingLanguage) (o:CAst.Nu
     }
 
 
-let createEnumeratedTypeDefinition (r:CAst.AstRoot) (l:ProgrammingLanguage) (o:CAst.Enumerated)  (baseDefinition:TypeDefinitionCommon option) (us:State) =
-    let typeDefinitionName = getTypeDefinitionName r l o.id
+let createEnumeratedTypeDefinition (r:Asn1AcnAst.AstRoot) (l:ProgrammingLanguage) (t:Asn1AcnAst.Asn1Type) (o:Asn1AcnAst.Enumerated)  (baseDefinition:TypeDefinitionCommon option) (us:State) =
+    let typeDefinitionName = getTypeDefinitionName r l t.id
     let completeDefintion, typeDefinitionBodyWithinSeq, completeDefinitionWithinSeq =
         match l with
         | C                      -> 
             let items = 
                 match o.userDefinedValues with
-                | true  -> o.items |> List.map( fun i -> header_c.PrintNamedItem (i.getBackendName l) i.Value)
-                | false ->o.items |> List.map( fun i -> i.getBackendName l)
+                | true  -> o.items |> List.map( fun i -> header_c.PrintNamedItem (i.getBackendName l) i.definitionValue)
+                | false -> o.items |> List.map( fun i -> i.getBackendName l)
             let typeDefinitionBody                       =
                 match baseDefinition with 
                 | Some baseType     -> baseType.name
@@ -267,7 +269,7 @@ let createEnumeratedTypeDefinition (r:CAst.AstRoot) (l:ProgrammingLanguage) (o:C
             match baseDefinition with
             | None  ->
                 let arrsEnumNames = o.items |> List.map( fun i -> i.getBackendName l)
-                let arrsEnumNamesAndValues = o.items |> List.map( fun i -> header_a.ENUMERATED_tas_decl_item (i.getBackendName l) i.Value)
+                let arrsEnumNamesAndValues = o.items |> List.map( fun i -> header_a.ENUMERATED_tas_decl_item (i.getBackendName l) i.definitionValue)
                 let nIndexMax = BigInteger ((Seq.length o.items)-1)
                 let completeDefintion = header_a.ENUMERATED_tas_decl typeDefinitionName arrsEnumNames arrsEnumNamesAndValues nIndexMax
                 completeDefintion, typeDefinitionName, (Some completeDefintion) 
@@ -285,8 +287,8 @@ let createEnumeratedTypeDefinition (r:CAst.AstRoot) (l:ProgrammingLanguage) (o:C
 
     }
 
-let createSequenceOfTypeDefinition (r:CAst.AstRoot) (l:ProgrammingLanguage) (o:CAst.SequenceOf)  (baseDefinition:TypeDefinitionCommon option) (childDefinition:TypeDefinitionCommon) (us:State) =
-    let typeDefinitionName = getTypeDefinitionName r l o.id
+let createSequenceOfTypeDefinition (r:Asn1AcnAst.AstRoot) (l:ProgrammingLanguage) (t:Asn1AcnAst.Asn1Type) (o:Asn1AcnAst.SequenceOf)  (baseDefinition:TypeDefinitionCommon option) (childDefinition:TypeDefinitionCommon) (us:State) =
+    let typeDefinitionName = getTypeDefinitionName r l t.id
     
     let childldrenCompleteDefintions =
         match createInnerTypes l with
@@ -343,7 +345,7 @@ let createSequenceOfTypeDefinition (r:CAst.AstRoot) (l:ProgrammingLanguage) (o:C
         completeDefinitionWithinSeq              = completeDefinitionWithinSeq
     }
 
-let createSequenceTypeDefinition (r:CAst.AstRoot) (l:ProgrammingLanguage) (o:CAst.Sequence)  (baseDefinition:TypeDefinitionCommon option) (children:SeqChildInfo list) (us:State) =
+let createSequenceTypeDefinition (r:Asn1AcnAst.AstRoot) (l:ProgrammingLanguage) (t:Asn1AcnAst.Asn1Type) (o:Asn1AcnAst.Sequence)  (baseDefinition:TypeDefinitionCommon option) (children:SeqChildInfo list) (us:State) =
     let handleChild (o:SeqChildInfo) =
         match o.acnInsertetField with
         | false ->
@@ -355,7 +357,7 @@ let createSequenceTypeDefinition (r:CAst.AstRoot) (l:ProgrammingLanguage) (o:CAs
                 Some (header_a.SEQUENCE_tas_decl_child o.c_name o.chType.typeDefinition.typeDefinitionBodyWithinSeq)
         | true                       -> None
 
-    let typeDefinitionName = getTypeDefinitionName r l o.id
+    let typeDefinitionName = getTypeDefinitionName r l t.id
     let childldrenCompleteDefintions =
         match createInnerTypes l with
         | true  -> (children |> List.choose (fun c -> c.chType.typeDefinition.completeDefinitionWithinSeq))
@@ -377,7 +379,7 @@ let createSequenceTypeDefinition (r:CAst.AstRoot) (l:ProgrammingLanguage) (o:CAs
             match baseDefinition with
             | None  ->
                 let childrenBodies = children |> List.choose handleChild
-                let optChildNames  = children |> List.choose(fun c -> match c.optionality with Some _ -> Some c.name | None -> None)
+                let optChildNames  = children |> List.choose(fun c -> match c.baseInfo.Optionality with Some _ -> Some c.baseInfo.Name.Value | None -> None)
                 let typeDefinitionBody = header_c.Declare_Sequence childrenBodies optChildNames
                 let completeDefintion = getCompleteDefinition l SUBTYPE typeDefinitionBody typeDefinitionName None childldrenCompleteDefintions
                 completeDefintion, typeDefinitionName, (Some completeDefintion) 
@@ -388,7 +390,7 @@ let createSequenceTypeDefinition (r:CAst.AstRoot) (l:ProgrammingLanguage) (o:CAs
             match baseDefinition with
             | None  ->
                 let childrenBodies = children |> List.choose handleChild
-                let optChildren  = children |> List.choose(fun c -> match c.optionality with Some _ -> Some(header_a.SEQUENCE_tas_decl_child_bit c.name) | None -> None)
+                let optChildren  = children |> List.choose(fun c -> match c.baseInfo.Optionality with Some _ -> Some(header_a.SEQUENCE_tas_decl_child_bit c.baseInfo.Name.Value) | None -> None)
                 let completeDefintion = header_a.SEQUENCE_tas_decl typeDefinitionName childrenBodies optChildren childldrenCompleteDefintions
                 completeDefintion, typeDefinitionName, (Some completeDefintion) 
             | Some baseTypeName     ->
@@ -405,7 +407,7 @@ let createSequenceTypeDefinition (r:CAst.AstRoot) (l:ProgrammingLanguage) (o:CAs
         completeDefinitionWithinSeq              = completeDefinitionWithinSeq
     }
 
-let createChoiceTypeDefinition (r:CAst.AstRoot) (l:ProgrammingLanguage) (o:CAst.Choice)  (baseDefinition:TypeDefinitionCommon option) (children:ChChildInfo list) (us:State) =
+let createChoiceTypeDefinition (r:Asn1AcnAst.AstRoot) (l:ProgrammingLanguage) (o:Asn1AcnAst.Choice)  (baseDefinition:TypeDefinitionCommon option) (children:ChChildInfo list) (us:State) =
     let typeDefinitionName = getTypeDefinitionName r l o.id
     let handleChild (o:ChChildInfo) =
         match l with

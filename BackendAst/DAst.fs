@@ -1,5 +1,7 @@
 ﻿module DAst
 
+open Antlr.Runtime.Tree
+open Antlr.Runtime
 open System
 open System.Numerics
 open FsUtils
@@ -7,6 +9,46 @@ open CommonTypes
 //open Constraints
 
 
+
+
+
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+////// ASN1 VALUES DEFINITION    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+type IntegerValue         = BigInteger
+type RealValue            = double
+type StringValue          = string
+type BooleanValue         = bool
+type BitStringValue       = string
+type OctetStringValue     = list<byte>
+type EnumValue            = string
+type NullValue            = unit
+type SeqOfValue           = list<Asn1Value>
+and SeqValue              = list<NamedValue>
+and ChValue               = NamedValue
+and RefValue              = ((StringLoc*StringLoc)*Asn1Value)
+
+and NamedValue = {
+    name        : StringLoc
+    Value       : Asn1Value
+}
+
+and Asn1Value =
+    | IntegerValue          of IntegerValue    
+    | RealValue             of RealValue       
+    | StringValue           of StringValue     
+    | BooleanValue          of BooleanValue    
+    | BitStringValue        of BitStringValue  
+    | OctetStringValue      of OctetStringValue
+    | EnumValue             of EnumValue       
+    | SeqOfValue            of SeqOfValue      
+    | SeqValue              of SeqValue        
+    | ChValue               of ChValue         
+    | NullValue             of NullValue
+    | RefValue              of RefValue   
+
+type Asn1GenericValue = Asn1Value
 
 type ProgrammingLanguage =
     |C
@@ -23,18 +65,8 @@ type VarScopNode =
     | IMG of int        //non ASN.1 value. Required when constructing values for types in backends
 
 type ReferenceToValue = 
-    | ReferenceToValue of (ScopeNode list)*(VarScopNode list)
-    with
-        member this.ModName =
-            match this with
-            | ReferenceToValue (path,_) -> 
-                match path with
-                | (MD modName)::_    -> modName
-                | _                               -> raise(BugErrorException "Did not find module at the begining of the scope path")
+    | ReferenceToValue of (Asn1AcnAst.ScopeNode list)*(VarScopNode list)
 
-
-
-type Asn1GenericValue = Asn1Value
 
 type FuncParamType =
   | VALUE       of string
@@ -108,13 +140,11 @@ type ErroCode = {
     errCodeName     : string
 }
 
-(*
 type BaseTypesEquivalence<'T> = {
     typeDefinition  : 'T option
     uper            : 'T option
     acn             : 'T option
 }
-*)    
         
 (*
 Generates initialization statement(s) that inititalize the type with the given Asn1GeneticValue.
@@ -193,7 +223,7 @@ type Integer = {
     //baseTypeEquivalence: BaseTypesEquivalence<Integer>
 
     typeDefinition      : TypeDefinitionCommon
-    initialValue        : Asn1AcnAst.IntegerValue
+    initialValue        : IntegerValue
     initFunction        : InitFunction
     equalFunction       : EqualFunction
     isValidFunction     : IsValidFunction option      // it is optional because some types do not require an IsValid function (e.g. an unconstraint integer)
@@ -211,17 +241,12 @@ type Enumerated = {
     //DAst properties
     //baseTypeEquivalence: BaseTypesEquivalence<Enumerated>
     typeDefinition      : TypeDefinitionCommon
-    initialValue        : Asn1AcnAst.EnumValue
+    initialValue        : EnumValue
     initFunction        : InitFunction
     equalFunction       : EqualFunction
     isValidFunction     : IsValidFunction option      // it is optional because some types do not require an IsValid function (e.g. an unconstraint integer)
     uperEncFunction     : UPerFunction
     uperDecFunction     : UPerFunction
-
-    encodeFuncName      : string option               // has value only for top level asn1 types (i.e. TypeAssignments (TAS))
-    encodeFuncBody      : string -> string            // an stg macro according the acnEncodingClass
-    decodeFuncName      : string option               // has value only for top level asn1 types (i.e. TypeAssignments (TAS))
-    decodeFuncBody      : string -> string            // an stg macro according the acnEncodingClass
 }
 
 type Real = {
@@ -230,17 +255,12 @@ type Real = {
     //DAst properties
     //baseTypeEquivalence: BaseTypesEquivalence<Real>
     typeDefinition      : TypeDefinitionCommon
-    initialValue        : Asn1AcnAst.RealValue
+    initialValue        : RealValue
     initFunction        : InitFunction
     equalFunction       : EqualFunction
     isValidFunction     : IsValidFunction option      // it is optional because some types do not require an IsValid function (e.g. an unconstraint integer)
     uperEncFunction     : UPerFunction
     uperDecFunction     : UPerFunction
-
-    encodeFuncName      : string option               // has value only for top level asn1 types (i.e. TypeAssignments (TAS))
-    encodeFuncBody      : string -> string            // an stg macro according the acnEncodingClass
-    decodeFuncName      : string option               // has value only for top level asn1 types (i.e. TypeAssignments (TAS))
-    decodeFuncBody      : string -> string            // an stg macro according the acnEncodingClass
 }
 
 
@@ -250,7 +270,7 @@ type Boolean = {
     //DAst properties
     //baseTypeEquivalence: BaseTypesEquivalence<Boolean>
     typeDefinition      : TypeDefinitionCommon
-    initialValue        : Asn1AcnAst.BooleanValue
+    initialValue        : BooleanValue
     initFunction        : InitFunction
     equalFunction       : EqualFunction
     isValidFunction     : IsValidFunction option      // it is optional because some types do not require an IsValid function (e.g. an unconstraint integer)
@@ -268,15 +288,11 @@ type NullType = {
     //baseTypeEquivalence: BaseTypesEquivalence<NullType>
     typeDefinition      : TypeDefinitionCommon
     initFunction        : InitFunction
-    initialValue        : Asn1AcnAst.NullValue
+    initialValue        : NullValue
     equalFunction       : EqualFunction
     uperEncFunction     : UPerFunction
     uperDecFunction     : UPerFunction
 
-    encodeFuncName      : string option               // has value only for top level asn1 types (i.e. TypeAssignments (TAS))
-    encodeFuncBody      : string -> string            // an stg macro according the acnEncodingClass
-    decodeFuncName      : string option               // has value only for top level asn1 types (i.e. TypeAssignments (TAS))
-    decodeFuncBody      : string -> string            // an stg macro according the acnEncodingClass
 }
 
 
@@ -286,17 +302,13 @@ type StringType = {
     //DAst properties
     //baseTypeEquivalence: BaseTypesEquivalence<StringType>
     typeDefinition      : TypeDefinitionCommon
-    initialValue        :  Asn1AcnAst.StringValue
+    initialValue        :  StringValue
     initFunction        : InitFunction
     equalFunction       : EqualFunction
     isValidFunction     : IsValidFunction option      // it is optional because some types do not require an IsValid function (e.g. an unconstraint integer)
     uperEncFunction     : UPerFunction
     uperDecFunction     : UPerFunction
 
-    encodeFuncName      : string option               // has value only for top level asn1 types (i.e. TypeAssignments (TAS))
-    encodeFuncBody      : string -> string            // an stg macro according the acnEncodingClass
-    decodeFuncName      : string option               // has value only for top level asn1 types (i.e. TypeAssignments (TAS))
-    decodeFuncBody      : string -> string            // an stg macro according the acnEncodingClass
 }
 
 
@@ -307,17 +319,13 @@ type OctetString = {
     //DAst properties
     //baseTypeEquivalence: BaseTypesEquivalence<OctetString>
     typeDefinition      : TypeDefinitionCommon
-    initialValue        : Asn1AcnAst.OctetStringValue
+    initialValue        : OctetStringValue
     initFunction        : InitFunction
     equalFunction       : EqualFunction
     isValidFunction     : IsValidFunction option      // it is optional because some types do not require an IsValid function (e.g. an unconstraint integer)
     uperEncFunction     : UPerFunction
     uperDecFunction     : UPerFunction
 
-    encodeFuncName      : string option               // has value only for top level asn1 types (i.e. TypeAssignments (TAS))
-    encodeFuncBody      : string -> string            // an stg macro according the acnEncodingClass
-    decodeFuncName      : string option               // has value only for top level asn1 types (i.e. TypeAssignments (TAS))
-    decodeFuncBody      : string -> string            // an stg macro according the acnEncodingClass
 }
 
 
@@ -328,17 +336,13 @@ type BitString = {
     //DAst properties
     //baseTypeEquivalence: BaseTypesEquivalence<BitString>
     typeDefinition      : TypeDefinitionCommon
-    initialValue        : Asn1AcnAst.BitStringValue
+    initialValue        : BitStringValue
     initFunction        : InitFunction
     equalFunction       : EqualFunction
     isValidFunction     : IsValidFunction option      // it is optional because some types do not require an IsValid function (e.g. an unconstraint integer)
     uperEncFunction     : UPerFunction
     uperDecFunction     : UPerFunction
 
-    encodeFuncName      : string option               // has value only for top level asn1 types (i.e. TypeAssignments (TAS))
-    encodeFuncBody      : string -> string            // an stg macro according the acnEncodingClass
-    decodeFuncName      : string option               // has value only for top level asn1 types (i.e. TypeAssignments (TAS))
-    decodeFuncBody      : string -> string            // an stg macro according the acnEncodingClass
 }
 
 
@@ -349,17 +353,13 @@ type SequenceOf = {
     //DAst properties
     //baseTypeEquivalence: BaseTypesEquivalence<SequenceOf>
     typeDefinition      : TypeDefinitionCommon
-    initialValue        : Asn1AcnAst.SeqOfValue
+    initialValue        : SeqOfValue
     initFunction        : InitFunction
     equalFunction       : EqualFunction
     isValidFunction     : IsValidFunction option      
     uperEncFunction     : UPerFunction
     uperDecFunction     : UPerFunction
 
-    encodeFuncName      : string option               // has value only for top level asn1 types (i.e. TypeAssignments (TAS))
-    encodeFuncBody      : string -> string            // an stg macro according the acnEncodingClass
-    decodeFuncName      : string option               // has value only for top level asn1 types (i.e. TypeAssignments (TAS))
-    decodeFuncBody      : string -> string            // an stg macro according the acnEncodingClass
 }
 
 
@@ -372,11 +372,9 @@ and SeqChoiceChildInfoIsValid = {
 
 
 and SeqChildInfo = {
-    name                :string
-    chType              :Asn1Type
-    optionality         :CAst.Asn1Optionality option
-    acnInsertetField    :bool
-    comments            :string list
+    baseInfo            : Asn1AcnAst.SeqChildInfo
+    chType              : Asn1Type
+    
 
     //DAst properties
     c_name              : string
@@ -386,23 +384,12 @@ and SeqChildInfo = {
 
 
 and Sequence = {
-    id                  : ReferenceToType
-    tasInfo             : BAst.TypeAssignmentInfo option
-    uperMaxSizeInBits   : int
-    uperMinSizeInBits   : int
+    baseInfo            : Asn1AcnAst.Sequence
     children            : SeqChildInfo list
-    cons                : SequenceConstraint list
-    withcons            : SequenceConstraint list
-    baseType            : Sequence option
-    Location            : SrcLoc   
 
-    //cast new properties
-    acnMaxSizeInBits    : int
-    acnMinSizeInBits    : int
-    alignment           : CAst.AcnAligment option
 
     //DAst properties
-    baseTypeEquivalence: BaseTypesEquivalence<Sequence>
+    //baseTypeEquivalence: BaseTypesEquivalence<Sequence>
     typeDefinition      : TypeDefinitionCommon
     initialValue        : SeqValue
     initFunction        : InitFunction
@@ -419,11 +406,8 @@ and Sequence = {
 
 
 and ChChildInfo = {
-    name                :string
+    baseInfo            : Asn1AcnAst.ChChildInfo
     chType              :Asn1Type
-    comments            :string list
-    presenseIsHandleByExtField :bool
-    presentWhenName     :string     // the name of the corresponding enum that indicates that specific child is present
     
     //DAst properties
     c_name              : string
@@ -432,25 +416,11 @@ and ChChildInfo = {
 }
 
 and Choice = {
-    id                  : ReferenceToType
-    tasInfo             : BAst.TypeAssignmentInfo option
-    uperMaxSizeInBits   : int
-    uperMinSizeInBits   : int
+    baseInfo            : Asn1AcnAst.Choice
     children            : ChChildInfo list
-    cons                : ChoiceConstraint list
-    withcons            : ChoiceConstraint list
-    baseType            : Choice option
-    Location            : SrcLoc   
-    choiceIDForNone     : string
-
-    //cast new properties
-    acnMaxSizeInBits    : int
-    acnMinSizeInBits    : int
-    acnEncodingClass    : CAst.ChoiceAcnEncClass
-    alignment           : CAst.AcnAligment option
 
     //DAst properties
-    baseTypeEquivalence: BaseTypesEquivalence<Choice>
+    //baseTypeEquivalence: BaseTypesEquivalence<Choice>
     typeDefinition      : TypeDefinitionCommon
     initialValue        : ChValue
     initFunction        : InitFunction
@@ -459,15 +429,30 @@ and Choice = {
     uperEncFunction     : UPerFunction
     uperDecFunction     : UPerFunction
 
-    encodeFuncName      : string option               // has value only for top level asn1 types (i.e. TypeAssignments (TAS))
-    encodeFuncBody      : string -> string            // an stg macro according the acnEncodingClass
-    decodeFuncName      : string option               // has value only for top level asn1 types (i.e. TypeAssignments (TAS))
-    decodeFuncBody      : string -> string            // an stg macro according the acnEncodingClass
 }
 
 
+and ReferenceType = {
+    baseInfo            : Asn1AcnAst.ReferenceType
+    baseType    : Asn1Type
 
-and Asn1Type =
+    typeDefinition      : TypeDefinitionCommon
+    initialValue        : Asn1Value
+    initFunction        : InitFunction
+    equalFunction       : EqualFunction
+    isValidFunction     : IsValidFunction option      
+    uperEncFunction     : UPerFunction
+    uperDecFunction     : UPerFunction
+
+}
+
+and Asn1Type = {
+    baseInfo    : Asn1AcnAst.Asn1Type
+    Kind            : Asn1TypeKind
+}
+
+
+and Asn1TypeKind =
     | Integer           of Integer
     | Real              of Real
     | IA5String         of StringType
@@ -479,6 +464,7 @@ and Asn1Type =
     | SequenceOf        of SequenceOf
     | Sequence          of Sequence
     | Choice            of Choice
+    | ReferenceType     of ReferenceType
 
 type State = {
     curSeqOfLevel : int
@@ -496,11 +482,50 @@ type ProgramUnit = {
     importedProgramUnits    : string list
 }
 
+type TypeAssignment = {
+    Name:StringLoc
+    c_name:string
+    ada_name:string
+    Type:Asn1Type
+    Comments: string array
+
+}
+
+type ValueAssignment = {
+    Name    :StringLoc
+    c_name  :string
+    ada_name:string
+    Type    :Asn1Type
+    Value   :Asn1Value
+}
+
+
+type Asn1Module = {
+    Name : StringLoc
+    TypeAssignments : list<TypeAssignment>
+    ValueAssignments : list<ValueAssignment>
+    Imports : list<Asn1Ast.ImportedModule>
+    Exports : Asn1Ast.Exports
+    Comments : string array
+}
+
+type Asn1File = {
+    FileName:string;
+    Tokens: IToken array
+    Modules : list<Asn1Module>
+}
 
 
 type AstRoot = {
-    Files                   : Asn1File list
+    Files: Asn1File list
+    acnConstants : Map<string, BigInteger>
     args:CommandLineSettings
+}
+
+(*
+type AstRoot = {
+    Files                   : Asn1File list
+    args                    : CommandLineSettings
     //valsMap                 : Map<ReferenceToValue, Asn1GenericValue>
     typesMap                : Map<ReferenceToType, Asn1Type>
     TypeAssignments         : Asn1Type list
@@ -509,5 +534,6 @@ type AstRoot = {
     acnConstants            : Map<string, BigInteger>
     acnLinks                : AcnLink list
 }
+*)
 
 
