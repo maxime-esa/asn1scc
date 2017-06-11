@@ -2,11 +2,45 @@
 
 open System
 open System.Numerics
-
 open FsUtils
 open CommonTypes
-open Constraints
-open uPER2
+//open Constraints
+
+
+
+type ProgrammingLanguage =
+    |C
+    |Ada
+
+type VarScopNode =
+    | VA2 of string      //VALUE ASSIGNMENT
+    | DV        //DEFAULT VALUE
+    | NI  of string      //NAMED ITEM VALUE (enum)
+    | CON of int         // constraint index
+    | SQOV of int             //SEQUENCE OF VALUE (value index)
+    | SQCHILD   of string   //child value (SEQUENCE, CHOICE)
+    | VL of int         //value index
+    | IMG of int        //non ASN.1 value. Required when constructing values for types in backends
+
+type ReferenceToValue = 
+    | ReferenceToValue of (ScopeNode list)*(VarScopNode list)
+    with
+        member this.ModName =
+            match this with
+            | ReferenceToValue (path,_) -> 
+                match path with
+                | (MD modName)::_    -> modName
+                | _                               -> raise(BugErrorException "Did not find module at the begining of the scope path")
+
+
+
+type Asn1GenericValue = Asn1Value
+
+type FuncParamType =
+  | VALUE       of string
+  | POINTER     of string
+  | FIXARRAY    of string
+
 type ExpOrStatement =
     | Expression 
     | Statement  
@@ -18,39 +52,6 @@ type LocalVariable =
     | Asn1UIntLocalVariable of string*int option     //variable name, initialValue
     | FlagLocalVariable     of string*int option     //variable name, initialValue
     | AcnInsertedChild      of string*string         //variable name, type 
-with
-    member this.VarName =
-        match this with
-        | SequenceOfIndex (i,_)   -> sprintf "i%d" i
-        | IntegerLocalVariable(name,_)    -> name
-        | Asn1SIntLocalVariable(name,_)   -> name
-        | Asn1UIntLocalVariable(name,_)   -> name
-        | FlagLocalVariable(name,_)       -> name
-        | AcnInsertedChild(name,_)        -> name
-    member this.GetDeclaration (l:Constraints.ProgrammingLanguage) =
-        match l, this with
-        | C,    SequenceOfIndex (i,None)                  -> sprintf "int i%d;" i
-        | C,    SequenceOfIndex (i,Some iv)               -> sprintf "int i%d=%d;" i iv
-        | Ada,  SequenceOfIndex (i,None)                  -> sprintf "i%d:Integer;" i
-        | Ada,  SequenceOfIndex (i,Some iv)               -> sprintf "i%d:Integer:=%d;" i iv
-        | C,    IntegerLocalVariable (name,None)          -> sprintf "int %s;" name
-        | C,    IntegerLocalVariable (name,Some iv)       -> sprintf "int %s=%d;" name iv
-        | Ada,  IntegerLocalVariable (name,None)          -> sprintf "%s:Integer;" name
-        | Ada,  IntegerLocalVariable (name,Some iv)       -> sprintf "%s:Integer:=%d;" name iv
-        | C,    Asn1SIntLocalVariable (name,None)         -> sprintf "asn1SccSint %s;" name
-        | C,    Asn1SIntLocalVariable (name,Some iv)      -> sprintf "asn1SccSint %s=%d;" name iv
-        | Ada,  Asn1SIntLocalVariable (name,None)         -> sprintf "%s:adaasn1rtl.Asn1Int;" name
-        | Ada,  Asn1SIntLocalVariable (name,Some iv)      -> sprintf "%s:adaasn1rtl.Asn1Int:=%d;" name iv
-        | C,    Asn1UIntLocalVariable (name,None)         -> sprintf "asn1SccUint %s;" name
-        | C,    Asn1UIntLocalVariable (name,Some iv)      -> sprintf "asn1SccUint %s=%d;" name iv
-        | Ada,  Asn1UIntLocalVariable (name,None)         -> sprintf "%s:adaasn1rtl.Asn1UInt;" name
-        | Ada,  Asn1UIntLocalVariable (name,Some iv)      -> sprintf "%s:adaasn1rtl.Asn1UInt:=%d;" name iv
-        | C,    FlagLocalVariable (name,None)             -> sprintf "flag %s;" name
-        | C,    FlagLocalVariable (name,Some iv)          -> sprintf "flag %s=%d;" name iv
-        | Ada,  FlagLocalVariable (name,None)             -> sprintf "%s:adaasn1rtl.BIT;" name
-        | Ada,  FlagLocalVariable (name,Some iv)          -> sprintf "%s:adaasn1rtl.BIT:=%d;" name iv
-        | C,    AcnInsertedChild(name, vartype)           -> sprintf "%s %s;" vartype name
-        | Ada,    AcnInsertedChild(name, vartype)         -> sprintf "%s:%s;" name vartype
 
 
 
@@ -107,12 +108,13 @@ type ErroCode = {
     errCodeName     : string
 }
 
+(*
 type BaseTypesEquivalence<'T> = {
     typeDefinition  : 'T option
     uper            : 'T option
     acn             : 'T option
 }
-    
+*)    
         
 (*
 Generates initialization statement(s) that inititalize the type with the given Asn1GeneticValue.
@@ -185,27 +187,13 @@ type AcnFunction = {
 
 type Integer = {
     //bast inherrited properties
-    id                  : ReferenceToType
-    tasInfo             : BAst.TypeAssignmentInfo option
-    uperMaxSizeInBits   : int
-    uperMinSizeInBits   : int
-    cons                : IntegerTypeConstraint list
-    withcons            : IntegerTypeConstraint list
-    uperRange           : uperRange<BigInteger>
-    baseType            : Integer option
-    Location            : SrcLoc   
-
-    //cast new properties
-    acnMaxSizeInBits    : int
-    acnMinSizeInBits    : int
-    alignment           : CAst.AcnAligment option
-    acnEncodingClass    : CAst.IntEncodingClass
+    baseInfo             : Asn1AcnAst.Integer
 
     //DAst properties
-    baseTypeEquivalence: BaseTypesEquivalence<Integer>
+    //baseTypeEquivalence: BaseTypesEquivalence<Integer>
 
     typeDefinition      : TypeDefinitionCommon
-    initialValue        : IntegerValue
+    initialValue        : Asn1AcnAst.IntegerValue
     initFunction        : InitFunction
     equalFunction       : EqualFunction
     isValidFunction     : IsValidFunction option      // it is optional because some types do not require an IsValid function (e.g. an unconstraint integer)
@@ -216,34 +204,14 @@ type Integer = {
     
 
 }
-with 
-    member this.Cons     = this.cons
-    member this.WithCons = this.withcons
-    member this.AllCons  = this.cons@this.withcons
-    member this.IsUnsigned = isUnsigned this.uperRange
 
 type Enumerated = {
-    id                  : ReferenceToType
-    tasInfo             : BAst.TypeAssignmentInfo option
-    uperMaxSizeInBits   : int
-    uperMinSizeInBits   : int
-    items               : BAst.EnumItem list
-    userDefinedValues   : bool      //if true, the user has associated at least one item with a value
-    cons                : EnumConstraint list
-    withcons            : EnumConstraint list
-    baseType            : Enumerated option
-    Location            : SrcLoc   
-
-    //cast new properties
-    acnMaxSizeInBits    : int
-    acnMinSizeInBits    : int
-    alignment           : CAst.AcnAligment option
-    enumEncodingClass   : CAst.EnumAcnEncodingClass
+    baseInfo             : Asn1AcnAst.Enumerated
 
     //DAst properties
-    baseTypeEquivalence: BaseTypesEquivalence<Enumerated>
+    //baseTypeEquivalence: BaseTypesEquivalence<Enumerated>
     typeDefinition      : TypeDefinitionCommon
-    initialValue        : EnumValue
+    initialValue        : Asn1AcnAst.EnumValue
     initFunction        : InitFunction
     equalFunction       : EqualFunction
     isValidFunction     : IsValidFunction option      // it is optional because some types do not require an IsValid function (e.g. an unconstraint integer)
@@ -255,33 +223,14 @@ type Enumerated = {
     decodeFuncName      : string option               // has value only for top level asn1 types (i.e. TypeAssignments (TAS))
     decodeFuncBody      : string -> string            // an stg macro according the acnEncodingClass
 }
-with 
-    member this.Cons     = this.cons
-    member this.WithCons = this.withcons
-    member this.AllCons  = this.cons@this.withcons
 
 type Real = {
-    //bast inherrited properties
-    id                  : ReferenceToType
-    tasInfo             : BAst.TypeAssignmentInfo option
-    uperMaxSizeInBits   : int
-    uperMinSizeInBits   : int
-    cons                : RealTypeConstraint list
-    withcons            : RealTypeConstraint list
-    uperRange           : uperRange<double>
-    baseType            : Real option
-    Location            : SrcLoc   
-
-    //cast new properties
-    acnMaxSizeInBits    : int
-    acnMinSizeInBits    : int
-    alignment           : CAst.AcnAligment option
-    acnEncodingClass    : CAst.RealEncodingClass
+    baseInfo             : Asn1AcnAst.Real
 
     //DAst properties
-    baseTypeEquivalence: BaseTypesEquivalence<Real>
+    //baseTypeEquivalence: BaseTypesEquivalence<Real>
     typeDefinition      : TypeDefinitionCommon
-    initialValue        : RealValue
+    initialValue        : Asn1AcnAst.RealValue
     initFunction        : InitFunction
     equalFunction       : EqualFunction
     isValidFunction     : IsValidFunction option      // it is optional because some types do not require an IsValid function (e.g. an unconstraint integer)
@@ -293,32 +242,15 @@ type Real = {
     decodeFuncName      : string option               // has value only for top level asn1 types (i.e. TypeAssignments (TAS))
     decodeFuncBody      : string -> string            // an stg macro according the acnEncodingClass
 }
-with 
-    member this.Cons     = this.cons
-    member this.WithCons = this.withcons
-    member this.AllCons  = this.cons@this.withcons
 
 
 type Boolean = {
-    id                  : ReferenceToType
-    tasInfo             : BAst.TypeAssignmentInfo option
-    uperMaxSizeInBits   : int
-    uperMinSizeInBits   : int
-    cons                : BoolConstraint list
-    withcons            : BoolConstraint list
-    baseType            : Boolean option
-    Location            : SrcLoc   
-
-    //cast new properties
-    acnMaxSizeInBits    : int
-    acnMinSizeInBits    : int
-    alignment           : CAst.AcnAligment option
-    acnEncodingClass    : CAst.BolleanAcnEncodingClass
+    baseInfo             : Asn1AcnAst.Boolean
 
     //DAst properties
-    baseTypeEquivalence: BaseTypesEquivalence<Boolean>
+    //baseTypeEquivalence: BaseTypesEquivalence<Boolean>
     typeDefinition      : TypeDefinitionCommon
-    initialValue        : BooleanValue
+    initialValue        : Asn1AcnAst.BooleanValue
     initFunction        : InitFunction
     equalFunction       : EqualFunction
     isValidFunction     : IsValidFunction option      // it is optional because some types do not require an IsValid function (e.g. an unconstraint integer)
@@ -327,31 +259,16 @@ type Boolean = {
     acnEncFunction      : AcnFunction
     acnDecFunction      : AcnFunction
 }
-with 
-    member this.Cons     = this.cons
-    member this.WithCons = this.withcons
-    member this.AllCons  = this.cons@this.withcons
 
 
 type NullType = {
-    id                  : ReferenceToType
-    tasInfo             : BAst.TypeAssignmentInfo option
-    uperMaxSizeInBits   : int
-    uperMinSizeInBits   : int
-    baseType            : NullType option
-    Location            : SrcLoc   
-
-    //cast new properties
-    acnMaxSizeInBits    : int
-    acnMinSizeInBits    : int
-    alignment           : CAst.AcnAligment option
-    acnEncodingClass    : CAst.NullAcnEncodingClass
+    baseInfo             : Asn1AcnAst.NullType
 
     //DAst properties
-    baseTypeEquivalence: BaseTypesEquivalence<NullType>
+    //baseTypeEquivalence: BaseTypesEquivalence<NullType>
     typeDefinition      : TypeDefinitionCommon
-    initialValue        : NullValue
     initFunction        : InitFunction
+    initialValue        : Asn1AcnAst.NullValue
     equalFunction       : EqualFunction
     uperEncFunction     : UPerFunction
     uperDecFunction     : UPerFunction
@@ -364,29 +281,12 @@ type NullType = {
 
 
 type StringType = {
-    //bast inherrited properties
-    id                  : ReferenceToType
-    tasInfo             : BAst.TypeAssignmentInfo option
-    uperMaxSizeInBits   : int
-    uperMinSizeInBits   : int
-    cons                : IA5StringConstraint list
-    withcons            : IA5StringConstraint list
-    minSize             : int
-    maxSize             : int
-    charSet             : char array
-    baseType            : StringType option
-    Location            : SrcLoc   
-
-    //cast new properties
-    acnMaxSizeInBits    : int
-    acnMinSizeInBits    : int
-    alignment           : CAst.AcnAligment option
-    acnEncodingClass    : CAst.StringAcnEncodingClass
+    baseInfo             : Asn1AcnAst.StringType
 
     //DAst properties
-    baseTypeEquivalence: BaseTypesEquivalence<StringType>
+    //baseTypeEquivalence: BaseTypesEquivalence<StringType>
     typeDefinition      : TypeDefinitionCommon
-    initialValue        : StringValue
+    initialValue        :  Asn1AcnAst.StringValue
     initFunction        : InitFunction
     equalFunction       : EqualFunction
     isValidFunction     : IsValidFunction option      // it is optional because some types do not require an IsValid function (e.g. an unconstraint integer)
@@ -398,34 +298,16 @@ type StringType = {
     decodeFuncName      : string option               // has value only for top level asn1 types (i.e. TypeAssignments (TAS))
     decodeFuncBody      : string -> string            // an stg macro according the acnEncodingClass
 }
-with 
-    member this.Cons     = this.cons
-    member this.WithCons = this.withcons
-    member this.AllCons  = this.cons@this.withcons
 
 
 type OctetString = {
-    id                  : ReferenceToType
-    tasInfo             : BAst.TypeAssignmentInfo option
-    uperMaxSizeInBits   : int
-    uperMinSizeInBits   : int
-    cons                : OctetStringConstraint list
-    withcons            : OctetStringConstraint list
-    minSize             : int
-    maxSize             : int
-    baseType            : OctetString option
-    Location            : SrcLoc   
+    baseInfo             : Asn1AcnAst.OctetString
 
-    //cast new properties
-    acnMaxSizeInBits    : int
-    acnMinSizeInBits    : int
-    alignment           : CAst.AcnAligment option
-    acnEncodingClass    : CAst.SizeableAcnEncodingClass
 
     //DAst properties
-    baseTypeEquivalence: BaseTypesEquivalence<OctetString>
+    //baseTypeEquivalence: BaseTypesEquivalence<OctetString>
     typeDefinition      : TypeDefinitionCommon
-    initialValue        : OctetStringValue
+    initialValue        : Asn1AcnAst.OctetStringValue
     initFunction        : InitFunction
     equalFunction       : EqualFunction
     isValidFunction     : IsValidFunction option      // it is optional because some types do not require an IsValid function (e.g. an unconstraint integer)
@@ -437,36 +319,16 @@ type OctetString = {
     decodeFuncName      : string option               // has value only for top level asn1 types (i.e. TypeAssignments (TAS))
     decodeFuncBody      : string -> string            // an stg macro according the acnEncodingClass
 }
-with 
-    member this.Cons     = this.cons
-    member this.WithCons = this.withcons
-    member this.AllCons = this.cons@this.withcons
 
 
 
 type BitString = {
-    id                  : ReferenceToType
-    tasInfo             : BAst.TypeAssignmentInfo option
-    uperMaxSizeInBits   : int
-    uperMinSizeInBits   : int
-    cons                : BitStringConstraint list
-    withcons            : BitStringConstraint list
-    minSize             : int
-    maxSize             : int
-    baseType            : BitString option
-    Location            : SrcLoc   
-
-    //cast new properties
-    acnMaxSizeInBits    : int
-    acnMinSizeInBits    : int
-    alignment           : CAst.AcnAligment option
-    acnEncodingClass    : CAst.SizeableAcnEncodingClass
-    //acnArguments        : IntArgument list
+    baseInfo             : Asn1AcnAst.BitString
 
     //DAst properties
-    baseTypeEquivalence: BaseTypesEquivalence<BitString>
+    //baseTypeEquivalence: BaseTypesEquivalence<BitString>
     typeDefinition      : TypeDefinitionCommon
-    initialValue        : BitStringValue
+    initialValue        : Asn1AcnAst.BitStringValue
     initFunction        : InitFunction
     equalFunction       : EqualFunction
     isValidFunction     : IsValidFunction option      // it is optional because some types do not require an IsValid function (e.g. an unconstraint integer)
@@ -478,36 +340,16 @@ type BitString = {
     decodeFuncName      : string option               // has value only for top level asn1 types (i.e. TypeAssignments (TAS))
     decodeFuncBody      : string -> string            // an stg macro according the acnEncodingClass
 }
-with 
-    member this.Cons     = this.cons
-    member this.WithCons = this.withcons
-    member this.AllCons  = this.cons@this.withcons
 
 
 type SequenceOf = {
-    id                  : ReferenceToType
-    tasInfo             : BAst.TypeAssignmentInfo option
-    uperMaxSizeInBits   : int
-    uperMinSizeInBits   : int
+    baseInfo            : Asn1AcnAst.SequenceOf
     childType           : Asn1Type
-    cons                : SequenceOfConstraint list
-    withcons            : SequenceOfConstraint list
-    minSize             : int
-    maxSize             : int
-    baseType            : SequenceOf option
-    Location            : SrcLoc   
-
-    //cast new properties
-    acnMaxSizeInBits    : int
-    acnMinSizeInBits    : int
-    alignment           : CAst.AcnAligment option
-    acnEncodingClass    : CAst.SizeableAcnEncodingClass
-    //acnArguments        : GenericArgument list
 
     //DAst properties
-    baseTypeEquivalence: BaseTypesEquivalence<SequenceOf>
+    //baseTypeEquivalence: BaseTypesEquivalence<SequenceOf>
     typeDefinition      : TypeDefinitionCommon
-    initialValue        : SeqOfValue
+    initialValue        : Asn1AcnAst.SeqOfValue
     initFunction        : InitFunction
     equalFunction       : EqualFunction
     isValidFunction     : IsValidFunction option      
@@ -519,10 +361,6 @@ type SequenceOf = {
     decodeFuncName      : string option               // has value only for top level asn1 types (i.e. TypeAssignments (TAS))
     decodeFuncBody      : string -> string            // an stg macro according the acnEncodingClass
 }
-with 
-    member this.Cons     = this.cons
-    member this.WithCons = this.withcons
-    member this.AllCons = this.cons@this.withcons
 
 
 and SeqChoiceChildInfoIsValid = {
@@ -576,10 +414,6 @@ and Sequence = {
     acnEncFunction      : AcnFunction
     acnDecFunction      : AcnFunction
 }
-with 
-    member this.Cons     = this.cons
-    member this.WithCons = this.withcons
-    member this.AllCons = this.cons@this.withcons
 
 
 
@@ -630,10 +464,6 @@ and Choice = {
     decodeFuncName      : string option               // has value only for top level asn1 types (i.e. TypeAssignments (TAS))
     decodeFuncBody      : string -> string            // an stg macro according the acnEncodingClass
 }
-with 
-    member this.Cons     = this.cons
-    member this.WithCons = this.withcons
-    member this.AllCons = this.cons@this.withcons
 
 
 
@@ -649,238 +479,6 @@ and Asn1Type =
     | SequenceOf        of SequenceOf
     | Sequence          of Sequence
     | Choice            of Choice
-with
-    member this.id =
-        match this with
-        | Integer      t -> t.id
-        | Real         t -> t.id
-        | IA5String    t -> t.id
-        | OctetString  t -> t.id
-        | NullType     t -> t.id
-        | BitString    t -> t.id
-        | Boolean      t -> t.id
-        | Enumerated   t -> t.id
-        | SequenceOf   t -> t.id
-        | Sequence     t -> t.id
-        | Choice       t -> t.id
-    member this.baseType =
-        match this with
-        | Integer      t -> t.baseType |> Option.map Integer     
-        | Real         t -> t.baseType |> Option.map Real        
-        | IA5String    t -> t.baseType |> Option.map IA5String   
-        | OctetString  t -> t.baseType |> Option.map OctetString 
-        | NullType     t -> t.baseType |> Option.map NullType    
-        | BitString    t -> t.baseType |> Option.map BitString   
-        | Boolean      t -> t.baseType |> Option.map Boolean     
-        | Enumerated   t -> t.baseType |> Option.map Enumerated  
-        | SequenceOf   t -> t.baseType |> Option.map SequenceOf  
-        | Sequence     t -> t.baseType |> Option.map Sequence    
-        | Choice       t -> t.baseType |> Option.map Choice      
-    member this.uperMaxSizeInBits =
-        match this with
-        | Integer      t -> t.uperMaxSizeInBits
-        | Real         t -> t.uperMaxSizeInBits
-        | IA5String    t -> t.uperMaxSizeInBits
-        | OctetString  t -> t.uperMaxSizeInBits
-        | NullType     t -> t.uperMaxSizeInBits
-        | BitString    t -> t.uperMaxSizeInBits
-        | Boolean      t -> t.uperMaxSizeInBits
-        | Enumerated   t -> t.uperMaxSizeInBits
-        | SequenceOf   t -> t.uperMaxSizeInBits
-        | Sequence     t -> t.uperMaxSizeInBits
-        | Choice       t -> t.uperMaxSizeInBits
-    member this.uperMinSizeInBits =
-        match this with
-        | Integer      t -> t.uperMinSizeInBits
-        | Real         t -> t.uperMinSizeInBits
-        | IA5String    t -> t.uperMinSizeInBits
-        | OctetString  t -> t.uperMinSizeInBits
-        | NullType     t -> t.uperMinSizeInBits
-        | BitString    t -> t.uperMinSizeInBits
-        | Boolean      t -> t.uperMinSizeInBits
-        | Enumerated   t -> t.uperMinSizeInBits
-        | SequenceOf   t -> t.uperMinSizeInBits
-        | Sequence     t -> t.uperMinSizeInBits
-        | Choice       t -> t.uperMinSizeInBits
-    member this.acnMinSizeInBits =
-        match this with
-        | Integer      t -> t.acnMinSizeInBits
-        | Real         t -> t.acnMinSizeInBits
-        | IA5String    t -> t.acnMinSizeInBits
-        | OctetString  t -> t.acnMinSizeInBits
-        | NullType     t -> t.acnMinSizeInBits
-        | BitString    t -> t.acnMinSizeInBits
-        | Boolean      t -> t.acnMinSizeInBits
-        | Enumerated   t -> t.acnMinSizeInBits
-        | SequenceOf   t -> t.acnMinSizeInBits
-        | Sequence     t -> t.acnMinSizeInBits
-        | Choice       t -> t.acnMinSizeInBits
-
-    member this.acnMaxSizeInBits =
-        match this with
-        | Integer      t -> t.acnMaxSizeInBits
-        | Real         t -> t.acnMaxSizeInBits
-        | IA5String    t -> t.acnMaxSizeInBits
-        | OctetString  t -> t.acnMaxSizeInBits
-        | NullType     t -> t.acnMaxSizeInBits
-        | BitString    t -> t.acnMaxSizeInBits
-        | Boolean      t -> t.acnMaxSizeInBits
-        | Enumerated   t -> t.acnMaxSizeInBits
-        | SequenceOf   t -> t.acnMaxSizeInBits
-        | Sequence     t -> t.acnMaxSizeInBits
-        | Choice       t -> t.acnMaxSizeInBits
-    member this.initialValue =
-        match this with
-        | Integer      t -> IntegerValue t.initialValue
-        | Real         t -> RealValue t.initialValue
-        | IA5String    t -> StringValue t.initialValue
-        | OctetString  t -> OctetStringValue t.initialValue
-        | NullType     t -> NullValue t.initialValue
-        | BitString    t -> BitStringValue t.initialValue
-        | Boolean      t -> BooleanValue t.initialValue
-        | Enumerated   t -> EnumValue t.initialValue
-        | SequenceOf   t -> SeqOfValue t.initialValue
-        | Sequence     t -> SeqValue t.initialValue
-        | Choice       t -> ChValue t.initialValue
-
-    member this.initFunction =
-        match this with
-        | Integer      t -> t.initFunction
-        | Real         t -> t.initFunction
-        | IA5String    t -> t.initFunction
-        | OctetString  t -> t.initFunction
-        | NullType     t -> t.initFunction
-        | BitString    t -> t.initFunction
-        | Boolean      t -> t.initFunction
-        | Enumerated   t -> t.initFunction
-        | SequenceOf   t -> t.initFunction
-        | Sequence     t -> t.initFunction
-        | Choice       t -> t.initFunction
-
-    member this.equalFunction =
-        match this with
-        | Integer      t -> t.equalFunction
-        | Real         t -> t.equalFunction
-        | IA5String    t -> t.equalFunction
-        | OctetString  t -> t.equalFunction
-        | NullType     t -> t.equalFunction
-        | BitString    t -> t.equalFunction
-        | Boolean      t -> t.equalFunction
-        | Enumerated   t -> t.equalFunction
-        | SequenceOf   t -> t.equalFunction
-        | Sequence     t -> t.equalFunction
-        | Choice       t -> t.equalFunction
-
-    member this.isValidFunction =
-        match this with
-        | Integer      t -> t.isValidFunction
-        | Real         t -> t.isValidFunction
-        | IA5String    t -> t.isValidFunction
-        | OctetString  t -> t.isValidFunction
-        | NullType     t -> None
-        | BitString    t -> t.isValidFunction
-        | Boolean      t -> t.isValidFunction
-        | Enumerated   t -> t.isValidFunction
-        | SequenceOf   t -> t.isValidFunction
-        | Sequence     t -> t.isValidFunction
-        | Choice       t -> t.isValidFunction
-    member this.getUperFunction (l:CommonTypes.Codec) =
-        match l with
-        | CommonTypes.Encode   -> this.uperEncFunction
-        | CommonTypes.Decode   -> this.uperDecFunction
-    member this.uperEncFunction =
-         match this with
-         | Integer      t -> Some(t.uperEncFunction)
-         | Real         t -> Some(t.uperEncFunction)
-         | IA5String    t -> Some(t.uperEncFunction)
-         | OctetString  t -> Some(t.uperEncFunction)
-         | NullType     t -> Some(t.uperEncFunction)
-         | BitString    t -> Some(t.uperEncFunction)
-         | Boolean      t -> Some(t.uperEncFunction)
-         | Enumerated   t -> Some(t.uperEncFunction)
-         | SequenceOf   t -> Some(t.uperEncFunction)
-         | Sequence     t -> Some(t.uperEncFunction)
-         | Choice       t -> Some(t.uperEncFunction)
-    member this.uperDecFunction =
-         match this with
-         | Integer      t -> Some(t.uperDecFunction)
-         | Real         t -> Some(t.uperDecFunction)
-         | IA5String    t -> Some(t.uperDecFunction)
-         | OctetString  t -> Some(t.uperDecFunction)
-         | NullType     t -> Some(t.uperDecFunction)
-         | BitString    t -> Some(t.uperDecFunction)
-         | Boolean      t -> Some(t.uperDecFunction)
-         | Enumerated   t -> Some(t.uperDecFunction)
-         | SequenceOf   t -> Some(t.uperDecFunction)
-         | Sequence     t -> Some(t.uperDecFunction)
-         | Choice       t -> Some(t.uperDecFunction)
-    member this.acnEncFunction : AcnFunction option =
-        match this with
-        | Integer      t -> Some (t.acnEncFunction)
-        | Real         t -> None
-        | IA5String    t -> None
-        | OctetString  t -> None
-        | NullType     t -> None
-        | BitString    t -> None
-        | Boolean      t -> Some (t.acnEncFunction)
-        | Enumerated   t -> None
-        | SequenceOf   t -> None
-        | Sequence     t -> Some (t.acnEncFunction)
-        | Choice       t -> None
-    member this.acnDecFunction : AcnFunction option =
-        match this with
-        | Integer      t -> Some (t.acnDecFunction)
-        | Real         t -> None
-        | IA5String    t -> None
-        | OctetString  t -> None
-        | NullType     t -> None
-        | BitString    t -> None
-        | Boolean      t -> Some (t.acnDecFunction)
-        | Enumerated   t -> None
-        | SequenceOf   t -> None
-        | Sequence     t -> Some (t.acnDecFunction)
-        | Choice       t -> None
-    member this.getAcnFunction (l:CommonTypes.Codec) =
-        match l with
-        | CommonTypes.Encode   -> this.acnEncFunction
-        | CommonTypes.Decode   -> this.acnDecFunction
-
-    member this.typeDefinition =
-        match this with
-        | Integer      t -> t.typeDefinition
-        | Real         t -> t.typeDefinition
-        | IA5String    t -> t.typeDefinition
-        | OctetString  t -> t.typeDefinition
-        | NullType     t -> t.typeDefinition
-        | BitString    t -> t.typeDefinition
-        | Boolean      t -> t.typeDefinition
-        | Enumerated   t -> t.typeDefinition
-        | SequenceOf   t -> t.typeDefinition
-        | Sequence     t -> t.typeDefinition
-        | Choice       t -> t.typeDefinition
-    member this.tasInfo =
-        match this with
-        | Integer      t -> t.tasInfo
-        | Real         t -> t.tasInfo
-        | IA5String    t -> t.tasInfo
-        | OctetString  t -> t.tasInfo
-        | NullType     t -> t.tasInfo
-        | BitString    t -> t.tasInfo
-        | Boolean      t -> t.tasInfo
-        | Enumerated   t -> t.tasInfo
-        | SequenceOf   t -> t.tasInfo
-        | Sequence     t -> t.tasInfo
-        | Choice       t -> t.tasInfo
-
-    member this.isIA5String =
-        match this with
-        | IA5String    _ -> true
-        | _              -> false
-
-    member this.asn1Name = 
-        match this.id with
-        | ReferenceToType((GenericFold2.MD _)::(GenericFold2.TA tasName)::[])   -> Some tasName
-        | _                                                                     -> None
 
 type State = {
     curSeqOfLevel : int
@@ -903,16 +501,13 @@ type ProgramUnit = {
 type AstRoot = {
     Files                   : Asn1File list
     args:CommandLineSettings
-    valsMap                 : Map<ReferenceToValue, Asn1GenericValue>
+    //valsMap                 : Map<ReferenceToValue, Asn1GenericValue>
     typesMap                : Map<ReferenceToType, Asn1Type>
     TypeAssignments         : Asn1Type list
     ValueAssignments        : Asn1GenericValue list
     programUnits            : ProgramUnit list
-    acnConstants            : AcnTypes.AcnConstant list
-    acnParameters           : CAst.AcnParameter list
-    acnLinks                : CAst.AcnLink list
+    acnConstants            : Map<string, BigInteger>
+    acnLinks                : AcnLink list
 }
 
-let getValueType (r:AstRoot) (v:Asn1GenericValue) =
-    r.typesMap.[v.refToType]
 

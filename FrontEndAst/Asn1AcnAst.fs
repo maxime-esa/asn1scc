@@ -17,8 +17,11 @@ open CommonTypes
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 type RelativePath = 
-    | RelativePath of string list
-
+    | RelativePath of StringLoc list
+with
+    member this.AsString = 
+        match this with  RelativePath p -> p |> Seq.StrJoin "."
+    override this.ToString() = this.AsString
 
 type AcnEndianness =
     | LittleEndianness
@@ -31,8 +34,8 @@ type AcnAligment =
 
 // present when property defintion
 // this property is not part of the ACN type itself but part of the AcnChildInfo
-type AcnPresentWhenConditionSeqChild =
-    | PresenceBool  of RelativePath                         
+type PresenceWhenBool  = 
+    | PresenceWhenBool of RelativePath                         
 
 type AcnPresentWhenConditionChoiceChild =
     | PresenceInt   of RelativePath*IntLoc
@@ -40,7 +43,7 @@ type AcnPresentWhenConditionChoiceChild =
 
 // Integer acn properties
 type AcnIntSizeProperty =
-    | Fixed                 of IntLoc
+    | Fixed                 of int
     | IntNullTerminated     of byte      //termination character when encoding is ASCII
 
 type AcnIntEncoding =
@@ -109,11 +112,38 @@ type ChoiceAcnProperties = {
 ////// ACN PARAMETERS DEFINITION ////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+[<CustomEquality; NoComparison>]
 type AcnParamType =
     | AcnPrmInteger    of SrcLoc
     | AcnPrmBoolean    of SrcLoc
     | AcnPrmNullType   of SrcLoc
     | AcnPrmRefType    of StringLoc*StringLoc
+with
+    override this.ToString() = 
+        match this with
+        | AcnPrmInteger   _         -> "INTEGER"
+        | AcnPrmBoolean   _         -> "BOOLEAN"
+        | AcnPrmNullType  _         -> "NULL"
+        | AcnPrmRefType    (md,ts)  -> sprintf "%s.%s" md.Value ts.Value
+    override x.Equals(yobj) =
+        match yobj with
+        | :? AcnParamType as other -> 
+            match x, other with
+            | AcnPrmInteger    _       , AcnPrmInteger    _         -> true
+            | AcnPrmBoolean    _       , AcnPrmBoolean    _         -> true
+            | AcnPrmNullType   _       , AcnPrmNullType   _         -> true
+            | AcnPrmRefType    (md,ts) , AcnPrmRefType    (md2,ts2) -> md=md2 && ts=ts2
+            | _                                                     -> false
+        | _ -> false
+    override x.GetHashCode() = 
+        match x with
+            | AcnPrmInteger    _       -> 1
+            | AcnPrmBoolean    _       -> 2
+            | AcnPrmNullType   _       -> 3
+            | AcnPrmRefType    (md,ts) -> md.GetHashCode() ^^^ ts.GetHashCode()
+
+
+ 
 
 type AcnParameter = {
     name        : string
@@ -132,6 +162,7 @@ type BooleanValue         = BoolLoc
 type BitStringValue       = StringLoc
 type OctetStringValue     = list<ByteLoc>
 type EnumValue            = StringLoc
+type NullValue            = unit
 type SeqOfValue           = list<Asn1Value>
 and SeqValue              = list<NamedValue>
 and ChValue               = NamedValue
@@ -153,7 +184,7 @@ and Asn1Value =
     | SeqOfValue            of SeqOfValue      
     | SeqValue              of SeqValue        
     | ChValue               of ChValue         
-    | NullValue             
+    | NullValue             of NullValue
     | RefValue              of RefValue   
 
 
@@ -233,79 +264,232 @@ type NamedItem = {
     Comments: string array
 }
 
-type Asn1Optionality = Asn1Ast.Asn1Optionality
+type Optional = {
+    defaultValue        : Asn1Value option
+    acnPresentWhen      : PresenceWhenBool option
+}
+
+type Asn1Optionality = 
+    | AlwaysAbsent
+    | AlwaysPresent
+    | Optional          of Optional
+
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+////// ACN ENCODING CLASSES    /////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+type IntEncodingClass =
+    |Integer_uPER
+    |PositiveInteger_ConstSize_8
+    |PositiveInteger_ConstSize_big_endian_16
+    |PositiveInteger_ConstSize_little_endian_16
+    |PositiveInteger_ConstSize_big_endian_32
+    |PositiveInteger_ConstSize_little_endian_32
+    |PositiveInteger_ConstSize_big_endian_64
+    |PositiveInteger_ConstSize_little_endian_64
+    |PositiveInteger_ConstSize of int
+    |TwosComplement_ConstSize_8
+    |TwosComplement_ConstSize_big_endian_16
+    |TwosComplement_ConstSize_little_endian_16
+    |TwosComplement_ConstSize_big_endian_32
+    |TwosComplement_ConstSize_little_endian_32
+    |TwosComplement_ConstSize_big_endian_64
+    |TwosComplement_ConstSize_little_endian_64
+    |TwosComplement_ConstSize of int
+    |ASCII_ConstSize of int
+    |ASCII_VarSize_NullTerminated of byte
+    |ASCII_UINT_ConstSize of int
+    |ASCII_UINT_VarSize_NullTerminated of byte
+    |BCD_ConstSize of int
+    |BCD_VarSize_NullTerminated of byte
 
 
+type RealEncodingClass =
+    | Real_uPER
+    | Real_IEEE754_32_big_endian
+    | Real_IEEE754_64_big_endian
+    | Real_IEEE754_32_little_endian
+    | Real_IEEE754_64_little_endian
+
+type StringAcnEncodingClass =
+    | Acn_Enc_String_uPER                                                               //as in uper 
+    | Acn_Enc_String_uPER_Ascii                                                         //as in uper but with charset (0..255)
+    | Acn_Enc_String_Ascii_Null_Teminated                   of byte                     //byte = the null character
+    | Acn_Enc_String_Ascii_External_Field_Determinant       of RelativePath             //encode ascii, size is provided by an external length determinant
+    | Acn_Enc_String_CharIndex_External_Field_Determinant   of RelativePath             //encode char index, size is provided by an external length determinant
+
+type SizeableAcnEncodingClass =
+    | SZ_EC_uPER
+    | SZ_EC_ExternalField    of RelativePath
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////// ASN1 WITH ACN INFORMATION  DEFINITION    /////////////////////////////////////////////////////////////////////////////////////////////////
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-
+type uperRange<'a> =
+    | Concrete      of 'a*'a    // [a, b]
+    | NegInf        of 'a       // (-inf, b]
+    | PosInf        of 'a       // [a, +inf)
+    | Full                      // (-inf, +inf)
 
 
 type Integer = {
-    acnProperties   : IntegerAcnProperties
-    cons            : IntegerTypeConstraint list
-    withcons        : IntegerTypeConstraint list
+    acnProperties       : IntegerAcnProperties
+    cons                : IntegerTypeConstraint list
+    withcons            : IntegerTypeConstraint list
+    uperMaxSizeInBits   : int
+    uperMinSizeInBits   : int
+    uperRange           : uperRange<BigInteger>
+
+    acnMaxSizeInBits    : int
+    acnMinSizeInBits    : int
+    acnEncodingClass    : IntEncodingClass
 }
 
 type Real = {
-    acnProperties   : RealAcnProperties
+    acnProperties       : RealAcnProperties
     cons                : RealTypeConstraint list
     withcons            : RealTypeConstraint list
+    uperMaxSizeInBits   : int
+    uperMinSizeInBits   : int
+    uperRange           : uperRange<double>
+
+    acnMaxSizeInBits    : int
+    acnMinSizeInBits    : int
+    acnEncodingClass    : RealEncodingClass
 }
 
 type StringType = {
-    acnProperties   : StringAcnProperties
+    acnProperties       : StringAcnProperties
     cons                : IA5StringConstraint list
     withcons            : IA5StringConstraint list
+
+    minSize             : int
+    maxSize             : int
+    uperMaxSizeInBits   : int
+    uperMinSizeInBits   : int
+    uperCharSet         : char array
+
+    acnMaxSizeInBits    : int
+    acnMinSizeInBits    : int
+    acnEncodingClass    : StringAcnEncodingClass
 }
 
 
 type OctetString = {
-    acnProperties   : SizeableAcnProperties
+    acnProperties       : SizeableAcnProperties
     cons                : OctetStringConstraint list
     withcons            : OctetStringConstraint list
+    minSize             : int
+    maxSize             : int
+    uperMaxSizeInBits   : int
+    uperMinSizeInBits   : int
+
+    acnMaxSizeInBits    : int
+    acnMinSizeInBits    : int
+    acnEncodingClass    : SizeableAcnEncodingClass
 }
 
 type BitString = {
     acnProperties   : SizeableAcnProperties
     cons                : BitStringConstraint list
     withcons            : BitStringConstraint list
+    minSize             : int
+    maxSize             : int
+    uperMaxSizeInBits   : int
+    uperMinSizeInBits   : int
+
+    acnMaxSizeInBits    : int
+    acnMinSizeInBits    : int
+    acnEncodingClass    : SizeableAcnEncodingClass
 }
 
 type NullType = {
-    acnProperties   : NullTypeAcnProperties
+    acnProperties       : NullTypeAcnProperties
+    uperMaxSizeInBits   : int
+    uperMinSizeInBits   : int
+
+    acnMaxSizeInBits    : int
+    acnMinSizeInBits    : int
 }
 
 type Boolean = {    
-    acnProperties   : BooleanAcnProperties
+    acnProperties       : BooleanAcnProperties
     cons                : BoolConstraint list
     withcons            : BoolConstraint list
+    uperMaxSizeInBits   : int
+    uperMinSizeInBits   : int
+    acnMaxSizeInBits    : int
+    acnMinSizeInBits    : int
 }
 
 type Enumerated = {
-    items           : NamedItem list
-    acnProperties   : IntegerAcnProperties
+    items               : NamedItem list
+    acnProperties       : IntegerAcnProperties
     cons                : EnumConstraint list
     withcons            : EnumConstraint list
+    uperMaxSizeInBits   : int
+    uperMinSizeInBits   : int
+    acnMaxSizeInBits    : int
+    acnMinSizeInBits    : int
+    acnEncodingClass    : IntEncodingClass
+    encodeValues        : bool
+}
+
+type AcnInteger = {
+    acnProperties       : IntegerAcnProperties
+    acnAligment         : AcnAligment option
+    acnMaxSizeInBits    : int
+    acnMinSizeInBits    : int
+    acnEncodingClass    : IntEncodingClass
+    Location            : SrcLoc //Line no, Char pos
+}
+
+type AcnBoolean = {
+    acnProperties       : BooleanAcnProperties
+    acnAligment         : AcnAligment option
+    acnMaxSizeInBits    : int
+    acnMinSizeInBits    : int
+    Location            : SrcLoc //Line no, Char pos
+}
+
+type AcnNullType = {
+    acnProperties       : NullTypeAcnProperties
+    acnAligment         : AcnAligment option
+    acnMaxSizeInBits    : int
+    acnMinSizeInBits    : int
+    Location            : SrcLoc //Line no, Char pos
 }
 
 type AcnInsertedType = 
-    | AcnInteger           of IntegerAcnProperties   *(AcnAligment option)
-    | AcnNullType          of NullTypeAcnProperties  *(AcnAligment option)
-    | AcnBoolean           of BooleanAcnProperties   *(AcnAligment option)
+    | AcnInteger           of AcnInteger
+    | AcnNullType          of AcnNullType
+    | AcnBoolean           of AcnBoolean
+with
+    member this.AsString =
+        match this with
+        | AcnInteger  _       -> "INTEGER"
+        | AcnNullType _       -> "NULL"
+        | AcnBoolean  _       -> "BOOLEAN"
 
-type AcnChild = {
-    Name                        : StringLoc
-    Type                        : AcnInsertedType
-}
 
+
+type ScopeNode =
+    | MD of string          //MODULE
+    | TA of string          //TYPE ASSIGNMENT
+    | VA of string          //VALUE ASSIGNMENT
+    | SEQ_CHILD of string   //SEQUENCE child
+    | CH_CHILD of string    //CHOICE child
+    | PRM of string         //ACN parameter
+    | SQF                   //SEQUENCE OF CHILD
+
+type ReferenceToType = 
+    | ReferenceToType of ScopeNode list
 
 type Asn1Type = {
+    id              : ReferenceToType
     Kind            : Asn1TypeKind
     acnAligment     : AcnAligment option
+    acnParameters   : AcnParameter list
     Location        : SrcLoc //Line no, Char pos
 }
 
@@ -330,18 +514,37 @@ and SequenceOf = {
     acnProperties   : SizeableAcnProperties
     cons                : SequenceOfConstraint list
     withcons            : SequenceOfConstraint list
+    minSize             : int
+    maxSize             : int
+    uperMaxSizeInBits   : int
+    uperMinSizeInBits   : int
+
+    acnMaxSizeInBits    : int
+    acnMinSizeInBits    : int
+    acnEncodingClass    : SizeableAcnEncodingClass
 }
 
 and Sequence = {
-    children        : SeqChildInfo list
-    cons                : SequenceConstraint list
-    withcons            : SequenceConstraint list
+    children                : SeqChildInfo list
+    cons                    : SequenceConstraint list
+    withcons                : SequenceConstraint list
+    uperMaxSizeInBits       : int
+    uperMinSizeInBits       : int
+
+    acnMaxSizeInBits        : int
+    acnMinSizeInBits        : int
 }
 
+and AcnChild = {
+    Name                        : StringLoc
+    id                          : ReferenceToType
+    Type                        : AcnInsertedType
+}
 
 and SeqChildInfo = 
     | Asn1Child of Asn1Child
     | AcnChild  of AcnChild
+
 
 and Asn1Child = {
     Name                        : StringLoc
@@ -349,7 +552,6 @@ and Asn1Child = {
     ada_name                    : string                     
     Type                        : Asn1Type
     Optionality                 : Asn1Optionality option
-    acnPresentWhenConditions    : AcnPresentWhenConditionSeqChild list
     Comments                    : string array
 }
 
@@ -357,10 +559,15 @@ and Asn1Child = {
 
 
 and Choice = {
-    children        : ChChildInfo list
-    acnProperties   : ChoiceAcnProperties
-    cons            : ChoiceConstraint list
-    withcons        : ChoiceConstraint list
+    children            : ChChildInfo list
+    acnProperties       : ChoiceAcnProperties
+    cons                : ChoiceConstraint list
+    withcons            : ChoiceConstraint list
+    uperMaxSizeInBits   : int
+    uperMinSizeInBits   : int
+
+    acnMaxSizeInBits    : int
+    acnMinSizeInBits    : int
 }
 
 and ChChildInfo = {
@@ -388,7 +595,6 @@ type TypeAssignment = {
     ada_name:string
     Type:Asn1Type
     Comments: string array
-    acnParameters   : AcnParameter list
 
 }
 
@@ -424,149 +630,3 @@ type AstRoot = {
 
 
 
-let rec getASN1Name  (t:Asn1Type) =
-    match t.Kind with
-    | Integer       _  -> "INTEGER"
-    | Real          _  -> "REAL"
-    | IA5String     _  -> "IA5String"
-    | NumericString _  -> "NumericString"
-    | OctetString   _  -> "OCTET STRING"
-    | NullType      _  -> "NULL"
-    | BitString     _  -> "BIT STRING"
-    | Boolean       _  -> "BOOLEAN"
-    | Enumerated    _  -> "ENUMERATED"
-    | SequenceOf    _  -> "SEQUENCE OF"
-    | Sequence      _  -> "SEQUENCE"
-    | Choice        _  -> "CHOICE"
-    | ReferenceType r  -> getASN1Name r.baseType
-(*
-
-type AstRoot with
-    member r.Modules = r.Files |> List.collect(fun f -> f.Modules)
-    member r.GetModuleByName(name:StringLoc)  = 
-        let (n,loc) = name.AsTupple
-        match r.Modules |> Seq.tryFind( fun m -> m.Name = name)  with
-        | Some(m) -> m
-        | None    -> raise(SemanticError(loc, sprintf "No Module Defined with name: %s" n ))
-
-type Asn1Module with
-    member this.ExportedTypes =
-        match this.Exports with
-        | All   -> 
-            let importedTypes = this.Imports |> List.collect(fun imp -> imp.Types) |> List.map(fun x -> x.Value)
-            (this.TypeAssignments |> List.map(fun x -> x.Name.Value))@importedTypes
-        | OnlySome(typesAndVars)    ->
-            typesAndVars |> List.filter(fun x -> System.Char.IsUpper (x.Chars 0))
-    member this.ExportedVars =
-        match this.Exports with
-        | All   -> this.ValueAssignments |> List.map(fun x -> x.Name.Value)
-        | OnlySome(typesAndVars)    ->
-            typesAndVars |> List.filter(fun x -> not (System.Char.IsUpper (x.Chars 0)))
-    member m.TryGetTypeAssignmentByName name (r:AstRoot) =
-        match m.TypeAssignments|> Seq.tryFind(fun x -> x.Name = name) with
-        | Some t   -> Some t
-        | None      -> 
-            let othMods = m.Imports |> Seq.filter(fun imp -> imp.Types |> Seq.exists((=) name)) 
-                                |> Seq.map(fun imp -> imp.Name) |> Seq.toList
-            match othMods with
-            | firstMod::_   -> 
-                match r.Modules |> Seq.tryFind( fun m -> m.Name = firstMod)  with
-                | Some(m) -> m.TryGetTypeAssignmentByName name r
-                | None    -> None
-            | []            -> None
-
-    member m.GetTypeAssignmentByName name (r:AstRoot) =
-        match m.TypeAssignments|> Seq.tryFind(fun x -> x.Name = name) with
-        | Some(t)   -> t
-        | None      -> 
-            let othMods = m.Imports |> Seq.filter(fun imp -> imp.Types |> Seq.exists((=) name)) 
-                                |> Seq.map(fun imp -> imp.Name) |> Seq.toList
-            match othMods with
-            | firstMod::tail   -> r.GetModuleByName(firstMod).GetTypeAssignmentByName name r
-            | []               ->            
-                let (n,loc) = name.AsTupple
-                raise(SemanticError(loc, sprintf "No Type Assignment with name: %s is defined in Module %s" n m.Name.Value))
-    member m.GetValueAsigByName(name:StringLoc) (r:AstRoot) =
-        let (n,loc) = name.AsTupple
-        let value = m.ValueAssignments |> Seq.tryFind(fun x -> x.Name = name) 
-        match value with
-        | Some(v)       -> v
-        | None          ->
-            let othMods = m.Imports 
-                          |> Seq.filter(fun imp -> imp.Values |> Seq.exists(fun vname -> vname = name)) 
-                          |> Seq.map(fun imp -> imp.Name) |> Seq.toList
-            match othMods with
-            | firstMod::tail   -> r.GetModuleByName(firstMod).GetValueAsigByName name r
-            | []               -> raise (SemanticError(loc, sprintf "No value assignment with name '%s' exists" n))
-
-
-
-let rec GetActualType (t:Asn1Type) (r:AstRoot) =
-    match t.Kind with
-    | ReferenceType ref ->
-        let newmod = r.GetModuleByName(ref.modName)
-        let tas = newmod.GetTypeAssignmentByName ref.tasName r
-        GetActualType tas.Type r
-    | _                         -> t
-
-
-let GetBaseType (t:Asn1Type) (r:AstRoot) =
-    match t.Kind with
-    | ReferenceType ref ->
-        let newmod = r.GetModuleByName(ref.modName)
-        let tas = newmod.GetTypeAssignmentByName ref.tasName r
-        tas.Type
-    | _                         -> t
-
-let GetBaseTypeByName modName tasName (r:AstRoot) =
-    let mdl = r.GetModuleByName(modName)
-    let tas = mdl.GetTypeAssignmentByName tasName r
-    tas.Type
-
-let GetBaseTypeConsIncluded (t:Asn1Type) (r:AstRoot) =
-    match t.Kind with
-    | ReferenceType ref ->
-        let newmod = r.GetModuleByName(ref.modName)
-        let tas = newmod.GetTypeAssignmentByName ref.tasName r
-        let baseType = tas.Type
-        {baseType with Constraints = baseType.Constraints@t.Constraints}
-    | _                         -> t
-
-let GetActualTypeByName modName tasName (r:AstRoot) =
-    let mdl = r.GetModuleByName(modName)
-    let tas = mdl.GetTypeAssignmentByName tasName r
-    GetActualType tas.Type r
-
-let GetBaseValue  modName vasName  (r:AstRoot) =
-    let mdl = r.GetModuleByName(modName)
-    let vas = mdl.GetValueAsigByName vasName r
-    vas.Value
-
-let rec GetActualValue modName vasName  (r:AstRoot) =
-    let baseVal = GetBaseValue  modName vasName  r
-    match baseVal.Kind with
-    |RefValue(newModName, newVasName)   -> GetActualValue newModName newVasName r
-    | _                                 -> baseVal
-
-
-let rec GetValueAsInt (v:Asn1Value) r=
-    match v.Kind with
-    | IntegerValue(a)                       -> a.Value
-    | RefValue(modName,valName)             -> GetValueAsInt (GetActualValue modName valName r) r
-    | _                                     -> raise(SemanticError (v.Location, sprintf "Expecting Integer value"))
-
-let GetActualTypeAllConsIncluded t (r:AstRoot) =
-    let rec GetActualTypeAux (t:Asn1Type) (addionalConstraints:list<Asn1Constraint>)   =
-        match t.Kind with
-        | ReferenceType ref ->
-            let newmod = r.GetModuleByName(ref.modName)
-            let tas = newmod.GetTypeAssignmentByName ref.tasName r
-            GetActualTypeAux tas.Type (t.Constraints@addionalConstraints) 
-        | _                         -> {t with Constraints = (t.Constraints@addionalConstraints)}
-    GetActualTypeAux t [] 
-
-let GetActualTypeByNameAllConsIncluded modName tasName (r:AstRoot) =
-    let mdl = r.GetModuleByName(modName)
-    let tas = mdl.GetTypeAssignmentByName tasName r
-    GetActualTypeAllConsIncluded tas.Type r
-*)

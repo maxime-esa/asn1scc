@@ -95,6 +95,9 @@ let main argv =
         | UserException msg            ->
             Console.Error.WriteLine(msg)
             2
+        | :? Antlr.Asn1.asn1Parser.SyntaxErrorException as ex            ->
+            Console.Error.WriteLine(ex.Message)
+            2
         | SemanticError (loc,msg)            ->
             Console.Error.WriteLine(msg)
             Console.Error.WriteLine("File:{0}, line:{1}, {2}", Path.GetFileName(loc.srcFilename), loc.srcLine, msg);

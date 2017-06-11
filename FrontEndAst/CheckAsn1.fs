@@ -75,9 +75,9 @@ let rec TypeValueMatch (t:Asn1Type) (typeNames:(StringLoc*StringLoc)list) (v:Asn
                 | Some(_,actVal)    ->  TypeValueMatch ch.Type [] actVal [] ast
                 | None              ->  match ch.Optionality with
                                         | Some(Optional(_))    -> true
-                                        | Some(Default(_))     -> true
                                         | Some(AlwaysAbsent)   -> true
-                                        | _                    -> false
+                                        | Some(AlwaysPresent)  -> false
+                                        | None                 -> false
             let childrenStatus = children |> Seq.forall checkChild
             let invalidValues = chValues |> Seq.exists(fun v -> not (children |> Seq.exists(fun c -> c.Name = (fst v))) )
             childrenStatus &&  not(invalidValues)
@@ -303,7 +303,6 @@ let CheckValueType (ot:Asn1Type) (v:Asn1Value) ast=
                     | Some(_,actVal)    ->  CheckValueType ch.Type actVal ast
                     | None              ->  match ch.Optionality with
                                             | Some(Optional(_))    -> ()
-                                            | Some(Default(_))     -> ()
                                             | Some(AlwaysAbsent)   -> ()
                                             | _                    -> raise(SemanticError(v.Location, sprintf "missing value for component: %s" ch.Name.Value ))
                                             
@@ -421,7 +420,7 @@ let rec isConstraintValid (t:Asn1Type) (c:Asn1Constraint) ast =
                     let isChoice = match (GetActualType t ast).Kind with Choice(_) -> true | _ -> false
                     match nc.Contraint with Some(newC)    -> isConstraintValid child.Type newC ast | _   -> ()
                     match child.Optionality, nc.Mark, isChoice with
-                    | Some(Default(_)), MarkAbsent,false  -> raise(SemanticError (loc, sprintf "Component %s has default value and therefore it cannot be constraint to ABSENT" conName))
+                    | Some(Optional opt), MarkAbsent,false  when opt.defaultValue.IsSome-> raise(SemanticError (loc, sprintf "Component %s has default value and therefore it cannot be constraint to ABSENT" conName))
                     | None, MarkAbsent,false  
                     | None, MarkPresent,false             -> raise(SemanticError (loc, sprintf "Component %s is not optional. So, it cannot be constraint to ABSENT or PRESENT" conName))
                     | _, MarkPresent, true
@@ -439,7 +438,10 @@ let rec CheckType(t:Asn1Type) (m:Asn1Module) ast =
         children |> 
         Seq.choose(fun c -> 
             match c.Optionality with 
-            | Some(Default v) -> Some (c.Type, v) 
+            | Some(Optional opt) -> 
+                match opt.defaultValue with
+                | Some v -> Some (c.Type, v) 
+                | None   -> None
             |_->None) 
         |> Seq.iter (fun (t,v) -> 
             CheckValueType t v ast

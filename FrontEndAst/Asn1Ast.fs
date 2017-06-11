@@ -101,11 +101,14 @@ type NamedItem = {
     Comments: string array
 }
 
+type Optional = {
+    defaultValue        : Asn1Value option
+}
+
 type Asn1Optionality = 
     | AlwaysAbsent
     | AlwaysPresent
-    | Optional  
-    | Default   of Asn1Value
+    | Optional          of Optional
 
 
 

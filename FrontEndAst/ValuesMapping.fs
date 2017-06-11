@@ -100,6 +100,6 @@ let rec mapValue
                 ChValue ({NamedValue.name  = cnm; Value = chValue})
             | None        -> raise (SemanticError(v.Location, (sprintf "Expecting a %s value but found a SEQUENCE value" (Asn1Ast.getASN1Name r baseType)))) 
         | _                         -> raise (SemanticError(v.Location, (sprintf "Expecting a %s value but found a SEQUENCE OF value" (Asn1Ast.getASN1Name r baseType))))
-    | Asn1Ast.NullValue           -> NullValue
+    | Asn1Ast.NullValue           -> NullValue ()
 
     

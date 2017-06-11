@@ -61,5 +61,10 @@ let constructAst (args:CommandLineSettings) =
     *)
     let acnAst = AcnCreateFromAntlr.mergeAsn1WithAcnAst asn1Ast0 acnParseTrees
 
+    (*
+        check acn references
+    *)
+    CheckLongReferences.checkAst acnAst
+
     acnAst
 

@@ -66,9 +66,13 @@
     <Compile Include="MapParamAstToNonParamAst.fs" />
     <Compile Include="CheckAsn1.fs" />
     <Compile Include="Asn1AcnAst.fs" />
+    <Compile Include="Asn1AcnAstUtilFunctions.fs" />
     <Compile Include="Asn1Fold.fs" />
     <Compile Include="ValuesMapping.fs" />
     <Compile Include="ConstraintsMapping.fs" />
+    <Compile Include="uPER.fs" />
+    <Compile Include="AcnEncodingClasses.fs" />
+    <Compile Include="CheckLongReferences.fs" />
     <Compile Include="ExportToXml.fs" />
     <Compile Include="AcnCreateFromAntlr.fs" />
     <Compile Include="FrontEntMain.fs" />

@@ -115,8 +115,8 @@ and MapAsn1Optionality (r:ParameterizedAsn1Ast.AstRoot) (kind: ParameterizedAsn1
     match o with
     | ParameterizedAsn1Ast.AlwaysAbsent     -> Asn1Ast.AlwaysAbsent
     | ParameterizedAsn1Ast.AlwaysPresent    -> Asn1Ast.AlwaysPresent
-    | ParameterizedAsn1Ast.Optional         -> Asn1Ast.Optional
-    | ParameterizedAsn1Ast.Default(v)       -> Asn1Ast.Default(MapAsn1Value r kind  v)
+    | ParameterizedAsn1Ast.Optional         -> Asn1Ast.Optional ({Asn1Ast.Optional.defaultValue = None})
+    | ParameterizedAsn1Ast.Default(v)       -> Asn1Ast.Optional ({Asn1Ast.Optional.defaultValue = Some (MapAsn1Value r kind  v)})
 
 and MapChildInfo (r:ParameterizedAsn1Ast.AstRoot)  (c:ParameterizedAsn1Ast.ChildInfo) :Asn1Ast.ChildInfo =
     {

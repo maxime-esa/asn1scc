@@ -4,7 +4,7 @@ open System
 open System.Numerics
 open DAst
 
-let foldMap = GenericFold2.foldMap
+let foldMap = Asn1Fold.foldMap
 
 let foldAsn1Type
     (t:Asn1Type) 
