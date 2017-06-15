@@ -7,16 +7,6 @@ Build status
 | Build the compiler under Windows | [![Build Status of ASN1SCC on AppVeyor](https://ci.appveyor.com/api/projects/status/github/ttsiodras/asn1scc)](https://ci.appveyor.com/project/ttsiodras/asn1scc) |
 | Build the compiler under OS/X | [![Build Status of ASN1SCC on Travis CI](https://travis-ci.org/ttsiodras/asn1scc.svg?branch=master)](https://travis-ci.org/ttsiodras/asn1scc?branch=master) |
 
-For the impatient
-=================
-
-If you already know what ASN.1 and ASN1SCC is, have access to Docker and just want to run the ASN1SCC compiler:
-
-    docker pull ttsiodras/asn1scc
-    docker run -it ttsiodras/asn1scc
-
-...and follow the instructions shown.
-
 Executive summary
 =================
 
@@ -32,33 +22,30 @@ or a blog post with hands-on examples
 Suffice to say, if you are developing for embedded systems, it will probably
 interest you.
 
-Compilation
-===========
+For the impatient
+=================
 
-## Common for all OSes
+If you...
 
-First, install the Java JRE. This is a compile-time only dependency,
-required to execute ANTLR.
+- already know what ASN.1 is
+- have access to Docker
+- ...and just want to run the ASN1SCC compiler, then...
+
+    docker pull ttsiodras/asn1scc
+    docker run -it ttsiodras/asn1scc
+
+...and follow the instructions shown.
+
+Compilation and testing
+=======================
+
+First, you'll need to install the Java JRE (no need for the full JDK).
+This is a compile-time only dependency, required to execute the parser
+generator ([ANTLR](http://www.antlr.org/)).
 
 Then depending on your OS:
 
-### Under Windows
-
-Install:
-
-1. A version of Visual Studio with support for F# .
-
-2. Open `Asn1.sln` and build the `Asn1f2` project (right-click/build)
-
-## Under OSX
-
-1. Install the [Mono MDK](http://www.mono-project.com).
-
-2. Execute `xbuild` (or `msbuild` in Mono 5.0 and newer) in ASN1SCC's directory.
-
-3. Built compiler will be available in `Asn1f2/bin/Debug` folder.
-
-## Under Linux
+## Under Linux (compilation and running the tests)
 
 1. Install the [mono](http://www.mono-project.com) development tools. Under
    Debian Jessie for example (as of Sep/2014):
@@ -93,27 +80,44 @@ Install:
     xbuild
     ```
 
-Depending on the version of Mono that you are using, you may need to specify
-a specific target .NET framework version:
+    Depending on the version of Mono that you are using, you may need to
+    specify a specific target .NET framework version:
 
     ```
     xbuild /p:TargetFrameworkVersion="v4.5"
     ```
 
-On Mono version 5.0 and newer use `msbuild` instead of `xbuild`.
+    Also note that on Mono version 5.0 and above, you better use `msbuild`
+    instead of `xbuild`.
 
-4. Built compiler will be available in `Asn1f2/bin/Debug/` folder.
+4. The compiler and supporting files will be built under the `Asn1f2/bin/Debug` folder.
 
-5. Run tests (if you want to):
+5. You can now run the tests - if you want to:
 
     ```
     cd Tests
     make
     ```
 
-Note that in order to run the tests you need both GCC and GNAT.
-The tests will process hundreds of ASN.1 grammars, generate C and
-Ada source code, compile it, run it, and check the coverage results.
+    Note that in order to run the tests you need both GCC and GNAT.
+    The tests will process hundreds of ASN.1 grammars, generate C and
+    Ada source code, compile it, run it, and check the coverage results.
+
+### Under Windows (compilation only)
+
+You'll need to:
+
+1. Install a version of Visual Studio with support for F# .
+
+2. Then open `Asn1.sln` and build the `Asn1f2` project (right-click/build)
+
+## Under OSX (compilation only)
+
+1. Install the [Mono MDK](http://www.mono-project.com).
+
+2. Execute `xbuild` (or `msbuild` in Mono 5.0 and newer) in ASN1SCC's directory.
+
+3. The compiler and supporting files will be built under the `Asn1f2/bin/Debug` folder.
 
 Continuous integration and Docker image
 =======================================
@@ -123,8 +127,6 @@ commit or merge request, the packaged circle.yml instructs CircleCI to...
 
     (a) build ASN1SCC with the new code
     (b) then run all the tests and check the coverage results.
-
-But where is that build being made? Inside what environment?
 
 CircleCI offers only 3 build environments: OSX, Ubuntu 12 and Ubuntu 14.
 Till recently (March/2017) Ubuntu 14 met all the dependencies that were
@@ -137,7 +139,7 @@ Thankfully, CircleCI also supports Docker images.
 We have therefore setup the build, so that it creates (on the fly)
 a Debian Docker image based on the latest version of Debian stable
 (the soon to be announced Debian Stretch). Both the ASN1SCC build and
-the test run are then executed inside the Docker image.
+the tests run are then executed inside the Docker image.
 
 Needless to say, the Docker image can be used for development as well;
 simply execute...
@@ -169,6 +171,9 @@ circle.yml for details). This means that upon new commits in ASN1SCC,
 CircleCI will re-use the Docker image that was made in previous runs,
 and therefore avoid re-installing all the build environment tools every
 time. The develop-test cycles are therefore as fast as they can be.
+
+There's two additional build automations: AppVeyor builds the compiler
+under Windows, and TravisCI builds it under OS/X.
 
 Usage
 =====
