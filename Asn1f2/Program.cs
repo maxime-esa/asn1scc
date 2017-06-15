@@ -559,6 +559,7 @@ namespace Asn1f2
                 }
 
                 var renamePolicy = getRenamePolicy(cmdArgs, ParameterizedAsn1Ast.EnumRenamePolicy.SelectiveEnumerants);
+                CheckAsn1.checkDuplicateValueAssigments(refTypesWithNoConstraints, CommonTypes.ProgrammingLanguage.C);
                 var astForBackend = EnsureUniqueEnumNames.DoWork(refTypesWithNoConstraints, renamePolicy);
                 c_body.DoWork(astForBackend, acnAst3, outDir);
 
