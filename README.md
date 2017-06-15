@@ -12,9 +12,11 @@ Executive summary
 
 This repository contains the complete source code and tests of the ASN1SCC
 compiler ; an ASN.1 compiler that targets C and Ada, while placing specific
-emphasis on embedded systems.
+emphasis on embedded systems (no black-box run-time library, portable code
+able to run under any OS (embedded or otherwise), no dynamic memory used
+anywhere, etc.
 
-You can read a comprehensive paper about it
+You can read a comprehensive paper about the compiler and its features
 [here (PDF)](http://web1.see.asso.fr/erts2012/Site/0P2RUC89/7C-4.pdf),
 or a blog post with hands-on examples
 [here](https://www.thanassis.space/asn1.html).
@@ -29,7 +31,8 @@ If you...
 
 - already know what ASN.1 is
 - have access to Docker
-- ...and just want to run the ASN1SCC compiler, then...
+
+...and just want to run the ASN1SCC compiler, then try:
 
     docker pull ttsiodras/asn1scc
     docker run -it ttsiodras/asn1scc
@@ -39,9 +42,9 @@ If you...
 Compilation and testing
 =======================
 
-First, you'll need to install the Java JRE (no need for the full JDK).
-This is a compile-time only dependency, required to execute the parser
-generator ([ANTLR](http://www.antlr.org/)).
+To build the compiler, you'll first need to install the Java JRE
+(no need for the full JDK). This is a compile-time only dependency,
+required to execute the parser generator ([ANTLR](http://www.antlr.org/)).
 
 Then depending on your OS:
 
@@ -64,8 +67,8 @@ Then depending on your OS:
             GC:            sgen
     ```
 
-2. Use the `fsharpc` compiler inside your distro, or just checkout and compile
-   the Open Source F# compiler...
+2. Use the `fsharpc` compiler provided by your Linux distribution,
+   or just checkout and compile the Open Source F# compiler...
 
     ```
     git clone https://github.com/fsharp/fsharp && \
@@ -74,7 +77,7 @@ Then depending on your OS:
         make && sudo make install 
     ```
 
-3. Execute
+3. Then execute...
 
     ```
     xbuild
@@ -100,8 +103,9 @@ Then depending on your OS:
     ```
 
     Note that in order to run the tests you need both GCC and GNAT.
-    The tests will process hundreds of ASN.1 grammars, generate C and
-    Ada source code, compile it, run it, and check the coverage results.
+    The tests will process hundreds of ASN.1 grammars, generating C and
+    Ada source code from each one of them; and for each grammar, compiling
+    the resulting code, running it, and checking the coverage results.
 
 ### Under Windows (compilation only)
 
