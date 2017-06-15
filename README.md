@@ -1,32 +1,36 @@
-Status of building the compiler and executing all C and Ada tests under Linux:
+Build status
+============
 
-[![Build and Test Status of ASN1SCC on Circle CI](https://circleci.com/gh/ttsiodras/asn1scc.svg?&style=shield&circle-token=fcc32f415742887faa6ad69826b1cf25426df086)](https://circleci.com/gh/ttsiodras/asn1scc/tree/master)
+| Test | Status |
+|------|--------|
+| Build the compiler and run all C and Ada tests under Linux | [![Build and Test Status of ASN1SCC on Circle CI](https://circleci.com/gh/ttsiodras/asn1scc.svg?&style=shield&circle-token=fcc32f415742887faa6ad69826b1cf25426df086)](https://circleci.com/gh/ttsiodras/asn1scc/tree/master) |
+|------|--------|
+| Build the compiler under Windows | [![Build Status of ASN1SCC on AppVeyor](https://ci.appveyor.com/api/projects/status/github/ttsiodras/asn1scc)](https://ci.appveyor.com/project/ttsiodras/asn1scc) |
+|------|--------|
+| Build the compiler under OS/X | [![Build Status of ASN1SCC on Travis CI](https://travis-ci.org/ttsiodras/asn1scc.svg?branch=master)](https://travis-ci.org/ttsiodras/asn1scc?branch=master) |
 
-Status of building the compiler under Windows:
+For the impatient
+=================
 
-[![Build Status of ASN1SCC on AppVeyor](https://ci.appveyor.com/api/projects/status/github/ttsiodras/asn1scc)](https://ci.appveyor.com/project/ttsiodras/asn1scc)
-
-Status of building the compiler under OS/X:
-
-[![Build Status of ASN1SCC on Travis CI](https://travis-ci.org/ttsiodras/asn1scc.svg?branch=master)](https://travis-ci.org/ttsiodras/asn1scc?branch=master)
-
-*For the impatient: if you already know what ASN.1 and ASN1SCC is, and
-just want to run the ASN1SCC compiler:*
+If you already know what ASN.1 and ASN1SCC is, have access to Docker and just want to run the ASN1SCC compiler:
 
     docker pull ttsiodras/asn1scc
     docker run -it ttsiodras/asn1scc
 
-*...and follow the instructions shown.*
+...and follow the instructions shown.
 
 Executive summary
 =================
 
-This is the source code of the ASN1SCC compiler - an ASN.1 compiler that
-targets C and Ada, while placing specific emphasis on embedded systems.
+This repository contains the complete source code and tests of the ASN1SCC
+compiler ; an ASN.1 compiler that targets C and Ada, while placing specific
+emphasis on embedded systems.
+
 You can read a comprehensive paper about it
 [here (PDF)](http://web1.see.asso.fr/erts2012/Site/0P2RUC89/7C-4.pdf),
 or a blog post with hands-on examples
 [here](https://www.thanassis.space/asn1.html).
+
 Suffice to say, if you are developing for embedded systems, it will probably
 interest you.
 
