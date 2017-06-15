@@ -1,11 +1,14 @@
 Status of building the compiler and executing all C and Ada tests under Linux:
+
 [![Build and Test Status of ASN1SCC on Circle CI](https://circleci.com/gh/ttsiodras/asn1scc.svg?&style=shield&circle-token=fcc32f415742887faa6ad69826b1cf25426df086)](https://circleci.com/gh/ttsiodras/asn1scc/tree/master)
 
 Status of building the compiler under Windows:
+
 [![Build Status of ASN1SCC on AppVeyor](https://ci.appveyor.com/api/projects/status/github/ttsiodras/asn1scc)](https://ci.appveyor.com/project/ttsiodras/asn1scc)
 
 Status of building the compiler under OS/X:
-[![Build Status of ASN1SCC on Travis CI](https://travis-ci.org/ttsiodras/asn1scc?branch=master)](https://travis-ci.org/ttsiodras/asn1scc.svg?branch=master)
+
+[![Build Status of ASN1SCC on Travis CI](https://travis-ci.org/ttsiodras/asn1scc.svg?branch=master)](https://travis-ci.org/ttsiodras/asn1scc?branch=master)
 
 *For the impatient: if you already know what ASN.1 and ASN1SCC is, and
 just want to run the ASN1SCC compiler:*
