@@ -1,0 +1,10 @@
+TASTE-Dataview DEFINITIONS ::= BEGIN
+    MyInteger[]
+    MyReal[]
+    MyBool[]
+    MyEnum[]
+    MySeq[]
+    MyChoice[]
+    MySeqOf[]
+    MyOctStr[]
+END

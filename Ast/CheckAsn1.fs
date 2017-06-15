@@ -566,3 +566,24 @@ let CheckFiles( ast:AstRoot) (pass :int) =
 
 
     
+let checkDuplicateValueAssigments (r:AstRoot)  (lang:ProgrammingLanguage) =
+    let doubleEnumNames0 = 
+        seq {
+            for m in r.Modules do
+                for vas in m.ValueAssignments do
+                    yield vas.Name
+        } |> Seq.toList 
+    let aa = doubleEnumNames0 |> Seq.groupBy (fun v -> v.Value)|> Seq.filter(fun (s,g) -> Seq.length g > 1) |> Seq.map(fun (s,g) -> (s, g |> Seq.toList)) |> Seq.toList
+
+    match aa with
+    | []    -> ()
+    | (varName,duplicates)::_     -> 
+        match duplicates with
+        | []
+        | _::[]     -> raise(BugErrorException"checkDuplicateValueAssigments")
+        | d1::d2::_ ->
+            match lang with
+            | ProgrammingLanguage.C ->
+                let errmsg = sprintf "value assignment '%s' is re-declared. Other declaration is in file '%s', line %d  " varName d2.Location.srcFilename d2.Location.srcLine
+                raise(SemanticError(d1.Location, errmsg))
+            | _ -> ()
