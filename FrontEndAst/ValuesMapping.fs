@@ -88,18 +88,18 @@ let rec mapValue
                     | Some chType -> 
                         let chValue = mapValue r chType.Type chv
                         {NamedValue.name  = cnm; Value = chValue}
-                    | None        -> raise (SemanticError(v.Location, (sprintf "Expecting a %s value but found a SEQUENCE value" (Asn1Ast.getASN1Name r baseType)))) )
+                    | None        -> raise (SemanticError(v.Location, (sprintf "No child exists with name '%s' " cnm.Value))) )
             SeqValue chValue
-        | _                         -> raise (SemanticError(v.Location, (sprintf "Expecting a %s value but found a SEQUENCE OF value" (Asn1Ast.getASN1Name r baseType))))
+        | _                         -> raise (SemanticError(v.Location, (sprintf "Expecting a %s value but found a SEQUENCE value" (Asn1Ast.getASN1Name r baseType))))
     | Asn1Ast.ChValue          (cnm, chv) -> 
         match baseType.Kind with
-        | Asn1Ast.Sequence children ->
+        | Asn1Ast.Choice children ->
             match children |> Seq.tryFind (fun c -> c.Name = cnm) with
             | Some chType -> 
                 let chValue = mapValue r chType.Type chv
                 ChValue ({NamedValue.name  = cnm; Value = chValue})
-            | None        -> raise (SemanticError(v.Location, (sprintf "Expecting a %s value but found a SEQUENCE value" (Asn1Ast.getASN1Name r baseType)))) 
-        | _                         -> raise (SemanticError(v.Location, (sprintf "Expecting a %s value but found a SEQUENCE OF value" (Asn1Ast.getASN1Name r baseType))))
+            | None        -> raise (SemanticError(v.Location, (sprintf "No child exists with name %s" cnm.Value))) 
+        | _                         -> raise (SemanticError(v.Location, (sprintf "Expecting a %s value but found a SEQUENCE value" (Asn1Ast.getASN1Name r baseType))))
     | Asn1Ast.NullValue           -> NullValue ()
 
     

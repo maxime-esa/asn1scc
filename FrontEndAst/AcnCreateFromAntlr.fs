@@ -16,7 +16,7 @@ open System.Numerics
 open Antlr.Acn
 open Antlr.Runtime.Tree
 open Antlr.Runtime
-
+open CommonTypes
 open FsUtils
 
 
@@ -767,13 +767,53 @@ let rec private mergeType (asn1:Asn1Ast.AstRoot) (acn:AcnAst) (m:Asn1Ast.Asn1Mod
     let combinedProperties = acnProps
     let allCons = t.Constraints@refTypeCons@withCons
 
+    (*Removes Type inclusion and RangeContraint_MIN_MAX constraints*)    
     let rec fixConstraint (c:Asn1Ast.Asn1Constraint) =
-        match c with
-        | Asn1Ast.RangeContraint_MIN_MAX            -> []
-        | Asn1Ast.TypeInclusionConstraint (md,ts)   -> 
-            let actTypeAllCons = Asn1Ast.GetActualTypeByNameAllConsIncluded md ts asn1
-            actTypeAllCons.Constraints |> List.collect fixConstraint
-        | _                                         -> [c]
+        let intersect c1 cs =
+            cs |> List.fold(fun fc cc -> (Asn1Ast.IntersectionConstraint (fc,cc))) c1
+        let mergeConstraints (cc:Asn1Ast.Asn1Constraint list)  constConstr =
+            match cc with
+            | []        -> []
+            | x1::[]    -> [constConstr x1]
+            | x1::xs    -> 
+                let sc = intersect x1 xs
+                [constConstr sc]
+        let mergeConstraints2 (c1:Asn1Ast.Asn1Constraint list) (c2:Asn1Ast.Asn1Constraint list) constConstr =
+            match c1,c2 with
+            | [], []    -> []
+            | _::_, []  -> c1
+            | [], _::_  -> c2
+            | x1::xs1, x2::xs2      -> [constConstr (intersect x1 xs1)  (intersect x2 xs2) ]        
+
+        Asn1Ast.foldConstraint
+            (fun v          -> [Asn1Ast.SingleValueContraint(v)] )
+            (fun a b b1 b2  -> [Asn1Ast.RangeContraint(a,b,b1,b2)])
+            (fun a b1       -> [Asn1Ast.RangeContraint_val_MAX (a,b1)])
+            (fun a b1       -> [Asn1Ast.RangeContraint_MIN_val (a,b1)])
+            (fun ()         -> [])           
+            (fun md ts      ->
+                let actTypeAllCons = Asn1Ast.GetActualTypeByNameAllConsIncluded md ts asn1
+                actTypeAllCons.Constraints |> List.collect fixConstraint)     
+            (fun sc         -> mergeConstraints sc (fun c -> Asn1Ast.SizeContraint c) )        
+            (fun sc         -> mergeConstraints sc (fun c -> Asn1Ast.AlphabetContraint c) )        
+            (fun sc         -> mergeConstraints sc (fun c -> Asn1Ast.WithComponentConstraint c) )        
+            (fun ni cons    -> 
+                match cons with
+                | None          -> [{ni with Contraint = None}]
+                | Some cons     -> cons |> List.map (fun c -> {ni with Contraint = Some c}))
+            (fun nameItems      -> [Asn1Ast.WithComponentsConstraint (nameItems |> List.collect id)])   
+            (fun c1 c2 b        -> mergeConstraints2 c1 c2 (fun c1 c2 -> Asn1Ast.UnionConstraint   (c1,c2,b)))       
+            (fun c1 c2          -> mergeConstraints2 c1 c2 (fun c1 c2 -> Asn1Ast.IntersectionConstraint   (c1,c2)))       
+            (fun sc             -> mergeConstraints sc (fun c -> Asn1Ast.AllExceptConstraint c) )        
+            (fun c1 c2          ->
+                match c1,c2 with
+                | [], []    -> []
+                | _::_, []  -> c1
+                | [], _::_  -> mergeConstraints c2 (fun c -> Asn1Ast.AllExceptConstraint c)
+                | _, _      -> mergeConstraints2 c1 c2 (fun c1 c2 -> Asn1Ast.ExceptConstraint   (c1,c2)))
+            (fun sc             -> mergeConstraints sc (fun c -> Asn1Ast.RootConstraint c) )        
+            (fun c1 c2          -> mergeConstraints2 c1 c2 (fun c1 c2 -> Asn1Ast.RootConstraint2   (c1,c2)))       
+            c
 
     let asn1Kind =
         match t.Kind with

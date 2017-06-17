@@ -25,8 +25,8 @@
     <PlatformTarget>AnyCPU</PlatformTarget>
     <DocumentationFile>bin\Debug\Asn1f4.XML</DocumentationFile>
     <Prefer32Bit>true</Prefer32Bit>
-    <StartWorkingDirectory>C:\prj\GitHub\asn1scc\tmp2\xml</StartWorkingDirectory>
-    <StartArguments>-x ast2.xml a.asn1 a.acn</StartArguments>
+    <StartWorkingDirectory>C:\prj\GitHub\asn1scc\tmp2\headerFiles</StartWorkingDirectory>
+    <StartArguments>-c -o c/ a1.asn1</StartArguments>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
     <DebugType>pdbonly</DebugType>
@@ -60,6 +60,7 @@
     <Compile Include="Program.fs" />
     <None Include="App.config" />
     <Content Include="packages.config" />
+    <EmbeddedResource Include="Resource1.resx" />
   </ItemGroup>
   <ItemGroup>
     <Reference Include="antlr.runtime">
@@ -88,6 +89,11 @@
     <ProjectReference Include="..\Antlr\Antlr.csproj">
       <Name>Antlr</Name>
       <Project>{a1882f1d-5185-407c-8227-1e2b69baade9}</Project>
+      <Private>True</Private>
+    </ProjectReference>
+    <ProjectReference Include="..\BackendAst\BackendAst.fsproj">
+      <Name>BackendAst</Name>
+      <Project>{2f960476-565f-4282-90b3-606dbac5eff2}</Project>
       <Private>True</Private>
     </ProjectReference>
     <ProjectReference Include="..\CommonTypes\CommonTypes.fsproj">

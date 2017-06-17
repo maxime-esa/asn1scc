@@ -54,12 +54,16 @@ let constructAst (args:CommandLineSettings) =
     //todo : check for commented code with uPER.
     CheckAsn1.CheckFiles asn1Ast0 0
 
+    (*
+        Ensure unique enum names
+    *)
+    let uniqueEnumNamesAst = EnsureUniqueEnumNames.DoWork asn1Ast0 
 
     (*
         - Updates ASN.1 AST with ASN.1 information
         - Creates the expanded tree (i.e reference types are now resolved)
     *)
-    let acnAst = AcnCreateFromAntlr.mergeAsn1WithAcnAst asn1Ast0 acnParseTrees
+    let acnAst = AcnCreateFromAntlr.mergeAsn1WithAcnAst uniqueEnumNamesAst acnParseTrees
 
     (*
         check acn references

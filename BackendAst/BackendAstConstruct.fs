@@ -1,21 +1,15 @@
 ﻿module BackendAstConstruct
 
-open Constraints
 
-let DoWork (lang:CommonTypes.ProgrammingLanguage) (app:Ast.AstRoot) (acn:AcnTypes.AcnAst) outdir =
+
+let DoWork (lang:CommonTypes.ProgrammingLanguage) (r:Asn1AcnAst.AstRoot) =
     let l =
         match lang with
-        | CommonTypes.ProgrammingLanguage.C     -> C
+        | CommonTypes.ProgrammingLanguage.C     -> DAst.ProgrammingLanguage.C
         | CommonTypes.ProgrammingLanguage.Ada   
-        | CommonTypes.ProgrammingLanguage.Spark -> Ada
+        | CommonTypes.ProgrammingLanguage.Spark -> DAst.ProgrammingLanguage.Ada
         | _                             -> raise(System.Exception "Unsupported programming language")
     
-    let bast = BAstConstruction.createValidationAst l app 
+    DAstConstruction.DoWork r l 
 
-    let bastWithAcnInsertedFields = BastAddAcnInsertFields.doWork bast acn
 
-    let cast = CAstConstruction.mapBAstToCast bastWithAcnInsertedFields acn
-
-    let dast = DAstConstruction.DoWork cast l
-
-    GenerateFiles.printDAst dast l outdir

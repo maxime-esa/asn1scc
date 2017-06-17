@@ -51,6 +51,12 @@ type Asn1Encoding =
     | XER
 
 
+type EnumRenamePolicy =
+    | NoRenamePolicy
+    | SelectiveEnumerants
+    | AllEnumerants
+
+
 type CommandLineSettings = {
     asn1Files : string list
     acnFiles  : string list
@@ -63,4 +69,94 @@ type CommandLineSettings = {
     IcdAcnHtmlFileName:string
     mappingFunctionsModule : string option
     integerSizeInBytes : int            //currently only the value of 8 bytes (64 bits) is supported
+    renamePolicy :  EnumRenamePolicy
 }
+
+type ScopeNode =
+    | MD of string          //MODULE
+    | TA of string          //TYPE ASSIGNMENT
+    | VA of string          //VALUE ASSIGNMENT
+    | SEQ_CHILD of string   //SEQUENCE child
+    | CH_CHILD of string    //CHOICE child
+    | PRM of string         //ACN parameter
+    | SQF                   //SEQUENCE OF CHILD
+
+type ReferenceToType = 
+    | ReferenceToType of ScopeNode list
+
+type TypeAssignmentInfo = {
+    modName : string
+    tasName : string
+}
+
+
+type ScopeNode with
+    member this.AsString =
+        match this with
+        | MD strVal
+        | TA strVal
+        | VA strVal
+        | PRM strVal
+        | SEQ_CHILD strVal
+        | CH_CHILD strVal -> strVal
+        | SQF             -> "#"
+    member this.StrValue = this.AsString
+
+type ReferenceToType with 
+    member this.AsString =
+        match this with
+        | ReferenceToType sn -> sn |> Seq.map(fun x -> x.AsString) |> Seq.StrJoin "."
+        member this.ToScopeNodeList = 
+            match this with
+            | ReferenceToType path -> path 
+        member this.ModName =
+            match this with
+            | ReferenceToType path -> 
+                match path with
+                | (MD modName)::_    -> modName
+                | _                               -> raise(BugErrorException "Did not find module at the begining of the scope path")
+        member this.AcnAbsPath =
+            match this with
+            | ReferenceToType path -> path |> List.map (fun i -> i.StrValue) 
+        member this.getSeqChildId (childName:string) =
+            match this with
+            | ReferenceToType path -> ReferenceToType (path@[SEQ_CHILD childName])
+        member this.getChildId (childName:string) =
+            match this with
+            | ReferenceToType path -> ReferenceToType (path@[CH_CHILD childName])
+        member this.getParamId (paramName:string) =
+            match this with
+            | ReferenceToType ((MD mdName)::(TA tasName)::[]) -> ReferenceToType ((MD mdName)::(TA tasName)::[PRM paramName])
+            | _                                                                         -> raise(BugErrorException "Cannot add parameter here. Only within TAS scope")
+
+        member this.appendLongChildId (childRelativePath:string list) =
+            match this with
+            | ReferenceToType path -> 
+                let newTail = 
+                    childRelativePath |> 
+                    List.map(fun s ->SEQ_CHILD s)
+                ReferenceToType (path@newTail)
+        member this.beginsWith (md:string) (ts:string)= 
+            match this with
+            | ReferenceToType((MD mdName)::(TA tasName)::[])   -> mdName = md && tasName = ts
+            | _                                                                          -> false
+        member this.lastItem =
+            match this with
+            | ReferenceToType path -> 
+                match path |> List.rev |> List.head with
+                | SEQ_CHILD name   -> name
+                | CH_CHILD name    -> name
+                | _                             -> raise (BugErrorException "error in lastitem")
+        member this.parentTypeId =
+            match this with
+            | ReferenceToType path -> 
+                let pathPar = path |> List.rev |> List.tail |> List.rev
+                match pathPar with
+                | [] 
+                | _::[]     -> None
+                | _         -> Some (ReferenceToType pathPar)
+        member this.SeqeuenceOfLevel =
+            match this with
+            | ReferenceToType path -> path |> List.filter(fun n -> match n with SQF -> true | _ -> false) |> Seq.length
+        static member createFromModAndTasName (modName : string) ((tasName : string))=
+            ReferenceToType((MD modName)::(TA tasName)::[])

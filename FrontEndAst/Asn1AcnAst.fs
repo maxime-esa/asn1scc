@@ -475,22 +475,6 @@ with
 
 
 
-type ScopeNode =
-    | MD of string          //MODULE
-    | TA of string          //TYPE ASSIGNMENT
-    | VA of string          //VALUE ASSIGNMENT
-    | SEQ_CHILD of string   //SEQUENCE child
-    | CH_CHILD of string    //CHOICE child
-    | PRM of string         //ACN parameter
-    | SQF                   //SEQUENCE OF CHILD
-
-type ReferenceToType = 
-    | ReferenceToType of ScopeNode list
-
-type TypeAssignmentInfo = {
-    modName : string
-    tasName : string
-}
 
 
 type Asn1Type = {

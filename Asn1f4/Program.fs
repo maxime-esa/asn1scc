@@ -3,6 +3,7 @@ open FsUtils
 open System
 open System.IO
 open CommonTypes
+open System.Resources
 
 type CliArguments =
     | [<AltCommandLine("-c")>]C_lang 
@@ -72,7 +73,29 @@ let constructCommandLineSettings args (parserResults: ParseResults<CliArguments>
         IcdAcnHtmlFileName = ""
         mappingFunctionsModule = None
         integerSizeInBytes = 8
+        renamePolicy = CommonTypes.EnumRenamePolicy.SelectiveEnumerants
     }    
+
+
+let exportRTL outDir  (l:DAst.ProgrammingLanguage) =
+    let writeTextFile fileName (content:String) =
+        System.IO.File.WriteAllText(fileName, content.Replace("\r",""))
+    let rm = new ResourceManager("Resource1", System.Reflection.Assembly.GetExecutingAssembly());
+    match l with
+    | DAst.ProgrammingLanguage.C ->
+                writeTextFile (Path.Combine(outDir, "asn1crt.c")) (rm.GetString("asn1crt",null)) 
+                writeTextFile (Path.Combine(outDir, "asn1crt.h")) (rm.GetString("asn1crt1",null)) 
+                writeTextFile (Path.Combine(outDir, "acn.c"))     (rm.GetString("Acn",null)) 
+                writeTextFile (Path.Combine(outDir, "real.c"))    (rm.GetString("real",null)) 
+    | DAst.ProgrammingLanguage.Ada ->
+                writeTextFile (Path.Combine(outDir, "adaasn1rtl.adb")) (rm.GetString("adaasn1rtl_adb",null)) 
+                writeTextFile (Path.Combine(outDir, "adaasn1rtl.ads")) (rm.GetString("adaasn1rtl_ads",null)) 
+                writeTextFile (Path.Combine(outDir, "IgnoredExaminerWarnings.wrn"))     (rm.GetString("IgnoredExaminerWarnings",null)) 
+                writeTextFile (Path.Combine(outDir, "gnat.cfg"))    (rm.GetString("gnat",null)) 
+                writeTextFile (Path.Combine(outDir, "runSpark.sh"))    (rm.GetString("run",null)) 
+                writeTextFile (Path.Combine(outDir, "GPS_project.gprc"))    (rm.GetString("GPS_project",null)) 
+
+
 
 [<EntryPoint>]
 let main argv = 
@@ -83,10 +106,32 @@ let main argv =
         let cliArgs = parserResults.GetAllResults()
         cliArgs |> Seq.iter checkArguement 
         let args = constructCommandLineSettings cliArgs parserResults
+        
+        // create front ent ast
         let frontEntAst = FrontEntMain.constructAst args
+        
+        // print front ent ast as xml 
         match args.AstXmlAbsFileName with
         | ""    -> ()
         | _     -> ExportToXml.exportFile frontEntAst args.AstXmlAbsFileName
+
+        // construct backend ast
+        let backends = 
+            cliArgs |> 
+            List.choose (fun a -> 
+                match a with
+                | C_lang        -> Some (DAstConstruction.DoWork frontEntAst  CommonTypes.ProgrammingLanguage.C)
+                | Ada_Lang      -> Some (DAstConstruction.DoWork frontEntAst  CommonTypes.ProgrammingLanguage.Ada)
+                | _             -> None)
+
+        //generate code
+        let outDir = parserResults.GetResult(<@Out@>, defaultValue = ".")
+        backends |> 
+            Seq.iter (fun r -> 
+                GenerateFiles.generateAll outDir r
+                exportRTL outDir r.lang)
+
+
         0
     with
         | :? Argu.ArguParseException as ex -> 
@@ -102,10 +147,11 @@ let main argv =
             Console.Error.WriteLine(msg)
             Console.Error.WriteLine("File:{0}, line:{1}, {2}", Path.GetFileName(loc.srcFilename), loc.srcLine, msg);
             3
+        (*
         | ex            ->
             Console.Error.WriteLine(ex.Message)
             Console.Error.WriteLine(ex.StackTrace)
             4
-
+            *)
 
     

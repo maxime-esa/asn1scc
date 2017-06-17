@@ -29,10 +29,6 @@ type AstRoot = {
     Files: Asn1File list
     args:CommandLineSettings
 }
-and EnumRenamePolicy =
-    | NoRenamePolicy
-    | SelectiveEnumerants
-    | AllEnumerants
 
 and Asn1File = {
     FileName:string;

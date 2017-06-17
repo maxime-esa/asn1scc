@@ -83,16 +83,16 @@ namespace Asn1f2
 
         }
 
-        public static ParameterizedAsn1Ast.EnumRenamePolicy getRenamePolicy(CmdLineArgs.CmdLineArguments cmdArgs, ParameterizedAsn1Ast.EnumRenamePolicy defaultValue)
+        public static CommonTypes.EnumRenamePolicy getRenamePolicy(CmdLineArgs.CmdLineArguments cmdArgs, CommonTypes.EnumRenamePolicy defaultValue)
         {
             var renamePolicyStr = cmdArgs.GetOptionalArgument("renamePolicy", "xxx");
             var renamePolicy = defaultValue;
             if (renamePolicyStr == "0")
-                renamePolicy = ParameterizedAsn1Ast.EnumRenamePolicy.NoRenamePolicy;
+                renamePolicy = CommonTypes.EnumRenamePolicy.NoRenamePolicy;
             else if (renamePolicyStr == "1")
-                renamePolicy = ParameterizedAsn1Ast.EnumRenamePolicy.SelectiveEnumerants;
+                renamePolicy = CommonTypes.EnumRenamePolicy.SelectiveEnumerants;
             else if (renamePolicyStr == "2")
-                renamePolicy = ParameterizedAsn1Ast.EnumRenamePolicy.AllEnumerants;
+                renamePolicy = CommonTypes.EnumRenamePolicy.AllEnumerants;
             else if (renamePolicyStr!="xxx")
             {
                 Console.Error.WriteLine("Invalid value for argument 'renamePolicy'\nValid values are 0,1,2");
@@ -105,6 +105,8 @@ namespace Asn1f2
 
         public static int CheckSuccess(IEnumerable<string> args)
         {
+            var aaa = Resource1.asn1crt;
+
             var asn1InputFiles = args.Where(a => !a.StartsWith("-") && (a.ToLower().EndsWith(".asn1") || a.ToLower().EndsWith(".asn")));
             var acnInputFiles = args.Where(a => !a.StartsWith("-") && a.ToLower().EndsWith(".acn"));
             
@@ -246,7 +248,7 @@ namespace Asn1f2
 
             if (astXmlFile != "")
             {
-                var renamePolicy = getRenamePolicy(cmdArgs, ParameterizedAsn1Ast.EnumRenamePolicy.SelectiveEnumerants);
+                var renamePolicy = getRenamePolicy(cmdArgs, CommonTypes.EnumRenamePolicy.SelectiveEnumerants);
                 var uniqueEnums = EnsureUniqueEnumNames.DoWork(asn1Ast0, renamePolicy);
                 //XmlAst.DoWork(uniqueEnums);
 
@@ -485,7 +487,7 @@ namespace Asn1f2
                     astForCustomBackend = refTypesWithNoConstraints;
                 else if (customStgAstVer == "4")
                 {
-                    var renamePolicy = getRenamePolicy(cmdArgs, ParameterizedAsn1Ast.EnumRenamePolicy.SelectiveEnumerants);
+                    var renamePolicy = getRenamePolicy(cmdArgs, CommonTypes.EnumRenamePolicy.SelectiveEnumerants);
                     astForCustomBackend = EnsureUniqueEnumNames.DoWork(refTypesWithNoConstraints, renamePolicy);
                 }
 
@@ -519,7 +521,7 @@ namespace Asn1f2
 
             if (cmdArgs.HasArgument("Ada"))
             {
-                var renamePolicy = getRenamePolicy(cmdArgs, ParameterizedAsn1Ast.EnumRenamePolicy.NoRenamePolicy);
+                var renamePolicy = getRenamePolicy(cmdArgs, CommonTypes.EnumRenamePolicy.NoRenamePolicy);
                 var astForBackend = EnsureUniqueEnumNames.DoWork(refTypesWithNoConstraints, renamePolicy);
 
                 spark_body.DoWork(astForBackend, acnAst3, outDir);
@@ -558,7 +560,7 @@ namespace Asn1f2
                     WriteTextFile(Path.Combine(outDir, "xer.c"), Resource1.xer);
                 }
 
-                var renamePolicy = getRenamePolicy(cmdArgs, ParameterizedAsn1Ast.EnumRenamePolicy.SelectiveEnumerants);
+                var renamePolicy = getRenamePolicy(cmdArgs, CommonTypes.EnumRenamePolicy.SelectiveEnumerants);
                 CheckAsn1.checkDuplicateValueAssigments(refTypesWithNoConstraints, CommonTypes.ProgrammingLanguage.C);
                 var astForBackend = EnsureUniqueEnumNames.DoWork(refTypesWithNoConstraints, renamePolicy);
                 c_body.DoWork(astForBackend, acnAst3, outDir);
@@ -593,7 +595,7 @@ namespace Asn1f2
                 if (cmdArgs.HasArgument("icdAcn"))
                 {
 
-                    var renamePolicy = getRenamePolicy(cmdArgs, ParameterizedAsn1Ast.EnumRenamePolicy.NoRenamePolicy);
+                    var renamePolicy = getRenamePolicy(cmdArgs, CommonTypes.EnumRenamePolicy.NoRenamePolicy);
                     var astForBackend = EnsureUniqueEnumNames.DoWork(refTypesWithNoConstraints, renamePolicy);
 
                     var htmlFileName = Path.Combine(outDir, astForBackend.IcdAcnHtmlFileName);

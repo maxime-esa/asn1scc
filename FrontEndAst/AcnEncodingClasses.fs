@@ -99,8 +99,8 @@ let GetRealEncodingClass (aligment: AcnAligment option) errLoc (p  : RealAcnProp
     let alignmentSize = getAlignmentSize aligment
     let encClass, minSizeInBits, maxSizeInBits = 
         match p.encodingProp.IsNone && p.endiannessProp.IsNone with     
-        | false     -> Real_uPER, uperMinSizeInBits, uperMaxSizeInBits
-        | true      ->
+        | true     -> Real_uPER, uperMinSizeInBits, uperMaxSizeInBits
+        | false    ->
             let endianess = 
                 match p.endiannessProp with
                 | Some e -> e

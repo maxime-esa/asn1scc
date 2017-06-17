@@ -346,3 +346,81 @@ let rec getASN1Name (r:AstRoot) (t:Asn1Type) =
     | Sequence     _  -> "SEQUENCE"
     | Choice       _  -> "CHOICE"
     | ReferenceType _ -> getASN1Name r (GetActualType t r)
+
+let rec GetMySelfAndChildren (t:Asn1Type) = 
+    seq {
+        yield t
+        match t.Kind with
+        | SequenceOf(conType) ->  yield! GetMySelfAndChildren conType
+        | Sequence(children) | Choice(children)-> 
+            for ch in children do 
+                yield! GetMySelfAndChildren ch.Type
+        |_ -> ()    
+    }
+
+type ChildInfo with
+    member c.CName (lang:ProgrammingLanguage) = 
+        match lang with
+        | Ada   | Spark     -> c.ada_name
+        | C                 -> c.c_name
+        | Html              -> raise(BugErrorException "invalid language")
+        | Unknown           -> raise(BugErrorException "invalid language")
+
+type NamedItem with
+    member c.CEnumName (r:AstRoot) (lang:ProgrammingLanguage) = 
+        match lang with
+        |Ada
+        |Spark  -> ToC2 (r.args.TypePrefix + c.ada_name)
+        |C      -> ToC2 (r.args.TypePrefix + c.c_name)
+        | _     -> raise(BugErrorException "invalid language")
+    member c.EnumName (lang:ProgrammingLanguage) = 
+        match lang with
+        |Ada
+        |Spark  -> c.ada_name
+        |C      -> c.c_name
+        | _     -> raise(BugErrorException "invalid language")
+
+let foldConstraint 
+    singleValueFunc rangeContraintFunc rangeContraint_val_MAX rangeContraint_MIN_val rangeContraint_MIN_MAX
+    typeInclusionConstraint sizeContraint alphabetContraint 
+    withComponentConstraint namedItemConstraint withComponentsConstraint
+    unionFunc intersectionFunc allExceptFunc exceptFunc rootFunc rootFunc2  
+    c =
+    let rec loopRecursiveConstraint c =
+        match c with
+        | SingleValueContraint v           -> singleValueFunc v
+        | RangeContraint (a,b,inclusiveMin,inclusiveMax)    ->
+            rangeContraintFunc a b inclusiveMin inclusiveMax
+        | RangeContraint_val_MAX (a, inclusive)  -> rangeContraint_val_MAX a inclusive
+        | RangeContraint_MIN_val (b, inclusive)  -> rangeContraint_MIN_val b inclusive
+        | RangeContraint_MIN_MAX                 -> rangeContraint_MIN_MAX ()
+        | TypeInclusionConstraint  (md,ts)       -> typeInclusionConstraint md ts
+        | SizeContraint c                        -> sizeContraint (loopRecursiveConstraint c)
+        | AlphabetContraint  c                   -> alphabetContraint (loopRecursiveConstraint c)
+        | WithComponentConstraint  c             -> withComponentConstraint (loopRecursiveConstraint c)
+        | WithComponentsConstraint nitems        -> 
+            let newItems = nitems |> List.map(fun ni -> namedItemConstraint ni   (ni.Contraint |> Option.map loopRecursiveConstraint))
+            withComponentsConstraint newItems
+        | UnionConstraint(c1,c2,b)         -> 
+            let nc1 = loopRecursiveConstraint c1 
+            let nc2 = loopRecursiveConstraint c2 
+            unionFunc nc1 nc2 b
+        | IntersectionConstraint(c1,c2)    -> 
+            let nc1 = loopRecursiveConstraint c1 
+            let nc2 = loopRecursiveConstraint c2 
+            intersectionFunc nc1 nc2 
+        | AllExceptConstraint(c1)          -> 
+            let nc1 = loopRecursiveConstraint c1 
+            allExceptFunc nc1 
+        | ExceptConstraint(c1,c2)          -> 
+            let nc1 = loopRecursiveConstraint c1 
+            let nc2 = loopRecursiveConstraint c2 
+            exceptFunc nc1 nc2 
+        | RootConstraint(c1)               -> 
+            let nc1 = loopRecursiveConstraint c1 
+            rootFunc nc1 
+        | RootConstraint2(c1,c2)           -> 
+            let nc1 = loopRecursiveConstraint c1 
+            let nc2 = loopRecursiveConstraint c2 
+            rootFunc2 nc1 nc2
+    loopRecursiveConstraint c 

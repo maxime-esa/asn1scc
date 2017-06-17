@@ -6,6 +6,7 @@ open System.Numerics
 open System.IO
 open System.Xml.Linq
 open FsUtils
+open CommonTypes
 open Asn1AcnAst
 open Asn1Fold
 open Asn1AcnAstUtilFunctions

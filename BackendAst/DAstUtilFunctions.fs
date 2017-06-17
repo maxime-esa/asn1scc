@@ -9,27 +9,6 @@ open Asn1AcnAstUtilFunctions
 open DAst
 
 
-type VarScopNode with
-    member this.StrValue =
-        match this with
-        | VA2 strVal -> strVal
-        | DV        -> "DV"
-        | NI    ni  -> ni
-        | VL   idx  -> "v" + idx.ToString()    
-        | IMG  idx  -> "img" + idx.ToString()    
-        | CON idx   -> "c" + idx.ToString()
-        | SQOV i     -> sprintf"[%d]" i
-        | SQCHILD  s-> s
-
-type ReferenceToValue 
-    with
-        member this.ModName =
-            match this with
-            | ReferenceToValue (path,_) -> 
-                match path with
-                | (Asn1AcnAst.MD modName)::_    -> modName
-                | _                               -> raise(BugErrorException "Did not find module at the begining of the scope path")
-
 
 type ProgrammingLanguage with
     member this.SpecExtention =
@@ -266,22 +245,42 @@ type Choice with
     member this.Cons     = this.baseInfo.cons
     member this.WithCons = this.baseInfo.withcons
     member this.AllCons  = this.baseInfo.cons@this.baseInfo.withcons
+    
+let  choiceIDForNone (id:ReferenceToType) =  ToC (id.AcnAbsPath.Tail.StrJoin("_").Replace("#","elem")) + "_NONE"
+
+type ReferenceType with
+    member ref.AsTypeAssignmentInfo =  {TypeAssignmentInfo.modName = ref.baseInfo.modName.Value; tasName = ref.baseInfo.tasName.Value}
+
+type TypeAssignment with
+    member ref.AsTypeAssignmentInfo modName=  {TypeAssignmentInfo.modName = modName; tasName = ref.Name.Value}
+
+type ChChildInfo with
+    member this.presentWhenName = (ToC this.Name.Value) + "_PRESENT"
 
 type SeqChildInfo with
     member this.acnInsertetField =
-        match this.baseInfo with
-        | Asn1AcnAst.Asn1Child _    -> false
-        | Asn1AcnAst.AcnChild _     -> true
+        match this with
+        | Asn1Child _    -> false
+        | AcnChild _     -> true
+
 
 type Asn1Type
 with
-    member this.id = this.baseInfo.id
-
-    member this.uperMaxSizeInBits = this.baseInfo.uperMaxSizeInBits
-    member this.uperMinSizeInBits = this.baseInfo.uperMinSizeInBits
-    member this.acnMinSizeInBits = this.baseInfo.acnMinSizeInBits
-    member this.acnMaxSizeInBits = this.baseInfo.acnMaxSizeInBits
-    
+    member this.typeDefinition =
+        match this.Kind with
+        | Integer      t -> t.typeDefinition
+        | Real         t -> t.typeDefinition
+        | IA5String    t -> t.typeDefinition
+        | OctetString  t -> t.typeDefinition
+        | NullType     t -> t.typeDefinition
+        | BitString    t -> t.typeDefinition
+        | Boolean      t -> t.typeDefinition
+        | Enumerated   t -> t.typeDefinition
+        | SequenceOf   t -> t.typeDefinition
+        | Sequence     t -> t.typeDefinition
+        | Choice       t -> t.typeDefinition
+        | ReferenceType t-> t.typeDefinition
+(*
     member this.initialValue =
         match this.Kind with
         | Integer      t -> IntegerValue t.initialValue
@@ -406,28 +405,14 @@ with
         | Sequence     t -> Some (t.acnDecFunction)
         | Choice       t -> None
         | ReferenceType t-> None
-
     member this.getAcnFunction (l:CommonTypes.Codec) =
         match l with
         | CommonTypes.Encode   -> this.acnEncFunction
         | CommonTypes.Decode   -> this.acnDecFunction
 
-    member this.typeDefinition =
-        match this.Kind with
-        | Integer      t -> t.typeDefinition
-        | Real         t -> t.typeDefinition
-        | IA5String    t -> t.typeDefinition
-        | OctetString  t -> t.typeDefinition
-        | NullType     t -> t.typeDefinition
-        | BitString    t -> t.typeDefinition
-        | Boolean      t -> t.typeDefinition
-        | Enumerated   t -> t.typeDefinition
-        | SequenceOf   t -> t.typeDefinition
-        | Sequence     t -> t.typeDefinition
-        | Choice       t -> t.typeDefinition
-        | ReferenceType t-> t.typeDefinition
 
-    member this.tasInfo = this.baseInfo.tasInfo
+*)
+    member this.tasInfo = this.tasInfo
 
     member this.isIA5String =
         match this.Kind with
@@ -443,4 +428,6 @@ with
 //let getValueType (r:AstRoot) (v:Asn1GenericValue) =
 //    r.typesMap.[v.refToType]
 
+type Asn1File with
+    member this.FileNameWithoutExtension = System.IO.Path.GetFileNameWithoutExtension this.FileName
 

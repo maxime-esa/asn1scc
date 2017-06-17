@@ -80,7 +80,7 @@ let private charGetter (r:Asn1Ast.AstRoot)  (v:Asn1Ast.Asn1Value) =
         }
     let newValue = ValuesMapping.mapValue r charType v
     match (getBaseValue newValue) with
-    | StringValue vl    when vl.Value.Length <> 1    -> vl.Value.ToCharArray().[0]
+    | StringValue vl    when vl.Value.Length = 1    -> vl.Value.ToCharArray().[0]
     | _                                         -> raise(SemanticError (v.Location, "Expecting a string with just one character"))
 
 let private strGetter (r:Asn1Ast.AstRoot)  (v:Asn1Ast.Asn1Value) =

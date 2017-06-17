@@ -270,3 +270,54 @@ let foldType
                refType ti newBaseType newState
         typeFunc t newKind newState
     loopType t us
+
+
+let foldType2
+    intFunc
+    realFunc
+    ia5StringFunc 
+    numStringFunc 
+    octStringFunc 
+    nullTypeFunc
+    bitStringFunc
+    boolFunc
+    enumFunc 
+    seqOfFunc
+    seqFunc
+    seqAsn1ChildFunc
+    seqAcnChildFunc
+    choiceFunc 
+    chChildFunc
+    refType 
+    typeFunc
+    (t:Asn1Type) 
+    (us:'UserState) 
+    =
+    let rec loopType (t:Asn1Type) (us:'UserState) =
+        let newKind=
+            match t.Kind with
+            | Integer        ti -> intFunc t ti us
+            | Real           ti -> realFunc t ti us
+            | IA5String      ti -> ia5StringFunc t ti us
+            | NumericString  ti -> numStringFunc t ti us
+            | OctetString    ti -> octStringFunc t ti us
+            | NullType       ti -> nullTypeFunc t ti us
+            | BitString      ti -> bitStringFunc t ti us
+            | Boolean        ti -> boolFunc t ti us
+            | Enumerated     ti -> enumFunc t ti us
+            | SequenceOf     ti -> seqOfFunc t ti (loopType ti.child us) 
+            | Sequence       ti -> 
+                let newChildren = 
+                    ti.children |> 
+                    foldMap (fun curState ch -> 
+                        match ch with
+                        | Asn1Child asn1Chlld   -> seqAsn1ChildFunc asn1Chlld (loopType asn1Chlld.Type curState)
+                        | AcnChild  acnChild    -> seqAcnChildFunc  acnChild curState) us
+                seqFunc t ti newChildren 
+            | Choice         ti -> 
+                let newChildren = ti.children |> foldMap (fun curState ch -> chChildFunc ch (loopType ch.Type curState)) us
+                choiceFunc t ti newChildren 
+            | ReferenceType  ti -> 
+               refType t ti (loopType ti.baseType us)
+        typeFunc t newKind
+    loopType t us

@@ -4,11 +4,296 @@ open System.Numerics
 open System.IO
 open DAstTypeDefinition
 open FsUtils
-open Constraints
+open CommonTypes
 open DAst
-open uPER2
+open DAstUtilFunctions
 
 
+let foldMap = Asn1Fold.foldMap
+
+let private createInteger (r:Asn1AcnAst.AstRoot) (l:ProgrammingLanguage) (m:Asn1AcnAst.Asn1Module) (t:Asn1AcnAst.Asn1Type) (ti:Asn1AcnAst.Integer) (us:State) =
+    let typeDef = DAstTypeDefinition.createInteger  r l t ti us
+    let ret =
+        {
+            Integer.baseInfo = ti
+            typeDefinition = typeDef
+        }
+    Integer ret, us
+
+let private createReal (r:Asn1AcnAst.AstRoot) (l:ProgrammingLanguage) (m:Asn1AcnAst.Asn1Module) (t:Asn1AcnAst.Asn1Type) (ti:Asn1AcnAst.Real) (us:State) =
+    let typeDef = DAstTypeDefinition.createReal  r l t ti us
+    let ret =
+        {
+            Real.baseInfo = ti
+            typeDefinition = typeDef
+        }
+    Real ret, us
+
+
+
+let private createStringType (r:Asn1AcnAst.AstRoot) (l:ProgrammingLanguage) (m:Asn1AcnAst.Asn1Module) (t:Asn1AcnAst.Asn1Type) (ti:Asn1AcnAst.StringType) (us:State) =
+    let typeDef = DAstTypeDefinition.createString  r l t ti us
+    let ret =
+        {
+            StringType.baseInfo = ti
+            typeDefinition = typeDef
+        }
+    ret, us
+
+
+let private createOctetString (r:Asn1AcnAst.AstRoot) (l:ProgrammingLanguage) (m:Asn1AcnAst.Asn1Module) (t:Asn1AcnAst.Asn1Type) (ti:Asn1AcnAst.OctetString) (us:State) =
+    let typeDef = DAstTypeDefinition.createOctet  r l t ti us
+    let ret =
+        {
+            OctetString.baseInfo = ti
+            typeDefinition = typeDef
+        }
+    OctetString ret, us
+
+
+
+let private createNullType (r:Asn1AcnAst.AstRoot) (l:ProgrammingLanguage) (m:Asn1AcnAst.Asn1Module) (t:Asn1AcnAst.Asn1Type) (ti:Asn1AcnAst.NullType) (us:State) =
+    let typeDef = DAstTypeDefinition.createNull  r l t ti us
+    let ret =
+        {
+            NullType.baseInfo = ti
+            typeDefinition = typeDef
+        }
+    NullType ret, us
+
+
+
+let private createBitString (r:Asn1AcnAst.AstRoot) (l:ProgrammingLanguage) (m:Asn1AcnAst.Asn1Module) (t:Asn1AcnAst.Asn1Type) (ti:Asn1AcnAst.BitString) (us:State) =
+    let typeDef = DAstTypeDefinition.createBitString  r l t ti us
+    let ret =
+        {
+            BitString.baseInfo = ti
+            typeDefinition = typeDef
+        }
+    BitString ret, us
+
+
+let private createBoolean (r:Asn1AcnAst.AstRoot) (l:ProgrammingLanguage) (m:Asn1AcnAst.Asn1Module) (t:Asn1AcnAst.Asn1Type) (ti:Asn1AcnAst.Boolean) (us:State) =
+    let typeDef = DAstTypeDefinition.createBoolean  r l t ti us
+    let ret =
+        {
+            Boolean.baseInfo = ti
+            typeDefinition = typeDef
+        }
+    Boolean ret, us
+
+
+let private createEnumerated (r:Asn1AcnAst.AstRoot) (l:ProgrammingLanguage) (m:Asn1AcnAst.Asn1Module) (t:Asn1AcnAst.Asn1Type) (ti:Asn1AcnAst.Enumerated) (us:State) =
+    let typeDef = DAstTypeDefinition.createEnumerated  r l t ti us
+    let ret =
+        {
+            Enumerated.baseInfo = ti
+            typeDefinition = typeDef
+        }
+    Enumerated ret, us
+
+
+let private createSequenceOf (r:Asn1AcnAst.AstRoot) (l:ProgrammingLanguage) (m:Asn1AcnAst.Asn1Module) (t:Asn1AcnAst.Asn1Type) (ti:Asn1AcnAst.SequenceOf) (newChild:Asn1Type, us:State) =
+    let typeDef = DAstTypeDefinition.createSequenceOf r l t ti newChild.typeDefinition us
+    let ret =
+        {
+            SequenceOf.baseInfo = ti
+            childType = newChild
+            typeDefinition = typeDef
+        }
+    SequenceOf ret, us
+
+
+
+let private createAsn1Child (r:Asn1AcnAst.AstRoot) (l:ProgrammingLanguage) (m:Asn1AcnAst.Asn1Module) (ch:Asn1AcnAst.Asn1Child) (newChildType : Asn1Type, us:State) =
+    let ret = 
+        {
+        
+            Asn1Child.Name     = ch.Name
+            c_name             = ch.c_name
+            ada_name           = ch.ada_name
+            Type               = newChildType
+            Optionality        = ch.Optionality
+            Comments           = ch.Comments
+        }
+    Asn1Child ret, us
+
+
+let private createAcnChild (r:Asn1AcnAst.AstRoot) (l:ProgrammingLanguage) (m:Asn1AcnAst.Asn1Module) (ch:Asn1AcnAst.AcnChild) (us:State) =
+    let ret = 
+        {
+        
+            AcnChild.Name  = ch.Name
+            id             = ch.id
+            Type           = ch.Type
+        }
+    AcnChild ret, us
+
+
+let private createSequence (r:Asn1AcnAst.AstRoot) (l:ProgrammingLanguage) (m:Asn1AcnAst.Asn1Module) (t:Asn1AcnAst.Asn1Type) (ti:Asn1AcnAst.Sequence) (newChildlren:SeqChildInfo list, us:State) =
+    let typeDef = DAstTypeDefinition.createSequence r l t ti newChildlren us
+    let ret =
+        {
+            Sequence.baseInfo = ti
+            children = newChildlren
+            typeDefinition = typeDef
+        }
+    Sequence ret, us
+
+let private createChoice (r:Asn1AcnAst.AstRoot) (l:ProgrammingLanguage) (m:Asn1AcnAst.Asn1Module) (t:Asn1AcnAst.Asn1Type) (ti:Asn1AcnAst.Choice) (newChildlren:ChChildInfo list, us:State) =
+    let typeDef = DAstTypeDefinition.createChoice r l t ti newChildlren us
+    let ret =
+        {
+            Choice.baseInfo = ti
+            children = newChildlren
+            typeDefinition = typeDef
+        }
+    Choice ret, us
+
+let private createChoiceChild (r:Asn1AcnAst.AstRoot) (l:ProgrammingLanguage) (m:Asn1AcnAst.Asn1Module) (ch:Asn1AcnAst.ChChildInfo) (newChildType : Asn1Type, us:State) =
+    let ret = 
+        {
+        
+            ChChildInfo.Name     = ch.Name
+            c_name             = ch.c_name
+            ada_name           = ch.ada_name
+            present_when_name  = ch.present_when_name
+            acnPresentWhenConditions = ch.acnPresentWhenConditions
+            chType               = newChildType
+            Comments           = ch.Comments
+        }
+    ret, us
+
+let private createReferenceType (r:Asn1AcnAst.AstRoot) (l:ProgrammingLanguage) (m:Asn1AcnAst.Asn1Module) (t:Asn1AcnAst.Asn1Type) (ti:Asn1AcnAst.ReferenceType) (newBaseType:Asn1Type, us:State) =
+    let typeDef = DAstTypeDefinition.createReferenceType r l t ti newBaseType.typeDefinition us
+    let ret = 
+        {
+            ReferenceType.baseInfo = ti
+            baseType = newBaseType
+            typeDefinition = typeDef
+        }
+    ReferenceType ret, us
+
+let private mapType (r:Asn1AcnAst.AstRoot) (l:ProgrammingLanguage) (m:Asn1AcnAst.Asn1Module) (t:Asn1AcnAst.Asn1Type, us:State) =
+    Asn1Fold.foldType2
+        (fun t ti us -> createInteger r l m t ti us)
+        (fun t ti us -> createReal r l m t ti us)
+        (fun t ti us -> 
+            let strtype, ns = createStringType r l m t ti us
+            IA5String strtype, ns)
+        (fun t ti us -> 
+            let strtype, ns = createStringType r l m t ti us
+            IA5String strtype, ns)
+        (fun t ti us -> createOctetString r l m t ti us)
+        (fun t ti us -> createNullType r l m t ti us)
+        (fun t ti us -> createBitString r l m t ti us)
+        
+        (fun t ti us -> createBoolean r l m t ti us)
+        (fun t ti us -> createEnumerated r l m t ti us)
+
+        (fun t ti newChild -> createSequenceOf r l m t ti newChild)
+
+        (fun t ti newChildren -> createSequence r l m t ti newChildren)
+        (fun ch newChild -> createAsn1Child r l m ch newChild)
+        (fun ch us -> createAcnChild r l m ch us)
+        
+
+        (fun t ti newChildren -> createChoice r l m t ti newChildren)
+        (fun ch newChild -> createChoiceChild r l m ch newChild)
+
+        (fun t ti newBaseType -> createReferenceType r l m t ti newBaseType)
+
+        (fun t (newKind,us)        -> 
+            {
+                Asn1Type.Kind = newKind
+                id            = t.id
+                acnAligment   = t.acnAligment
+                acnParameters = t.acnParameters
+                Location      = t.Location
+                tasInfo       = t.tasInfo
+            }, us)
+        t
+        us 
+        
+
+let private mapTas (r:Asn1AcnAst.AstRoot) (l:ProgrammingLanguage) (m:Asn1AcnAst.Asn1Module) (tas:Asn1AcnAst.TypeAssignment) (us:State)=
+    let newType, ns = mapType r l m (tas.Type, us)
+    {
+        TypeAssignment.Name = tas.Name
+        c_name = tas.c_name
+        ada_name = tas.ada_name
+        Type = newType
+        Comments = tas.Comments
+    },ns
+
+let rec private  mapValue (v:Asn1AcnAst.Asn1Value) =
+    match v with
+    | Asn1AcnAst.IntegerValue     v ->  IntegerValue        v.Value 
+    | Asn1AcnAst.RealValue        v ->  RealValue           v.Value 
+    | Asn1AcnAst.StringValue      v ->  StringValue         v.Value 
+    | Asn1AcnAst.BooleanValue     v ->  BooleanValue        v.Value 
+    | Asn1AcnAst.BitStringValue   v ->  BitStringValue      v.Value 
+    | Asn1AcnAst.OctetStringValue v ->  OctetStringValue    (v |> List.map(fun z -> z.Value))
+    | Asn1AcnAst.EnumValue        v ->  EnumValue           v.Value 
+    | Asn1AcnAst.SeqOfValue       v ->  SeqOfValue          (v |> List.map mapValue)
+    | Asn1AcnAst.SeqValue         v ->  SeqValue            (v |> List.map (fun n -> {NamedValue.name = n.name; Value = mapValue n.Value}))
+    | Asn1AcnAst.ChValue          n ->  ChValue             {NamedValue.name = n.name; Value = mapValue n.Value}
+    | Asn1AcnAst.NullValue        v ->  NullValue           v
+    | Asn1AcnAst.RefValue     (a,v) ->  RefValue            (a, mapValue v)
+
+
+let private mapVas (r:Asn1AcnAst.AstRoot) (l:ProgrammingLanguage) (m:Asn1AcnAst.Asn1Module) (vas:Asn1AcnAst.ValueAssignment) (us:State)=
+    let newType, ns = mapType r l m (vas.Type, us)
+    {
+        ValueAssignment.Name = vas.Name
+        c_name = vas.c_name
+        ada_name = vas.ada_name
+        Type = newType
+        Value = mapValue vas.Value
+    },ns
+
+let private mapModule (r:Asn1AcnAst.AstRoot) (l:ProgrammingLanguage) (m:Asn1AcnAst.Asn1Module) (us:State) =
+    let newTases, ns1 = m.TypeAssignments |> foldMap (fun ns nt -> mapTas r l m nt ns) us
+    let newVases, ns2 = m.ValueAssignments |> foldMap (fun ns nt -> mapVas r l m nt ns) ns1
+    {
+        Asn1Module.Name = m.Name
+        TypeAssignments = newTases
+        ValueAssignments = newVases
+        Imports = m.Imports
+        Exports = m.Exports
+        Comments = m.Comments
+    }, ns2
+
+let private mapFile (r:Asn1AcnAst.AstRoot) (l:ProgrammingLanguage) (f:Asn1AcnAst.Asn1File) (us:State) =
+    let newModules, ns = f.Modules |> foldMap (fun cs m -> mapModule r l m cs) us
+    {
+        Asn1File.FileName = f.FileName
+        Tokens = f.Tokens
+        Modules = newModules
+    }, ns
+
+let DoWork (r:Asn1AcnAst.AstRoot) (lang:CommonTypes.ProgrammingLanguage) : AstRoot=
+
+    let l =
+        match lang with
+        | CommonTypes.ProgrammingLanguage.C     -> DAst.ProgrammingLanguage.C
+        | CommonTypes.ProgrammingLanguage.Ada   
+        | CommonTypes.ProgrammingLanguage.Spark -> DAst.ProgrammingLanguage.Ada
+        | _                             -> raise(System.Exception "Unsupported programming language")
+
+    
+    let initialState = {State.currentTypes = []; curSeqOfLevel=0; currErrCode = 1}
+
+    let files, ns = r.Files |> foldMap (fun cs f -> mapFile r l f cs) initialState
+    {
+        AstRoot.Files = files
+        acnConstants = r.acnConstants
+        args = r.args
+        programUnits = DAstProgramUnit.createProgramUnits files l
+        lang = l
+    }
+
+(*
 let getTypeDefinitionName (r:CAst.AstRoot) (l:ProgrammingLanguage) (tasInfo:BAst.TypeAssignmentInfo option) =
     tasInfo |> Option.map (fun x -> ToC2(r.args.TypePrefix + x.tasName))
 
@@ -674,3 +959,4 @@ let DoWork (r:CAst.AstRoot) (l:ProgrammingLanguage) =
 
 
 
+*)

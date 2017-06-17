@@ -21,7 +21,7 @@ open CommonTypes
 type State =  string list
 
 
-let rec handleEnumChoices (r:AstRoot) (renamePolicy:ParameterizedAsn1Ast.EnumRenamePolicy)=
+let rec handleEnumChoices (r:AstRoot) (renamePolicy:EnumRenamePolicy)=
     let doubleEnumNames = seq {
         for m in r.Modules do
             for tas in m.TypeAssignments do
@@ -52,9 +52,9 @@ let rec handleEnumChoices (r:AstRoot) (renamePolicy:ParameterizedAsn1Ast.EnumRen
                 //let newChildren, finalState = children |> foldMap CloneChild state
                 let newChildren, finalState =
                     match renamePolicy with
-                    | ParameterizedAsn1Ast.NoRenamePolicy           -> children, state
-                    | ParameterizedAsn1Ast.SelectiveEnumerants      -> children |> foldMap CloneChild state
-                    | ParameterizedAsn1Ast.AllEnumerants            -> 
+                    | NoRenamePolicy           -> children, state
+                    | SelectiveEnumerants      -> children |> foldMap CloneChild state
+                    | AllEnumerants            -> 
                         let newChildren, finalState = children |> foldMap CloneChild state
                         let newPrefix = newChildren |> List.map(fun itm -> itm.present_when_name.Replace(ToC2 itm.Name.Value,"")) |> List.maxBy(fun prf -> prf.Length)
                         let newChildren = 
@@ -133,7 +133,7 @@ let rec handleChoices (r:AstRoot) (lang:ProgrammingLanguage) (renamePolicy:Param
         handleChoices newTree lang renamePolicy
 *)
 
-let rec handleSequencesAndChoices (r:AstRoot) (lang:ProgrammingLanguage) (renamePolicy:ParameterizedAsn1Ast.EnumRenamePolicy)=
+let rec handleSequencesAndChoices (r:AstRoot) (lang:ProgrammingLanguage) (renamePolicy:EnumRenamePolicy)=
     let doubleEnumNames = seq {
         for m in r.Modules do
             for tas in m.TypeAssignments do
@@ -172,9 +172,9 @@ let rec handleSequencesAndChoices (r:AstRoot) (lang:ProgrammingLanguage) (rename
             | Sequence(children)    -> 
                 let newChildren, finalState =
                     match renamePolicy with
-                    | ParameterizedAsn1Ast.NoRenamePolicy           -> children, state
-                    | ParameterizedAsn1Ast.SelectiveEnumerants      -> children |> foldMap CloneChild state
-                    | ParameterizedAsn1Ast.AllEnumerants            -> 
+                    | NoRenamePolicy           -> children, state
+                    | SelectiveEnumerants      -> children |> foldMap CloneChild state
+                    | AllEnumerants            -> 
                         let newChildren, finalState = children |> foldMap CloneChild state
                         let newPrefix = newChildren |> List.map(fun itm -> (itm.CName lang).Replace(ToC2 itm.Name.Value,"")) |> List.maxBy(fun prf -> prf.Length)
                         let newChildren = 
@@ -197,7 +197,7 @@ let rec handleSequencesAndChoices (r:AstRoot) (lang:ProgrammingLanguage) (rename
 
 
 
-let rec handleEnums (r:AstRoot) (renamePolicy:ParameterizedAsn1Ast.EnumRenamePolicy) (lang:ProgrammingLanguage) =
+let rec handleEnums (r:AstRoot) (renamePolicy:EnumRenamePolicy) (lang:ProgrammingLanguage) =
     let doubleEnumNames0 = 
         seq {
             for m in r.Modules do
@@ -238,9 +238,9 @@ let rec handleEnums (r:AstRoot) (renamePolicy:ParameterizedAsn1Ast.EnumRenamePol
                     | _                                                     -> raise(BugErrorException "handleEnums")
                 let newItems = 
                     match renamePolicy with
-                    | ParameterizedAsn1Ast.NoRenamePolicy           -> itesm
-                    | ParameterizedAsn1Ast.SelectiveEnumerants      -> itesm|> List.map copyItem
-                    | ParameterizedAsn1Ast.AllEnumerants            -> 
+                    | NoRenamePolicy           -> itesm
+                    | SelectiveEnumerants      -> itesm|> List.map copyItem
+                    | AllEnumerants            -> 
                         let newPrefix = itesm|> List.map copyItem |> List.map(fun itm -> (itm.EnumName lang).Replace(ToC2 itm.Name.Value,"")) |> List.maxBy(fun prf -> prf.Length)
                         match lang with
                         | ProgrammingLanguage.C->  itesm|> List.map (fun itm -> {itm with c_name = newPrefix + itm.c_name})
@@ -255,9 +255,9 @@ let rec handleEnums (r:AstRoot) (renamePolicy:ParameterizedAsn1Ast.EnumRenamePol
         handleEnums newTree renamePolicy lang
 
 
-let DoWork (ast:AstRoot) (renamePolicy:ParameterizedAsn1Ast.EnumRenamePolicy)  =
+let DoWork (ast:AstRoot) (renamePolicy:EnumRenamePolicy)  =
     match renamePolicy with
-    | ParameterizedAsn1Ast.NoRenamePolicy           -> ast
+    | NoRenamePolicy           -> ast
     | _                                             ->
         let r1 = handleEnumChoices ast  renamePolicy
         let r2_c = handleEnums r1 renamePolicy ProgrammingLanguage.C

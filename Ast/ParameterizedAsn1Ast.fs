@@ -30,10 +30,6 @@ type AstRoot = {
     mappingFunctionsModule : string option
     integerSizeInBytes : int            //currently only the value of 8 bytes (64 bits) is supported
 }
-and EnumRenamePolicy =
-    | NoRenamePolicy
-    | SelectiveEnumerants
-    | AllEnumerants
 
 and Asn1File = {
     FileName:string;
