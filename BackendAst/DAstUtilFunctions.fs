@@ -254,6 +254,9 @@ type ReferenceType with
 type TypeAssignment with
     member ref.AsTypeAssignmentInfo modName=  {TypeAssignmentInfo.modName = modName; tasName = ref.Name.Value}
 
+type Asn1AcnAst.ChChildInfo with
+    member this.presentWhenName = (ToC this.Name.Value) + "_PRESENT"
+
 type ChChildInfo with
     member this.presentWhenName = (ToC this.Name.Value) + "_PRESENT"
 
@@ -263,9 +266,71 @@ type SeqChildInfo with
         | Asn1Child _    -> false
         | AcnChild _     -> true
 
+    member this.Name =
+        match this with
+        | Asn1Child x    -> x.Name.Value
+        | AcnChild x     -> x.Name.Value
+
+    member this.Optionality =
+        match this with
+        | Asn1Child x    -> x.Optionality
+        | AcnChild x     -> None
+
+
+type Asn1AcnAst.Asn1Type with
+    member this.getParamType (l:ProgrammingLanguage) (c:Codec) =
+        match l with
+        | Ada   -> VALUE "val"
+        | C     ->
+            match c with
+            | Encode  ->
+                match this.Kind with
+                | Asn1AcnAst.Integer      _ -> VALUE "val"
+                | Asn1AcnAst.Real         _ -> VALUE "val"
+                | Asn1AcnAst.IA5String    _ -> FIXARRAY "val"
+                | Asn1AcnAst.NumericString _ -> FIXARRAY "val"
+                | Asn1AcnAst.OctetString  _ -> POINTER "pVal"
+                | Asn1AcnAst.NullType     _ -> VALUE "val"
+                | Asn1AcnAst.BitString    _ -> POINTER "pVal"
+                | Asn1AcnAst.Boolean      _ -> VALUE "val"
+                | Asn1AcnAst.Enumerated   _ -> VALUE "val"
+                | Asn1AcnAst.SequenceOf   _ -> POINTER "pVal"
+                | Asn1AcnAst.Sequence     _ -> POINTER "pVal"
+                | Asn1AcnAst.Choice       _ -> POINTER "pVal"
+                | Asn1AcnAst.ReferenceType r -> r.baseType.getParamType l c
+            | Decode  ->
+                match this.Kind with
+                | Asn1AcnAst.Integer      _ -> POINTER "pVal"
+                | Asn1AcnAst.Real         _ -> POINTER "pVal"
+                | Asn1AcnAst.IA5String    _ -> FIXARRAY "val"
+                | Asn1AcnAst.NumericString    _ -> FIXARRAY "val"
+                | Asn1AcnAst.OctetString  _ -> POINTER "pVal"
+                | Asn1AcnAst.NullType     _ -> POINTER "pVal"
+                | Asn1AcnAst.BitString    _ -> POINTER "pVal"
+                | Asn1AcnAst.Boolean      _ -> POINTER "pVal"
+                | Asn1AcnAst.Enumerated   _ -> POINTER "pVal"
+                | Asn1AcnAst.SequenceOf   _ -> POINTER "pVal"
+                | Asn1AcnAst.Sequence     _ -> POINTER "pVal"
+                | Asn1AcnAst.Choice       _ -> POINTER "pVal"
+                | Asn1AcnAst.ReferenceType r -> r.baseType.getParamType l c
 
 type Asn1Type
 with
+    member this.ActualType =
+        match this.Kind with
+        | ReferenceType t-> t.baseType.ActualType
+        | Integer      _ -> this
+        | Real         _ -> this
+        | IA5String    _ -> this
+        | OctetString  _ -> this
+        | NullType     _ -> this
+        | BitString    _ -> this
+        | Boolean      _ -> this
+        | Enumerated   _ -> this
+        | SequenceOf   _ -> this
+        | Sequence     _ -> this
+        | Choice       _ -> this
+        
     member this.typeDefinition =
         match this.Kind with
         | Integer      t -> t.typeDefinition
@@ -280,7 +345,6 @@ with
         | Sequence     t -> t.typeDefinition
         | Choice       t -> t.typeDefinition
         | ReferenceType t-> t.typeDefinition
-(*
     member this.initialValue =
         match this.Kind with
         | Integer      t -> IntegerValue t.initialValue
@@ -340,6 +404,7 @@ with
         | Sequence     t -> t.isValidFunction
         | Choice       t -> t.isValidFunction
         | ReferenceType t-> t.isValidFunction
+(*
     
     member this.getUperFunction (l:CommonTypes.Codec) =
         match l with
@@ -412,7 +477,6 @@ with
 
 
 *)
-    member this.tasInfo = this.tasInfo
 
     member this.isIA5String =
         match this.Kind with
@@ -424,10 +488,80 @@ with
         | ReferenceToType((MD _)::(TA tasName)::[])   -> Some tasName
         | _                                                                     -> None
 
+    member this.getParamType (l:ProgrammingLanguage) (c:Codec) =
+        match l with
+        | Ada   -> VALUE "val"
+        | C     ->
+            match c with
+            | Encode  ->
+                match this.Kind with
+                | Integer      _ -> VALUE "val"
+                | Real         _ -> VALUE "val"
+                | IA5String    _ -> FIXARRAY "val"
+                | OctetString  _ -> POINTER "pVal"
+                | NullType     _ -> VALUE "val"
+                | BitString    _ -> POINTER "pVal"
+                | Boolean      _ -> VALUE "val"
+                | Enumerated   _ -> VALUE "val"
+                | SequenceOf   _ -> POINTER "pVal"
+                | Sequence     _ -> POINTER "pVal"
+                | Choice       _ -> POINTER "pVal"
+                | ReferenceType r -> r.baseType.getParamType l c
+            | Decode  ->
+                match this.Kind with
+                | Integer      _ -> POINTER "pVal"
+                | Real         _ -> POINTER "pVal"
+                | IA5String    _ -> FIXARRAY "val"
+                | OctetString  _ -> POINTER "pVal"
+                | NullType     _ -> POINTER "pVal"
+                | BitString    _ -> POINTER "pVal"
+                | Boolean      _ -> POINTER "pVal"
+                | Enumerated   _ -> POINTER "pVal"
+                | SequenceOf   _ -> POINTER "pVal"
+                | Sequence     _ -> POINTER "pVal"
+                | Choice       _ -> POINTER "pVal"
+                | ReferenceType r -> r.baseType.getParamType l c
+
+
 
 //let getValueType (r:AstRoot) (v:Asn1GenericValue) =
 //    r.typesMap.[v.refToType]
 
+type AstRoot with
+    member this.getValueAssignmentByName (modName:String) (vasName:string) =
+        match this.Files |> Seq.collect(fun f -> f.Modules) |> Seq.tryFind(fun m -> m.Name.Value = modName) with
+        | None  -> raise(SemanticError(emptyLocation, (sprintf "No module exists with name '%s'" modName)))
+        | Some m ->
+            match m.ValueAssignments |> Seq.tryFind(fun vas -> vas.Name.Value = vasName) with
+            |None   -> raise(SemanticError(emptyLocation, (sprintf "No value assignment exists with name '%s'" vasName)))
+            | Some vas -> vas
+
+
 type Asn1File with
     member this.FileNameWithoutExtension = System.IO.Path.GetFileNameWithoutExtension this.FileName
 
+let getValueByUperRange (r:uperRange<'T>) (z:'T) = 
+    match r with
+    | Concrete (a,b)    -> if a <= z && z <= b then z else a
+    | NegInf  b         -> if z <= b then z else b              //(-inf, b]
+    | PosInf a          -> if a <= z then z else a               //[a, +inf)
+    | Full              -> z
+
+let rec mapValue (v:Asn1AcnAst.Asn1Value) =
+    match v with
+    | Asn1AcnAst.IntegerValue     v ->  IntegerValue        v.Value 
+    | Asn1AcnAst.RealValue        v ->  RealValue           v.Value 
+    | Asn1AcnAst.StringValue      v ->  StringValue         v.Value 
+    | Asn1AcnAst.BooleanValue     v ->  BooleanValue        v.Value 
+    | Asn1AcnAst.BitStringValue   v ->  BitStringValue      v.Value 
+    | Asn1AcnAst.OctetStringValue v ->  OctetStringValue    (v |> List.map(fun z -> z.Value))
+    | Asn1AcnAst.EnumValue        v ->  EnumValue           v.Value 
+    | Asn1AcnAst.SeqOfValue       v ->  SeqOfValue          (v |> List.map mapValue)
+    | Asn1AcnAst.SeqValue         v ->  SeqValue            (v |> List.map (fun n -> {NamedValue.name = n.name; Value = mapValue n.Value}))
+    | Asn1AcnAst.ChValue          n ->  ChValue             {NamedValue.name = n.name; Value = mapValue n.Value}
+    | Asn1AcnAst.NullValue        v ->  NullValue           v
+    | Asn1AcnAst.RefValue     (a,v) ->  RefValue            (a, mapValue v)
+
+type Asn1Value with
+    member this.getBackendName (l:ProgrammingLanguage) =
+        "unnamed_variable"

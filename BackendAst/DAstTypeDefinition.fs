@@ -462,13 +462,22 @@ let createChoice (r:Asn1AcnAst.AstRoot) (l:ProgrammingLanguage) (t:Asn1AcnAst.As
 
 
 
-let createReferenceType (r:Asn1AcnAst.AstRoot) (l:ProgrammingLanguage) (t:Asn1AcnAst.Asn1Type) (o:Asn1AcnAst.ReferenceType)  (baseDefinition:TypeDefinitionCommon ) (us:State) =
-    let typeDefinitionName = getTypeDefinitionName r l t.id
-    {
-        TypeDefinitionCommon.name                = typeDefinitionName
-        typeOrSubsType                           = SUBTYPE
-        arraySize                                = None
-        completeDefinition                       = getCompleteDefinition l SUBTYPE baseDefinition.name typeDefinitionName None []
-        typeDefinitionBodyWithinSeq              = baseDefinition.name
-        completeDefinitionWithinSeq              = None
-    } 
+let createReferenceType (r:Asn1AcnAst.AstRoot) (l:ProgrammingLanguage) (t:Asn1AcnAst.Asn1Type) (o:Asn1AcnAst.ReferenceType)  (baseType:Asn1Type ) (us:State) =
+    match o.baseType.Kind with
+    | Asn1AcnAst.Integer ii   when ii.isUnsigned ->
+        createInteger r l o.baseType  ii   us
+    | _             ->
+        let typeDefinitionName = 
+            match t.tasInfo with
+            | Some tasInfo    -> ToC2(r.args.TypePrefix + tasInfo.tasName)
+            | None            -> ToC2(r.args.TypePrefix + o.tasName.Value)
+        let refTypeAssignment = o.tasName.Value
+        let completeDefinition                       = getCompleteDefinition l SUBTYPE refTypeAssignment typeDefinitionName None []
+        {
+            TypeDefinitionCommon.name                = typeDefinitionName
+            typeOrSubsType                           = SUBTYPE
+            arraySize                                = None
+            completeDefinition                       = completeDefinition
+            typeDefinitionBodyWithinSeq              = typeDefinitionName
+            completeDefinitionWithinSeq              = None
+        } 

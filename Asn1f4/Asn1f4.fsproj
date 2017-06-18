@@ -25,8 +25,8 @@
     <PlatformTarget>AnyCPU</PlatformTarget>
     <DocumentationFile>bin\Debug\Asn1f4.XML</DocumentationFile>
     <Prefer32Bit>true</Prefer32Bit>
-    <StartWorkingDirectory>C:\prj\GitHub\asn1scc\tmp2\headerFiles</StartWorkingDirectory>
-    <StartArguments>-c -o c/ a1.asn1</StartArguments>
+    <StartWorkingDirectory>C:\prj\GitHub\asn1scc\tmp2\headerFiles\a2</StartWorkingDirectory>
+    <StartArguments>-c -o c/ a.asn1</StartArguments>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
     <DebugType>pdbonly</DebugType>
@@ -127,10 +127,29 @@
       <Private>True</Private>
     </ProjectReference>
   </ItemGroup>
+  <Target Name="BeforeBuild">
+	<ItemGroup>
+		<ResourceFilesToCopy Include="$(SolutionDir)SPARK_RTL/adaasn1rtl.*" />
+		<ResourceFilesToCopy Include="$(SolutionDir)SPARK_RTL/IgnoredExaminerWarnings.wrn" />
+		<ResourceFilesToCopy Include="$(SolutionDir)SPARK_RTL/gnat.cfg" />
+		<ResourceFilesToCopy Include="$(SolutionDir)SPARK_RTL/run.sh" />
+		<ResourceFilesToCopy Include="$(SolutionDir)SPARK_RTL/GPS_project.gpr" />
+		<ResourceFilesToCopy Include="$(SolutionDir)asn1crt/asn1crt.c" />
+		<ResourceFilesToCopy Include="$(SolutionDir)asn1crt/asn1crt.h" />
+		<ResourceFilesToCopy Include="$(SolutionDir)asn1crt/Acn.c" />
+		<ResourceFilesToCopy Include="$(SolutionDir)asn1crt/ber.c" />
+		<ResourceFilesToCopy Include="$(SolutionDir)asn1crt/xer.c" />
+		<ResourceFilesToCopy Include="$(SolutionDir)asn1crt/real.c" />
+	</ItemGroup>
+	<PropertyGroup>
+		<ResourcesDir>$(ProjectDir)/Resources</ResourcesDir>
+	</PropertyGroup>
+    <MakeDir Directories="$(ResourcesDir)" />
+    <Copy SourceFiles="@(ResourceFilesToCopy)" DestinationFolder="$(ResourcesDir)" />
+  </Target>
+  
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
        Other similar extension points exist, see Microsoft.Common.targets.
-  <Target Name="BeforeBuild">
-  </Target>
   <Target Name="AfterBuild">
   </Target>
   -->

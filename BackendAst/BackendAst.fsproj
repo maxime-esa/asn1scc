@@ -62,6 +62,10 @@
     <Compile Include="DastFold.fs" />
     <Compile Include="DAstBaseTypesEquivalence.fs" />
     <Compile Include="DAstTypeDefinition.fs" />
+    <Compile Include="DAstInitialize.fs" />
+    <Compile Include="DAstVariables.fs" />
+    <Compile Include="DAstEqual.fs" />
+    <Compile Include="DAstValidate.fs" />
     <Compile Include="DAstProgramUnit.fs" />
     <Compile Include="DAstConstruction.fs" />
     <Compile Include="GenerateFiles.fs" />

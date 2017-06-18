@@ -9,46 +9,45 @@ open DAst
 open DAstUtilFunctions
 
 
-(*
-let printValueAssignment (r:DAst.AstRoot) (l:ProgrammingLanguage) (pu:ProgramUnit) (v:Asn1GenericValue) =
-    let sName = v.getBackendName l
-    let t = getValueType r v
-    let sTypeDecl= t.typeDefinition.name
-    let sVal = DAstVariables.printValue r l pu v
+let printValueAssignment (r:DAst.AstRoot) (l:ProgrammingLanguage) (pu:ProgramUnit) (vas:ValueAssignment) =
+    let sName = vas.c_name
+    let t = vas.Type
+    let sTypeDecl= 
+        match t.Kind with
+        | Integer _
+        | Real _
+        | Boolean _     -> t.typeDefinition.typeDefinitionBodyWithinSeq
+        | _             -> t.typeDefinition.name
+    let sVal = DAstVariables.printValue r l pu vas.Type None vas.Value
     match l with
     | C     ->variables_c.PrintValueAssignment sTypeDecl sName sVal
     | Ada   -> header_a.PrintValueAssignment sName sTypeDecl sVal
 
 
-type CollectTypeKindAux = CT_REFTYPE | CT_NOREFTYPE
-let collectEqualDeffinitions (t:Asn1Type)  =
-    DastFold.foldAsn1Type2
-        t
-        0
-        (fun o bs us -> match o.baseTypeEquivalence.typeDefinition with Some _ ->(CT_REFTYPE,[o.equalFunction]), us | None -> (CT_NOREFTYPE,[o.equalFunction]), us )
-        (fun o bs us -> match o.baseTypeEquivalence.typeDefinition with Some _ ->(CT_REFTYPE,[o.equalFunction]), us | None -> (CT_NOREFTYPE,[o.equalFunction]), us )
-        (fun o bs us -> match o.baseTypeEquivalence.typeDefinition with Some _ ->(CT_REFTYPE,[o.equalFunction]), us | None -> (CT_NOREFTYPE,[o.equalFunction]), us )
-        (fun o bs us -> match o.baseTypeEquivalence.typeDefinition with Some _ ->(CT_REFTYPE,[o.equalFunction]), us | None -> (CT_NOREFTYPE,[o.equalFunction]), us )
-        (fun o bs us -> match o.baseTypeEquivalence.typeDefinition with Some _ ->(CT_REFTYPE,[o.equalFunction]), us | None -> (CT_NOREFTYPE,[o.equalFunction]), us )
-        (fun o bs us -> match o.baseTypeEquivalence.typeDefinition with Some _ ->(CT_REFTYPE,[o.equalFunction]), us | None -> (CT_NOREFTYPE,[o.equalFunction]), us )
-        (fun o bs us -> match o.baseTypeEquivalence.typeDefinition with Some _ ->(CT_REFTYPE,[o.equalFunction]), us | None -> (CT_NOREFTYPE,[o.equalFunction]), us )
-        (fun o bs us -> match o.baseTypeEquivalence.typeDefinition with Some _ ->(CT_REFTYPE,[o.equalFunction]), us | None -> (CT_NOREFTYPE,[o.equalFunction]), us )
-        (fun (refType, childDefs) o bs us ->
-            let childCollects = match refType with CT_REFTYPE -> [] | CT_NOREFTYPE -> childDefs 
-            match o.baseTypeEquivalence.typeDefinition with Some _ -> (CT_REFTYPE,childCollects@[o.equalFunction]), us | None -> (CT_NOREFTYPE,childCollects@[o.equalFunction]),us)
-        //sequence
-        (fun o (refType, childDefs) us -> match refType with CT_REFTYPE -> [],us | CT_NOREFTYPE -> childDefs , us)
-        (fun children o bs us -> 
-            let childrenCollects = children |> List.collect id
-            match o.baseTypeEquivalence.typeDefinition with Some _ -> (CT_REFTYPE,childrenCollects@[o.equalFunction]), us | None -> (CT_NOREFTYPE,childrenCollects@[o.equalFunction]), us )
-        //Choice
-        (fun o (refType, childDefs) us -> match refType with CT_REFTYPE -> [],us | CT_NOREFTYPE -> childDefs , us)
-        (fun children o bs us -> 
-            let childrenCollects = children |> List.collect id
-            match o.baseTypeEquivalence.typeDefinition with Some _ -> (CT_REFTYPE,childrenCollects@[o.equalFunction]), us | None -> (CT_NOREFTYPE,childrenCollects@[o.equalFunction]), us )
-    |> fst |> snd
-
-*)
+let rec collectEqualFuncs (t:Asn1Type) =
+    seq {
+        match t.Kind with
+        | Integer          _
+        | Real             _
+        | IA5String        _
+        | OctetString      _
+        | NullType         _
+        | BitString        _
+        | Boolean          _
+        | Enumerated       _ -> ()
+        | SequenceOf        ch -> 
+            yield! collectEqualFuncs ch.childType
+        | Sequence        sq ->
+            for ch in sq.children do 
+                match ch with
+                | Asn1Child ch  -> yield! collectEqualFuncs ch.Type
+                | AcnChild  _   -> ()
+        | Choice          ch ->
+            for c in ch.children do 
+                yield! collectEqualFuncs c.chType
+        | ReferenceType     _   -> ()
+        yield t.equalFunction
+    } |> Seq.toList
 
 let private printUnit (r:DAst.AstRoot) (l:ProgrammingLanguage) outDir (pu:ProgramUnit) =
     let tases = pu.sortedTypeAssignments
@@ -64,13 +63,13 @@ let private printUnit (r:DAst.AstRoot) (l:ProgrammingLanguage) outDir (pu:Progra
         tases |> 
         List.map(fun tas -> 
             let type_defintion = tas.Type.typeDefinition.completeDefinition
-            (*
-            let equal_defs      = collectEqualDeffinitions t |> List.choose(fun ef -> ef.isEqualFuncDef)
-            let init_def        = t.initFunction.initFuncDef
+            let init_def        = tas.Type.initFunction.initFuncDef
+            let equal_defs      = collectEqualFuncs tas.Type |> List.choose(fun ef -> ef.isEqualFuncDef)
             let isValid        = 
-                match t.isValidFunction with
+                match tas.Type.isValidFunction with
                 | None      -> None
                 | Some f    -> f.funcDef
+            (*
             let uPerEncFunc = match t.uperEncFunction with None -> None | Some x -> x.funcDef
             let uPerDecFunc = match t.uperDecFunction with None -> None | Some x -> x.funcDef
             let acnEncFunc = match t.acnEncFunction with None -> None | Some x -> x.funcDef
@@ -78,20 +77,24 @@ let private printUnit (r:DAst.AstRoot) (l:ProgrammingLanguage) outDir (pu:Progra
 
             let allProcs = equal_defs@([(*init_def;*) isValid;uPerEncFunc;uPerDecFunc;acnEncFunc; acnDecFunc] |> List.choose id)
             *)
-            let allProcs = []
+            let allProcs = equal_defs@([init_def;isValid] |> List.choose id)
             match l with
             |C     -> header_c.Define_TAS type_defintion allProcs 
             |Ada   -> header_a.Define_TAS type_defintion allProcs 
         )
-    let arrsValues = []
-    (*
+    let arrsValues = 
         vases |>
         List.map(fun gv -> 
-            let t = getValueType r gv
+            let t = gv.Type
             match l with
-            | C     -> header_c.PrintValueAssignment (t.typeDefinition.name) (gv.getBackendName l)
+            | C     -> 
+                match t.Kind with
+                | Integer _
+                | Real _
+                | Boolean _     -> header_c.PrintValueAssignment (t.typeDefinition.typeDefinitionBodyWithinSeq) gv.c_name
+                | _             -> header_c.PrintValueAssignment (t.typeDefinition.name) gv.c_name
             | Ada   -> printValueAssignment r l pu gv)
-            *)
+
     let arrsPrototypes = []
     let defintionsContntent =
         match l with
@@ -108,11 +111,12 @@ let private printUnit (r:DAst.AstRoot) (l:ProgrammingLanguage) outDir (pu:Progra
     //sourse file
     let arrsTypeAssignments = 
         tases |> List.map(fun t -> 
+            let initialize        = t.Type.initFunction.initFunc
+            //let eqFuncs = collectEqualDeffinitions t |> List.choose(fun ef -> ef.isEqualFunc)
+            let eqFuncs = collectEqualFuncs t.Type |> List.choose(fun ef -> ef.isEqualFunc)
+            let isValid = match t.Type.isValidFunction with None -> None | Some isVal -> isVal.func
             (*
-            let eqFuncs = collectEqualDeffinitions t |> List.choose(fun ef -> ef.isEqualFunc)
 
-            let initialize        = t.initFunction.initFunc
-            let isValid = match t.isValidFunction with None -> None | Some isVal -> isVal.func
 
             let uperEncDec codec         =  
                 match codec with
@@ -125,7 +129,7 @@ let private printUnit (r:DAst.AstRoot) (l:ProgrammingLanguage) outDir (pu:Progra
                 | CommonTypes.Decode    -> match t.acnDecFunction with None -> None | Some x -> x.func
             let allProcs = eqFuncs@([(*initialize;*) isValid;(uperEncDec CommonTypes.Encode); (uperEncDec CommonTypes.Decode);(ancEncDec CommonTypes.Encode); (ancEncDec CommonTypes.Decode)] |> List.choose id)
             *)
-            let allProcs =  []
+            let allProcs =  eqFuncs@([initialize; isValid] |> List.choose id)
             match l with
             | C     ->  body_c.printTass allProcs 
             | Ada   ->  body_a.printTass allProcs )
@@ -133,7 +137,7 @@ let private printUnit (r:DAst.AstRoot) (l:ProgrammingLanguage) outDir (pu:Progra
         match l with
         | C     ->
             let arrsUnnamedVariables = []
-            let arrsValueAssignments = [] //vases |> List.map (printValueAssignment r l pu)
+            let arrsValueAssignments = vases |> List.map (printValueAssignment r l pu)
             body_c.printSourceFile pu.name arrsUnnamedVariables arrsValueAssignments arrsTypeAssignments
         | Ada   ->
             let arrsNegativeReals = []

@@ -223,10 +223,10 @@ type Integer = {
     //baseTypeEquivalence: BaseTypesEquivalence<Integer>
 
     typeDefinition      : TypeDefinitionCommon
-    //initialValue        : IntegerValue
-    //initFunction        : InitFunction
-    //equalFunction       : EqualFunction
-    //isValidFunction     : IsValidFunction option      // it is optional because some types do not require an IsValid function (e.g. an unconstraint integer)
+    initialValue        : IntegerValue
+    initFunction        : InitFunction
+    equalFunction       : EqualFunction
+    isValidFunction     : IsValidFunction option      // it is optional because some types do not require an IsValid function (e.g. an unconstraint integer)
     //uperEncFunction     : UPerFunction
     //uperDecFunction     : UPerFunction
     //acnEncFunction      : AcnFunction
@@ -241,10 +241,10 @@ type Enumerated = {
     //DAst properties
     //baseTypeEquivalence: BaseTypesEquivalence<Enumerated>
     typeDefinition      : TypeDefinitionCommon
-    //initialValue        : EnumValue
-    //initFunction        : InitFunction
-    //equalFunction       : EqualFunction
-    //isValidFunction     : IsValidFunction option      // it is optional because some types do not require an IsValid function (e.g. an unconstraint integer)
+    initialValue        : EnumValue
+    initFunction        : InitFunction
+    equalFunction       : EqualFunction
+    isValidFunction     : IsValidFunction option      // it is optional because some types do not require an IsValid function (e.g. an unconstraint integer)
     //uperEncFunction     : UPerFunction
     //uperDecFunction     : UPerFunction
 }
@@ -255,10 +255,10 @@ type Real = {
     //DAst properties
     //baseTypeEquivalence: BaseTypesEquivalence<Real>
     typeDefinition      : TypeDefinitionCommon
-    //initialValue        : RealValue
-    //initFunction        : InitFunction
-    //equalFunction       : EqualFunction
-    //isValidFunction     : IsValidFunction option      // it is optional because some types do not require an IsValid function (e.g. an unconstraint integer)
+    initialValue        : RealValue
+    initFunction        : InitFunction
+    equalFunction       : EqualFunction
+    isValidFunction     : IsValidFunction option      // it is optional because some types do not require an IsValid function (e.g. an unconstraint integer)
     //uperEncFunction     : UPerFunction
     //uperDecFunction     : UPerFunction
 }
@@ -270,10 +270,10 @@ type Boolean = {
     //DAst properties
     //baseTypeEquivalence: BaseTypesEquivalence<Boolean>
     typeDefinition      : TypeDefinitionCommon
-    //initialValue        : BooleanValue
-    //initFunction        : InitFunction
-    //equalFunction       : EqualFunction
-    //isValidFunction     : IsValidFunction option      // it is optional because some types do not require an IsValid function (e.g. an unconstraint integer)
+    initialValue        : BooleanValue
+    initFunction        : InitFunction
+    equalFunction       : EqualFunction
+    isValidFunction     : IsValidFunction option      // it is optional because some types do not require an IsValid function (e.g. an unconstraint integer)
     //uperEncFunction     : UPerFunction
     //uperDecFunction     : UPerFunction
     //acnEncFunction      : AcnFunction
@@ -287,9 +287,9 @@ type NullType = {
     //DAst properties
     //baseTypeEquivalence: BaseTypesEquivalence<NullType>
     typeDefinition      : TypeDefinitionCommon
-    //initFunction        : InitFunction
-    //initialValue        : NullValue
-    //equalFunction       : EqualFunction
+    initFunction        : InitFunction
+    initialValue        : NullValue
+    equalFunction       : EqualFunction
     //uperEncFunction     : UPerFunction
     //uperDecFunction     : UPerFunction
 
@@ -302,10 +302,10 @@ type StringType = {
     //DAst properties
     //baseTypeEquivalence: BaseTypesEquivalence<StringType>
     typeDefinition      : TypeDefinitionCommon
-    //initialValue        :  StringValue
-    //initFunction        : InitFunction
-    //equalFunction       : EqualFunction
-    //isValidFunction     : IsValidFunction option      // it is optional because some types do not require an IsValid function (e.g. an unconstraint integer)
+    initialValue        :  StringValue
+    initFunction        : InitFunction
+    equalFunction       : EqualFunction
+    isValidFunction     : IsValidFunction option      // it is optional because some types do not require an IsValid function (e.g. an unconstraint integer)
     //uperEncFunction     : UPerFunction
     //uperDecFunction     : UPerFunction
 
@@ -319,10 +319,10 @@ type OctetString = {
     //DAst properties
     //baseTypeEquivalence: BaseTypesEquivalence<OctetString>
     typeDefinition      : TypeDefinitionCommon
-    //initialValue        : OctetStringValue
-    //initFunction        : InitFunction
-    //equalFunction       : EqualFunction
-    //isValidFunction     : IsValidFunction option      // it is optional because some types do not require an IsValid function (e.g. an unconstraint integer)
+    initialValue        : OctetStringValue
+    initFunction        : InitFunction
+    equalFunction       : EqualFunction
+    isValidFunction     : IsValidFunction option      // it is optional because some types do not require an IsValid function (e.g. an unconstraint integer)
     //uperEncFunction     : UPerFunction
     //uperDecFunction     : UPerFunction
 
@@ -336,10 +336,10 @@ type BitString = {
     //DAst properties
     //baseTypeEquivalence: BaseTypesEquivalence<BitString>
     typeDefinition      : TypeDefinitionCommon
-    //initialValue        : BitStringValue
-    //initFunction        : InitFunction
-    //equalFunction       : EqualFunction
-    //isValidFunction     : IsValidFunction option      // it is optional because some types do not require an IsValid function (e.g. an unconstraint integer)
+    initialValue        : BitStringValue
+    initFunction        : InitFunction
+    equalFunction       : EqualFunction
+    isValidFunction     : IsValidFunction option      // it is optional because some types do not require an IsValid function (e.g. an unconstraint integer)
     //uperEncFunction     : UPerFunction
     //uperDecFunction     : UPerFunction
 
@@ -353,10 +353,10 @@ type SequenceOf = {
     //DAst properties
     //baseTypeEquivalence: BaseTypesEquivalence<SequenceOf>
     typeDefinition      : TypeDefinitionCommon
-    //initialValue        : SeqOfValue
-    //initFunction        : InitFunction
-    //equalFunction       : EqualFunction
-    //isValidFunction     : IsValidFunction option      
+    initialValue        : SeqOfValue
+    initFunction        : InitFunction
+    equalFunction       : EqualFunction
+    isValidFunction     : IsValidFunction option      
     //uperEncFunction     : UPerFunction
     //uperDecFunction     : UPerFunction
 
@@ -399,6 +399,8 @@ and Asn1Child = {
     Name                        : StringLoc
     c_name                      : string
     ada_name                    : string                     
+    isEqualBodyStats            : string -> string  -> string -> (string*(LocalVariable list)) option  // 
+    isValidBodyStats            : int -> (SeqChoiceChildInfoIsValid option * int)
     Type                        : Asn1Type
     Optionality                 : Asn1AcnAst.Asn1Optionality option
     Comments                    : string array
@@ -414,10 +416,10 @@ and Sequence = {
     //DAst properties
     //baseTypeEquivalence: BaseTypesEquivalence<Sequence>
     typeDefinition      : TypeDefinitionCommon
-    //initialValue        : SeqValue
-    //initFunction        : InitFunction
-    //equalFunction       : EqualFunction
-    //isValidFunction     : IsValidFunction option      // it is optional because some types do not require an IsValid function (e.g. an unconstraint integer)
+    initialValue        : SeqValue
+    initFunction        : InitFunction
+    equalFunction       : EqualFunction
+    isValidFunction     : IsValidFunction option      // it is optional because some types do not require an IsValid function (e.g. an unconstraint integer)
     //uperEncFunction     : UPerFunction
     //uperDecFunction     : UPerFunction
     //
@@ -439,8 +441,8 @@ and ChChildInfo = {
     chType              :Asn1Type
     
     //DAst properties
-    //isEqualBodyStats    : string -> string -> string -> string*(LocalVariable list) // 
-    //isValidBodyStats    : int -> (SeqChoiceChildInfoIsValid option * int)
+    isEqualBodyStats    : string -> string -> string -> string*(LocalVariable list) // 
+    isValidBodyStats    : int -> (SeqChoiceChildInfoIsValid option * int)
 }
 
 and Choice = {
@@ -450,10 +452,10 @@ and Choice = {
     //DAst properties
     //baseTypeEquivalence: BaseTypesEquivalence<Choice>
     typeDefinition      : TypeDefinitionCommon
-    //initialValue        : ChValue
-    //initFunction        : InitFunction
-    //equalFunction       : EqualFunction
-    //isValidFunction     : IsValidFunction option      
+    initialValue        : ChValue
+    initFunction        : InitFunction
+    equalFunction       : EqualFunction
+    isValidFunction     : IsValidFunction option      
     //uperEncFunction     : UPerFunction
     //uperDecFunction     : UPerFunction
 
@@ -465,10 +467,10 @@ and ReferenceType = {
     baseType            : Asn1Type
 
     typeDefinition      : TypeDefinitionCommon
-    //initialValue        : Asn1Value
-    //initFunction        : InitFunction
-    //equalFunction       : EqualFunction
-    //isValidFunction     : IsValidFunction option      
+    initialValue        : Asn1Value
+    initFunction        : InitFunction
+    equalFunction       : EqualFunction
+    isValidFunction     : IsValidFunction option      
     //uperEncFunction     : UPerFunction
     //uperDecFunction     : UPerFunction
 

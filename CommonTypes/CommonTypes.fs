@@ -115,6 +115,12 @@ type ReferenceToType with
                 match path with
                 | (MD modName)::_    -> modName
                 | _                               -> raise(BugErrorException "Did not find module at the begining of the scope path")
+        member this.tasInfo =
+            match this with
+            | ReferenceToType path -> 
+                match path with
+                | (MD modName)::(TA tasName)::[]    -> Some ({TypeAssignmentInfo.modName = modName; tasName=tasName})
+                | _                                 -> None
         member this.AcnAbsPath =
             match this with
             | ReferenceToType path -> path |> List.map (fun i -> i.StrValue) 

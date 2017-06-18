@@ -324,6 +324,14 @@ let private exportType (t:Asn1Type) =
                             nt), us )
         (fun t nk us -> XElement(xname "Asn1Type",
                             XAttribute(xname "id", t.id.AsString),
+                            (match t.tasInfo with
+                             |Some ts -> XAttribute(xname "tasInfoModule",ts.modName)
+                             |None     -> null
+                            ),
+                            (match t.tasInfo with
+                             |Some ts -> XAttribute(xname "tasInfoName",ts.tasName)
+                             |None     -> null
+                            ),
                             (exportAcnAligment t.acnAligment),
                             (match t.acnParameters with
                             | []    -> []

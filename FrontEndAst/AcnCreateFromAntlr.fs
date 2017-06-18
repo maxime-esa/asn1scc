@@ -754,8 +754,8 @@ let rec private mapAcnParamTypeToAcnAcnInsertedType (asn1:Asn1Ast.AstRoot) (acn:
 
 let rec private mergeType (asn1:Asn1Ast.AstRoot) (acn:AcnAst) (m:Asn1Ast.Asn1Module) (t:Asn1Ast.Asn1Type) (curPath : ScopeNode list)
                            (acnType:AcnTypeEncodingSpec option) 
-                           (refTypeCons:Asn1Ast.Asn1Constraint list)      // constraints from reference types
-                           (withCons:Asn1Ast.Asn1Constraint list)         // constraints from with component and  with components
+                           (refTypeCons:Asn1Ast.Asn1Constraint list)      // constraints applied to this type originating from reference types --> uPER visible
+                           (withCons:Asn1Ast.Asn1Constraint list)         // constraints applied to this type originating from with component and  with components --> non uPER visible
                            (acnArgs : Asn1AcnAst.RelativePath list)
                            (acnParameters   : AcnParameter list)
                            tasInfo : Asn1Type=
@@ -856,11 +856,12 @@ let rec private mergeType (asn1:Asn1Ast.AstRoot) (acn:AcnAst) (m:Asn1Ast.Asn1Mod
             let wcons = withCons |> List.collect fixConstraint |> List.map (ConstraintsMapping.getEnumConstraint asn1 t)
             Enumerated (mergeEnumerated asn1 items t.Location acnErrLoc acnType combinedProperties cons wcons)
         | Asn1Ast.SequenceOf  chType       -> 
-            let childWithCons = t.Constraints@refTypeCons |> List.choose(fun c -> match c with Asn1Ast.WithComponentConstraint w -> Some w| _ -> None)
-            let noWithCompCons = t.Constraints@refTypeCons |> List.choose(fun c -> match c with Asn1Ast.WithComponentConstraint _ -> None | _ -> Some c)
+            let childWithCons = allCons |> List.choose(fun c -> match c with Asn1Ast.WithComponentConstraint w -> Some w| _ -> None)
+            let myVisibleConstraints = t.Constraints@refTypeCons |> List.choose(fun c -> match c with Asn1Ast.WithComponentConstraint _ -> None | _ -> Some c)
+            let myNonVisibleConstraints = withCons |> List.choose(fun c -> match c with Asn1Ast.WithComponentConstraint _ -> None | _ -> Some c)
 
-            let cons =  noWithCompCons |> List.collect fixConstraint |> List.map (ConstraintsMapping.getSequenceOfConstraint asn1 t)
-            let wcons = withCons |> List.collect fixConstraint |> List.map (ConstraintsMapping.getSequenceOfConstraint asn1 t)
+            let cons =  myVisibleConstraints |> List.collect fixConstraint |> List.map (ConstraintsMapping.getSequenceOfConstraint asn1 t)
+            let wcons = myNonVisibleConstraints |> List.collect fixConstraint |> List.map (ConstraintsMapping.getSequenceOfConstraint asn1 t)
 
             let childEncSpec, acnArgs = 
                 match acnType with
@@ -886,11 +887,12 @@ let rec private mergeType (asn1:Asn1Ast.AstRoot) (acn:AcnAst) (m:Asn1Ast.Asn1Mod
             let newKind = {SequenceOf.child=newChType; acnProperties   = acnProperties; cons = cons; withcons = wcons;minSize=minSize; maxSize =maxSize; uperMaxSizeInBits = uperMaxSizeInBits; uperMinSizeInBits=uperMinSizeInBits; acnEncodingClass = acnEncodingClass;  acnMinSizeInBits = acnMinSizeInBits; acnMaxSizeInBits=acnMaxSizeInBits}
             SequenceOf newKind
         | Asn1Ast.Sequence    children     -> 
-            let childrenNameConstraints = refTypeCons@t.Constraints |> List.choose(fun c -> match c with Asn1Ast.WithComponentsConstraint w -> Some w| _ -> None) |> List.collect id
-            let noWithCompCons = refTypeCons@t.Constraints |> List.choose(fun c -> match c with Asn1Ast.WithComponentsConstraint _ -> None | _ -> Some c)
+            let childrenNameConstraints = allCons |> List.choose(fun c -> match c with Asn1Ast.WithComponentsConstraint w -> Some w| _ -> None) |> List.collect id
+            let myVisibleConstraints = refTypeCons@t.Constraints |> List.choose(fun c -> match c with Asn1Ast.WithComponentsConstraint _ -> None | _ -> Some c)
+            let myNonVisibleConstraints = withCons |> List.choose(fun c -> match c with Asn1Ast.WithComponentsConstraint _ -> None | _ -> Some c)
 
-            let cons =  noWithCompCons |> List.collect fixConstraint |> List.map (ConstraintsMapping.getSequenceConstraint asn1 t)
-            let wcons = withCons |> List.collect fixConstraint |> List.map (ConstraintsMapping.getSequenceConstraint asn1 t)
+            let cons =  myVisibleConstraints|> List.collect fixConstraint |> List.map (ConstraintsMapping.getSequenceConstraint asn1 t)
+            let wcons = myNonVisibleConstraints |> List.collect fixConstraint |> List.map (ConstraintsMapping.getSequenceConstraint asn1 t)
 
             let mergeChild (cc:ChildSpec option) (c:Asn1Ast.ChildInfo)  =
                 let childNamedConstraints = childrenNameConstraints |> List.filter(fun x -> x.Name = c.Name)
@@ -1012,10 +1014,11 @@ let rec private mergeType (asn1:Asn1Ast.AstRoot) (acn:AcnAst) (m:Asn1Ast.Asn1Mod
             Sequence ({Sequence.children = mergedChildren;    cons=cons; withcons = wcons;uperMaxSizeInBits=bitMaskSize+maxChildrenSize; uperMinSizeInBits=bitMaskSize+minChildrenSize;acnMaxSizeInBits=acnMaxSizeInBits;acnMinSizeInBits=acnMinSizeInBits})
         | Asn1Ast.Choice      children     -> 
             let childrenNameConstraints = t.Constraints@refTypeCons |> List.choose(fun c -> match c with Asn1Ast.WithComponentsConstraint w -> Some w| _ -> None) |> List.collect id
-            let noWithCompCons = t.Constraints@refTypeCons |> List.choose(fun c -> match c with Asn1Ast.WithComponentsConstraint _ -> None | _ -> Some c)
+            let myVisibleConstraints = t.Constraints@refTypeCons |> List.choose(fun c -> match c with Asn1Ast.WithComponentsConstraint _ -> None | _ -> Some c)
+            let myNonVisibleConstraints = withCons |> List.choose(fun c -> match c with Asn1Ast.WithComponentsConstraint _ -> None | _ -> Some c)
 
-            let cons =  noWithCompCons |> List.collect fixConstraint |> List.map (ConstraintsMapping.getChoiceConstraint asn1 t)
-            let wcons = withCons |> List.collect fixConstraint |> List.map (ConstraintsMapping.getChoiceConstraint asn1 t)
+            let cons =  myVisibleConstraints |> List.collect fixConstraint |> List.map (ConstraintsMapping.getChoiceConstraint asn1 t)
+            let wcons = myNonVisibleConstraints |> List.collect fixConstraint |> List.map (ConstraintsMapping.getChoiceConstraint asn1 t)
             
             let mergeChild (cc:ChildSpec option) (c:Asn1Ast.ChildInfo)  =
                 let childNamedConstraints = childrenNameConstraints |> List.filter(fun x -> x.Name = c.Name)
@@ -1081,7 +1084,7 @@ let rec private mergeType (asn1:Asn1Ast.AstRoot) (acn:AcnAst) (m:Asn1Ast.Asn1Mod
                 | None      -> None
                 | Some x    -> Some x.typeEncodingSpec
             let mergedAcnEncSpec = mergeAcnEncodingSpecs acnType baseTypeAcnEncSpec
-            let baseType     = mergeType asn1 acn m oldBaseType curPath mergedAcnEncSpec restCons withCons acnArgs baseTypeAcnParams None
+            let baseType     = mergeType asn1 acn m oldBaseType curPath mergedAcnEncSpec restCons withCompCons acnArgs baseTypeAcnParams (Some {TypeAssignmentInfo.modName = rf.modName.Value; tasName = rf.tasName.Value})
             let newRef       = {ReferenceType.modName = rf.modName; tasName = rf.tasName; tabularized = rf.tabularized; acnArguments = acnArguments; baseType=baseType}
             ReferenceType newRef
     {

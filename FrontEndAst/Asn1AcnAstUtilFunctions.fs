@@ -141,3 +141,45 @@ let rec getASN1Name  (t:Asn1Type) =
     | Sequence      _  -> "SEQUENCE"
     | Choice        _  -> "CHOICE"
     | ReferenceType r  -> getASN1Name r.baseType
+
+type Integer with
+    member this.AllCons  = this.cons@this.withcons
+
+type Real             with
+    member this.AllCons  = this.cons@this.withcons
+
+type StringType       with
+    member this.AllCons  = this.cons@this.withcons
+
+
+type OctetString      with
+    member this.AllCons  = this.cons@this.withcons
+
+type NullType         with
+    member this.AllCons  = []
+
+type BitString        with
+    member this.AllCons  = this.cons@this.withcons
+
+//type Boolean          with
+//    member this.AllCons  = this.cons@this.withcons
+
+type Enumerated       with
+    member this.AllCons  = this.cons@this.withcons
+
+type SequenceOf       with
+    member this.AllCons  = this.cons@this.withcons
+
+type Sequence         with
+    member this.AllCons  = this.cons@this.withcons
+
+type Choice           with
+    member this.AllCons  = this.cons@this.withcons
+
+//type ReferenceType    with
+//    member this.AllCons  = this.cons@this.withcons
+
+
+type Asn1Value with
+    member this.getBackendName () =
+        "unnamed_variable"
