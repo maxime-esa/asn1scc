@@ -3,7 +3,7 @@ import requests
 
 def run(uri):
     print("asn1scc Daemon Test Client")
-    print("asn1scc Daemon version:", requests.get(uri + "version").json())
+    print("asn1scc Daemon version:", requests.get(uri + "version").content)
 
     data = {
         'AsnFiles': [
@@ -17,7 +17,7 @@ def run(uri):
 
     print("Requesting AST XML for contents: ", data['AsnFiles'][0]['Contents'])
     print("AST:")
-    print(requests.post(uri + "ast", json = data).json())
+    print(requests.post(uri + "ast", json = data).content)
 
 
 if __name__ == "__main__":

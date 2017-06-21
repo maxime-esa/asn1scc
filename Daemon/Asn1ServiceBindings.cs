@@ -25,13 +25,13 @@ namespace Daemon
 
         private void GetVersion(HttpListenerContext context)
         {
-            context.Response.SendJson(service.GetVersion());
+            context.Response.SendPlainText(service.GetVersion());
         }
 
         private void BuildAst(HttpListenerContext context)
         {
             var data = context.Request.ReadJson<Files>();
-            context.Response.SendJson(service.BuildAst(data));
+            context.Response.SendPlainText(service.BuildAst(data));
         }
 
         private IAsn1Service service;
