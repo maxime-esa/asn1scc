@@ -404,7 +404,6 @@ with
         | Sequence     t -> t.isValidFunction
         | Choice       t -> t.isValidFunction
         | ReferenceType t-> t.isValidFunction
-(*
     
     member this.getUperFunction (l:CommonTypes.Codec) =
         match l with
@@ -413,33 +412,64 @@ with
     
     member this.uperEncFunction =
          match this.Kind with
-         | Integer      t -> Some(t.uperEncFunction)
-         | Real         t -> Some(t.uperEncFunction)
-         | IA5String    t -> Some(t.uperEncFunction)
-         | OctetString  t -> Some(t.uperEncFunction)
-         | NullType     t -> Some(t.uperEncFunction)
-         | BitString    t -> Some(t.uperEncFunction)
-         | Boolean      t -> Some(t.uperEncFunction)
-         | Enumerated   t -> Some(t.uperEncFunction)
-         | SequenceOf   t -> Some(t.uperEncFunction)
-         | Sequence     t -> Some(t.uperEncFunction)
-         | Choice       t -> Some(t.uperEncFunction)
-         | ReferenceType t-> Some t.uperEncFunction
+         | Integer      t ->t.uperEncFunction
+         | Real         t ->t.uperEncFunction
+         | IA5String    t ->t.uperEncFunction
+         | OctetString  t ->t.uperEncFunction
+         | NullType     t ->t.uperEncFunction
+         | BitString    t ->t.uperEncFunction
+         | Boolean      t ->t.uperEncFunction
+         | Enumerated   t ->t.uperEncFunction
+         | SequenceOf   t ->t.uperEncFunction
+         | Sequence     t ->t.uperEncFunction
+         | Choice       t ->t.uperEncFunction
+         | ReferenceType t->t.uperEncFunction
 
     member this.uperDecFunction =
          match this.Kind with
-         | Integer      t -> Some(t.uperDecFunction)
-         | Real         t -> Some(t.uperDecFunction)
-         | IA5String    t -> Some(t.uperDecFunction)
-         | OctetString  t -> Some(t.uperDecFunction)
-         | NullType     t -> Some(t.uperDecFunction)
-         | BitString    t -> Some(t.uperDecFunction)
-         | Boolean      t -> Some(t.uperDecFunction)
-         | Enumerated   t -> Some(t.uperDecFunction)
-         | SequenceOf   t -> Some(t.uperDecFunction)
-         | Sequence     t -> Some(t.uperDecFunction)
-         | Choice       t -> Some(t.uperDecFunction)
-         | ReferenceType t-> Some t.uperDecFunction
+         | Integer      t -> t.uperDecFunction
+         | Real         t -> t.uperDecFunction
+         | IA5String    t -> t.uperDecFunction
+         | OctetString  t -> t.uperDecFunction
+         | NullType     t -> t.uperDecFunction
+         | BitString    t -> t.uperDecFunction
+         | Boolean      t -> t.uperDecFunction
+         | Enumerated   t -> t.uperDecFunction
+         | SequenceOf   t -> t.uperDecFunction
+         | Sequence     t -> t.uperDecFunction
+         | Choice       t -> t.uperDecFunction
+         | ReferenceType t-> t.uperDecFunction
+
+    member this.uperMaxSizeInBits =
+        match this.Kind with
+        | Integer      t -> t.baseInfo.uperMaxSizeInBits
+        | Real         t -> t.baseInfo.uperMaxSizeInBits
+        | IA5String    t -> t.baseInfo.uperMaxSizeInBits
+        | OctetString  t -> t.baseInfo.uperMaxSizeInBits
+        | NullType     t -> t.baseInfo.uperMaxSizeInBits
+        | BitString    t -> t.baseInfo.uperMaxSizeInBits
+        | Boolean      t -> t.baseInfo.uperMaxSizeInBits
+        | Enumerated   t -> t.baseInfo.uperMaxSizeInBits
+        | SequenceOf   t -> t.baseInfo.uperMaxSizeInBits
+        | Sequence     t -> t.baseInfo.uperMaxSizeInBits
+        | Choice       t -> t.baseInfo.uperMaxSizeInBits
+        | ReferenceType ref -> ref.baseInfo.baseType.uperMaxSizeInBits
+    member this.uperMinSizeInBits =
+        match this.Kind with
+        | Integer      t -> t.baseInfo.uperMinSizeInBits
+        | Real         t -> t.baseInfo.uperMinSizeInBits
+        | IA5String    t -> t.baseInfo.uperMinSizeInBits
+        | OctetString  t -> t.baseInfo.uperMinSizeInBits
+        | NullType     t -> t.baseInfo.uperMinSizeInBits
+        | BitString    t -> t.baseInfo.uperMinSizeInBits
+        | Boolean      t -> t.baseInfo.uperMinSizeInBits
+        | Enumerated   t -> t.baseInfo.uperMinSizeInBits
+        | SequenceOf   t -> t.baseInfo.uperMinSizeInBits
+        | Sequence     t -> t.baseInfo.uperMinSizeInBits
+        | Choice       t -> t.baseInfo.uperMinSizeInBits
+        | ReferenceType ref -> ref.baseInfo.baseType.uperMinSizeInBits
+
+(*
 
     member this.acnEncFunction : AcnFunction option =
         match this.Kind with

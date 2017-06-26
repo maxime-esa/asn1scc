@@ -66,6 +66,7 @@
     <Compile Include="DAstVariables.fs" />
     <Compile Include="DAstEqual.fs" />
     <Compile Include="DAstValidate.fs" />
+    <Compile Include="DAstUPer.fs" />
     <Compile Include="DAstProgramUnit.fs" />
     <Compile Include="DAstConstruction.fs" />
     <Compile Include="GenerateFiles.fs" />

@@ -13,7 +13,7 @@ open DAstUtilFunctions
 
 let getDefaultValueByType  (t:Asn1Type)  =  t.initialValue
 
-let rec printValue (r:DAst.AstRoot) (l:ProgrammingLanguage) (pu:ProgramUnit) (t:Asn1Type) (parentValue:Asn1GenericValue option) (gv:Asn1GenericValue) =
+let rec printValue (r:DAst.AstRoot) (l:ProgrammingLanguage) (pu:ProgramUnit) (t:Asn1Type) (parentValue:Asn1Value option) (gv:Asn1Value) =
     match l with
     | C ->
         match gv with

@@ -172,6 +172,13 @@ and NamedValue = {
     name        : StringLoc
     Value       : Asn1Value
 }
+(*
+and Asn1Value = {
+    kind : Asn1ValueKind
+    loc  : SrcLoc
+    id   : ReferenceToType
+}
+*)
 
 and Asn1Value =
     | IntegerValue          of IntegerValue    

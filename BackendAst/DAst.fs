@@ -48,7 +48,7 @@ and Asn1Value =
     | NullValue             of NullValue
     | RefValue              of RefValue   
 
-type Asn1GenericValue = Asn1Value
+//type Asn1GenericValue = Asn1Value
 
 type ProgrammingLanguage =
     |C
@@ -153,7 +153,7 @@ type InitFunction = {
     initFuncName            : string option               // the name of the function
     initFunc                : string option               // the body of the function
     initFuncDef             : string option               // function definition in header file
-    initFuncBody            : FuncParamType  -> Asn1GenericValue -> string                      // returns the statement(s) that initialize this type
+    initFuncBody            : FuncParamType  -> Asn1Value -> string                      // returns the statement(s) that initialize this type
 }
 
 
@@ -227,8 +227,8 @@ type Integer = {
     initFunction        : InitFunction
     equalFunction       : EqualFunction
     isValidFunction     : IsValidFunction option      // it is optional because some types do not require an IsValid function (e.g. an unconstraint integer)
-    //uperEncFunction     : UPerFunction
-    //uperDecFunction     : UPerFunction
+    uperEncFunction     : UPerFunction
+    uperDecFunction     : UPerFunction
     //acnEncFunction      : AcnFunction
     //acnDecFunction      : AcnFunction
     
@@ -245,8 +245,8 @@ type Enumerated = {
     initFunction        : InitFunction
     equalFunction       : EqualFunction
     isValidFunction     : IsValidFunction option      // it is optional because some types do not require an IsValid function (e.g. an unconstraint integer)
-    //uperEncFunction     : UPerFunction
-    //uperDecFunction     : UPerFunction
+    uperEncFunction     : UPerFunction
+    uperDecFunction     : UPerFunction
 }
 
 type Real = {
@@ -259,8 +259,8 @@ type Real = {
     initFunction        : InitFunction
     equalFunction       : EqualFunction
     isValidFunction     : IsValidFunction option      // it is optional because some types do not require an IsValid function (e.g. an unconstraint integer)
-    //uperEncFunction     : UPerFunction
-    //uperDecFunction     : UPerFunction
+    uperEncFunction     : UPerFunction
+    uperDecFunction     : UPerFunction
 }
 
 
@@ -274,8 +274,8 @@ type Boolean = {
     initFunction        : InitFunction
     equalFunction       : EqualFunction
     isValidFunction     : IsValidFunction option      // it is optional because some types do not require an IsValid function (e.g. an unconstraint integer)
-    //uperEncFunction     : UPerFunction
-    //uperDecFunction     : UPerFunction
+    uperEncFunction     : UPerFunction
+    uperDecFunction     : UPerFunction
     //acnEncFunction      : AcnFunction
     //acnDecFunction      : AcnFunction
 }
@@ -290,8 +290,8 @@ type NullType = {
     initFunction        : InitFunction
     initialValue        : NullValue
     equalFunction       : EqualFunction
-    //uperEncFunction     : UPerFunction
-    //uperDecFunction     : UPerFunction
+    uperEncFunction     : UPerFunction
+    uperDecFunction     : UPerFunction
 
 }
 
@@ -306,8 +306,8 @@ type StringType = {
     initFunction        : InitFunction
     equalFunction       : EqualFunction
     isValidFunction     : IsValidFunction option      // it is optional because some types do not require an IsValid function (e.g. an unconstraint integer)
-    //uperEncFunction     : UPerFunction
-    //uperDecFunction     : UPerFunction
+    uperEncFunction     : UPerFunction
+    uperDecFunction     : UPerFunction
 
 }
 
@@ -323,8 +323,8 @@ type OctetString = {
     initFunction        : InitFunction
     equalFunction       : EqualFunction
     isValidFunction     : IsValidFunction option      // it is optional because some types do not require an IsValid function (e.g. an unconstraint integer)
-    //uperEncFunction     : UPerFunction
-    //uperDecFunction     : UPerFunction
+    uperEncFunction     : UPerFunction
+    uperDecFunction     : UPerFunction
 
 }
 
@@ -340,8 +340,8 @@ type BitString = {
     initFunction        : InitFunction
     equalFunction       : EqualFunction
     isValidFunction     : IsValidFunction option      // it is optional because some types do not require an IsValid function (e.g. an unconstraint integer)
-    //uperEncFunction     : UPerFunction
-    //uperDecFunction     : UPerFunction
+    uperEncFunction     : UPerFunction
+    uperDecFunction     : UPerFunction
 
 }
 
@@ -357,8 +357,8 @@ type SequenceOf = {
     initFunction        : InitFunction
     equalFunction       : EqualFunction
     isValidFunction     : IsValidFunction option      
-    //uperEncFunction     : UPerFunction
-    //uperDecFunction     : UPerFunction
+    uperEncFunction     : UPerFunction
+    uperDecFunction     : UPerFunction
 
 }
 
@@ -420,8 +420,8 @@ and Sequence = {
     initFunction        : InitFunction
     equalFunction       : EqualFunction
     isValidFunction     : IsValidFunction option      // it is optional because some types do not require an IsValid function (e.g. an unconstraint integer)
-    //uperEncFunction     : UPerFunction
-    //uperDecFunction     : UPerFunction
+    uperEncFunction     : UPerFunction
+    uperDecFunction     : UPerFunction
     //
     //acnEncFunction      : AcnFunction
     //acnDecFunction      : AcnFunction
@@ -456,8 +456,8 @@ and Choice = {
     initFunction        : InitFunction
     equalFunction       : EqualFunction
     isValidFunction     : IsValidFunction option      
-    //uperEncFunction     : UPerFunction
-    //uperDecFunction     : UPerFunction
+    uperEncFunction     : UPerFunction
+    uperDecFunction     : UPerFunction
 
 }
 
@@ -471,8 +471,8 @@ and ReferenceType = {
     initFunction        : InitFunction
     equalFunction       : EqualFunction
     isValidFunction     : IsValidFunction option      
-    //uperEncFunction     : UPerFunction
-    //uperDecFunction     : UPerFunction
+    uperEncFunction     : UPerFunction
+    uperDecFunction     : UPerFunction
 
 }
 

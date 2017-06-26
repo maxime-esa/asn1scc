@@ -718,6 +718,8 @@ let createSequenceOfFunction (r:Asn1AcnAst.AstRoot) (l:ProgrammingLanguage) (t:A
 
 
 let createReferenceTypeFunction (r:Asn1AcnAst.AstRoot) (l:ProgrammingLanguage) (t:Asn1AcnAst.Asn1Type) (o:Asn1AcnAst.ReferenceType) (typeDefinition:TypeDefinitionCommon) (baseType:Asn1Type)  (us:State)  =
+    baseType.isValidFunction, us    
+(*
     let typeDefinitionName = 
         match t.tasInfo with
         | Some tasInfo    -> ToC2(r.args.TypePrefix + tasInfo.tasName)
@@ -742,3 +744,4 @@ let createReferenceTypeFunction (r:Asn1AcnAst.AstRoot) (l:ProgrammingLanguage) (
             localVariables              = []
         }    
     Some ret, {us with currErrCode = us.currErrCode + 0}
+*)

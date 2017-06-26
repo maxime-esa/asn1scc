@@ -16,6 +16,8 @@ let private createInteger (r:Asn1AcnAst.AstRoot) (l:ProgrammingLanguage) (m:Asn1
     let initialValue        = getValueByUperRange o.uperRange 0I
     let initFunction        = DAstInitialize.createIntegerInitFunc r l t o typeDefinition (IntegerValue initialValue)
     let isValidFunction, s1     = DAstValidate.createIntegerFunction r l t o typeDefinition None us
+    let uperEncFunction, s2     = DAstUPer.createIntegerFunction r l Codec.Encode t o typeDefinition None isValidFunction s1
+    let uperDecFunction, s3     = DAstUPer.createIntegerFunction r l Codec.Decode t o typeDefinition None isValidFunction s2
 
     let ret =
         {
@@ -25,14 +27,18 @@ let private createInteger (r:Asn1AcnAst.AstRoot) (l:ProgrammingLanguage) (m:Asn1
             initFunction        = initFunction
             equalFunction       = DAstEqual.createIntegerEqualFunction r l t o typeDefinition 
             isValidFunction     = isValidFunction
+            uperEncFunction     = uperEncFunction
+            uperDecFunction     = uperDecFunction 
         }
-    Integer ret, s1
+    Integer ret, s3
 
 let private createReal (r:Asn1AcnAst.AstRoot) (l:ProgrammingLanguage) (m:Asn1AcnAst.Asn1Module) (t:Asn1AcnAst.Asn1Type) (o:Asn1AcnAst.Real) (us:State) =
     let typeDefinition = DAstTypeDefinition.createReal  r l t o us
     let initialValue        = getValueByUperRange o.uperRange 0.0
     let initFunction        = DAstInitialize.createRealInitFunc r l t o typeDefinition (RealValue initialValue)
     let isValidFunction, s1     = DAstValidate.createRealFunction r l t o typeDefinition None us
+    let uperEncFunction, s2     = DAstUPer.createRealFunction r l Codec.Encode t o typeDefinition None isValidFunction s1
+    let uperDecFunction, s3     = DAstUPer.createRealFunction r l Codec.Decode t o typeDefinition None isValidFunction s2
 
     let ret =
         {
@@ -42,8 +48,10 @@ let private createReal (r:Asn1AcnAst.AstRoot) (l:ProgrammingLanguage) (m:Asn1Acn
             initFunction        = initFunction
             equalFunction       = DAstEqual.createRealEqualFunction r l t o typeDefinition 
             isValidFunction     = isValidFunction
+            uperEncFunction     = uperEncFunction
+            uperDecFunction     = uperDecFunction 
         }
-    Real ret, s1
+    Real ret, s3
 
 
 
@@ -57,6 +65,8 @@ let private createStringType (r:Asn1AcnAst.AstRoot) (l:ProgrammingLanguage) (m:A
         System.String(ch, o.minSize)
     let initFunction        = DAstInitialize.createIA5StringInitFunc r l t o typeDefinition (StringValue initialValue)
     let isValidFunction, s1     = DAstValidate.createStringFunction r l t o typeDefinition None us
+    let uperEncFunction, s2     = DAstUPer.createIA5StringFunction r l Codec.Encode t o typeDefinition None isValidFunction s1
+    let uperDecFunction, s3     = DAstUPer.createIA5StringFunction r l Codec.Decode t o typeDefinition None isValidFunction s2
     let ret =
         {
             StringType.baseInfo = o
@@ -65,8 +75,10 @@ let private createStringType (r:Asn1AcnAst.AstRoot) (l:ProgrammingLanguage) (m:A
             initFunction        = initFunction
             equalFunction       = DAstEqual.createStringEqualFunction r l t o typeDefinition 
             isValidFunction     = isValidFunction
+            uperEncFunction     = uperEncFunction
+            uperDecFunction     = uperDecFunction 
         }
-    ret, s1
+    ret, s3
 
 
 let private createOctetString (r:Asn1AcnAst.AstRoot) (l:ProgrammingLanguage) (m:Asn1AcnAst.Asn1Module) (t:Asn1AcnAst.Asn1Type) (o:Asn1AcnAst.OctetString) (us:State) =
@@ -76,6 +88,8 @@ let private createOctetString (r:Asn1AcnAst.AstRoot) (l:ProgrammingLanguage) (m:
     let initFunction        = DAstInitialize.createOctetStringInitFunc r l t o typeDefinition (OctetStringValue initialValue)
     let equalFunction       = DAstEqual.createOctetStringEqualFunction r l t o typeDefinition 
     let isValidFunction, s1     = DAstValidate.createOctetStringFunction r l t o typeDefinition None equalFunction us
+    let uperEncFunction, s2     = DAstUPer.createOctetStringFunction r l Codec.Encode t o typeDefinition None isValidFunction s1
+    let uperDecFunction, s3     = DAstUPer.createOctetStringFunction r l Codec.Decode t o typeDefinition None isValidFunction s2
     let ret =
         {
             OctetString.baseInfo = o
@@ -84,8 +98,10 @@ let private createOctetString (r:Asn1AcnAst.AstRoot) (l:ProgrammingLanguage) (m:
             initFunction        = initFunction
             equalFunction       = equalFunction
             isValidFunction     = isValidFunction
+            uperEncFunction     = uperEncFunction
+            uperDecFunction     = uperDecFunction 
         }
-    OctetString ret, s1
+    OctetString ret, s3
 
 
 
@@ -93,6 +109,8 @@ let private createNullType (r:Asn1AcnAst.AstRoot) (l:ProgrammingLanguage) (m:Asn
     let typeDefinition = DAstTypeDefinition.createNull  r l t o us
     let initialValue        = ()
     let initFunction        = DAstInitialize.createNullTypeInitFunc r l t o typeDefinition (NullValue initialValue)
+    let uperEncFunction, s2     = DAstUPer.createNullTypeFunction r l Codec.Encode t o typeDefinition None None us
+    let uperDecFunction, s3     = DAstUPer.createNullTypeFunction r l Codec.Decode t o typeDefinition None None s2
     let ret =
         {
             NullType.baseInfo   = o
@@ -100,8 +118,10 @@ let private createNullType (r:Asn1AcnAst.AstRoot) (l:ProgrammingLanguage) (m:Asn
             initialValue        = initialValue
             initFunction        = initFunction
             equalFunction       = DAstEqual.createNullTypeEqualFunction r l  o
+            uperEncFunction     = uperEncFunction
+            uperDecFunction     = uperDecFunction 
         }
-    NullType ret, us
+    NullType ret, s3
 
 
 
@@ -113,6 +133,8 @@ let private createBitString (r:Asn1AcnAst.AstRoot) (l:ProgrammingLanguage) (m:As
     let initFunction        = DAstInitialize.createBitStringInitFunc r l t o typeDefinition (BitStringValue initialValue)
     let equalFunction       = DAstEqual.createBitStringEqualFunction r l t o typeDefinition 
     let isValidFunction, s1     = DAstValidate.createBitStringFunction r l t o typeDefinition None equalFunction us
+    let uperEncFunction, s2     = DAstUPer.createBitStringFunction r l Codec.Encode t o typeDefinition None isValidFunction s1
+    let uperDecFunction, s3     = DAstUPer.createBitStringFunction r l Codec.Decode t o typeDefinition None isValidFunction s2
     let ret =
         {
             BitString.baseInfo  = o
@@ -121,8 +143,10 @@ let private createBitString (r:Asn1AcnAst.AstRoot) (l:ProgrammingLanguage) (m:As
             initFunction        = initFunction
             equalFunction       = equalFunction
             isValidFunction     = isValidFunction
+            uperEncFunction     = uperEncFunction
+            uperDecFunction     = uperDecFunction 
         }
-    BitString ret, s1
+    BitString ret, s3
 
 
 let private createBoolean (r:Asn1AcnAst.AstRoot) (l:ProgrammingLanguage) (m:Asn1AcnAst.Asn1Module) (t:Asn1AcnAst.Asn1Type) (o:Asn1AcnAst.Boolean) (us:State) =
@@ -130,6 +154,8 @@ let private createBoolean (r:Asn1AcnAst.AstRoot) (l:ProgrammingLanguage) (m:Asn1
     let initialValue        = false
     let initFunction        = DAstInitialize.createBooleanInitFunc r l t o typeDefinition (BooleanValue initialValue)
     let isValidFunction, s1     = DAstValidate.createBoolFunction r l t o typeDefinition None us
+    let uperEncFunction, s2     = DAstUPer.createBooleanFunction r l Codec.Encode t o typeDefinition None isValidFunction s1
+    let uperDecFunction, s3     = DAstUPer.createBooleanFunction r l Codec.Decode t o typeDefinition None isValidFunction s2
     let ret =
         {
             Boolean.baseInfo    = o
@@ -138,8 +164,10 @@ let private createBoolean (r:Asn1AcnAst.AstRoot) (l:ProgrammingLanguage) (m:Asn1
             initFunction        = initFunction
             equalFunction       = DAstEqual.createBooleanEqualFunction r l t o typeDefinition 
             isValidFunction     = isValidFunction
+            uperEncFunction     = uperEncFunction
+            uperDecFunction     = uperDecFunction 
         }
-    Boolean ret, s1
+    Boolean ret, s3
 
 
 let private createEnumerated (r:Asn1AcnAst.AstRoot) (l:ProgrammingLanguage) (m:Asn1AcnAst.Asn1Module) (t:Asn1AcnAst.Asn1Type) (o:Asn1AcnAst.Enumerated) (us:State) =
@@ -152,6 +180,8 @@ let private createEnumerated (r:Asn1AcnAst.AstRoot) (l:ProgrammingLanguage) (m:A
     let initialValue  =o.items.Head.Name.Value
     let initFunction        = DAstInitialize.createEnumeratedInitFunc r l t o typeDefinition (EnumValue initialValue)
     let isValidFunction, s1     = DAstValidate.createEnumeratedFunction r l t o typeDefinition None us
+    let uperEncFunction, s2     = DAstUPer.createEnumeratedFunction r l Codec.Encode t o typeDefinition None isValidFunction s1
+    let uperDecFunction, s3     = DAstUPer.createEnumeratedFunction r l Codec.Decode t o typeDefinition None isValidFunction s2
 
     let ret =
         {
@@ -161,8 +191,10 @@ let private createEnumerated (r:Asn1AcnAst.AstRoot) (l:ProgrammingLanguage) (m:A
             initFunction        = initFunction
             equalFunction       = DAstEqual.createEnumeratedEqualFunction r l t o typeDefinition 
             isValidFunction     = isValidFunction
+            uperEncFunction     = uperEncFunction
+            uperDecFunction     = uperDecFunction 
         }
-    Enumerated ret, s1
+    Enumerated ret, s3
 
 
 let private createSequenceOf (r:Asn1AcnAst.AstRoot) (l:ProgrammingLanguage) (m:Asn1AcnAst.Asn1Module) (t:Asn1AcnAst.Asn1Type) (o:Asn1AcnAst.SequenceOf) (childType:Asn1Type, us:State) =
@@ -171,6 +203,8 @@ let private createSequenceOf (r:Asn1AcnAst.AstRoot) (l:ProgrammingLanguage) (m:A
         [1 .. o.minSize] |> List.map(fun i -> childType.initialValue)
     let initFunction        = DAstInitialize.createSequenceOfInitFunc r l t o typeDefinition childType (SeqOfValue initialValue)
     let isValidFunction, s1     = DAstValidate.createSequenceOfFunction r l t o typeDefinition childType None us
+    let uperEncFunction, s2     = DAstUPer.createSequenceOfFunction r l Codec.Encode t o typeDefinition None isValidFunction childType s1
+    let uperDecFunction, s3     = DAstUPer.createSequenceOfFunction r l Codec.Decode t o typeDefinition None isValidFunction childType s2
     let ret =
         {
             SequenceOf.baseInfo = o
@@ -180,8 +214,10 @@ let private createSequenceOf (r:Asn1AcnAst.AstRoot) (l:ProgrammingLanguage) (m:A
             initFunction        = initFunction
             equalFunction       = DAstEqual.createSequenceOfEqualFunction r l t o typeDefinition childType
             isValidFunction     = isValidFunction
+            uperEncFunction     = uperEncFunction
+            uperDecFunction     = uperDecFunction 
         }
-    SequenceOf ret, s1
+    SequenceOf ret, s3
 
 
 
@@ -222,6 +258,8 @@ let private createSequence (r:Asn1AcnAst.AstRoot) (l:ProgrammingLanguage) (m:Asn
             | AcnChild  _ -> None)
     let initFunction        = DAstInitialize.createSequenceInitFunc r l t o typeDefinition children (SeqValue initialValue)
     let isValidFunction, s1     = DAstValidate.createSequenceFunction r l t o typeDefinition children None us
+    let uperEncFunction, s2     = DAstUPer.createSequenceFunction r l Codec.Encode t o typeDefinition None isValidFunction children s1
+    let uperDecFunction, s3     = DAstUPer.createSequenceFunction r l Codec.Decode t o typeDefinition None isValidFunction children s2
     let ret =
         {
             Sequence.baseInfo   = o
@@ -231,8 +269,10 @@ let private createSequence (r:Asn1AcnAst.AstRoot) (l:ProgrammingLanguage) (m:Asn
             initFunction        = initFunction
             equalFunction       = DAstEqual.createSequenceEqualFunction r l t o typeDefinition children
             isValidFunction     = isValidFunction
+            uperEncFunction     = uperEncFunction
+            uperDecFunction     = uperDecFunction 
         }
-    Sequence ret, s1
+    Sequence ret, s3
 
 let private createChoice (r:Asn1AcnAst.AstRoot) (l:ProgrammingLanguage) (m:Asn1AcnAst.Asn1Module) (t:Asn1AcnAst.Asn1Type) (o:Asn1AcnAst.Choice) (children:ChChildInfo list, us:State) =
     let typeDefinition = DAstTypeDefinition.createChoice r l t o children us
@@ -240,6 +280,8 @@ let private createChoice (r:Asn1AcnAst.AstRoot) (l:ProgrammingLanguage) (m:Asn1A
         children |> Seq.map(fun o -> {NamedValue.name = o.Name; Value=o.chType.initialValue}) |> Seq.head
     let initFunction        = DAstInitialize.createChoiceInitFunc r l t o typeDefinition children (ChValue initialValue)
     let isValidFunction, s1     = DAstValidate.createChoiceFunction r l t o typeDefinition children None us
+    let uperEncFunction, s2     = DAstUPer.createChoiceFunction r l Codec.Encode t o typeDefinition None isValidFunction children s1
+    let uperDecFunction, s3     = DAstUPer.createChoiceFunction r l Codec.Decode t o typeDefinition None isValidFunction children s2
     let ret =
         {
             Choice.baseInfo     = o
@@ -249,8 +291,10 @@ let private createChoice (r:Asn1AcnAst.AstRoot) (l:ProgrammingLanguage) (m:Asn1A
             initFunction        = initFunction
             equalFunction       = DAstEqual.createChoiceEqualFunction r l t o typeDefinition children
             isValidFunction     = isValidFunction
+            uperEncFunction     = uperEncFunction
+            uperDecFunction     = uperDecFunction 
         }
-    Choice ret, s1
+    Choice ret, s3
 
 let private createChoiceChild (r:Asn1AcnAst.AstRoot) (l:ProgrammingLanguage) (m:Asn1AcnAst.Asn1Module) (ch:Asn1AcnAst.ChChildInfo) (newChildType : Asn1Type, us:State) =
     let typeDefinitionName = 
@@ -276,6 +320,8 @@ let private createReferenceType (r:Asn1AcnAst.AstRoot) (l:ProgrammingLanguage) (
     let initialValue = newBaseType.initialValue
     let initFunction        = DAstInitialize.createReferenceType r l t o newBaseType
     let isValidFunction, s1     = DAstValidate.createReferenceTypeFunction r l t o typeDefinition newBaseType us
+    let uperEncFunction, s2     = DAstUPer.createReferenceFunction r l Codec.Encode t o typeDefinition isValidFunction newBaseType s1
+    let uperDecFunction, s3     = DAstUPer.createReferenceFunction r l Codec.Decode t o typeDefinition isValidFunction newBaseType s2
 
     let ret = 
         {
@@ -286,8 +332,10 @@ let private createReferenceType (r:Asn1AcnAst.AstRoot) (l:ProgrammingLanguage) (
             initFunction        = initFunction
             equalFunction       = DAstEqual.createReferenceTypeEqualFunction r l t o newBaseType
             isValidFunction     = isValidFunction
+            uperEncFunction     = uperEncFunction
+            uperDecFunction     = uperDecFunction 
         }
-    ReferenceType ret, s1
+    ReferenceType ret, s3
 
 let private mapType (r:Asn1AcnAst.AstRoot) (l:ProgrammingLanguage) (m:Asn1AcnAst.Asn1Module) (t:Asn1AcnAst.Asn1Type, us:State) =
     Asn1Fold.foldType2

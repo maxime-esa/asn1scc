@@ -69,15 +69,15 @@ let private printUnit (r:DAst.AstRoot) (l:ProgrammingLanguage) outDir (pu:Progra
                 match tas.Type.isValidFunction with
                 | None      -> None
                 | Some f    -> f.funcDef
+            let uPerEncFunc = tas.Type.uperEncFunction.funcDef
+            let uPerDecFunc = tas.Type.uperDecFunction.funcDef
             (*
-            let uPerEncFunc = match t.uperEncFunction with None -> None | Some x -> x.funcDef
-            let uPerDecFunc = match t.uperDecFunction with None -> None | Some x -> x.funcDef
             let acnEncFunc = match t.acnEncFunction with None -> None | Some x -> x.funcDef
             let acnDecFunc = match t.acnDecFunction with None -> None | Some x -> x.funcDef
 
             let allProcs = equal_defs@([(*init_def;*) isValid;uPerEncFunc;uPerDecFunc;acnEncFunc; acnDecFunc] |> List.choose id)
             *)
-            let allProcs = equal_defs@([init_def;isValid] |> List.choose id)
+            let allProcs = equal_defs@([init_def;isValid;uPerEncFunc;uPerDecFunc] |> List.choose id)
             match l with
             |C     -> header_c.Define_TAS type_defintion allProcs 
             |Ada   -> header_a.Define_TAS type_defintion allProcs 
@@ -115,21 +115,18 @@ let private printUnit (r:DAst.AstRoot) (l:ProgrammingLanguage) outDir (pu:Progra
             //let eqFuncs = collectEqualDeffinitions t |> List.choose(fun ef -> ef.isEqualFunc)
             let eqFuncs = collectEqualFuncs t.Type |> List.choose(fun ef -> ef.isEqualFunc)
             let isValid = match t.Type.isValidFunction with None -> None | Some isVal -> isVal.func
-            (*
-
-
             let uperEncDec codec         =  
                 match codec with
-                | CommonTypes.Encode    -> match t.uperEncFunction with None -> None | Some x -> x.func
-                | CommonTypes.Decode    -> match t.uperDecFunction with None -> None | Some x -> x.func
-
+                | CommonTypes.Encode    -> t.Type.uperEncFunction.func
+                | CommonTypes.Decode    -> t.Type.uperDecFunction.func
+            (*
             let ancEncDec codec         = 
                 match codec with
                 | CommonTypes.Encode    -> match t.acnEncFunction with None -> None | Some x -> x.func
                 | CommonTypes.Decode    -> match t.acnDecFunction with None -> None | Some x -> x.func
             let allProcs = eqFuncs@([(*initialize;*) isValid;(uperEncDec CommonTypes.Encode); (uperEncDec CommonTypes.Decode);(ancEncDec CommonTypes.Encode); (ancEncDec CommonTypes.Decode)] |> List.choose id)
             *)
-            let allProcs =  eqFuncs@([initialize; isValid] |> List.choose id)
+            let allProcs =  eqFuncs@([initialize; isValid;(uperEncDec CommonTypes.Encode); (uperEncDec CommonTypes.Decode)] |> List.choose id)
             match l with
             | C     ->  body_c.printTass allProcs 
             | Ada   ->  body_a.printTass allProcs )
