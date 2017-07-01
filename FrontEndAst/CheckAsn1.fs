@@ -14,7 +14,7 @@ module CheckAsn1
 open System.Numerics
 open Asn1Ast
 open FsUtils
-
+open CommonTypes
 
     
 
@@ -140,6 +140,7 @@ let rec IsValueAllowed (c:Asn1Constraint) (v:Asn1Value) (isOfEnumType:bool) (bit
         {
             Asn1Value.Kind = valKind
             Location = {SrcLoc.srcFilename="";srcLine=0; charPos=0}
+            id = ReferenceToValue([],[])
         }
     match c with
     | SingleValueContraint(v1)          -> AreAsn1ValuesEqual v1 v isOfEnumType ast
@@ -276,7 +277,7 @@ let rec getEnumeratedAllowedEnumerations ast (m:Asn1Module) (t:Asn1Type) =
     |Enumerated(items)   -> 
             items |>
             List.choose(fun itm -> 
-                let v = {Asn1Value.Location = itm.Name.Location; Kind = RefValue(m.Name, itm.Name)} 
+                let v = {Asn1Value.Location = itm.Name.Location; Kind = RefValue(m.Name, itm.Name); id = ReferenceToValue([],[])} 
                 match t.Constraints |> Seq.forall(fun c -> IsValueAllowed c v true None ast ) with
                 | true -> Some itm
                 | false-> None)
@@ -465,7 +466,7 @@ let rec CheckType(t:Asn1Type) (m:Asn1Module) ast =
     | Choice(children)      ->  CheckSeqChoiceChildren children
     | SequenceOf(child)     ->  CheckType child m ast
     | Enumerated(children)  ->  
-        let getVal vKind = { Asn1Value.Kind = vKind; Location = emptyLocation}
+        let getVal vKind = { Asn1Value.Kind = vKind; Location = emptyLocation; id = ReferenceToValue([],[])}
         CheckNamedItem  children 
         children |> Seq.filter(fun x -> x._value.IsSome) |> Seq.map(fun c -> {IntLoc.Value=GetValueAsInt c._value.Value ast; Location=c._value.Value.Location}) |> CheckForDuplicates 
         match children |> Seq.tryFind (fun itm -> 

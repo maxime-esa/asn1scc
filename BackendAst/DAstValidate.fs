@@ -88,7 +88,7 @@ let foldSizableConstraint (l:ProgrammingLanguage) compareSingValueFunc  getSizeF
         (fun e1 e2 s        -> l.ExpAnd e1 (l.ExpNot e2), s)
         (fun e s            -> e, s)
         (fun e1 e2 s        -> l.ExpOr e1 e2, s)
-        (fun v  s         -> (compareSingValueFunc p v) ,s)
+        (fun v  s           -> (compareSingValueFunc p v) ,s)
         (fun intCon s       -> foldSizeRangeTypeConstraint l getSizeFunc p intCon)
         c
         0 |> fst
@@ -186,10 +186,11 @@ let createPrimitiveFunction (r:Asn1AcnAst.AstRoot) (l:ProgrammingLanguage)  (typ
                 funcBody2                   = (fun p acc -> funcBody p)
                 alphaFuncs                  = alphaFuncs
                 localVariables              = []
+                anonymousVariables          = []
             }    
         Some ret, {us with currErrCode = us.currErrCode + 1}
 
-let createBitOrOctetStringFunction (r:Asn1AcnAst.AstRoot) (l:ProgrammingLanguage)  (typeId:ReferenceToType) allCons  conToStrFunc (typeDefinition:TypeDefinitionCommon) (alphaFuncs : AlphaFunc list) (baseTypeValFunc : IsValidFunction option) (us:State)  =
+let createBitOrOctetStringFunction (r:Asn1AcnAst.AstRoot) (l:ProgrammingLanguage)  (typeId:ReferenceToType) allCons  conToStrFunc (typeDefinition:TypeDefinitionCommon) (alphaFuncs : AlphaFunc list) (baseTypeValFunc : IsValidFunction option) anonymousVariables (us:State)  =
     let baseFuncName = baseFuncName baseTypeValFunc
     let hasValidationFunc = hasValidationFunc allCons baseFuncName
     let baseCallStatement l p baseFncName =
@@ -244,6 +245,7 @@ let createBitOrOctetStringFunction (r:Asn1AcnAst.AstRoot) (l:ProgrammingLanguage
                 funcBody2                   = funcBody
                 alphaFuncs                  = alphaFuncs
                 localVariables              = []
+                anonymousVariables           = anonymousVariables
             }    
         Some ret, {us with currErrCode = us.currErrCode + 1}
 
@@ -285,13 +287,24 @@ let exlcudeSizeConstraintIfFixedSize minSize maxSize allCons =
     | false -> allCons
     | true  -> allCons |> List.filter(fun x -> match x with SizeContraint al-> false | _ -> true)
 
-let createOctetStringFunction (r:Asn1AcnAst.AstRoot) (l:ProgrammingLanguage) (t:Asn1AcnAst.Asn1Type) (o:Asn1AcnAst.OctetString) (typeDefinition:TypeDefinitionCommon) (baseTypeValFunc : IsValidFunction option) (equalFunc:EqualFunction) (us:State)  =
+let createOctetStringFunction (r:Asn1AcnAst.AstRoot) (l:ProgrammingLanguage) (t:Asn1AcnAst.Asn1Type) (o:Asn1AcnAst.OctetString) (typeDefinition:TypeDefinitionCommon) (baseTypeValFunc : IsValidFunction option) (equalFunc:EqualFunction) (printValue  : (Asn1ValueKind option) -> (Asn1ValueKind) -> string) (us:State)  =
     let allCons = exlcudeSizeConstraintIfFixedSize o.minSize o.maxSize o.AllCons
-    let compareSingValueFunc (p:String) acc (v:Asn1AcnAst.OctetStringValue) =
+    let anonymousVariables =
+        allCons |> 
+        List.map DastFold.getValueFromSizeableConstraint 
+        |> List.collect id |> 
+        List.choose (fun (v:Asn1AcnAst.OctetStringValue, (id,loc)) ->
+                    let recValue = {Asn1Value.kind = OctetStringValue (v |> List.map(fun z -> z.Value)); id=id;loc=loc}
+                    match id with
+                    | ReferenceToValue (typePath,(VA2 vasName)::[]) -> None
+                    | ReferenceToValue(ts,vs)                       ->
+                        Some ({AnonymousVariable.valueName = (recValue.getBackendName l); valueExpresion = (printValue None recValue.kind); typeDefinitionName = typeDefinition.typeDefinitionBodyWithinSeq}))
+    let compareSingValueFunc (p:String) acc (v:Asn1AcnAst.OctetStringValue, (id,loc)) =
+        let recValue = {Asn1Value.kind = OctetStringValue (v |> List.map(fun z -> z.Value)); id=id;loc=loc}
         let vstr = 
             match acc with
-            | "->"  -> getAddres l ((Asn1AcnAst.OctetStringValue v).getBackendName ())
-            | _     -> ((Asn1AcnAst.OctetStringValue v).getBackendName ())
+            | "->"  -> getAddres l (recValue.getBackendName l)
+            | _     -> (recValue.getBackendName l)
         match equalFunc.isEqualBody2 with
         | EqualBodyExpression2 eqFunc    ->
             match eqFunc p vstr acc with
@@ -299,15 +312,27 @@ let createOctetStringFunction (r:Asn1AcnAst.AstRoot) (l:ProgrammingLanguage) (t:
             | Some (ret,_)      -> ret
         | EqualBodyStatementList2  _     -> raise(BugErrorException "unexpected case")
     let foldSizeCon childAccess = foldSizableConstraint l (fun p v -> compareSingValueFunc p childAccess v) (fun l p -> l.Length p childAccess)
-    createBitOrOctetStringFunction r l t.id allCons foldSizeCon typeDefinition [] baseTypeValFunc us
+    createBitOrOctetStringFunction r l t.id allCons foldSizeCon typeDefinition [] baseTypeValFunc anonymousVariables us
 
-let createBitStringFunction (r:Asn1AcnAst.AstRoot) (l:ProgrammingLanguage) (t:Asn1AcnAst.Asn1Type) (o:Asn1AcnAst.BitString) (typeDefinition:TypeDefinitionCommon) (baseTypeValFunc : IsValidFunction option) (equalFunc:EqualFunction) (us:State)  =
+
+let createBitStringFunction (r:Asn1AcnAst.AstRoot) (l:ProgrammingLanguage) (t:Asn1AcnAst.Asn1Type) (o:Asn1AcnAst.BitString) (typeDefinition:TypeDefinitionCommon) (baseTypeValFunc : IsValidFunction option) (equalFunc:EqualFunction) (printValue  : (Asn1ValueKind option) -> (Asn1ValueKind) -> string) (us:State)  =
     let allCons = exlcudeSizeConstraintIfFixedSize o.minSize o.maxSize o.AllCons
-    let compareSingValueFunc (p:String) acc (v:Asn1AcnAst.BitStringValue) =
+    let anonymousVariables =
+        allCons |> 
+        List.map DastFold.getValueFromSizeableConstraint 
+        |> List.collect id |> 
+        List.choose (fun (v:Asn1AcnAst.BitStringValue, (id,loc)) ->
+                    let recValue = {Asn1Value.kind = BitStringValue (v.Value ); id=id;loc=loc}
+                    match id with
+                    | ReferenceToValue (typePath,(VA2 vasName)::[]) -> None
+                    | ReferenceToValue(ts,vs)                       ->
+                        Some ({AnonymousVariable.valueName = (recValue.getBackendName l); valueExpresion = (printValue None recValue.kind); typeDefinitionName = typeDefinition.typeDefinitionBodyWithinSeq}))
+    let compareSingValueFunc (p:String) acc (v:Asn1AcnAst.BitStringValue, (id,loc)) =
+        let recValue = {Asn1Value.kind = BitStringValue (v.Value ); id=id;loc=loc}
         let vstr = 
             match acc with
-            | "->"  -> getAddres l ((Asn1AcnAst.BitStringValue v).getBackendName ())
-            | _     -> ((Asn1AcnAst.BitStringValue v).getBackendName ())
+            | "->"  -> getAddres l (recValue.getBackendName l)
+            | _     -> recValue.getBackendName l
         match equalFunc.isEqualBody2 with
         | EqualBodyExpression2 eqFunc    ->
             match eqFunc p vstr acc with
@@ -315,7 +340,7 @@ let createBitStringFunction (r:Asn1AcnAst.AstRoot) (l:ProgrammingLanguage) (t:As
             | Some (ret,_)      -> ret
         | EqualBodyStatementList2  _     -> raise(BugErrorException "unexpected case")
     let foldSizeCon childAccess = foldSizableConstraint l (fun p v -> compareSingValueFunc p childAccess v) (fun l p -> l.Length p childAccess)
-    createBitOrOctetStringFunction r l t.id allCons foldSizeCon typeDefinition [] baseTypeValFunc us
+    createBitOrOctetStringFunction r l t.id allCons foldSizeCon typeDefinition [] baseTypeValFunc anonymousVariables us
 
 
 (*  SEQUENCE *)
@@ -374,15 +399,14 @@ let isValidSequenceChild   (l:ProgrammingLanguage) (o:Asn1AcnAst.Asn1Child) (new
 
 let createSequenceFunction (r:Asn1AcnAst.AstRoot) (l:ProgrammingLanguage) (t:Asn1AcnAst.Asn1Type) (o:Asn1AcnAst.Sequence) (typeDefinition:TypeDefinitionCommon) (children:SeqChildInfo list) (baseTypeValFunc : IsValidFunction option) (us:State)  =
 
-    let funcName            = getFuncName r l t.id
+    let funcName     = getFuncName r l t.id
     let baseFuncName = baseFuncName baseTypeValFunc
-
+    let asn1Children = children |> List.choose(fun c -> match c with Asn1Child x -> Some x | AcnChild _ -> None)
     let body =
         match baseFuncName with
         | None  ->
             let childrenConent, finalErrCode =   
-                children |> 
-                List.choose(fun c -> match c with Asn1Child x -> Some x | AcnChild _ -> None) |> 
+                asn1Children |>
                 Asn1Fold.foldMap (fun errCode cc -> cc.isValidBodyStats errCode) us.currErrCode
             let childrenConent = childrenConent |> List.choose id
             let deltaErrCode = finalErrCode - us.currErrCode
@@ -456,6 +480,9 @@ let createSequenceFunction (r:Asn1AcnAst.AstRoot) (l:ProgrammingLanguage) (t:Asn
                 funcBody2                   = funcBody
                 alphaFuncs                  = alphaFuncs
                 localVariables              = localVars
+                anonymousVariables          = 
+                    let ret = asn1Children |> List.collect(fun c -> match c.Type.isValidFunction with Some vf -> vf.anonymousVariables | None -> [])
+                    ret |> Seq.distinctBy(fun x -> x.valueName) |> Seq.toList
             }    
         Some ret, {us with currErrCode = us.currErrCode + deltaErrCode}
 
@@ -560,6 +587,9 @@ let createChoiceFunction (r:Asn1AcnAst.AstRoot) (l:ProgrammingLanguage) (t:Asn1A
                 funcBody2                   = funcBody
                 alphaFuncs                  = alphaFuncs
                 localVariables              = localVars
+                anonymousVariables          = 
+                    let ret =children |> List.collect(fun c -> match c.chType.isValidFunction with Some vf -> vf.anonymousVariables | None -> []) 
+                    ret |> Seq.distinctBy(fun x -> x.valueName) |> Seq.toList
             }    
         Some ret, {us with currErrCode = us.currErrCode + deltaErrCode}
 
@@ -713,6 +743,10 @@ let createSequenceOfFunction (r:Asn1AcnAst.AstRoot) (l:ProgrammingLanguage) (t:A
                 funcBody2                   = funcBody
                 alphaFuncs                  = alphaFuncs
                 localVariables              = localVars
+                anonymousVariables          = 
+                    match childType.isValidFunction with
+                    | Some v  -> v.anonymousVariables
+                    | None    -> []
             }    
         Some ret, {us with currErrCode = us.currErrCode + deltaErrCode}
 

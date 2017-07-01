@@ -383,7 +383,7 @@ let createSequenceFunction (r:Asn1AcnAst.AstRoot) (l:ProgrammingLanguage) (codec
                             match opt.defaultValue with
                             | None                   -> Some (sequence_optional_child p.p (p.getAcces l) child.c_name childContent.funcBody codec)
                             | Some v                 -> 
-                                let defInit= child.Type.initFunction.initFuncBody (p.getSeqChild l child.c_name child.Type.isIA5String) (mapValue v)
+                                let defInit= child.Type.initFunction.initFuncBody (p.getSeqChild l child.c_name child.Type.isIA5String) (mapValue v).kind
                                 Some (sequence_default_child p.p (p.getAcces l) child.c_name childContent.funcBody defInit codec) 
                     Some (childBody, childContent.localVariables, childContent.errCodes)
             

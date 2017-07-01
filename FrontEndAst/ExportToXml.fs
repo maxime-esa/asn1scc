@@ -24,8 +24,8 @@ let private printCharVal (v:char) = XElement(xname "StringValue", v)
 let private printEnumVal (v:String) = XElement(xname "EnumValue", v)
 let private printBoolVal (v:bool) = XElement(xname "BooleanValue", v)
 
-let private printBitStringVal (v:BitStringValue) = XElement(xname "BitStringValue", v.Value)
-let private printOctetStringVal (v:OctetStringValue) = XElement(xname "OctetStringValue", (v |> List.map(fun b -> b.Value)))
+let private printBitStringVal (v:BitStringValue,_) = XElement(xname "BitStringValue", v.Value)
+let private printOctetStringVal (v:OctetStringValue,_) = XElement(xname "OctetStringValue", (v |> List.map(fun b -> b.Value)))
 
 let rec private printSeqOfValue (v:SeqOfValue) = 
     XElement(xname "SequenceOfValue", (v |> List.map PrintAsn1GenericValue ))
@@ -47,14 +47,14 @@ and private printRefValue ((md:StringLoc,ts:StringLoc), v:Asn1Value) =
             XAttribute(xname "Name", ts.Value),
             (PrintAsn1GenericValue v))
 and private PrintAsn1GenericValue (v:Asn1Value) = 
-    match v with
+    match v.kind with
     |IntegerValue(v)         -> printIntVal v.Value
     |RealValue(v)            -> printRealVal v.Value
     |StringValue(v)          -> printStringVal v.Value
     |EnumValue(v)            -> printEnumVal v.Value
     |BooleanValue(v)         -> printBoolVal v.Value
-    |BitStringValue(v)       -> printBitStringVal v
-    |OctetStringValue(v)     -> printOctetStringVal v
+    |BitStringValue(v)       -> printBitStringVal (v, ())
+    |OctetStringValue(v)     -> printOctetStringVal (v, ())
     |SeqOfValue(v)           -> printSeqOfValue v
     |SeqValue(v)             -> printSeqValue v
     |ChValue(nv)             -> printChoiceValue nv

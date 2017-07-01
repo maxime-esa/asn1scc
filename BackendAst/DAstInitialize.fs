@@ -19,7 +19,7 @@ However, now with the 'pragma Annotate (GNATprove, False_Positive)' we can handl
 let getFuncName (r:Asn1AcnAst.AstRoot) (l:ProgrammingLanguage) (tasInfo:TypeAssignmentInfo option) =
     tasInfo |> Option.map (fun x -> ToC2(r.args.TypePrefix + x.tasName + "_Initialize"))
 
-let createInitFunctionCommon (r:Asn1AcnAst.AstRoot) (l:ProgrammingLanguage)   (o:Asn1AcnAst.Asn1Type) (typeDefinition:TypeDefinitionCommon) funcBody iv =
+let createInitFunctionCommon (r:Asn1AcnAst.AstRoot) (l:ProgrammingLanguage)   (o:Asn1AcnAst.Asn1Type) (typeDefinition:TypeDefinitionCommon) funcBody (iv:Asn1ValueKind) =
     let funcName            = getFuncName r l o.id.tasInfo
     let p = o.getParamType l CommonTypes.Codec.Decode
     let initTypeAssignment = match l with C -> init_c.initTypeAssignment | Ada -> init_a.initTypeAssignment
@@ -144,10 +144,10 @@ let createSequenceOfInitFunc (r:Asn1AcnAst.AstRoot) (l:ProgrammingLanguage) (t:A
     let funcBody (p:FuncParamType) v = 
         let vl = 
             match v with
-            | SeqOfValue iv     -> 
-                iv |> 
+            | SeqOfValue childVals ->
+                childVals |> 
                 List.mapi(fun i chv -> 
-                    let ret = childType.initFunction.initFuncBody (p.getArrayItem l ((i+l.ArrayStartIndex).ToString()) childType.isIA5String) chv
+                    let ret = childType.initFunction.initFuncBody (p.getArrayItem l ((i+l.ArrayStartIndex).ToString()) childType.isIA5String) chv.kind
                     match l with
                     | C     -> ret
                     | Ada   when i>0 -> ret
@@ -156,7 +156,7 @@ let createSequenceOfInitFunc (r:Asn1AcnAst.AstRoot) (l:ProgrammingLanguage) (t:A
                         let pragma = init_a.initSequence_pragma p.p
                         ret + pragma
                     )
-            | _                 -> raise(BugErrorException "UnexpectedValue")
+            | _               -> raise(BugErrorException "UnexpectedValue")
         match o.minSize = o.maxSize with
         | true  -> initFixedSequenceOf vl
         | false -> initVarSizeSequenceOf p.p (p.getAcces l) (BigInteger vl.Length) vl
@@ -173,13 +173,13 @@ let createSequenceInitFunc (r:Asn1AcnAst.AstRoot) (l:ProgrammingLanguage) (t:Asn
                 List.choose(fun seqChild ->
                     match seqChild with
                     | Asn1Child seqChild   ->
-                        match iv |> Seq.tryFind(fun chv -> chv.name.Value = seqChild.Name.Value) with
+                        match iv |> Seq.tryFind(fun chv -> chv.name = seqChild.Name.Value) with
                         | None  ->
                             match seqChild.Optionality with
                             | None      -> None
                             | Some _    -> Some (initSequence_optionalChild p.p (p.getAcces l) seqChild.c_name "0" "")
                         | Some chv  ->
-                            let chContent = seqChild.Type.initFunction.initFuncBody (p.getSeqChild l seqChild.c_name seqChild.Type.isIA5String) chv.Value
+                            let chContent = seqChild.Type.initFunction.initFuncBody (p.getSeqChild l seqChild.c_name seqChild.Type.isIA5String) chv.Value.kind
                             match seqChild.Optionality with
                             | None      -> Some chContent
                             | Some _    -> Some (initSequence_optionalChild p.p (p.getAcces l) seqChild.c_name "1" chContent)
@@ -197,19 +197,19 @@ let createChoiceInitFunc (r:Asn1AcnAst.AstRoot) (l:ProgrammingLanguage) (t:Asn1A
             | ChValue iv     -> 
                 children |> 
                 List.choose(fun chChild -> 
-                    match chChild.Name.Value = iv.name.Value with
+                    match chChild.Name.Value = iv.name with
                     | false -> None
                     | true  ->
                         match l with
                         | C ->
-                            let chContent = chChild.chType.initFunction.initFuncBody (p.getChChild l chChild.c_name chChild.chType.isIA5String) iv.Value
+                            let chContent = chChild.chType.initFunction.initFuncBody (p.getChChild l chChild.c_name chChild.chType.isIA5String) iv.Value.kind
                             Some (init_c.initChoice p.p (p.getAcces l) chContent chChild.presentWhenName) 
                         | Ada ->
                             let sChildTempVarName = chChild.chType.typeDefinition.name.L1 + "_tmp"
                             let sChildTypeName = chChild.chType.typeDefinition.typeDefinitionBodyWithinSeq
                             let sChoiceTypeName = typeDefinition.name
                             let sChildName = chChild.c_name
-                            let chContent = chChild.chType.initFunction.initFuncBody (VALUE sChildTempVarName) iv.Value
+                            let chContent = chChild.chType.initFunction.initFuncBody (VALUE sChildTempVarName) iv.Value.kind
                             Some (init_a.initChoice p.p (p.getAcces l) chContent chChild.presentWhenName sChildTempVarName sChildTypeName sChoiceTypeName sChildName) 
                         ) 
 

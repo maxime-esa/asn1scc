@@ -27,14 +27,20 @@ type NullValue            = unit
 type SeqOfValue           = list<Asn1Value>
 and SeqValue              = list<NamedValue>
 and ChValue               = NamedValue
-and RefValue              = ((StringLoc*StringLoc)*Asn1Value)
+and RefValue              = ((string*string)*Asn1Value)
 
 and NamedValue = {
-    name        : StringLoc
+    name        : string
     Value       : Asn1Value
 }
 
-and Asn1Value =
+and Asn1Value = {
+    kind : Asn1ValueKind
+    loc  : SrcLoc
+    id   : ReferenceToValue
+}
+
+and Asn1ValueKind =
     | IntegerValue          of IntegerValue    
     | RealValue             of RealValue       
     | StringValue           of StringValue     
@@ -53,19 +59,6 @@ and Asn1Value =
 type ProgrammingLanguage =
     |C
     |Ada
-
-type VarScopNode =
-    | VA2 of string      //VALUE ASSIGNMENT
-    | DV        //DEFAULT VALUE
-    | NI  of string      //NAMED ITEM VALUE (enum)
-    | CON of int         // constraint index
-    | SQOV of int             //SEQUENCE OF VALUE (value index)
-    | SQCHILD   of string   //child value (SEQUENCE, CHOICE)
-    | VL of int         //value index
-    | IMG of int        //non ASN.1 value. Required when constructing values for types in backends
-
-type ReferenceToValue = 
-    | ReferenceToValue of (ScopeNode list)*(VarScopNode list)
 
 
 type FuncParamType =
@@ -153,7 +146,7 @@ type InitFunction = {
     initFuncName            : string option               // the name of the function
     initFunc                : string option               // the body of the function
     initFuncDef             : string option               // function definition in header file
-    initFuncBody            : FuncParamType  -> Asn1Value -> string                      // returns the statement(s) that initialize this type
+    initFuncBody            : FuncParamType  -> Asn1ValueKind -> string                      // returns the statement(s) that initialize this type
 }
 
 
@@ -178,6 +171,12 @@ type AlphaFunc   = {
     funcBody            : string
 }
 
+type AnonymousVariable = {
+    valueName           : string
+    valueExpresion      : string
+    typeDefinitionName  : string
+}
+
 type IsValidFunction = {
     errCodes            : ErroCode list
     funcName            : string option               // the name of the function. Valid only for TASes)
@@ -188,6 +187,8 @@ type IsValidFunction = {
     funcBody2           : string -> string -> string  //like funBody but with two arguement p and accessOper ( i.e. '->' or '.')
     alphaFuncs          : AlphaFunc list  
     localVariables      : LocalVariable list
+    anonymousVariables  : AnonymousVariable  list      //list with the anonymous asn1 values used in constraints and which must be declared.
+                                                       //these are the bit and octet string values which cannot be expressed as single primitives in C/Ada
 }
 
 type UPERFuncBodyResult = {
@@ -223,6 +224,7 @@ type Integer = {
     //baseTypeEquivalence: BaseTypesEquivalence<Integer>
 
     typeDefinition      : TypeDefinitionCommon
+    printValue          : (Asn1ValueKind option) -> (Asn1ValueKind) -> string
     initialValue        : IntegerValue
     initFunction        : InitFunction
     equalFunction       : EqualFunction
@@ -241,6 +243,7 @@ type Enumerated = {
     //DAst properties
     //baseTypeEquivalence: BaseTypesEquivalence<Enumerated>
     typeDefinition      : TypeDefinitionCommon
+    printValue          : (Asn1ValueKind option) -> (Asn1ValueKind) -> string
     initialValue        : EnumValue
     initFunction        : InitFunction
     equalFunction       : EqualFunction
@@ -255,6 +258,7 @@ type Real = {
     //DAst properties
     //baseTypeEquivalence: BaseTypesEquivalence<Real>
     typeDefinition      : TypeDefinitionCommon
+    printValue          : (Asn1ValueKind option) -> (Asn1ValueKind) -> string
     initialValue        : RealValue
     initFunction        : InitFunction
     equalFunction       : EqualFunction
@@ -270,6 +274,7 @@ type Boolean = {
     //DAst properties
     //baseTypeEquivalence: BaseTypesEquivalence<Boolean>
     typeDefinition      : TypeDefinitionCommon
+    printValue          : (Asn1ValueKind option) -> (Asn1ValueKind) -> string
     initialValue        : BooleanValue
     initFunction        : InitFunction
     equalFunction       : EqualFunction
@@ -287,6 +292,7 @@ type NullType = {
     //DAst properties
     //baseTypeEquivalence: BaseTypesEquivalence<NullType>
     typeDefinition      : TypeDefinitionCommon
+    printValue          : (Asn1ValueKind option) -> (Asn1ValueKind) -> string
     initFunction        : InitFunction
     initialValue        : NullValue
     equalFunction       : EqualFunction
@@ -302,6 +308,7 @@ type StringType = {
     //DAst properties
     //baseTypeEquivalence: BaseTypesEquivalence<StringType>
     typeDefinition      : TypeDefinitionCommon
+    printValue          : (Asn1ValueKind option) -> (Asn1ValueKind) -> string
     initialValue        :  StringValue
     initFunction        : InitFunction
     equalFunction       : EqualFunction
@@ -319,6 +326,7 @@ type OctetString = {
     //DAst properties
     //baseTypeEquivalence: BaseTypesEquivalence<OctetString>
     typeDefinition      : TypeDefinitionCommon
+    printValue          : (Asn1ValueKind option) -> (Asn1ValueKind) -> string
     initialValue        : OctetStringValue
     initFunction        : InitFunction
     equalFunction       : EqualFunction
@@ -336,6 +344,7 @@ type BitString = {
     //DAst properties
     //baseTypeEquivalence: BaseTypesEquivalence<BitString>
     typeDefinition      : TypeDefinitionCommon
+    printValue          : (Asn1ValueKind option) -> (Asn1ValueKind) -> string
     initialValue        : BitStringValue
     initFunction        : InitFunction
     equalFunction       : EqualFunction
@@ -353,6 +362,7 @@ type SequenceOf = {
     //DAst properties
     //baseTypeEquivalence: BaseTypesEquivalence<SequenceOf>
     typeDefinition      : TypeDefinitionCommon
+    printValue          : (Asn1ValueKind option) -> (Asn1ValueKind) -> string
     initialValue        : SeqOfValue
     initFunction        : InitFunction
     equalFunction       : EqualFunction
@@ -416,6 +426,7 @@ and Sequence = {
     //DAst properties
     //baseTypeEquivalence: BaseTypesEquivalence<Sequence>
     typeDefinition      : TypeDefinitionCommon
+    printValue          : (Asn1ValueKind option) -> (Asn1ValueKind) -> string
     initialValue        : SeqValue
     initFunction        : InitFunction
     equalFunction       : EqualFunction
@@ -452,6 +463,7 @@ and Choice = {
     //DAst properties
     //baseTypeEquivalence: BaseTypesEquivalence<Choice>
     typeDefinition      : TypeDefinitionCommon
+    printValue          : (Asn1ValueKind option) -> (Asn1ValueKind) -> string
     initialValue        : ChValue
     initFunction        : InitFunction
     equalFunction       : EqualFunction
@@ -467,6 +479,7 @@ and ReferenceType = {
     baseType            : Asn1Type
 
     typeDefinition      : TypeDefinitionCommon
+    printValue          : (Asn1ValueKind option) -> (Asn1ValueKind) -> string
     initialValue        : Asn1Value
     initFunction        : InitFunction
     equalFunction       : EqualFunction

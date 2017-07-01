@@ -172,15 +172,13 @@ and NamedValue = {
     name        : StringLoc
     Value       : Asn1Value
 }
-(*
 and Asn1Value = {
     kind : Asn1ValueKind
     loc  : SrcLoc
-    id   : ReferenceToType
+    id   : ReferenceToValue
 }
-*)
 
-and Asn1Value =
+and Asn1ValueKind =
     | IntegerValue          of IntegerValue    
     | RealValue             of RealValue       
     | StringValue           of StringValue     
@@ -249,8 +247,8 @@ type IA5StringConstraint =
     | StrSizeContraint                 of PosIntTypeConstraint               
     | AlphabetContraint                of CharTypeConstraint           
 
-type OctetStringConstraint  =    SizableTypeConstraint<OctetStringValue>
-type BitStringConstraint    =    SizableTypeConstraint<BitStringValue>
+type OctetStringConstraint  =    SizableTypeConstraint<OctetStringValue*(ReferenceToValue*SrcLoc)>
+type BitStringConstraint    =    SizableTypeConstraint<BitStringValue*(ReferenceToValue*SrcLoc)>
 type BoolConstraint         =    GenericConstraint<bool>
 type EnumConstraint         =    GenericConstraint<string>
 

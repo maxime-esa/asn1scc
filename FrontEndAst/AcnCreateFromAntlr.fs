@@ -606,7 +606,7 @@ let private mergeBooleanType (acnErrLoc: SrcLoc option) (props:GenericAcnPropert
 
 let private mergeEnumerated (asn1:Asn1Ast.AstRoot) (items: Asn1Ast.NamedItem list) (loc:SrcLoc) (acnErrLoc: SrcLoc option) (acnType:AcnTypeEncodingSpec option) (props:GenericAcnProperty list) cons withcons  =
     let allocatedValuesToAllEnumItems (namedItems:Asn1Ast.NamedItem list) = 
-        let createAsn1ValueByBigInt biVal = {Asn1Ast.Asn1Value.Kind = Asn1Ast.IntegerValue (IntLoc.ByValue biVal); Asn1Ast.Location = emptyLocation}
+        let createAsn1ValueByBigInt biVal = {Asn1Ast.Asn1Value.Kind = Asn1Ast.IntegerValue (IntLoc.ByValue biVal); Asn1Ast.Location = emptyLocation; Asn1Ast.id = ReferenceToValue([],[])}
         let allocated   = namedItems |> List.filter(fun x -> x._value.IsSome)
         let unallocated = namedItems |> List.filter(fun x -> x._value.IsNone)
         let rec allocateItems (unallocated:Asn1Ast.NamedItem list) (allocated:Asn1Ast.NamedItem list) potentialValue: Asn1Ast.NamedItem list =

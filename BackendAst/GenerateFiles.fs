@@ -18,9 +18,9 @@ let printValueAssignment (r:DAst.AstRoot) (l:ProgrammingLanguage) (pu:ProgramUni
         | Real _
         | Boolean _     -> t.typeDefinition.typeDefinitionBodyWithinSeq
         | _             -> t.typeDefinition.name
-    let sVal = DAstVariables.printValue r l pu vas.Type None vas.Value
+    let sVal = DAstVariables.printValue r l pu vas.Type None vas.Value.kind
     match l with
-    | C     ->variables_c.PrintValueAssignment sTypeDecl sName sVal
+    | C     -> variables_c.PrintValueAssignment sTypeDecl sName sVal
     | Ada   -> header_a.PrintValueAssignment sName sTypeDecl sVal
 
 
@@ -52,10 +52,13 @@ let rec collectEqualFuncs (t:Asn1Type) =
 let private printUnit (r:DAst.AstRoot) (l:ProgrammingLanguage) outDir (pu:ProgramUnit) =
     let tases = pu.sortedTypeAssignments
     
-    let vases =
-        pu.valueAssignments //|>
-        //List.filter(fun x -> not x.childValue) |>
-        //List.filter(fun x -> x.isVAS || not (x.isLiteral l))
+    let vases = pu.valueAssignments 
+    let arrsAnonymousValues =
+        pu.sortedTypeAssignments |>
+        List.choose(fun z -> z.Type.isValidFunction) |>
+        List.collect (fun z -> z.anonymousVariables)  |>
+        Seq.distinctBy(fun z -> z.valueName) |>
+        Seq.toList
 
     //header file
     //let typeDefs = tases |> List.choose(fun t -> t.getTypeDefinition l)
@@ -94,16 +97,23 @@ let private printUnit (r:DAst.AstRoot) (l:ProgrammingLanguage) outDir (pu:Progra
                 | Boolean _     -> header_c.PrintValueAssignment (t.typeDefinition.typeDefinitionBodyWithinSeq) gv.c_name
                 | _             -> header_c.PrintValueAssignment (t.typeDefinition.name) gv.c_name
             | Ada   -> printValueAssignment r l pu gv)
+    let arrsHeaderAnonymousValues =
+        arrsAnonymousValues |>
+        List.map(fun av -> 
+            match l with
+            | C     -> header_c.PrintValueAssignment av.typeDefinitionName av.valueName
+            | Ada   -> 
+                header_a.PrintValueAssignment av.valueName av.typeDefinitionName av.valueExpresion)
 
     let arrsPrototypes = []
     let defintionsContntent =
         match l with
         | C     -> 
             let arrsUtilityDefines = []
-            header_c.PrintHeaderFile pu.name.U1 pu.importedProgramUnits typeDefs arrsValues arrsPrototypes arrsUtilityDefines
+            header_c.PrintHeaderFile pu.name.U1 pu.importedProgramUnits typeDefs (arrsValues@arrsHeaderAnonymousValues) arrsPrototypes arrsUtilityDefines
         | Ada   -> 
             let arrsPrivateChoices = []
-            header_a.PrintPackageSpec pu.name pu.importedProgramUnits typeDefs arrsValues arrsPrivateChoices
+            header_a.PrintPackageSpec pu.name pu.importedProgramUnits typeDefs (arrsValues@arrsHeaderAnonymousValues) arrsPrivateChoices
 
     let fileName = Path.Combine(outDir, pu.specFileName)
     File.WriteAllText(fileName, defintionsContntent.Replace("\r",""))
@@ -135,7 +145,10 @@ let private printUnit (r:DAst.AstRoot) (l:ProgrammingLanguage) outDir (pu:Progra
         | C     ->
             let arrsUnnamedVariables = []
             let arrsValueAssignments = vases |> List.map (printValueAssignment r l pu)
-            body_c.printSourceFile pu.name arrsUnnamedVariables arrsValueAssignments arrsTypeAssignments
+            let arrsSourceAnonymousValues = 
+                arrsAnonymousValues |>
+                List.map (fun av -> variables_c.PrintValueAssignment av.typeDefinitionName av.valueName av.valueExpresion)
+            body_c.printSourceFile pu.name arrsUnnamedVariables (arrsValueAssignments@arrsSourceAnonymousValues) arrsTypeAssignments
         | Ada   ->
             let arrsNegativeReals = []
             let arrsBoolPatterns = []

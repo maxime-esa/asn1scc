@@ -2,8 +2,9 @@
 
 open System
 open System.Numerics
+open Asn1AcnAst
 open DAst
-
+open DAstUtilFunctions
 let foldMap = Asn1Fold.foldMap
 
 let foldAsn1Type
@@ -61,4 +62,51 @@ let foldAsn1Type
         typeFunc t newKind
     loopType t us
 
-    
+let getValueFromSizeableConstraint (c:SizableTypeConstraint<'v>) =
+    Asn1Fold.foldSizableTypeConstraint2
+        (fun e1 e2 b s      -> e1@e2, s)
+        (fun e1 e2 s        -> e1@e2, s)
+        (fun e s            -> e, s)
+        (fun e1 e2 s        -> e1@e2, s)
+        (fun e s            -> e, s)
+        (fun e1 e2 s        -> e1@e2, s)
+        (fun v  s           -> [v] ,s)
+        (fun intCon s       -> [],s)
+        c
+        0 |> fst
+
+(*
+let rec getOctetStringValues (t:Asn1Type) =
+    seq {
+        match t.Kind with
+        | OctetString o -> 
+            let octVals = (o.baseInfo.cons@o.baseInfo.withcons) |> List.map getValueFromSizeableConstraint |> List.collect id
+            yield! octVals
+        | Sequence seq  ->
+            for ch in seq.Asn1Children do
+                yield! getOctetStringValues ch.Type
+        | Choice ch     ->
+            for ch in ch.children do
+                yield! getOctetStringValues ch.chType
+        | SequenceOf ch  ->
+            yield! getOctetStringValues ch.childType
+        | _             -> ()
+    } |> Seq.toList
+
+let rec getBitStringValues (t:Asn1Type) =
+    seq {
+        match t.Kind with
+        | BitString o -> 
+            let octVals = (o.baseInfo.cons@o.baseInfo.withcons) |> List.map getValueFromSizeableConstraint |> List.collect id
+            yield! octVals
+        | Sequence seq  ->
+            for ch in seq.Asn1Children do
+                yield! getBitStringValues ch.Type
+        | Choice ch     ->
+            for ch in ch.children do
+                yield! getBitStringValues ch.chType
+        | SequenceOf ch  ->
+            yield! getBitStringValues ch.childType
+        | _             -> ()
+    } |> Seq.toList
+*)

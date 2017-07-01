@@ -23,6 +23,7 @@ open CommonTypes
 
 type Asn1Value = {
     Kind:Asn1ValueKind
+    id : ReferenceToValue
     Location: SrcLoc
 }
 

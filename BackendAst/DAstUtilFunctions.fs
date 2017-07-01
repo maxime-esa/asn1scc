@@ -240,6 +240,8 @@ type Sequence with
     member this.Cons     = this.baseInfo.cons
     member this.WithCons = this.baseInfo.withcons
     member this.AllCons  = this.baseInfo.cons@this.baseInfo.withcons
+    member this.Asn1Children =
+        this.children |> List.choose(fun c -> match c with Asn1Child c -> Some c | AcnChild _ -> None)
 
 type Choice with 
     member this.Cons     = this.baseInfo.cons
@@ -345,6 +347,22 @@ with
         | Sequence     t -> t.typeDefinition
         | Choice       t -> t.typeDefinition
         | ReferenceType t-> t.typeDefinition
+
+    member this.printValue =
+        match this.Kind with
+        | Integer      t -> t.printValue
+        | Real         t -> t.printValue
+        | IA5String    t -> t.printValue
+        | OctetString  t -> t.printValue
+        | NullType     t -> t.printValue
+        | BitString    t -> t.printValue
+        | Boolean      t -> t.printValue
+        | Enumerated   t -> t.printValue
+        | SequenceOf   t -> t.printValue
+        | Sequence     t -> t.printValue
+        | Choice       t -> t.printValue
+        | ReferenceType t-> t.printValue
+
     member this.initialValue =
         match this.Kind with
         | Integer      t -> IntegerValue t.initialValue
@@ -358,7 +376,7 @@ with
         | SequenceOf   t -> SeqOfValue t.initialValue
         | Sequence     t -> SeqValue t.initialValue
         | Choice       t -> ChValue t.initialValue
-        | ReferenceType t-> t.initialValue
+        | ReferenceType t-> t.initialValue.kind
 
     member this.initFunction =
         match this.Kind with
@@ -578,20 +596,26 @@ let getValueByUperRange (r:uperRange<'T>) (z:'T) =
     | Full              -> z
 
 let rec mapValue (v:Asn1AcnAst.Asn1Value) =
-    match v with
-    | Asn1AcnAst.IntegerValue     v ->  IntegerValue        v.Value 
-    | Asn1AcnAst.RealValue        v ->  RealValue           v.Value 
-    | Asn1AcnAst.StringValue      v ->  StringValue         v.Value 
-    | Asn1AcnAst.BooleanValue     v ->  BooleanValue        v.Value 
-    | Asn1AcnAst.BitStringValue   v ->  BitStringValue      v.Value 
-    | Asn1AcnAst.OctetStringValue v ->  OctetStringValue    (v |> List.map(fun z -> z.Value))
-    | Asn1AcnAst.EnumValue        v ->  EnumValue           v.Value 
-    | Asn1AcnAst.SeqOfValue       v ->  SeqOfValue          (v |> List.map mapValue)
-    | Asn1AcnAst.SeqValue         v ->  SeqValue            (v |> List.map (fun n -> {NamedValue.name = n.name; Value = mapValue n.Value}))
-    | Asn1AcnAst.ChValue          n ->  ChValue             {NamedValue.name = n.name; Value = mapValue n.Value}
-    | Asn1AcnAst.NullValue        v ->  NullValue           v
-    | Asn1AcnAst.RefValue     (a,v) ->  RefValue            (a, mapValue v)
+    let newVKind = 
+        match v.kind with
+        | Asn1AcnAst.IntegerValue     v ->  IntegerValue        v.Value 
+        | Asn1AcnAst.RealValue        v ->  RealValue           v.Value 
+        | Asn1AcnAst.StringValue      v ->  StringValue         v.Value 
+        | Asn1AcnAst.BooleanValue     v ->  BooleanValue        v.Value 
+        | Asn1AcnAst.BitStringValue   v ->  BitStringValue      v.Value 
+        | Asn1AcnAst.OctetStringValue v ->  OctetStringValue    (v |> List.map(fun z -> z.Value))
+        | Asn1AcnAst.EnumValue        v ->  EnumValue           v.Value 
+        | Asn1AcnAst.SeqOfValue       v ->  SeqOfValue          (v |> List.map mapValue)
+        | Asn1AcnAst.SeqValue         v ->  SeqValue            (v |> List.map (fun n -> {NamedValue.name = n.name.Value; Value = mapValue n.Value}))
+        | Asn1AcnAst.ChValue          n ->  ChValue             {NamedValue.name = n.name.Value; Value = mapValue n.Value}
+        | Asn1AcnAst.NullValue        v ->  NullValue           v
+        | Asn1AcnAst.RefValue     ((md,ts),v) ->  RefValue            ((md.Value, ts.Value), mapValue v)
+    {Asn1Value.kind = newVKind; id=v.id; loc = v.loc}
 
 type Asn1Value with
     member this.getBackendName (l:ProgrammingLanguage) =
-        "unnamed_variable"
+        match this.id with
+        | ReferenceToValue (typePath,(VA2 vasName)::[]) -> ToC vasName
+        | ReferenceToValue (typePath, vasPath)      -> 
+            let longName = (typePath.Tail |> List.map (fun i -> i.StrValue))@ (vasPath |> List.map (fun i -> i.StrValue))  |> Seq.StrJoin "_"
+            ToC2(longName.Replace("#","elem").L1)

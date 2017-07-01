@@ -75,6 +75,23 @@ type Asn1Type with
         | Choice         x -> x.acnMaxSizeInBits
         | ReferenceType  x -> x.baseType.acnMaxSizeInBits
 
+    member this.ActualType =
+        match this.Kind with
+        | ReferenceType t-> t.baseType.ActualType
+        | Integer      _ -> this
+        | Real         _ -> this
+        | IA5String    _ -> this
+        | NumericString _ -> this
+        | OctetString  _ -> this
+        | NullType     _ -> this
+        | BitString    _ -> this
+        | Boolean      _ -> this
+        | Enumerated   _ -> this
+        | SequenceOf   _ -> this
+        | Sequence     _ -> this
+        | Choice       _ -> this
+
+
 type AcnInsertedType with
     member this.acnMinSizeInBits =
         match this with

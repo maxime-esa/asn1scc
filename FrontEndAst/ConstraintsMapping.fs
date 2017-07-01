@@ -6,7 +6,7 @@ open Asn1AcnAst
 
 
 let rec getBaseValue (v: Asn1Value) = 
-    match v with
+    match v.kind with
     | RefValue (_, rv)  -> getBaseValue rv
     | _                 -> v
 
@@ -49,13 +49,13 @@ let foldBConstraint
 
 let rec private getValueAsBigInteger (r:Asn1Ast.AstRoot) (t:Asn1Ast.Asn1Type) (v:Asn1Ast.Asn1Value) =
     let newValue = ValuesMapping.mapValue r t v
-    match (getBaseValue newValue) with
+    match (getBaseValue newValue).kind with
     | IntegerValue x -> x.Value
     | _                  -> raise(BugErrorException "Value is not of expected type")
 
 let private getValueAsDouble (r:Asn1Ast.AstRoot) (t:Asn1Ast.Asn1Type) (v:Asn1Ast.Asn1Value) =
     let newValue = ValuesMapping.mapValue r t v
-    match (getBaseValue newValue) with
+    match (getBaseValue newValue).kind with
     | RealValue x -> x.Value
     | _                  -> raise(BugErrorException "Value is not of expected type")
 
@@ -67,7 +67,7 @@ let private posIntValGetter (r:Asn1Ast.AstRoot) (v:Asn1Ast.Asn1Value) =
             Asn1Ast.Asn1Type.Location = FsUtils.emptyLocation
         }
     let newValue = ValuesMapping.mapValue r sizeIntegerType v
-    match (getBaseValue newValue) with
+    match (getBaseValue newValue).kind with
     | IntegerValue x when x.Value >= 0I   -> uint32 x.Value
     | _                                 -> raise(BugErrorException "Value is not of expected type")
 
@@ -79,7 +79,7 @@ let private charGetter (r:Asn1Ast.AstRoot)  (v:Asn1Ast.Asn1Value) =
             Asn1Ast.Asn1Type.Location = FsUtils.emptyLocation
         }
     let newValue = ValuesMapping.mapValue r charType v
-    match (getBaseValue newValue) with
+    match (getBaseValue newValue).kind with
     | StringValue vl    when vl.Value.Length = 1    -> vl.Value.ToCharArray().[0]
     | _                                         -> raise(SemanticError (v.Location, "Expecting a string with just one character"))
 
@@ -91,55 +91,55 @@ let private strGetter (r:Asn1Ast.AstRoot)  (v:Asn1Ast.Asn1Value) =
             Asn1Ast.Asn1Type.Location = FsUtils.emptyLocation
         }
     let newValue = ValuesMapping.mapValue r charType v
-    match (getBaseValue newValue) with
+    match (getBaseValue newValue).kind with
     | StringValue vl            -> vl.Value
     | _                        -> raise(BugErrorException "Value is not of expected type")
 
 let private strValueGetter (r:Asn1Ast.AstRoot) (t:Asn1Ast.Asn1Type) (v:Asn1Ast.Asn1Value) =
     let newValue = ValuesMapping.mapValue r t v
-    match (getBaseValue newValue) with
+    match (getBaseValue newValue).kind with
     | StringValue vl            -> vl.Value
     | _                        -> raise(BugErrorException "Value is not of expected type")
 
 let private octGetter (r:Asn1Ast.AstRoot) (t:Asn1Ast.Asn1Type) (v:Asn1Ast.Asn1Value) =
     let newValue = ValuesMapping.mapValue r t v
-    match (getBaseValue newValue) with
-    |OctetStringValue vl            -> vl
+    match (getBaseValue newValue).kind with
+    |OctetStringValue vl            -> (vl, (v.id, v.Location)) 
     | _                             -> raise(BugErrorException "Value is not of expected type")
 
 let private bitGetter (r:Asn1Ast.AstRoot) (t:Asn1Ast.Asn1Type) (v:Asn1Ast.Asn1Value) =
     let newValue = ValuesMapping.mapValue r t v
-    match (getBaseValue newValue) with
-    | BitStringValue vl            -> vl
+    match (getBaseValue newValue).kind with
+    | BitStringValue vl            -> (vl, (v.id, v.Location))
     | _                             -> raise(BugErrorException "Value is not of expected type")
 
 let private boolGetter (r:Asn1Ast.AstRoot) (t:Asn1Ast.Asn1Type) (v:Asn1Ast.Asn1Value) =
     let newValue = ValuesMapping.mapValue r t v
-    match (getBaseValue newValue) with
+    match (getBaseValue newValue).kind with
     | BooleanValue vl            -> vl.Value
     | _                             -> raise(BugErrorException "Value is not of expected type")
 
 let private enumGetter (r:Asn1Ast.AstRoot) (t:Asn1Ast.Asn1Type)  (v:Asn1Ast.Asn1Value) =
     let newValue = ValuesMapping.mapValue r t v
-    match (getBaseValue newValue) with
+    match (getBaseValue newValue).kind with
     | EnumValue vl         -> vl.Value
     | _                             -> raise(BugErrorException "Value is not of expected type")
 
 let private seqOfValueGetter (r:Asn1Ast.AstRoot) (t:Asn1Ast.Asn1Type) (v:Asn1Ast.Asn1Value) =
     let newValue = ValuesMapping.mapValue r t v
-    match (getBaseValue newValue) with
+    match (getBaseValue newValue).kind with
     | SeqOfValue vl            -> vl
     | _                             -> raise(BugErrorException "Value is not of expected type")
 
 let private seqValueGetter (r:Asn1Ast.AstRoot) (t:Asn1Ast.Asn1Type) (v:Asn1Ast.Asn1Value) =
     let newValue = ValuesMapping.mapValue r t v
-    match (getBaseValue newValue) with
+    match (getBaseValue newValue).kind with
     | SeqValue vl            -> vl
     | _                             -> raise(BugErrorException "Value is not of expected type")
 
 let private chValueGetter (r:Asn1Ast.AstRoot) (t:Asn1Ast.Asn1Type) (v:Asn1Ast.Asn1Value) =
     let newValue = ValuesMapping.mapValue r t v
-    match (getBaseValue newValue) with
+    match (getBaseValue newValue).kind with
     |ChValue v           -> v
     | _                             -> raise(BugErrorException "Value is not of expected type")
 

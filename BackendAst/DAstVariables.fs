@@ -13,7 +13,7 @@ open DAstUtilFunctions
 
 let getDefaultValueByType  (t:Asn1Type)  =  t.initialValue
 
-let rec printValue (r:DAst.AstRoot) (l:ProgrammingLanguage) (pu:ProgramUnit) (t:Asn1Type) (parentValue:Asn1Value option) (gv:Asn1Value) =
+let rec printValue (r:DAst.AstRoot) (l:ProgrammingLanguage) (pu:ProgramUnit) (t:Asn1Type) (parentValue:Asn1ValueKind option) (gv:Asn1ValueKind) =
     match l with
     | C ->
         match gv with
@@ -42,7 +42,7 @@ let rec printValue (r:DAst.AstRoot) (l:ProgrammingLanguage) (pu:ProgramUnit) (t:
         | SeqOfValue        v -> 
             match t.ActualType.Kind with
             | SequenceOf so -> 
-                let childVals = v |> List.map (printValue r l pu so.childType (Some gv))
+                let childVals = v |> List.map (fun chv -> printValue r l pu so.childType (Some gv) chv.kind)
                 variables_c.PrintSequenceOfValue (so.baseInfo.minSize = so.baseInfo.maxSize) childVals
             | _         -> raise(BugErrorException "unexpected type")
         | SeqValue          v -> 
@@ -53,20 +53,20 @@ let rec printValue (r:DAst.AstRoot) (l:ProgrammingLanguage) (pu:ProgramUnit) (t:
                     List.choose(fun ch -> match ch with Asn1Child a -> Some a | AcnChild _ -> None) |>
                     List.filter(fun ch -> ch.Optionality.IsSome) |>
                     List.map(fun x ->
-                        match v |> Seq.tryFind(fun chv -> chv.name.Value = x.Name.Value) with
+                        match v |> Seq.tryFind(fun chv -> chv.name = x.Name.Value) with
                         | Some _    -> variables_c.PrintSequenceValue_child_exists x.c_name "1"
                         | None      -> variables_c.PrintSequenceValue_child_exists x.c_name "0")
                 let arrChildren = 
                     s.children |>
                     List.choose(fun ch -> match ch with Asn1Child a -> Some a | AcnChild _ -> None) |>
                     List.choose(fun cht -> 
-                        match v |> Seq.tryFind(fun chv -> chv.name.Value = cht.Name.Value) with
-                        | Some v    -> Some (variables_c.PrintSequenceValueChild cht.c_name (printValue r l pu cht.Type (Some gv) v.Value))
+                        match v |> Seq.tryFind(fun chv -> chv.name = cht.Name.Value) with
+                        | Some v    -> Some (variables_c.PrintSequenceValueChild cht.c_name (printValue r l pu cht.Type (Some gv) v.Value.kind))
                         | None      -> 
                             match cht.Optionality with
                             | Some(Asn1AcnAst.Optional opt)    -> 
                                 match opt.defaultValue with
-                                | Some v    -> Some (variables_c.PrintSequenceValueChild cht.c_name (printValue r l pu cht.Type (Some gv) (mapValue v)))                    
+                                | Some v    -> Some (variables_c.PrintSequenceValueChild cht.c_name (printValue r l pu cht.Type (Some gv) (mapValue v).kind ))                    
                                 | None      -> None
                             | _             -> None)
                 variables_c.PrintSequenceValue arrChildren optChildren
@@ -76,12 +76,12 @@ let rec printValue (r:DAst.AstRoot) (l:ProgrammingLanguage) (pu:ProgramUnit) (t:
             match t.ActualType.Kind with
             | Choice s -> 
                 s.children |>
-                List.filter(fun x -> x.Name.Value = v.name.Value)  |>
-                List.map(fun x -> variables_c.PrintChoiceValue x.presentWhenName x.c_name (printValue r l pu x.chType (Some gv) v.Value)) |>
+                List.filter(fun x -> x.Name.Value = v.name)  |>
+                List.map(fun x -> variables_c.PrintChoiceValue x.presentWhenName x.c_name (printValue r l pu x.chType (Some gv) v.Value.kind)) |>
                 List.head
             | _         -> raise(BugErrorException "unexpected type")
         | RefValue ((md,vs),v)         ->
-            let vas = r.getValueAssignmentByName md.Value vs.Value
+            let vas = r.getValueAssignmentByName md vs
             vas.c_name
     | Ada ->
         match gv with
@@ -129,7 +129,7 @@ let rec printValue (r:DAst.AstRoot) (l:ProgrammingLanguage) (pu:ProgramUnit) (t:
             match t.ActualType.Kind with
             | SequenceOf so -> 
                 let typeDefName  = if parentValue.IsSome then so.typeDefinition.typeDefinitionBodyWithinSeq else so.typeDefinition.name
-                let childVals = v |> List.map (printValue r l pu so.childType (Some gv))
+                let childVals = v |> List.map (fun chv -> printValue r l pu so.childType (Some gv) chv.kind)
                 let sDefValue = printValue r l pu t None (getDefaultValueByType so.childType)
                 variables_a.PrintSequenceOfValue typeDefName (so.baseInfo.minSize = so.baseInfo.maxSize) (BigInteger v.Length) childVals sDefValue
             | _         -> raise(BugErrorException "unexpected type")
@@ -143,21 +143,21 @@ let rec printValue (r:DAst.AstRoot) (l:ProgrammingLanguage) (pu:ProgramUnit) (t:
                     List.choose(fun ch -> match ch with Asn1Child a -> Some a | AcnChild _ -> None) |>
                     List.filter(fun ch -> ch.Optionality.IsSome) |>
                     List.map(fun x ->
-                        match v |> Seq.tryFind(fun chv -> chv.name.Value = x.Name.Value) with
+                        match v |> Seq.tryFind(fun chv -> chv.name = x.Name.Value) with
                         | Some _    -> variables_a.PrintSequenceValue_child_exists x.c_name "1"
                         | None      -> variables_a.PrintSequenceValue_child_exists x.c_name "0")
                 let arrChildren = 
                     s.children |>
                     List.choose(fun ch -> match ch with Asn1Child a -> Some a | AcnChild _ -> None) |>
                     List.map(fun x -> 
-                        match v |> Seq.tryFind(fun chv -> chv.name.Value = x.Name.Value) with
-                        | Some v    -> variables_a.PrintSequenceValueChild x.c_name (printValue r l pu x.Type (Some gv) v.Value)
+                        match v |> Seq.tryFind(fun chv -> chv.name = x.Name.Value) with
+                        | Some v    -> variables_a.PrintSequenceValueChild x.c_name (printValue r l pu x.Type (Some gv) v.Value.kind)
                         | None      -> 
                             let chV = 
                                 match x.Optionality with
                                 | Some(Asn1AcnAst.Optional opt)    -> 
                                     match opt.defaultValue with
-                                    | Some v    -> mapValue v
+                                    | Some v    -> (mapValue v).kind
                                     | None      -> getDefaultValueByType x.Type
                                 | _             -> getDefaultValueByType x.Type
                             variables_a.PrintSequenceValueChild x.c_name (printValue r l pu x.Type None chV) )
@@ -171,11 +171,216 @@ let rec printValue (r:DAst.AstRoot) (l:ProgrammingLanguage) (pu:ProgramUnit) (t:
             | Choice s -> 
                 let typeDefName  = if parentValue.IsSome then s.typeDefinition.typeDefinitionBodyWithinSeq else s.typeDefinition.name
                 s.children |>
-                List.filter(fun x -> x.Name.Value = v.name.Value)  |>
-                List.map(fun x -> variables_a.PrintChoiceValue typeDefName x.c_name (printValue r l pu  x.chType (Some gv) v.Value) x.presentWhenName) |>
+                List.filter(fun x -> x.Name.Value = v.name)  |>
+                List.map(fun x -> variables_a.PrintChoiceValue typeDefName x.c_name (printValue r l pu  x.chType (Some gv) v.Value.kind) x.presentWhenName) |>
                 List.head
             | _         -> raise(BugErrorException "unexpected type")
 
         | RefValue ((md,vs),v)         ->
-            let vas = r.getValueAssignmentByName md.Value vs.Value
+            let vas = r.getValueAssignmentByName md vs
             vas.ada_name
+
+
+let createIntegerFunction (r:Asn1AcnAst.AstRoot) (l:ProgrammingLanguage) (t:Asn1AcnAst.Asn1Type) (o:Asn1AcnAst.Integer) (typeDefinition:TypeDefinitionCommon) =
+    let stgMacro = match l with C -> variables_c.PrintIntValue | Ada -> variables_a.PrintIntValue
+    let printValue (parentValue:Asn1ValueKind option) (v:Asn1ValueKind) =
+        match v with
+        | IntegerValue i    -> stgMacro i
+        | RefValue ((md,vs),ov)   -> vs
+        | _                 -> raise(BugErrorException "unexpected value")
+    printValue
+
+let createRealFunction (r:Asn1AcnAst.AstRoot) (l:ProgrammingLanguage) (t:Asn1AcnAst.Asn1Type) (o:Asn1AcnAst.Real) (typeDefinition:TypeDefinitionCommon) =
+    let stgMacro = match l with C -> variables_c.PrintRealValue | Ada -> variables_a.PrintRealValue
+    let printValue (parentValue:Asn1ValueKind option) (v:Asn1ValueKind) =
+        match v with
+        | RealValue i    -> stgMacro i
+        | RefValue ((md,vs),ov)   -> vs
+        | _                 -> raise(BugErrorException "unexpected value")
+    printValue
+
+let createBooleanFunction (r:Asn1AcnAst.AstRoot) (l:ProgrammingLanguage) (t:Asn1AcnAst.Asn1Type) (o:Asn1AcnAst.Boolean) (typeDefinition:TypeDefinitionCommon) =
+    let stgMacro = match l with C -> variables_c.PrintBooleanValue | Ada -> variables_a.PrintBooleanValue
+    let printValue (parentValue:Asn1ValueKind option) (v:Asn1ValueKind) =
+        match v with
+        | BooleanValue i    -> stgMacro i
+        | RefValue ((md,vs),ov)   -> vs
+        | _                 -> raise(BugErrorException "unexpected value")
+    printValue
+
+let createEnumeratedFunction (r:Asn1AcnAst.AstRoot) (l:ProgrammingLanguage) (t:Asn1AcnAst.Asn1Type) (o:Asn1AcnAst.Enumerated) (typeDefinition:TypeDefinitionCommon) =
+    let stgMacro = match l with C -> variables_c.PrintEnumValue | Ada -> variables_a.PrintEnumValue
+    let printValue (parentValue:Asn1ValueKind option) (v:Asn1ValueKind) =
+        match v with
+        | EnumValue i    -> 
+            let itm = o.items |> Seq.find(fun x -> x.Name.Value = i)
+            stgMacro (itm.getBackendName l)
+        | RefValue ((md,vs),ov)   -> vs
+        | _                 -> raise(BugErrorException "unexpected value")
+    printValue
+
+
+let createNullTypeFunction (r:Asn1AcnAst.AstRoot) (l:ProgrammingLanguage) (t:Asn1AcnAst.Asn1Type) (o:Asn1AcnAst.NullType) (typeDefinition:TypeDefinitionCommon) =
+    let stgMacro = match l with C -> variables_c.PrintNullValue | Ada -> variables_a.PrintNullValue
+    let printValue (parentValue:Asn1ValueKind option) (v:Asn1ValueKind) =
+        match v with
+        | NullValue _    -> stgMacro ()
+        | RefValue ((md,vs),ov)   -> vs
+        | _                 -> raise(BugErrorException "unexpected value")
+    printValue
+
+
+let createStringFunction (r:Asn1AcnAst.AstRoot) (l:ProgrammingLanguage) (t:Asn1AcnAst.Asn1Type) (o:Asn1AcnAst.StringType) (typeDefinition:TypeDefinitionCommon) =
+    let printValue (parentValue:Asn1ValueKind option) (v:Asn1ValueKind) =
+        match v with
+        | StringValue v    -> 
+            match l with 
+            | C ->  variables_c.PrintStringValue v
+            | Ada ->
+                let arrNuls = [0 .. (o.maxSize- v.Length)] |> Seq.map(fun x -> variables_a.PrintStringValueNull())
+                variables_a.PrintStringValue (v.Replace("\"","\"\"")) arrNuls
+
+        | RefValue ((md,vs),ov)   -> vs
+        | _                 -> raise(BugErrorException "unexpected value")
+
+    printValue
+
+let createOctetStringFunction (r:Asn1AcnAst.AstRoot) (l:ProgrammingLanguage) (t:Asn1AcnAst.Asn1Type) (o:Asn1AcnAst.OctetString) (typeDefinition:TypeDefinitionCommon) =
+    let printValue (parentValue:Asn1ValueKind option) (v:Asn1ValueKind) =
+        match v with
+        | OctetStringValue  v -> 
+            match l with 
+            | C ->  variables_c.PrintBitOrOctetStringValue (o.minSize = o.maxSize) v (BigInteger v.Length)
+            | Ada -> 
+                let typeDefName  = if parentValue.IsSome then typeDefinition.typeDefinitionBodyWithinSeq else typeDefinition.name
+                variables_a.PrintOctetStringValue typeDefName (o.minSize = o.maxSize) v (BigInteger v.Length)
+        | BitStringValue    v -> 
+            let bytes = bitStringValueToByteArray (StringLoc.ByValue v)
+            match l with 
+            | C ->  
+                variables_c.PrintBitOrOctetStringValue (o.minSize = o.maxSize) bytes (BigInteger bytes.Length)
+            | Ada -> 
+                let typeDefName  = if parentValue.IsSome then typeDefinition.typeDefinitionBodyWithinSeq else typeDefinition.name
+                variables_a.PrintOctetStringValue typeDefName (o.minSize = o.maxSize) bytes (BigInteger bytes.Length)
+        | RefValue ((md,vs),ov)   -> vs
+        | _                 -> raise(BugErrorException "unexpected value")
+    printValue
+
+
+let createBitStringFunction (r:Asn1AcnAst.AstRoot) (l:ProgrammingLanguage) (t:Asn1AcnAst.Asn1Type) (o:Asn1AcnAst.BitString) (typeDefinition:TypeDefinitionCommon) =
+    let printValue (parentValue:Asn1ValueKind option) (v:Asn1ValueKind) =
+        match v with
+        | BitStringValue    v -> 
+            let bytes = bitStringValueToByteArray (StringLoc.ByValue v)
+            match l with 
+            | C ->  
+                variables_c.PrintBitOrOctetStringValue (o.minSize = o.maxSize) bytes (BigInteger bytes.Length)
+            | Ada -> 
+                let typeDefName  = if parentValue.IsSome then typeDefinition.typeDefinitionBodyWithinSeq else typeDefinition.name
+                let arBits = v.ToCharArray() |> Array.map(fun x -> x.ToString())
+                variables_a.PrintBitStringValue typeDefName (o.minSize = o.maxSize) arBits (BigInteger arBits.Length)
+
+        | OctetStringValue  v -> 
+            match l with 
+            | C ->  variables_c.PrintBitOrOctetStringValue (o.minSize = o.maxSize) v (BigInteger v.Length)
+            | Ada -> 
+                let typeDefName  = if parentValue.IsSome then typeDefinition.typeDefinitionBodyWithinSeq else typeDefinition.name
+                variables_a.PrintOctetStringValue typeDefName (o.minSize = o.maxSize) v (BigInteger v.Length)
+        | RefValue ((md,vs),ov)   -> vs
+        | _                 -> raise(BugErrorException "unexpected value")
+    printValue
+
+
+let createSequenceOfFunction (r:Asn1AcnAst.AstRoot) (l:ProgrammingLanguage) (t:Asn1AcnAst.Asn1Type) (o:Asn1AcnAst.SequenceOf) (typeDefinition:TypeDefinitionCommon) (childType:Asn1Type) =
+    let stgMacro = match l with C -> variables_c.PrintBooleanValue | Ada -> variables_a.PrintBooleanValue
+    let printValue (parentValue:Asn1ValueKind option) (gv:Asn1ValueKind) =
+        match gv with
+        | SeqOfValue chVals    -> 
+            let childVals = chVals |> List.map (fun chv -> childType.printValue (Some gv) chv.kind)
+            match l with 
+            | C ->   variables_c.PrintSequenceOfValue (o.minSize = o.maxSize)childVals
+            | Ada ->
+                let typeDefName  = if parentValue.IsSome then typeDefinition.typeDefinitionBodyWithinSeq else typeDefinition.name
+                let sDefValue =  childType.printValue None childType.initialValue 
+                variables_a.PrintSequenceOfValue typeDefName (o.minSize = o.maxSize) (BigInteger chVals.Length) childVals sDefValue
+        | RefValue ((md,vs),ov)   -> vs
+        | _                 -> raise(BugErrorException "unexpected value")
+    printValue
+
+
+let createSequenceFunction (r:Asn1AcnAst.AstRoot) (l:ProgrammingLanguage) (t:Asn1AcnAst.Asn1Type) (o:Asn1AcnAst.Sequence) (typeDefinition:TypeDefinitionCommon) (children:SeqChildInfo list) =
+    let PrintSequenceValue_child_exists = match l with C -> variables_c.PrintSequenceValue_child_exists | Ada -> variables_a.PrintSequenceValue_child_exists
+    let PrintSequenceValueChild = match l with C -> variables_c.PrintSequenceValueChild | Ada -> variables_a.PrintSequenceValueChild
+    
+    let optChildren = 
+        children |>
+        List.choose(fun ch -> match ch with Asn1Child a -> Some a | AcnChild _ -> None) |>
+        List.filter(fun ch -> ch.Optionality.IsSome) 
+    
+    let printValue (parentValue:Asn1ValueKind option) (gv:Asn1ValueKind) =
+        match gv with
+        | SeqValue  v -> 
+                let typeDefName  = if parentValue.IsSome then typeDefinition.typeDefinitionBodyWithinSeq else typeDefinition.name
+                let optChildren = 
+                    optChildren |>
+                    List.map(fun x ->
+                        match v |> Seq.tryFind(fun chv -> chv.name = x.Name.Value) with
+                        | Some _    -> PrintSequenceValue_child_exists x.c_name "1"
+                        | None      -> PrintSequenceValue_child_exists x.c_name "0")
+                let arrChildren = 
+                    children |>
+                    List.choose(fun ch -> match ch with Asn1Child a -> Some a | AcnChild _ -> None) |>
+                    List.choose(fun x -> 
+                        match v |> Seq.tryFind(fun chv -> chv.name = x.Name.Value) with
+                        | Some v    -> 
+                            let childValue = x.Type.printValue (Some gv) v.Value.kind
+                            Some (variables_a.PrintSequenceValueChild x.c_name childValue)
+                        | None      -> 
+                            let childValue = 
+                                match x.Optionality with
+                                | Some(Asn1AcnAst.Optional opt)    -> 
+                                    match opt.defaultValue with
+                                    | Some zz    -> 
+                                        let v = (mapValue zz).kind
+                                        Some(x.Type.printValue (Some gv) v)
+                                    | None      -> match l with C -> None | Ada -> Some (x.Type.printValue (Some gv) x.Type.initialValue)
+                                | _             -> match l with C -> None | Ada -> Some (x.Type.printValue (Some gv) x.Type.initialValue)
+                            match childValue with
+                            | None  -> None
+                            | Some childValue -> Some (PrintSequenceValueChild x.c_name childValue) )
+                                            
+                match l with 
+                | C -> 
+                    variables_c.PrintSequenceValue arrChildren optChildren
+                | Ada -> 
+                    let allChildren = match Seq.isEmpty optChildren with
+                                      | true     -> arrChildren
+                                      | false    -> arrChildren @ [variables_a.PrintSequenceValue_Exists typeDefName optChildren]
+                    variables_a.PrintSequenceValue typeDefName allChildren
+        | RefValue ((md,vs),ov)   -> vs
+        | _                 -> raise(BugErrorException "unexpected value")
+    printValue
+
+
+let createChoiceFunction (r:Asn1AcnAst.AstRoot) (l:ProgrammingLanguage) (t:Asn1AcnAst.Asn1Type) (o:Asn1AcnAst.Choice) (typeDefinition:TypeDefinitionCommon) (children:ChChildInfo list) =
+    let printValue (parentValue:Asn1ValueKind option) (gv:Asn1ValueKind) =
+        match gv with
+        | ChValue chVal    -> 
+            let typeDefName  = if parentValue.IsSome then typeDefinition.typeDefinitionBodyWithinSeq else typeDefinition.name
+            match l with
+            | C ->
+                children |>
+                List.filter(fun x -> x.Name.Value = chVal.name)  |>
+                List.map(fun x -> variables_c.PrintChoiceValue x.presentWhenName x.c_name (x.chType.printValue (Some gv) chVal.Value.kind)) |>
+                List.head
+            | Ada   ->
+                children |>
+                List.filter(fun x -> x.Name.Value = chVal.name)  |>
+                List.map(fun x -> variables_a.PrintChoiceValue typeDefName x.c_name (x.chType.printValue (Some gv) chVal.Value.kind) x.presentWhenName) |>
+                List.head
+        | RefValue ((md,vs),ov)   -> vs
+        | _                 -> raise(BugErrorException "unexpected value")
+    printValue
+
+let createReferenceTypeFunction (r:Asn1AcnAst.AstRoot) (l:ProgrammingLanguage) (t:Asn1AcnAst.Asn1Type) (o:Asn1AcnAst.ReferenceType) (typeDefinition:TypeDefinitionCommon) (baseType:Asn1Type)   =
+    baseType.printValue

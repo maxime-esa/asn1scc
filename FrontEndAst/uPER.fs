@@ -114,10 +114,10 @@ let getSizeableUperRange (cons:SizableTypeConstraint<'v> list) funcGetLength (l:
     cons |> List.fold(fun s c -> uperIntersection s (getConUperRange c l) l) Full
 
 let getOctetStringUperRange (cons:OctetStringConstraint list) (l:SrcLoc) =
-    getSizeableUperRange cons (fun x -> uint32 x.Length) l
+    getSizeableUperRange cons (fun (x,_) -> uint32 x.Length) l
 
 let getBitStringUperRange (cons:BitStringConstraint list) (l:SrcLoc) =
-    getSizeableUperRange cons (fun x -> uint32 x.Value.Length) l
+    getSizeableUperRange cons (fun (x,_) -> uint32 x.Value.Length) l
 
 let getSequenceOfUperRange (cons:SequenceOfConstraint list) (l:SrcLoc) =
     getSizeableUperRange cons (fun x -> uint32 x.Length) l

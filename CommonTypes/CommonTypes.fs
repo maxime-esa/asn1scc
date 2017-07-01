@@ -90,6 +90,8 @@ type TypeAssignmentInfo = {
 }
 
 
+
+
 type ScopeNode with
     member this.AsString =
         match this with
@@ -101,6 +103,42 @@ type ScopeNode with
         | CH_CHILD strVal -> strVal
         | SQF             -> "#"
     member this.StrValue = this.AsString
+
+
+type VarScopNode =
+    | VA2 of string      //VALUE ASSIGNMENT
+    | DV        //DEFAULT VALUE
+    | NI  of string      //NAMED ITEM VALUE (enum)
+    | CON of int         // constraint index
+    | SQOV of int             //SEQUENCE OF VALUE (value index)
+    | SQCHILD   of string   //child value (SEQUENCE, CHOICE)
+    | VL of int         //value index
+    | IMG of int        //non ASN.1 value. Required when constructing values for types in backends
+    with
+        member this.StrValue =
+            match this with
+            | VA2 strVal -> strVal
+            | DV        -> "DV"
+            | NI    ni  -> ni
+            | VL   idx  -> "v" + idx.ToString()    
+            | IMG  idx  -> "img" + idx.ToString()    
+            | CON idx   -> "c" + idx.ToString()
+            | SQOV i     -> sprintf"[%d]" i
+            | SQCHILD  s-> s
+
+        override this.ToString() = this.StrValue
+
+
+type ReferenceToValue = 
+    | ReferenceToValue of (ScopeNode list)*(VarScopNode list)
+    with
+        member this.ModName =
+            match this with
+            | ReferenceToValue (path,_) -> 
+                match path with
+                | (MD modName)::_    -> modName
+                | _                               -> raise(BugErrorException "Did not find module at the begining of the scope path")
+
 
 type ReferenceToType with 
     member this.AsString =
@@ -166,3 +204,13 @@ type ReferenceToType with
             | ReferenceToType path -> path |> List.filter(fun n -> match n with SQF -> true | _ -> false) |> Seq.length
         static member createFromModAndTasName (modName : string) ((tasName : string))=
             ReferenceToType((MD modName)::(TA tasName)::[])
+
+
+
+let rec foldMap func state lst =
+    match lst with
+    | []        -> [],state
+    | h::tail   -> 
+        let procItem, newState = func state h
+        let restList, finalState = tail |> foldMap func newState
+        procItem::restList, finalState
