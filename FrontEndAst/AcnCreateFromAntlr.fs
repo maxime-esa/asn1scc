@@ -500,10 +500,10 @@ let private mergeInteger (asn1:Asn1Ast.AstRoot) (loc:SrcLoc) (acnErrLoc: SrcLoc 
 
     let isUnsigned =
         match uperRange with
-        | Concrete  (a,b) when a >= 0I -> true      //[a, b]
+        | Concrete  (a,b) when a >= 0I && rootCons.IsEmpty-> true      //[a, b]
         | Concrete  _                  -> false
         | NegInf    _                  -> false    //(-inf, b]
-        | PosInf   a when a >= 0I      -> true     //[a, +inf)
+        | PosInf   a when a >= 0I  && rootCons.IsEmpty    -> true     //[a, +inf)
         | PosInf  _                    -> false    //[a, +inf)
         | Full    _                    -> false    // (-inf, +inf)
 

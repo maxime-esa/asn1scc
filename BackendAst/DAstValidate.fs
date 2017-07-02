@@ -61,7 +61,66 @@ let foldRangeCon (l:ProgrammingLanguage) valToStrFunc1 valToStrFunc2 (p:String) 
         c
         0 |> fst
 
+// constraint simplification started here
+type SimplifiedIntegerConstraint =
+    | SicAlwaysTrue
+    | SciConstraint of IntegerTypeConstraint
+    
+let simplifytUnsignedIntegerTypeConstraint (c:IntegerTypeConstraint) =
+    let handleEqual v1 = 
+        match v1 < 0I with
+        | true  -> SicAlwaysTrue
+        | false -> SciConstraint (RangeSingleValueConstraint v1)
+    
+    (*  e.g. INTEGER (5..MAX)  ==> intVal >= 5 *)
+    let handleRangeContraint_val_MAX  eqIsInc  v1 =
+        match v1 < 0I with
+        | true  -> SicAlwaysTrue
+        | false ->
+            match eqIsInc with
+            | true  when v1 =0I -> SicAlwaysTrue
+            | true   -> SciConstraint (RangeContraint_val_MAX (v1,eqIsInc))
+            | false  -> SciConstraint (RangeContraint_val_MAX (v1,eqIsInc))
+        (* e.g INTEGER (MIN .. 40) --> intVal <= 40*)
+    let handleRangeContraint_MIN_val  eqIsInc  v1 =
+        match v1 <= 0I with
+        | true  -> SicAlwaysTrue
+        | false ->
+            match eqIsInc with
+            | true  when v1 = (BigInteger UInt64.MaxValue) -> SicAlwaysTrue
+            | true   -> SciConstraint (RangeContraint_MIN_val (v1,eqIsInc))
+            | false  -> SciConstraint (RangeContraint_MIN_val (v1,eqIsInc))
 
+    let handleOr e1 e2 = 
+        match e1, e2 with
+        | SicAlwaysTrue, _                      -> SicAlwaysTrue
+        | _          , SicAlwaysTrue            -> SicAlwaysTrue
+        | SciConstraint e1, SciConstraint e2    -> SciConstraint(RangeUnionConstraint (e1,e2, false))
+    
+    let handleAnd e1 e2 =
+        match e1, e2 with
+        | SicAlwaysTrue, _             -> e2
+        | _, SicAlwaysTrue             -> e1
+        | SciConstraint e1, SciConstraint e2    -> SciConstraint(RangeIntersectionConstraint (e1,e2))
+    let handleNot e = e
+
+    foldRangeTypeConstraint        
+        (fun e1 e2 b s      -> handleOr e1 e2, s)
+        (fun e1 e2 s        -> handleAnd e1 e2, s)
+        (fun e s            -> handleNot e, s)
+        (fun e1 e2 s        -> handleAnd e1 (handleNot e2), s)
+        (fun e s            -> e, s)
+        (fun e1 e2 s        -> handleOr e1 e2, s)
+        (fun v  s           -> handleEqual v ,s)
+        (fun v1 v2  minIsIn maxIsIn s   -> 
+            let exp1 = handleRangeContraint_val_MAX minIsIn v1
+            let exp2 = handleRangeContraint_MIN_val maxIsIn v2
+            handleAnd exp1 exp2, s)
+        (fun v1 minIsIn s   -> handleRangeContraint_val_MAX  minIsIn v1, s)
+        (fun v2 maxIsIn s   -> handleRangeContraint_MIN_val maxIsIn v2, s)
+        c
+        0 |> fst
+// constraint simplification ended here
 
 let foldSizeRangeTypeConstraint (l:ProgrammingLanguage)  getSizeFunc (p:String) (c:PosIntTypeConstraint) = 
     foldRangeTypeConstraint        
@@ -250,8 +309,13 @@ let createBitOrOctetStringFunction (r:Asn1AcnAst.AstRoot) (l:ProgrammingLanguage
         Some ret, {us with currErrCode = us.currErrCode + 1}
 
 
+
 let createIntegerFunction (r:Asn1AcnAst.AstRoot) (l:ProgrammingLanguage) (t:Asn1AcnAst.Asn1Type) (o:Asn1AcnAst.Integer) (typeDefinition:TypeDefinitionCommon) (baseTypeValFunc : IsValidFunction option) (us:State)  =
-    createPrimitiveFunction r l t.id o.AllCons (foldRangeCon l (fun v -> v.ToString()) (fun v -> v.ToString())) typeDefinition [] baseTypeValFunc us
+    let allCons = 
+        match o.isUnsigned with
+        | true         -> o.AllCons |> List.map simplifytUnsignedIntegerTypeConstraint |> List.choose (fun sc -> match sc with SicAlwaysTrue -> None | SciConstraint c -> Some c)
+        | false         -> o.AllCons
+    createPrimitiveFunction r l t.id allCons (foldRangeCon l (fun v -> v.ToString()) (fun v -> v.ToString())) typeDefinition [] baseTypeValFunc us
 
 let createRealFunction (r:Asn1AcnAst.AstRoot) (l:ProgrammingLanguage) (t:Asn1AcnAst.Asn1Type) (o:Asn1AcnAst.Real) (typeDefinition:TypeDefinitionCommon) (baseTypeValFunc : IsValidFunction option) (us:State)  =
     createPrimitiveFunction r l t.id o.AllCons (foldRangeCon l (fun v -> v.ToString("E20", NumberFormatInfo.InvariantInfo)) (fun v -> v.ToString("E20", NumberFormatInfo.InvariantInfo))) typeDefinition [] baseTypeValFunc us
