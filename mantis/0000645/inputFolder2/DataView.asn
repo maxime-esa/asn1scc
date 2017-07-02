@@ -1,0 +1,7 @@
+MODB DEFINITIONS ::=
+BEGIN
+
+MyReal   ::= REAL (1.0 .. 20.4)
+
+END
+

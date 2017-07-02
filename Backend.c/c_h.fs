@@ -215,7 +215,7 @@ let SortTypeAssigments (f:Asn1File) (r:AstRoot) (acn:AcnTypes.AcnAstResolved) =
 
 
 let PrintFile (f:Asn1File) outDir newFileExt (r:AstRoot) (acn:AcnTypes.AcnAstResolved)  =
-    let fileNameNoExtUpper = f.FileNameWithoutExtension.ToUpper()
+    let fileNameNoExtUpper = f.FileNameWithoutExtension
     let allImportedModules = f.Modules |> Seq.collect(fun m -> m.Imports) |> Seq.map(fun imp -> imp.Name.Value) |> Seq.distinct
     let includedModules  = seq {   
         for file in r.Files do

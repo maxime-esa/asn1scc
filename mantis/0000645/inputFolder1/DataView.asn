@@ -1,0 +1,7 @@
+MODA DEFINITIONS ::=
+BEGIN
+
+MyInteger   ::= INTEGER (1..20)
+
+END
+

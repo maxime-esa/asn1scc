@@ -105,8 +105,8 @@ namespace Asn1f2
 
         public static int CheckSuccess(IEnumerable<string> args)
         {
-            var asn1InputFiles = args.Where(a => !a.StartsWith("-") && (a.ToLower().EndsWith(".asn1") || a.ToLower().EndsWith(".asn")));
-            var acnInputFiles = args.Where(a => !a.StartsWith("-") && a.ToLower().EndsWith(".acn"));
+            var asn1InputFiles = args.Where(a => !a.StartsWith("-") && (a.ToLower().EndsWith(".asn1") || a.ToLower().EndsWith(".asn"))).ToList();
+            var acnInputFiles = args.Where(a => !a.StartsWith("-") && a.ToLower().EndsWith(".acn")).ToList();
             
             foreach (var f in asn1InputFiles.Concat(acnInputFiles))
                 if (!File.Exists(f))
@@ -615,23 +615,34 @@ namespace Asn1f2
         }
 
 
-        public static Tuple<ITree, string, IToken[]> Parse<L, P>(string filename, Func<ANTLRFileStream, L> lexer, Func<ITokenStream, P> parser, Func<P, ITree> root)
+        public static Tuple<ITree, string, IToken[]> Parse<L, P>(IGrouping<string,string> fileGrouping, Func<ANTLRInputStream, L> lexer, Func<ITokenStream, P> parser, Func<P, ITree> root)
             where L : Lexer where P : Parser
         {
-            var stream = new CommonTokenStream(lexer(new ANTLRFileStream(filename)));
+            MemoryStream memStream = new MemoryStream();
+            foreach(var filename in fileGrouping)
+            {
+                byte[] fileData = File.ReadAllBytes(filename);
+                memStream.Write(fileData, 0, fileData.Length);
+                memStream.WriteByte(32);    //append a space in case there is no character after ASN.1 END
+            }
+            memStream.Position = 0;
+
+            var stream = new CommonTokenStream(lexer(new ANTLRInputStream(memStream)));
             var tokens = stream.GetTokens().Cast<IToken>().ToArray();
             var tree = root(parser(stream));
-            return Tuple.Create(tree, filename, tokens);
+            return Tuple.Create(tree, fileGrouping.Key, tokens);
         }
 
         public static List<Tuple<ITree, string, IToken[]>> ParseAsn1InputFiles(IEnumerable<string> inputFiles)
         {
-            return inputFiles.Select(f => Parse(f, fs => new asn1Lexer(fs), ts => new asn1Parser(ts), p => (CommonTree)p.moduleDefinitions().Tree)).ToList();
+            var groupedByFileName = inputFiles.GroupBy(f => Path.GetFileNameWithoutExtension(f)).ToList();
+            return groupedByFileName.Select(f => Parse(f, fs => new asn1Lexer(fs), ts => new asn1Parser(ts), p => (CommonTree)p.moduleDefinitions().Tree)).ToList();
         }
 
         public static List<Tuple<ITree, string, IToken[]>> ParseAcnInputFiles(IEnumerable<string> inputFiles)
         {
-            return inputFiles.Select(f => Parse(f, fs => new acnLexer(fs), ts => new acnParser(ts), p => (CommonTree)p.moduleDefinitions().Tree)).ToList();
+            var groupedByFileName = inputFiles.GroupBy(f => Path.GetFileNameWithoutExtension(f));
+            return groupedByFileName.Select(f => Parse(f, fs => new acnLexer(fs), ts => new acnParser(ts), p => (CommonTree)p.moduleDefinitions().Tree)).ToList();
         }
 
 
