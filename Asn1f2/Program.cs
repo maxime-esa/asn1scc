@@ -614,20 +614,29 @@ namespace Asn1f2
             return 0;
         }
 
-
-        public static Tuple<ITree, string, IToken[]> Parse<L, P>(IGrouping<string,string> fileGrouping, Func<ANTLRInputStream, L> lexer, Func<ITokenStream, P> parser, Func<P, ITree> root)
+        //ANTLRReaderStream
+        public static Tuple<ITree, string, IToken[]> Parse<L, P>(IGrouping<string,string> fileGrouping, Func<ICharStream, L> lexer, Func<ITokenStream, P> parser, Func<P, ITree> root)
             where L : Lexer where P : Parser
         {
-            MemoryStream memStream = new MemoryStream();
-            foreach(var filename in fileGrouping)
+            CommonTokenStream stream = null;
+            if (fileGrouping.Count() > 1)
             {
-                byte[] fileData = File.ReadAllBytes(filename);
-                memStream.Write(fileData, 0, fileData.Length);
-                memStream.WriteByte(32);    //append a space in case there is no character after ASN.1 END
+                MemoryStream memStream = new MemoryStream();
+                foreach (var filename in fileGrouping)
+                {
+                    byte[] fileData = File.ReadAllBytes(filename);
+                    memStream.Write(fileData, 0, fileData.Length);
+                    memStream.WriteByte(32);    //append a space in case there is no character after ASN.1 END
+                }
+                memStream.Position = 0;
+                stream = new CommonTokenStream(lexer(new ANTLRInputStream(memStream)));
+            } else {
+                foreach (var filename in fileGrouping)
+                {
+                    stream = new CommonTokenStream(lexer(new ANTLRFileStream(filename)));
+                }
             }
-            memStream.Position = 0;
-
-            var stream = new CommonTokenStream(lexer(new ANTLRInputStream(memStream)));
+            
             var tokens = stream.GetTokens().Cast<IToken>().ToArray();
             var tree = root(parser(stream));
             return Tuple.Create(tree, fileGrouping.Key, tokens);
