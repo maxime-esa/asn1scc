@@ -19,10 +19,27 @@ namespace Daemon.Utils
         {
             listener.Start();
 
-            while (true)
+            stopRequested = false;
+            while (!stopRequested)
             {
-                ThreadPool.QueueUserWorkItem(ProcessRequest, listener.GetContext());
+                try
+                {
+                    ThreadPool.QueueUserWorkItem(ProcessRequest, listener.GetContext());
+                }
+                catch (HttpListenerException)
+                {
+                    break;
+                }
             }
+
+            listener.Abort();
+            listener.Close();
+        }
+
+        public void Stop()
+        {
+            stopRequested = true;
+            listener.Stop();
         }
 
         public void InstallHandler(string path, Action<HttpListenerContext> handler)
@@ -52,6 +69,7 @@ namespace Daemon.Utils
             }
         }
 
+        private volatile bool stopRequested = false;
         private HttpListener listener;
         private Dictionary<string, Action<HttpListenerContext>> handlers = new Dictionary<string, Action<HttpListenerContext>>();
     }

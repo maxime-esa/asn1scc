@@ -16,11 +16,9 @@ namespace Daemon
 
             Console.WriteLine("Asn1Scc Daemon listening on: " + options.Uri);
 
-            var bindings = new Asn1ServiceBindings(new Asn1Service());
-
             var server = new HttpServer(options.Uri);
 
-            bindings.BindTo(server);
+            new Asn1ServiceBindings(new Asn1Service()).BindTo(server);
 
             server.Serve();
             // TODO nice closing of service?
