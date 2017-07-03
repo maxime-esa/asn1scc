@@ -1,5 +1,4 @@
-﻿using Daemon.Utils;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Net;
 using System.Threading;
@@ -44,6 +43,10 @@ namespace Daemon.Utils
 
         public void InstallHandler(string path, Action<HttpListenerContext> handler)
         {
+            if (handlers.ContainsKey(path))
+            {
+                throw new ArgumentException("Handler for path: '" + path + "' already installed");
+            }
             handlers[path] = handler;
         }
 

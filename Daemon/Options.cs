@@ -11,6 +11,13 @@ namespace Daemon
                 DefaultValue = "http://localhost:9749/")]
         public string Uri { get; set; }
 
+        [Option('w', "watchdog",
+                HelpText = "Enables watchog - if service /stayAlive will not be called for given amount of milliseconds, server will stop. Value -1 disables watchod.",
+                DefaultValue = -1)]
+        public int WatchdogMs { get; set; }
+
+        public bool IsWatchdogEnabled { get { return WatchdogMs > 0; } }
+
         [HelpOption]
         public string GetUsage()
         {
