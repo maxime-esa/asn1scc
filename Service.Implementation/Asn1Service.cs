@@ -17,7 +17,10 @@ namespace Service.Implementation
 
                 var args = new[] { "-ast", outFile };
 
-                Asn1f2.Program.Main(args.Concat(asnPaths).ToArray());
+                lock (asn1f2AccessLock)
+                {
+                    Asn1f2.Program.Main(args.Concat(asnPaths).ToArray());
+                }
 
                 var lines = File.ReadAllLines(outFile).Select(l => l.Replace(dir.Path, "")).ToArray();
                 return String.Join("\n", lines);
@@ -28,5 +31,7 @@ namespace Service.Implementation
         {
             return Asn1f2.Program.GetVersionString();
         }
+
+        private object asn1f2AccessLock = new object();
     }
 }
