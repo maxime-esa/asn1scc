@@ -40,7 +40,8 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Dto\FileData.cs" />
-    <Compile Include="Dto\Files.cs" />
+    <Compile Include="Dto\InputFiles.cs" />
+    <Compile Include="Dto\Output.cs" />
     <Compile Include="IAsn1Service.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>

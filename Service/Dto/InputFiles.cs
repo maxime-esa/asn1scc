@@ -2,7 +2,7 @@
 
 namespace Service.Dto
 {
-    public class Files
+    public class InputFiles
     {
         public IEnumerable<FileData> AsnFiles { get; set; }
         public IEnumerable<FileData> AcnFiles { get; set; }

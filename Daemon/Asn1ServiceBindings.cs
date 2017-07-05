@@ -25,8 +25,8 @@ namespace Daemon
 
         private void BuildAst(HttpListenerContext context)
         {
-            var data = context.Request.ReadJson<Files>();
-            context.Response.SendPlainText(service.BuildAst(data));
+            var data = context.Request.ReadJson<InputFiles>();
+            context.Response.SendJson(service.BuildAst(data));
         }
 
         private IAsn1Service service;
