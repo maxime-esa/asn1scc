@@ -83,11 +83,6 @@
     <Compile Include="FrontEntMain.fs" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\AntlrUtils\AntlrUtils.fsproj">
-      <Name>AntlrUtils</Name>
-      <Project>{db416047-7207-4816-8db6-2182be2e1104}</Project>
-      <Private>True</Private>
-    </ProjectReference>
     <ProjectReference Include="..\Antlr\Antlr.csproj">
       <Name>Antlr</Name>
       <Project>{a1882f1d-5185-407c-8227-1e2b69baade9}</Project>
