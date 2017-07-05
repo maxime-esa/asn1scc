@@ -72,12 +72,16 @@ namespace Asn1f2
             }
             catch (FsUtils.SemanticError ex)
             {
-                if (ex.Data0.Equals(FsUtils.emptyLocation))
-                    Console.Error.WriteLine("error: {0}", ex.Data1);
-                else
-                    Console.Error.WriteLine(ErrorFormatter.FormatError(ex.Data0.srcFilename, ex.Data0.srcLine, ex.Data0.charPos, ex.Data1));
+                Console.Error.WriteLine(FormatError(ex));
                 return 2;
             }
+        }
+
+        public static string FormatError(FsUtils.SemanticError ex)
+        {
+            if (ex.Data0.Equals(FsUtils.emptyLocation))
+                return "error: " + ex.Data1;
+            return ErrorFormatter.FormatError(ex.Data0.srcFilename, ex.Data0.srcLine, ex.Data0.charPos, ex.Data1);
         }
 
         public static ParameterizedAsn1Ast.EnumRenamePolicy getRenamePolicy(CmdLineArgs.CmdLineArguments cmdArgs, ParameterizedAsn1Ast.EnumRenamePolicy defaultValue)
