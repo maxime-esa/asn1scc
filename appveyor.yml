@@ -1,5 +1,9 @@
 version: 3.3.20.{build}
 
+image:
+  - Visual Studio 2015
+  - Visual Studio 2017
+
 build:
   parallel: true
   project: Asn1.sln
