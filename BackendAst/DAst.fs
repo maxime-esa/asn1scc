@@ -159,7 +159,7 @@ type IsEqualBody2 =
     | EqualBodyStatementList2    of (string -> string -> string -> (string*(LocalVariable list)) option)
 
 type EqualFunction = {
-    isEqualFuncName     : string option               // the name of the equal function. Valid only for TASes)
+    isEqualFuncName     : string option               // the name of the equal function. 
     isEqualFunc         : string option               // the body of the equal function
     isEqualFuncDef      : string option
     isEqualBody         : IsEqualBody                 // a function that  returns an expression or a statement list

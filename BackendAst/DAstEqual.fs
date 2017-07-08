@@ -246,7 +246,8 @@ let createOctetOrBitStringEqualFunction (r:Asn1AcnAst.AstRoot) (l:ProgrammingLan
                 match isEqualBody topLevAcc val1 val2 with
                 | Some (funcBody,_) -> 
                     let eqBody acc p1 p2 = 
-                        Some(callBaseTypeFunc l (getAddres l p1) (getAddres l p2) funcName, [])
+                        //Some(callBaseTypeFunc l (getAddres l p1) (getAddres l p2) funcName, [])
+                        isEqualBody acc p1 p2
                     match l with
                     | C    -> Some funcName, Some (equal_c.PrintEqualOctBit funcName typeDefinition.name funcBody), Some (stgMacroDefFunc funcName typeDefinition.name),eqBody
                     | Ada  -> Some funcName, Some (equal_a.PrintEqualPrimitive funcName typeDefinition.name funcBody), Some (stgMacroDefFunc funcName typeDefinition.name),eqBody

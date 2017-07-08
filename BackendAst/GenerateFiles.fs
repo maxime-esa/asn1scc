@@ -110,7 +110,7 @@ let private printUnit (r:DAst.AstRoot) (l:ProgrammingLanguage) outDir (pu:Progra
         match l with
         | C     -> 
             let arrsUtilityDefines = []
-            header_c.PrintHeaderFile pu.name.U1 pu.importedProgramUnits typeDefs (arrsValues@arrsHeaderAnonymousValues) arrsPrototypes arrsUtilityDefines
+            header_c.PrintHeaderFile pu.name pu.importedProgramUnits typeDefs (arrsValues@arrsHeaderAnonymousValues) arrsPrototypes arrsUtilityDefines
         | Ada   -> 
             let arrsPrivateChoices = []
             header_a.PrintPackageSpec pu.name pu.importedProgramUnits typeDefs (arrsValues@arrsHeaderAnonymousValues) arrsPrivateChoices
