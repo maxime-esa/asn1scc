@@ -82,7 +82,7 @@ let constructAst (args:CommandLineSettings) =
     (*
         check acn references
     *)
-    CheckLongReferences.checkAst acnAst
+    let acnDeps = CheckLongReferences.checkAst acnAst
 
-    acnAst
+    (acnAst, acnDeps)
 

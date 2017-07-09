@@ -487,7 +487,6 @@ with
         | Choice       t -> t.baseInfo.uperMinSizeInBits
         | ReferenceType ref -> ref.baseInfo.baseType.uperMinSizeInBits
 
-(*
 
     member this.acnEncFunction : AcnFunction option =
         match this.Kind with
@@ -497,10 +496,10 @@ with
         | OctetString  t -> None
         | NullType     t -> None
         | BitString    t -> None
-        | Boolean      t -> Some (t.acnEncFunction)
+        | Boolean      t -> None //Some (t.acnEncFunction)
         | Enumerated   t -> None
         | SequenceOf   t -> None
-        | Sequence     t -> Some (t.acnEncFunction)
+        | Sequence     t -> None //Some (t.acnEncFunction)
         | Choice       t -> None
         | ReferenceType t-> None
 
@@ -512,10 +511,10 @@ with
         | OctetString  t -> None
         | NullType     t -> None
         | BitString    t -> None
-        | Boolean      t -> Some (t.acnDecFunction)
+        | Boolean      t -> None //Some (t.acnDecFunction)
         | Enumerated   t -> None
         | SequenceOf   t -> None
-        | Sequence     t -> Some (t.acnDecFunction)
+        | Sequence     t -> None //Some (t.acnDecFunction)
         | Choice       t -> None
         | ReferenceType t-> None
     member this.getAcnFunction (l:CommonTypes.Codec) =
@@ -524,7 +523,6 @@ with
         | CommonTypes.Decode   -> this.acnDecFunction
 
 
-*)
 
     member this.isIA5String =
         match this.Kind with

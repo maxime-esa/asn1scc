@@ -18,6 +18,8 @@ let private createInteger (r:Asn1AcnAst.AstRoot) (l:ProgrammingLanguage) (m:Asn1
     let isValidFunction, s1     = DAstValidate.createIntegerFunction r l t o typeDefinition None us
     let uperEncFunction, s2     = DAstUPer.createIntegerFunction r l Codec.Encode t o typeDefinition None isValidFunction s1
     let uperDecFunction, s3     = DAstUPer.createIntegerFunction r l Codec.Decode t o typeDefinition None isValidFunction s2
+    let acnEncFunction, s4      = DAstACN.createIntegerFunction r l Codec.Encode t o typeDefinition None isValidFunction uperEncFunction s3
+    let acnDecFunction, s5      = DAstACN.createIntegerFunction r l Codec.Decode t o typeDefinition None isValidFunction uperDecFunction s4
 
     let ret =
         {
@@ -30,8 +32,10 @@ let private createInteger (r:Asn1AcnAst.AstRoot) (l:ProgrammingLanguage) (m:Asn1
             isValidFunction     = isValidFunction
             uperEncFunction     = uperEncFunction
             uperDecFunction     = uperDecFunction 
+            acnEncFunction      = acnEncFunction
+            acnDecFunction      = acnDecFunction
         }
-    Integer ret, s3
+    Integer ret, s5
 
 let private createReal (r:Asn1AcnAst.AstRoot) (l:ProgrammingLanguage) (m:Asn1AcnAst.Asn1Module) (t:Asn1AcnAst.Asn1Type) (o:Asn1AcnAst.Real) (us:State) =
     let typeDefinition = DAstTypeDefinition.createReal  r l t o us
@@ -165,6 +169,8 @@ let private createBoolean (r:Asn1AcnAst.AstRoot) (l:ProgrammingLanguage) (m:Asn1
     let isValidFunction, s1     = DAstValidate.createBoolFunction r l t o typeDefinition None us
     let uperEncFunction, s2     = DAstUPer.createBooleanFunction r l Codec.Encode t o typeDefinition None isValidFunction s1
     let uperDecFunction, s3     = DAstUPer.createBooleanFunction r l Codec.Decode t o typeDefinition None isValidFunction s2
+    let acnEncFunction, s4      = DAstACN.createBooleanFunction r l Codec.Encode t o typeDefinition None isValidFunction  s3
+    let acnDecFunction, s5      = DAstACN.createBooleanFunction r l Codec.Decode t o typeDefinition None isValidFunction  s4
     let ret =
         {
             Boolean.baseInfo    = o
@@ -176,6 +182,8 @@ let private createBoolean (r:Asn1AcnAst.AstRoot) (l:ProgrammingLanguage) (m:Asn1
             isValidFunction     = isValidFunction
             uperEncFunction     = uperEncFunction
             uperDecFunction     = uperDecFunction 
+            acnEncFunction      = acnEncFunction
+            acnDecFunction      = acnDecFunction
         }
     Boolean ret, s3
 
@@ -260,7 +268,7 @@ let private createAcnChild (r:Asn1AcnAst.AstRoot) (l:ProgrammingLanguage) (m:Asn
     AcnChild ret, us
 
 
-let private createSequence (r:Asn1AcnAst.AstRoot) (l:ProgrammingLanguage) (m:Asn1AcnAst.Asn1Module) (t:Asn1AcnAst.Asn1Type) (o:Asn1AcnAst.Sequence) (children:SeqChildInfo list, us:State) =
+let private createSequence (r:Asn1AcnAst.AstRoot) (deps:Asn1AcnAst.AcnInsertedFieldDependencies) (l:ProgrammingLanguage) (m:Asn1AcnAst.Asn1Module) (t:Asn1AcnAst.Asn1Type) (o:Asn1AcnAst.Sequence) (children:SeqChildInfo list, us:State) =
     let typeDefinition = DAstTypeDefinition.createSequence r l t o children us
     let initialValue =
         children |> 
@@ -272,6 +280,8 @@ let private createSequence (r:Asn1AcnAst.AstRoot) (l:ProgrammingLanguage) (m:Asn
     let isValidFunction, s1     = DAstValidate.createSequenceFunction r l t o typeDefinition children None us
     let uperEncFunction, s2     = DAstUPer.createSequenceFunction r l Codec.Encode t o typeDefinition None isValidFunction children s1
     let uperDecFunction, s3     = DAstUPer.createSequenceFunction r l Codec.Decode t o typeDefinition None isValidFunction children s2
+    let acnEncFunction, s4      = DAstACN.createSequenceFunction r deps l Codec.Encode t o typeDefinition None isValidFunction children s3
+    let acnDecFunction, s5      = DAstACN.createSequenceFunction r deps l Codec.Decode t o typeDefinition None isValidFunction children s4
     let ret =
         {
             Sequence.baseInfo   = o
@@ -284,8 +294,10 @@ let private createSequence (r:Asn1AcnAst.AstRoot) (l:ProgrammingLanguage) (m:Asn
             isValidFunction     = isValidFunction
             uperEncFunction     = uperEncFunction
             uperDecFunction     = uperDecFunction 
+            acnEncFunction      = acnEncFunction
+            acnDecFunction      = acnDecFunction
         }
-    Sequence ret, s3
+    Sequence ret, s5
 
 let private createChoice (r:Asn1AcnAst.AstRoot) (l:ProgrammingLanguage) (m:Asn1AcnAst.Asn1Module) (t:Asn1AcnAst.Asn1Type) (o:Asn1AcnAst.Choice) (children:ChChildInfo list, us:State) =
     let typeDefinition = DAstTypeDefinition.createChoice r l t o children us
@@ -352,7 +364,7 @@ let private createReferenceType (r:Asn1AcnAst.AstRoot) (l:ProgrammingLanguage) (
         }
     ReferenceType ret, s3
 
-let private mapType (r:Asn1AcnAst.AstRoot) (l:ProgrammingLanguage) (m:Asn1AcnAst.Asn1Module) (t:Asn1AcnAst.Asn1Type, us:State) =
+let private mapType (r:Asn1AcnAst.AstRoot) (deps:Asn1AcnAst.AcnInsertedFieldDependencies) (l:ProgrammingLanguage) (m:Asn1AcnAst.Asn1Module) (t:Asn1AcnAst.Asn1Type, us:State) =
     Asn1Fold.foldType2
         (fun t ti us -> createInteger r l m t ti us)
         (fun t ti us -> createReal r l m t ti us)
@@ -371,7 +383,7 @@ let private mapType (r:Asn1AcnAst.AstRoot) (l:ProgrammingLanguage) (m:Asn1AcnAst
 
         (fun t ti newChild -> createSequenceOf r l m t ti newChild)
 
-        (fun t ti newChildren -> createSequence r l m t ti newChildren)
+        (fun t ti newChildren -> createSequence r deps l m t ti newChildren)
         (fun ch newChild -> createAsn1Child r l m ch newChild)
         (fun ch us -> createAcnChild r l m ch us)
         
@@ -394,8 +406,8 @@ let private mapType (r:Asn1AcnAst.AstRoot) (l:ProgrammingLanguage) (m:Asn1AcnAst
         us 
         
 
-let private mapTas (r:Asn1AcnAst.AstRoot) (l:ProgrammingLanguage) (m:Asn1AcnAst.Asn1Module) (tas:Asn1AcnAst.TypeAssignment) (us:State)=
-    let newType, ns = mapType r l m (tas.Type, us)
+let private mapTas (r:Asn1AcnAst.AstRoot) (deps:Asn1AcnAst.AcnInsertedFieldDependencies) (l:ProgrammingLanguage) (m:Asn1AcnAst.Asn1Module) (tas:Asn1AcnAst.TypeAssignment) (us:State)=
+    let newType, ns = mapType r deps l m (tas.Type, us)
     {
         TypeAssignment.Name = tas.Name
         c_name = tas.c_name
@@ -405,8 +417,8 @@ let private mapTas (r:Asn1AcnAst.AstRoot) (l:ProgrammingLanguage) (m:Asn1AcnAst.
     },ns
 
 
-let private mapVas (r:Asn1AcnAst.AstRoot) (l:ProgrammingLanguage) (m:Asn1AcnAst.Asn1Module) (vas:Asn1AcnAst.ValueAssignment) (us:State)=
-    let newType, ns = mapType r l m (vas.Type, us)
+let private mapVas (r:Asn1AcnAst.AstRoot) (deps:Asn1AcnAst.AcnInsertedFieldDependencies)  (l:ProgrammingLanguage) (m:Asn1AcnAst.Asn1Module) (vas:Asn1AcnAst.ValueAssignment) (us:State)=
+    let newType, ns = mapType r deps l m (vas.Type, us)
     {
         ValueAssignment.Name = vas.Name
         c_name = vas.c_name
@@ -415,9 +427,9 @@ let private mapVas (r:Asn1AcnAst.AstRoot) (l:ProgrammingLanguage) (m:Asn1AcnAst.
         Value = mapValue vas.Value
     },ns
 
-let private mapModule (r:Asn1AcnAst.AstRoot) (l:ProgrammingLanguage) (m:Asn1AcnAst.Asn1Module) (us:State) =
-    let newTases, ns1 = m.TypeAssignments |> foldMap (fun ns nt -> mapTas r l m nt ns) us
-    let newVases, ns2 = m.ValueAssignments |> foldMap (fun ns nt -> mapVas r l m nt ns) ns1
+let private mapModule (r:Asn1AcnAst.AstRoot) (deps:Asn1AcnAst.AcnInsertedFieldDependencies) (l:ProgrammingLanguage) (m:Asn1AcnAst.Asn1Module) (us:State) =
+    let newTases, ns1 = m.TypeAssignments |> foldMap (fun ns nt -> mapTas r deps l m nt ns) us
+    let newVases, ns2 = m.ValueAssignments |> foldMap (fun ns nt -> mapVas r deps l m nt ns) ns1
     {
         Asn1Module.Name = m.Name
         TypeAssignments = newTases
@@ -427,15 +439,15 @@ let private mapModule (r:Asn1AcnAst.AstRoot) (l:ProgrammingLanguage) (m:Asn1AcnA
         Comments = m.Comments
     }, ns2
 
-let private mapFile (r:Asn1AcnAst.AstRoot) (l:ProgrammingLanguage) (f:Asn1AcnAst.Asn1File) (us:State) =
-    let newModules, ns = f.Modules |> foldMap (fun cs m -> mapModule r l m cs) us
+let private mapFile (r:Asn1AcnAst.AstRoot) (deps:Asn1AcnAst.AcnInsertedFieldDependencies) (l:ProgrammingLanguage) (f:Asn1AcnAst.Asn1File) (us:State) =
+    let newModules, ns = f.Modules |> foldMap (fun cs m -> mapModule r deps l m cs) us
     {
         Asn1File.FileName = f.FileName
         Tokens = f.Tokens
         Modules = newModules
     }, ns
 
-let DoWork (r:Asn1AcnAst.AstRoot) (lang:CommonTypes.ProgrammingLanguage) : AstRoot=
+let DoWork (r:Asn1AcnAst.AstRoot) (deps:Asn1AcnAst.AcnInsertedFieldDependencies) (lang:CommonTypes.ProgrammingLanguage) : AstRoot=
 
     let l =
         match lang with
@@ -447,7 +459,7 @@ let DoWork (r:Asn1AcnAst.AstRoot) (lang:CommonTypes.ProgrammingLanguage) : AstRo
     
     let initialState = {State.currentTypes = []; curSeqOfLevel=0; currErrCode = 1}
 
-    let files, ns = r.Files |> foldMap (fun cs f -> mapFile r l f cs) initialState
+    let files, ns = r.Files |> foldMap (fun cs f -> mapFile r deps l f cs) initialState
     {
         AstRoot.Files = files
         acnConstants = r.acnConstants

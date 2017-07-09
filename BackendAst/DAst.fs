@@ -231,8 +231,8 @@ type Integer = {
     isValidFunction     : IsValidFunction option      // it is optional because some types do not require an IsValid function (e.g. an unconstraint integer)
     uperEncFunction     : UPerFunction
     uperDecFunction     : UPerFunction
-    //acnEncFunction      : AcnFunction
-    //acnDecFunction      : AcnFunction
+    acnEncFunction      : AcnFunction
+    acnDecFunction      : AcnFunction
     
 
 }
@@ -281,8 +281,8 @@ type Boolean = {
     isValidFunction     : IsValidFunction option      // it is optional because some types do not require an IsValid function (e.g. an unconstraint integer)
     uperEncFunction     : UPerFunction
     uperDecFunction     : UPerFunction
-    //acnEncFunction      : AcnFunction
-    //acnDecFunction      : AcnFunction
+    acnEncFunction      : AcnFunction
+    acnDecFunction      : AcnFunction
 }
 
 
@@ -398,6 +398,7 @@ and AcnChild = {
     Name                        : StringLoc
     id                          : ReferenceToType
     Type                        : Asn1AcnAst.AcnInsertedType
+    typeDefinitionBodyWithinSeq : string
 }
 
 and SeqChildInfo = 
@@ -434,8 +435,8 @@ and Sequence = {
     uperEncFunction     : UPerFunction
     uperDecFunction     : UPerFunction
     //
-    //acnEncFunction      : AcnFunction
-    //acnDecFunction      : AcnFunction
+    acnEncFunction      : AcnFunction
+    acnDecFunction      : AcnFunction
 }
 
 

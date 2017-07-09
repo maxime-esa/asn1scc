@@ -108,7 +108,7 @@ let main argv =
         let args = constructCommandLineSettings cliArgs parserResults
         
         // create front ent ast
-        let frontEntAst = FrontEntMain.constructAst args
+        let frontEntAst, acnDeps = FrontEntMain.constructAst args
         
         // print front ent ast as xml 
         match args.AstXmlAbsFileName with

@@ -150,6 +150,8 @@ type AcnParameter = {
     asn1Type    : AcnParamType
     loc         : SrcLoc
 }
+with 
+    member this.c_name = ToC this.name
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////// ASN1 VALUES DEFINITION    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -624,6 +626,20 @@ type AstRoot = {
     Files: list<Asn1File>
     acnConstants : Map<string, BigInteger>
     args:CommandLineSettings
+}
+
+
+type DependencyKind = 
+    | DepIA5StringSizeDeterminant          of ReferenceToType     // points to an integer type that acts as a size determinant to a IA5StringType etc
+    | DepOtherSizeDeterminant              of ReferenceToType     // points to an integer type that acts as a size determinant to a SEQUENCE OF, BIT STRINT, OCTET STRING etc
+    | DepRefTypeArgument                   of ReferenceToType      // 
+    | DepPresenceBool                      of ReferenceToType      // points to a SEQEUNCE child
+    | DepPresenceInt                       of ReferenceToType      // points to a Choice child
+    | DepPresenceStr                       of ReferenceToType      // points to a Choice child
+    | DepChoiceDeteterminant               of ReferenceToType      // points to Enumerated type acting as CHOICE determinant.
+
+type AcnInsertedFieldDependencies = {
+    acnFields   : Map<ReferenceToType, list<DependencyKind> >
 }
 
 
