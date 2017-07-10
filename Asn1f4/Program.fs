@@ -120,8 +120,8 @@ let main argv =
             cliArgs |> 
             List.choose (fun a -> 
                 match a with
-                | C_lang        -> Some (DAstConstruction.DoWork frontEntAst  CommonTypes.ProgrammingLanguage.C)
-                | Ada_Lang      -> Some (DAstConstruction.DoWork frontEntAst  CommonTypes.ProgrammingLanguage.Ada)
+                | C_lang        -> Some (DAstConstruction.DoWork frontEntAst acnDeps CommonTypes.ProgrammingLanguage.C)
+                | Ada_Lang      -> Some (DAstConstruction.DoWork frontEntAst acnDeps CommonTypes.ProgrammingLanguage.Ada)
                 | _             -> None)
 
         //generate code

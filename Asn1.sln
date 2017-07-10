@@ -47,10 +47,19 @@ EndProject
 Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "BackendAst", "BackendAst\BackendAst.fsproj", "{2F960476-565F-4282-90B3-606DBAC5EFF2}"
 EndProject
 Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "StgAda", "StgAda\StgAda.fsproj", "{18B04AEE-C300-4139-A2DE-C3519CC24E94}"
+	ProjectSection(ProjectDependencies) = postProject
+		{4112E7C9-0E9C-41DB-88C3-D5911C1D89D5} = {4112E7C9-0E9C-41DB-88C3-D5911C1D89D5}
+	EndProjectSection
 EndProject
 Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "StgC", "StgC\StgC.fsproj", "{A35CB9D7-70B4-41E3-BBA8-7F8263AA3498}"
+	ProjectSection(ProjectDependencies) = postProject
+		{4112E7C9-0E9C-41DB-88C3-D5911C1D89D5} = {4112E7C9-0E9C-41DB-88C3-D5911C1D89D5}
+	EndProjectSection
 EndProject
 Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "StgVarious", "StgVarious\StgVarious.fsproj", "{44920B63-4F4D-40E2-A652-66EA7EBD5E80}"
+	ProjectSection(ProjectDependencies) = postProject
+		{4112E7C9-0E9C-41DB-88C3-D5911C1D89D5} = {4112E7C9-0E9C-41DB-88C3-D5911C1D89D5}
+	EndProjectSection
 EndProject
 Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "FrontEndAst", "FrontEndAst\FrontEndAst.fsproj", "{11FDC208-86E6-464E-9974-0E534ED55513}"
 EndProject

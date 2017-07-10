@@ -264,6 +264,7 @@ let private createAcnChild (r:Asn1AcnAst.AstRoot) (l:ProgrammingLanguage) (m:Asn
             AcnChild.Name  = ch.Name
             id             = ch.id
             Type           = ch.Type
+            typeDefinitionBodyWithinSeq = "INTEGER"
         }
     AcnChild ret, us
 
