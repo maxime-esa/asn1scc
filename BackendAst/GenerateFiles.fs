@@ -74,13 +74,10 @@ let private printUnit (r:DAst.AstRoot) (l:ProgrammingLanguage) outDir (pu:Progra
                 | Some f    -> f.funcDef
             let uPerEncFunc = tas.Type.uperEncFunction.funcDef
             let uPerDecFunc = tas.Type.uperDecFunction.funcDef
-            (*
-            let acnEncFunc = match t.acnEncFunction with None -> None | Some x -> x.funcDef
-            let acnDecFunc = match t.acnDecFunction with None -> None | Some x -> x.funcDef
+            let acnEncFunc = match tas.Type.acnEncFunction with None -> None | Some x -> x.funcDef
+            let acnDecFunc = match tas.Type.acnDecFunction with None -> None | Some x -> x.funcDef
 
-            let allProcs = equal_defs@([(*init_def;*) isValid;uPerEncFunc;uPerDecFunc;acnEncFunc; acnDecFunc] |> List.choose id)
-            *)
-            let allProcs = equal_defs@([init_def;isValid;uPerEncFunc;uPerDecFunc] |> List.choose id)
+            let allProcs = equal_defs@([init_def;isValid;uPerEncFunc;uPerDecFunc;acnEncFunc; acnDecFunc] |> List.choose id)
             match l with
             |C     -> header_c.Define_TAS type_defintion allProcs 
             |Ada   -> header_a.Define_TAS type_defintion allProcs 
@@ -129,14 +126,11 @@ let private printUnit (r:DAst.AstRoot) (l:ProgrammingLanguage) outDir (pu:Progra
                 match codec with
                 | CommonTypes.Encode    -> t.Type.uperEncFunction.func
                 | CommonTypes.Decode    -> t.Type.uperDecFunction.func
-            (*
             let ancEncDec codec         = 
                 match codec with
-                | CommonTypes.Encode    -> match t.acnEncFunction with None -> None | Some x -> x.func
-                | CommonTypes.Decode    -> match t.acnDecFunction with None -> None | Some x -> x.func
-            let allProcs = eqFuncs@([(*initialize;*) isValid;(uperEncDec CommonTypes.Encode); (uperEncDec CommonTypes.Decode);(ancEncDec CommonTypes.Encode); (ancEncDec CommonTypes.Decode)] |> List.choose id)
-            *)
-            let allProcs =  eqFuncs@([initialize; isValid;(uperEncDec CommonTypes.Encode); (uperEncDec CommonTypes.Decode)] |> List.choose id)
+                | CommonTypes.Encode    -> match t.Type.acnEncFunction with None -> None | Some x -> x.func
+                | CommonTypes.Decode    -> match t.Type.acnDecFunction with None -> None | Some x -> x.func
+            let allProcs =  eqFuncs@([initialize; isValid;(uperEncDec CommonTypes.Encode); (uperEncDec CommonTypes.Decode);(ancEncDec CommonTypes.Encode); (ancEncDec CommonTypes.Decode)] |> List.choose id)
             match l with
             | C     ->  body_c.printTass allProcs 
             | Ada   ->  body_a.printTass allProcs )

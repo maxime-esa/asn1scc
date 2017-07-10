@@ -82,6 +82,24 @@ let createInteger (r:Asn1AcnAst.AstRoot) (l:ProgrammingLanguage) (t:Asn1AcnAst.A
 
     }
 
+let createAcnInteger (r:Asn1AcnAst.AstRoot) (l:ProgrammingLanguage) (a:Asn1AcnAst.AcnInteger) =
+    let Declare_Integer     =  match l with  C  -> header_c.Declare_Integer  | Ada   -> header_a.Declare_Integer 
+    let Declare_PosInteger  =  match l with  C  -> header_c.Declare_PosInteger  | Ada   -> header_a.Declare_Integer  
+    match a.acnProperties.encodingProp with
+    | Some (PosInt)     -> Declare_PosInteger ()
+    | _                 -> Declare_Integer ()
+        
+    
+let createAcnBoolean (r:Asn1AcnAst.AstRoot) (l:ProgrammingLanguage) =
+    match l with
+    | C                      -> header_c.Declare_Boolean ()
+    | Ada                    -> header_a.Declare_BOOLEAN ()    
+
+let createAcnNull (r:Asn1AcnAst.AstRoot) (l:ProgrammingLanguage) =
+    match l with
+    | C                      -> header_c.Declare_NullType ()
+    | Ada                    -> header_a.Declare_NULL ()
+
 let createBoolean (r:Asn1AcnAst.AstRoot) (l:ProgrammingLanguage) (t:Asn1AcnAst.Asn1Type) (o:Asn1AcnAst.Boolean)   (us:State) =
     let typeDefinitionName = getTypeDefinitionName r l t.id
 

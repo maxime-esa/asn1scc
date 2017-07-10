@@ -27,6 +27,36 @@ let private addAcnChild (cur:AcnInsertedFieldDependencies) (acnRefId:ReferenceTo
     | None      -> {cur with acnFields = cur.acnFields.Add(newKey,[d])}
     | Some lst  -> {cur with acnFields = cur.acnFields.Add(newKey,lst@[d])}
 
+(*
+    TAP3File[]{
+         header []{
+			operatorID1  [],
+			operatorID2  [],
+			callsArePresent BOOLEAN []
+		},  
+        data [] {
+			calls[present-when header.callsArePresent]		
+		}
+    }
+
+
+	                /*Encode callsArePresent */
+					//data.calls [present-when header.callsArePresent]
+					//Είμαι στο data.calls και το present-when attribute είναι header.callsArePresent
+					//Στην checkLongReference κάνω τα εξής
+					//Θεωρώ ότι οι κοινός μπαμπάς είναι ο δικός μου μπαμπας. 
+					//Δηλαδή αρχικά θεωρώ ότι commonFather = data και βάζω μέσα στην στοίβα ReverseLinkStack τον optional παιδί δηλαδή ReverseLinkStack = [calls]
+					//Έχει το sequence data πεδίο header ?
+					// OXI -> ανεβαίνω ένα επίπεδο πάνω δηλαδή commonFather = TAP3File και βάζω στην αρχή της στοίβας ReverseLinkStack τον τον μπαμπά που εγκαταλύπω δηλαδή [data; calls].
+					//Έχει το sequence TAP3File πεδίο header ? 
+					// Nai -> CommnoFather = TAP3File
+					// Είναι το μονοπάτι TAP3File.header.callsArePresent ναι άρα το link είναι valid.
+					// Ποιο είναι το reverse link?
+					// To reverse link βρίσκεται στην στοίβα ReverseLinkStack δηλαδή από τον CommnoFather (TAP3File) με long access [data; calls]
+
+
+*)
+
 let private checkRelativePath (curState:AcnInsertedFieldDependencies) (parents: Asn1Type list) (visibleParameters:(ReferenceToType*AcnParameter) list) (RelativePath path : RelativePath) (d:DependencyKind) checkParameter checkAcnType =
     match path with
     | []        -> raise (BugErrorException("Invalid Argument"))

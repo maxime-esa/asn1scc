@@ -258,15 +258,34 @@ let private createAsn1Child (r:Asn1AcnAst.AstRoot) (l:ProgrammingLanguage) (m:As
 
 
 let private createAcnChild (r:Asn1AcnAst.AstRoot) (l:ProgrammingLanguage) (m:Asn1AcnAst.Asn1Module) (ch:Asn1AcnAst.AcnChild) (us:State) =
+    let funcBodyEncode, ns1 = 
+        match ch.Type with
+        | Asn1AcnAst.AcnInteger  a -> DAstACN.createAcnIntegerFunction r l Codec.Encode ch.id a us
+        | Asn1AcnAst.AcnBoolean  a -> DAstACN.createAcnBooleanFunction r l Codec.Encode ch.id a us
+        | Asn1AcnAst.AcnNullType a -> (fun p -> None), us
+        
+    let funcBodyDecode, ns2 = 
+        match ch.Type with
+        | Asn1AcnAst.AcnInteger  a -> DAstACN.createAcnIntegerFunction r l Codec.Decode ch.id a ns1
+        | Asn1AcnAst.AcnBoolean  a -> DAstACN.createAcnBooleanFunction r l Codec.Decode ch.id a ns1
+        | Asn1AcnAst.AcnNullType a -> (fun p -> None), us
+        
+
     let ret = 
         {
         
             AcnChild.Name  = ch.Name
             id             = ch.id
             Type           = ch.Type
-            typeDefinitionBodyWithinSeq = "INTEGER"
+            typeDefinitionBodyWithinSeq = 
+                match ch.Type with
+                | Asn1AcnAst.AcnInteger  a -> DAstTypeDefinition.createAcnInteger r l a
+                | Asn1AcnAst.AcnNullType _ -> DAstTypeDefinition.createAcnNull r l
+                | Asn1AcnAst.AcnBoolean  _ -> DAstTypeDefinition.createAcnBoolean r l
+            funcBody = fun codec -> match codec with Codec.Encode -> funcBodyEncode | Codec.Decode -> funcBodyDecode
+
         }
-    AcnChild ret, us
+    AcnChild ret, ns2
 
 
 let private createSequence (r:Asn1AcnAst.AstRoot) (deps:Asn1AcnAst.AcnInsertedFieldDependencies) (l:ProgrammingLanguage) (m:Asn1AcnAst.Asn1Module) (t:Asn1AcnAst.Asn1Type) (o:Asn1AcnAst.Sequence) (children:SeqChildInfo list, us:State) =

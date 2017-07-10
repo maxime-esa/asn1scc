@@ -154,6 +154,33 @@ type FuncParamType  with
             if childTypeIsString then (FIXARRAY newPath) else (VALUE newPath)
 
 
+let getAccessFromScopeNodeList (ReferenceToType nodes)  (childTypeIsString: bool) (l:ProgrammingLanguage) (pVal : FuncParamType) =
+    let handleNode zeroBasedSeqeuenceOfLevel (pVal : FuncParamType) (n:ScopeNode) = 
+        match n with
+        | MD _
+        | TA _
+        | PRM _
+        | VA _          -> raise(BugErrorException "getAccessFromScopeNodeList")
+        | SEQ_CHILD chName  -> pVal.getSeqChild l (ToC chName) childTypeIsString
+        | CH_CHILD  chName  -> pVal.getChChild l (ToC chName) childTypeIsString
+        | SQF               -> 
+            let curIdx = sprintf "i%d" (zeroBasedSeqeuenceOfLevel + 1)
+
+            pVal.getArrayItem l curIdx childTypeIsString
+
+    match nodes with
+    | (MD md)::(TA tas)::(PRM prm)::[]  -> VALUE (ToC (md + "_" + tas + "_" + prm))
+    | (MD md)::(TA tas):: xs            ->
+        let ret = 
+            xs |> 
+            List.fold(fun (curPath, zeroBasedSeqeuenceOfLevel) n -> 
+                let newPath = handleNode zeroBasedSeqeuenceOfLevel curPath n
+                let zeroBasedSeqeuenceOfLevel = match n with SQF -> zeroBasedSeqeuenceOfLevel + 1 | _ -> zeroBasedSeqeuenceOfLevel
+                (newPath, zeroBasedSeqeuenceOfLevel)) (pVal,0) |> fst
+        ret 
+    | _                                 -> raise(BugErrorException "getAccessFromScopeNodeList")
+
+
 
 type LocalVariable with
     member this.VarName =
@@ -278,6 +305,8 @@ type SeqChildInfo with
         | Asn1Child x    -> x.Optionality
         | AcnChild x     -> None
 
+type AcnChild with
+    member this.c_name = ToC this.Name.Value
 
 type Asn1AcnAst.Asn1Type with
     member this.getParamType (l:ProgrammingLanguage) (c:Codec) =
@@ -496,10 +525,10 @@ with
         | OctetString  t -> None
         | NullType     t -> None
         | BitString    t -> None
-        | Boolean      t -> None //Some (t.acnEncFunction)
+        | Boolean      t -> Some (t.acnEncFunction)
         | Enumerated   t -> None
         | SequenceOf   t -> None
-        | Sequence     t -> None //Some (t.acnEncFunction)
+        | Sequence     t -> Some (t.acnEncFunction)
         | Choice       t -> None
         | ReferenceType t-> None
 
@@ -511,10 +540,10 @@ with
         | OctetString  t -> None
         | NullType     t -> None
         | BitString    t -> None
-        | Boolean      t -> None //Some (t.acnDecFunction)
+        | Boolean      t -> Some (t.acnDecFunction)
         | Enumerated   t -> None
         | SequenceOf   t -> None
-        | Sequence     t -> None //Some (t.acnDecFunction)
+        | Sequence     t -> Some (t.acnDecFunction)
         | Choice       t -> None
         | ReferenceType t-> None
     member this.getAcnFunction (l:CommonTypes.Codec) =

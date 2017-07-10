@@ -141,7 +141,7 @@ let get_group  fileName =
         let applicationFolder = Path.GetDirectoryName(System.Reflection.Assembly.GetAssembly(typedefof<dummy>).Location);
         let devFolders = match runsUnderMono() with
                          | true  -> [@"/mnt/camelot/prj/DataModeling/ASN1_FSHARP/Backend2.ST"]
-                         | false -> [@"C:\prj\GitHub\asn1scc\StgC"; @"C:\prj\GitHub\asn1scc\StgAda"; @"C:\prj\GitHub\asn1scc\Backend.c.ST"; @"C:\prj\GitHub\asn1scc\Backend2.ST"]
+                         | false -> [@"E:\prj\GitHub\asn1scc\StgC"; @"E:\prj\GitHub\asn1scc\StgAda"; @"C:\prj\GitHub\asn1scc\Backend.c.ST"; @"C:\prj\GitHub\asn1scc\Backend2.ST"]
         let custFolder =
             match Path.GetDirectoryName fileName with
             | ""    -> []

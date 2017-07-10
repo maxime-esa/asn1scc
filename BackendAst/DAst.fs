@@ -399,6 +399,7 @@ and AcnChild = {
     id                          : ReferenceToType
     Type                        : Asn1AcnAst.AcnInsertedType
     typeDefinitionBodyWithinSeq : string
+    funcBody                    : CommonTypes.Codec -> FuncParamType -> (AcnFuncBodyResult option)            // returns a list of validations statements
 }
 
 and SeqChildInfo = 
