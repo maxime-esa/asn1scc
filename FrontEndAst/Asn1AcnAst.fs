@@ -639,7 +639,8 @@ type DependencyKind =
     | DepChoiceDeteterminant               of ReferenceToType      // points to Enumerated type acting as CHOICE determinant.
 
 type AcnInsertedFieldDependencies = {
-    acnFields   : Map<ReferenceToType, list<DependencyKind> >
+    acnFields           : Map<ReferenceToType, list<DependencyKind> >       //for each acninserted fields a list with their dependencies
+    asn12AcnFieldDep    : Map<DependencyKind, ReferenceToType>
 }
 
 

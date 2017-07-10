@@ -311,6 +311,35 @@ let createSequenceFunction (r:Asn1AcnAst.AstRoot) (deps:Asn1AcnAst.AcnInsertedFi
                             | Some chFunc   -> chFunc.funcBody (p.getSeqChild l child.c_name child.Type.isIA5String)
                             | None          -> None
 
+
+
+
+                        //handle present-when acn property
+                        let acnPresenceStatement = 
+                            match child.Optionality with
+                            | Some (Asn1AcnAst.Optional opt)   -> 
+                                match opt.acnPresentWhen with
+                                | None    -> None
+                                | Some (PresenceWhenBool relPath)    -> 
+                                    //TODO multiple decoding types may use the same determinant.
+                                    // We must be updated from all types and if value is different return error
+                                    let determinantId = deps.asn12AcnFieldDep.[(DepPresenceBool child.Type.id)]
+                                    let extField = getAcnDeterminantName determinantId
+                                    Some(sequence_presense_optChild_pres_bool p.p (p.getAcces l) child.c_name extField codec)
+                                    (*
+                                    match lnk.linkType with
+                                    | Asn1AcnAst.PresenceBool              -> Some(sequence_presense_optChild_pres_bool p.p (p.getAcces l) child.c_name extField codec)
+                                    | Asn1AcnAst.PresenceInt intVal        -> Some(sequence_presense_optChild_pres_int p.p (p.getAcces l) child.c_name extField intVal codec)
+                                    | Asn1AcnAst.PresenceStr strval        -> Some(sequence_presense_optChild_pres_str p.p (p.getAcces l) child.c_name extField strval codec)
+                                    | _                         -> raise(BugErrorException "unexpected error in createSequenceFunction")
+                                    *)
+                            | _                 -> None
+                        yield (acnPresenceStatement, [], [])
+
+
+
+
+
                         match childContentResult with
                         | None              -> ()
                         | Some childContent ->
@@ -337,14 +366,14 @@ let createSequenceFunction (r:Asn1AcnAst.AstRoot) (deps:Asn1AcnAst.AcnInsertedFi
                             | DepOtherSizeDeterminant      decTypeId   -> raise(BugErrorException "Not implemented functionality")
                             | DepRefTypeArgument           decTypeId   -> raise(BugErrorException "Not implemented functionality")
                             | DepPresenceBool              decTypeId   -> 
-                                    //<v> = (<sSeqPath><sAcc>exist.<sChildName> == 1);
-                                    let parDecTypeSeq =
-                                        match decTypeId with
-                                        | ReferenceToType (nodes) -> ReferenceToType (nodes |> List.rev |> List.tail |> List.rev)
-                                    let pDecParSeq = getAccessFromScopeNodeList parDecTypeSeq false l pRoot
-                                    let v = childP.getValue l
-                                    let updateStatement = acn_c.PresenceDependency v (pDecParSeq.p) (pDecParSeq.getAcces l) (ToC decTypeId.lastItem)
-                                    Some updateStatement
+                                //<v> = (<sSeqPath><sAcc>exist.<sChildName> == 1);
+                                let parDecTypeSeq =
+                                    match decTypeId with
+                                    | ReferenceToType (nodes) -> ReferenceToType (nodes |> List.rev |> List.tail |> List.rev)
+                                let pDecParSeq = getAccessFromScopeNodeList parDecTypeSeq false l pRoot
+                                let v = childP.getValue l
+                                let updateStatement = acn_c.PresenceDependency v (pDecParSeq.p) (pDecParSeq.getAcces l) (ToC decTypeId.lastItem)
+                                Some updateStatement
                             | DepPresenceInt               decTypeId   -> raise(BugErrorException "Not implemented functionality")
                             | DepPresenceStr               decTypeId   -> raise(BugErrorException "Not implemented functionality")
                             | DepChoiceDeteterminant       decTypeId   -> raise(BugErrorException "Not implemented functionality")
