@@ -305,8 +305,6 @@ type SeqChildInfo with
         | Asn1Child x    -> x.Optionality
         | AcnChild x     -> None
 
-type AcnChild with
-    member this.c_name = ToC this.Name.Value
 
 type Asn1AcnAst.Asn1Type with
     member this.getParamType (l:ProgrammingLanguage) (c:Codec) =

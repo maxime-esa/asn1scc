@@ -396,10 +396,12 @@ and SeqChildInfo = {
 
 and AcnChild = {
     Name                        : StringLoc
+    c_name                      : string
     id                          : ReferenceToType
     Type                        : Asn1AcnAst.AcnInsertedType
     typeDefinitionBodyWithinSeq : string
     funcBody                    : CommonTypes.Codec -> FuncParamType -> (AcnFuncBodyResult option)            // returns a list of validations statements
+    funcUpdateStatement         : FuncParamType -> FuncParamType -> string                                    // vTarget,  pSrcRoot, return the update statement 
 }
 
 and SeqChildInfo = 
@@ -491,10 +493,22 @@ and ReferenceType = {
 
 }
 
+and AcnParameter = {
+    name        : string
+    c_name      : string
+    asn1Type    : Asn1AcnAst.AcnParamType
+    loc         : SrcLoc
+    id          : ReferenceToType
+    typeDefinitionBodyWithinSeq : string
+    funcUpdateStatement         : FuncParamType -> FuncParamType -> string                                    // vTarget,  pSrcRoot, return the update statement 
+}
+    
+
+
 and Asn1Type = {
     id              : ReferenceToType
     acnAligment     : Asn1AcnAst.AcnAligment option
-    acnParameters   : Asn1AcnAst.AcnParameter list
+    acnParameters   : AcnParameter list
     Location        : SrcLoc //Line no, Char pos
     tasInfo         : TypeAssignmentInfo option
     Kind            : Asn1TypeKind

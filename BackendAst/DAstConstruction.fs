@@ -11,6 +11,60 @@ open DAstUtilFunctions
 
 let foldMap = Asn1Fold.foldMap
 
+let private mapAcnParameter (r:Asn1AcnAst.AstRoot) (deps:Asn1AcnAst.AcnInsertedFieldDependencies) (l:ProgrammingLanguage) (m:Asn1AcnAst.Asn1Module) (t:Asn1AcnAst.Asn1Type) (prm:Asn1AcnAst.AcnParameter) (us:State) =
+    let id = 
+            match t.id with
+            |ReferenceToType (nodes) -> ReferenceToType (nodes@[PRM prm.name])
+    let funcUpdateStatement, ns1 = DAstACN.getUpdateFunctionUsedInEncoding r deps l m id us
+    {
+        AcnParameter.asn1Type = prm.asn1Type; 
+        name = prm.name; 
+        loc = prm.loc
+        id = id
+        c_name = DAstACN.getAcnDeterminantName id
+        typeDefinitionBodyWithinSeq = 
+            match prm.asn1Type with
+            | Asn1AcnAst.AcnPrmInteger  _ -> DAstTypeDefinition.createPrmAcnInteger r l 
+            | Asn1AcnAst.AcnPrmBoolean  _ -> DAstTypeDefinition.createAcnNull r l
+            | Asn1AcnAst.AcnPrmNullType _ -> DAstTypeDefinition.createAcnBoolean r l
+            | Asn1AcnAst.AcnPrmRefType (md,ts)  -> DAstTypeDefinition.getTypeDefinitionName r l (ReferenceToType [MD md.Value; TA ts.Value])
+
+
+        funcUpdateStatement = funcUpdateStatement
+    }, ns1
+
+let private createAcnChild (r:Asn1AcnAst.AstRoot) (deps:Asn1AcnAst.AcnInsertedFieldDependencies) (l:ProgrammingLanguage) (m:Asn1AcnAst.Asn1Module) (ch:Asn1AcnAst.AcnChild) (us:State) =
+    let funcBodyEncode, ns1 = 
+        match ch.Type with
+        | Asn1AcnAst.AcnInteger  a -> DAstACN.createAcnIntegerFunction r l Codec.Encode ch.id a us
+        | Asn1AcnAst.AcnBoolean  a -> DAstACN.createAcnBooleanFunction r l Codec.Encode ch.id a us
+        | Asn1AcnAst.AcnNullType a -> (fun p -> None), us
+        
+    let funcBodyDecode, ns2 = 
+        match ch.Type with
+        | Asn1AcnAst.AcnInteger  a -> DAstACN.createAcnIntegerFunction r l Codec.Decode ch.id a ns1
+        | Asn1AcnAst.AcnBoolean  a -> DAstACN.createAcnBooleanFunction r l Codec.Decode ch.id a ns1
+        | Asn1AcnAst.AcnNullType a -> (fun p -> None), us
+        
+    let funcUpdateStatement, ns3 = DAstACN.getUpdateFunctionUsedInEncoding r deps l m ch.id ns2
+
+    let ret = 
+        {
+        
+            AcnChild.Name  = ch.Name
+            id             = ch.id
+            c_name = DAstACN.getAcnDeterminantName ch.id
+            Type           = ch.Type
+            typeDefinitionBodyWithinSeq = 
+                match ch.Type with
+                | Asn1AcnAst.AcnInteger  a -> DAstTypeDefinition.createAcnInteger r l a
+                | Asn1AcnAst.AcnNullType _ -> DAstTypeDefinition.createAcnNull r l
+                | Asn1AcnAst.AcnBoolean  _ -> DAstTypeDefinition.createAcnBoolean r l
+            funcBody = fun codec -> match codec with Codec.Encode -> funcBodyEncode | Codec.Decode -> funcBodyDecode
+            funcUpdateStatement = funcUpdateStatement
+        }
+    AcnChild ret, ns3
+
 let private createInteger (r:Asn1AcnAst.AstRoot) (l:ProgrammingLanguage) (m:Asn1AcnAst.Asn1Module) (t:Asn1AcnAst.Asn1Type) (o:Asn1AcnAst.Integer) (us:State) =
     let typeDefinition = DAstTypeDefinition.createInteger  r l t o us
     let initialValue        = getValueByUperRange o.uperRange 0I
@@ -35,7 +89,7 @@ let private createInteger (r:Asn1AcnAst.AstRoot) (l:ProgrammingLanguage) (m:Asn1
             acnEncFunction      = acnEncFunction
             acnDecFunction      = acnDecFunction
         }
-    Integer ret, s5
+    ((Integer ret),[]), s5
 
 let private createReal (r:Asn1AcnAst.AstRoot) (l:ProgrammingLanguage) (m:Asn1AcnAst.Asn1Module) (t:Asn1AcnAst.Asn1Type) (o:Asn1AcnAst.Real) (us:State) =
     let typeDefinition = DAstTypeDefinition.createReal  r l t o us
@@ -57,7 +111,7 @@ let private createReal (r:Asn1AcnAst.AstRoot) (l:ProgrammingLanguage) (m:Asn1Acn
             uperEncFunction     = uperEncFunction
             uperDecFunction     = uperDecFunction 
         }
-    Real ret, s3
+    ((Real ret),[]), s3
 
 
 
@@ -85,7 +139,7 @@ let private createStringType (r:Asn1AcnAst.AstRoot) (l:ProgrammingLanguage) (m:A
             uperEncFunction     = uperEncFunction
             uperDecFunction     = uperDecFunction 
         }
-    ret, s3
+    (ret,[]), s3
 
 
 let private createOctetString (r:Asn1AcnAst.AstRoot) (l:ProgrammingLanguage) (m:Asn1AcnAst.Asn1Module) (t:Asn1AcnAst.Asn1Type) (o:Asn1AcnAst.OctetString) (us:State) =
@@ -111,7 +165,7 @@ let private createOctetString (r:Asn1AcnAst.AstRoot) (l:ProgrammingLanguage) (m:
             uperEncFunction     = uperEncFunction
             uperDecFunction     = uperDecFunction 
         }
-    OctetString ret, s3
+    ((OctetString ret),[]), s3
 
 
 
@@ -132,7 +186,7 @@ let private createNullType (r:Asn1AcnAst.AstRoot) (l:ProgrammingLanguage) (m:Asn
             uperEncFunction     = uperEncFunction
             uperDecFunction     = uperDecFunction 
         }
-    NullType ret, s3
+    ((NullType ret),[]), s3
 
 
 
@@ -159,7 +213,7 @@ let private createBitString (r:Asn1AcnAst.AstRoot) (l:ProgrammingLanguage) (m:As
             uperEncFunction     = uperEncFunction
             uperDecFunction     = uperDecFunction 
         }
-    BitString ret, s3
+    ((BitString ret),[]), s3
 
 
 let private createBoolean (r:Asn1AcnAst.AstRoot) (l:ProgrammingLanguage) (m:Asn1AcnAst.Asn1Module) (t:Asn1AcnAst.Asn1Type) (o:Asn1AcnAst.Boolean) (us:State) =
@@ -185,7 +239,7 @@ let private createBoolean (r:Asn1AcnAst.AstRoot) (l:ProgrammingLanguage) (m:Asn1
             acnEncFunction      = acnEncFunction
             acnDecFunction      = acnDecFunction
         }
-    Boolean ret, s3
+    ((Boolean ret),[]), s3
 
 
 let private createEnumerated (r:Asn1AcnAst.AstRoot) (l:ProgrammingLanguage) (m:Asn1AcnAst.Asn1Module) (t:Asn1AcnAst.Asn1Type) (o:Asn1AcnAst.Enumerated) (us:State) =
@@ -213,7 +267,7 @@ let private createEnumerated (r:Asn1AcnAst.AstRoot) (l:ProgrammingLanguage) (m:A
             uperEncFunction     = uperEncFunction
             uperDecFunction     = uperDecFunction 
         }
-    Enumerated ret, s3
+    ((Enumerated ret),[]), s3
 
 
 let private createSequenceOf (r:Asn1AcnAst.AstRoot) (l:ProgrammingLanguage) (m:Asn1AcnAst.Asn1Module) (t:Asn1AcnAst.Asn1Type) (o:Asn1AcnAst.SequenceOf) (childType:Asn1Type, us:State) =
@@ -237,7 +291,7 @@ let private createSequenceOf (r:Asn1AcnAst.AstRoot) (l:ProgrammingLanguage) (m:A
             uperEncFunction     = uperEncFunction
             uperDecFunction     = uperDecFunction 
         }
-    SequenceOf ret, s3
+    ((SequenceOf ret),[]), s3
 
 
 
@@ -257,39 +311,11 @@ let private createAsn1Child (r:Asn1AcnAst.AstRoot) (l:ProgrammingLanguage) (m:As
     Asn1Child ret, us
 
 
-let private createAcnChild (r:Asn1AcnAst.AstRoot) (l:ProgrammingLanguage) (m:Asn1AcnAst.Asn1Module) (ch:Asn1AcnAst.AcnChild) (us:State) =
-    let funcBodyEncode, ns1 = 
-        match ch.Type with
-        | Asn1AcnAst.AcnInteger  a -> DAstACN.createAcnIntegerFunction r l Codec.Encode ch.id a us
-        | Asn1AcnAst.AcnBoolean  a -> DAstACN.createAcnBooleanFunction r l Codec.Encode ch.id a us
-        | Asn1AcnAst.AcnNullType a -> (fun p -> None), us
-        
-    let funcBodyDecode, ns2 = 
-        match ch.Type with
-        | Asn1AcnAst.AcnInteger  a -> DAstACN.createAcnIntegerFunction r l Codec.Decode ch.id a ns1
-        | Asn1AcnAst.AcnBoolean  a -> DAstACN.createAcnBooleanFunction r l Codec.Decode ch.id a ns1
-        | Asn1AcnAst.AcnNullType a -> (fun p -> None), us
-        
-
-    let ret = 
-        {
-        
-            AcnChild.Name  = ch.Name
-            id             = ch.id
-            Type           = ch.Type
-            typeDefinitionBodyWithinSeq = 
-                match ch.Type with
-                | Asn1AcnAst.AcnInteger  a -> DAstTypeDefinition.createAcnInteger r l a
-                | Asn1AcnAst.AcnNullType _ -> DAstTypeDefinition.createAcnNull r l
-                | Asn1AcnAst.AcnBoolean  _ -> DAstTypeDefinition.createAcnBoolean r l
-            funcBody = fun codec -> match codec with Codec.Encode -> funcBodyEncode | Codec.Decode -> funcBodyDecode
-
-        }
-    AcnChild ret, ns2
 
 
 let private createSequence (r:Asn1AcnAst.AstRoot) (deps:Asn1AcnAst.AcnInsertedFieldDependencies) (l:ProgrammingLanguage) (m:Asn1AcnAst.Asn1Module) (t:Asn1AcnAst.Asn1Type) (o:Asn1AcnAst.Sequence) (children:SeqChildInfo list, us:State) =
-    let typeDefinition = DAstTypeDefinition.createSequence r l t o children us
+    let newPrms, us0 = t.acnParameters |> foldMap(fun ns p -> mapAcnParameter r deps l m t p ns) us
+    let typeDefinition = DAstTypeDefinition.createSequence r l t o children us0
     let initialValue =
         children |> 
         List.choose(fun ch -> 
@@ -300,8 +326,8 @@ let private createSequence (r:Asn1AcnAst.AstRoot) (deps:Asn1AcnAst.AcnInsertedFi
     let isValidFunction, s1     = DAstValidate.createSequenceFunction r l t o typeDefinition children None us
     let uperEncFunction, s2     = DAstUPer.createSequenceFunction r l Codec.Encode t o typeDefinition None isValidFunction children s1
     let uperDecFunction, s3     = DAstUPer.createSequenceFunction r l Codec.Decode t o typeDefinition None isValidFunction children s2
-    let acnEncFunction, s4      = DAstACN.createSequenceFunction r deps l Codec.Encode t o typeDefinition None isValidFunction children s3
-    let acnDecFunction, s5      = DAstACN.createSequenceFunction r deps l Codec.Decode t o typeDefinition None isValidFunction children s4
+    let acnEncFunction, s4      = DAstACN.createSequenceFunction r deps l Codec.Encode t o typeDefinition None isValidFunction children newPrms s3
+    let acnDecFunction, s5      = DAstACN.createSequenceFunction r deps l Codec.Decode t o typeDefinition None isValidFunction children newPrms s4
     let ret =
         {
             Sequence.baseInfo   = o
@@ -317,7 +343,7 @@ let private createSequence (r:Asn1AcnAst.AstRoot) (deps:Asn1AcnAst.AcnInsertedFi
             acnEncFunction      = acnEncFunction
             acnDecFunction      = acnDecFunction
         }
-    Sequence ret, s5
+    ((Sequence ret),newPrms), s5
 
 let private createChoice (r:Asn1AcnAst.AstRoot) (l:ProgrammingLanguage) (m:Asn1AcnAst.Asn1Module) (t:Asn1AcnAst.Asn1Type) (o:Asn1AcnAst.Choice) (children:ChChildInfo list, us:State) =
     let typeDefinition = DAstTypeDefinition.createChoice r l t o children us
@@ -340,7 +366,7 @@ let private createChoice (r:Asn1AcnAst.AstRoot) (l:ProgrammingLanguage) (m:Asn1A
             uperEncFunction     = uperEncFunction
             uperDecFunction     = uperDecFunction 
         }
-    Choice ret, s3
+    ((Choice ret),[]), s3
 
 let private createChoiceChild (r:Asn1AcnAst.AstRoot) (l:ProgrammingLanguage) (m:Asn1AcnAst.Asn1Module) (ch:Asn1AcnAst.ChChildInfo) (newChildType : Asn1Type, us:State) =
     let typeDefinitionName = 
@@ -382,18 +408,19 @@ let private createReferenceType (r:Asn1AcnAst.AstRoot) (l:ProgrammingLanguage) (
             uperEncFunction     = uperEncFunction
             uperDecFunction     = uperDecFunction 
         }
-    ReferenceType ret, s3
+    ((ReferenceType ret),[]), s3
+
 
 let private mapType (r:Asn1AcnAst.AstRoot) (deps:Asn1AcnAst.AcnInsertedFieldDependencies) (l:ProgrammingLanguage) (m:Asn1AcnAst.Asn1Module) (t:Asn1AcnAst.Asn1Type, us:State) =
     Asn1Fold.foldType2
         (fun t ti us -> createInteger r l m t ti us)
         (fun t ti us -> createReal r l m t ti us)
         (fun t ti us -> 
-            let strtype, ns = createStringType r l m t ti us
-            IA5String strtype, ns)
+            let (strtype, prms), ns = createStringType r l m t ti us
+            ((IA5String strtype),prms), ns)
         (fun t ti us -> 
-            let strtype, ns = createStringType r l m t ti us
-            IA5String strtype, ns)
+            let (strtype, prms), ns = createStringType r l m t ti us
+            ((IA5String strtype),prms), ns)
         (fun t ti us -> createOctetString r l m t ti us)
         (fun t ti us -> createNullType r l m t ti us)
         (fun t ti us -> createBitString r l m t ti us)
@@ -405,7 +432,7 @@ let private mapType (r:Asn1AcnAst.AstRoot) (deps:Asn1AcnAst.AcnInsertedFieldDepe
 
         (fun t ti newChildren -> createSequence r deps l m t ti newChildren)
         (fun ch newChild -> createAsn1Child r l m ch newChild)
-        (fun ch us -> createAcnChild r l m ch us)
+        (fun ch us -> createAcnChild r deps l m ch us)
         
 
         (fun t ti newChildren -> createChoice r l m t ti newChildren)
@@ -413,12 +440,12 @@ let private mapType (r:Asn1AcnAst.AstRoot) (deps:Asn1AcnAst.AcnInsertedFieldDepe
 
         (fun t ti newBaseType -> createReferenceType r l m t ti newBaseType)
 
-        (fun t (newKind,us)        -> 
+        (fun t ((newKind, newPrms),us)        -> 
             {
                 Asn1Type.Kind = newKind
                 id            = t.id
                 acnAligment   = t.acnAligment
-                acnParameters = t.acnParameters
+                acnParameters = newPrms 
                 Location      = t.Location
                 tasInfo       = t.tasInfo
             }, us)

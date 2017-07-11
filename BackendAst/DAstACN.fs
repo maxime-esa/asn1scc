@@ -255,8 +255,38 @@ let getFuncParamTypeFromReferenceToType (r:Asn1AcnAst.AstRoot) (l:ProgrammingLan
         
 *)        
 
+let handleSingleUpdateDependency (l:ProgrammingLanguage) (vTarget:FuncParamType) d (pSrcRoot : FuncParamType) =
+    match d with
+    | DepIA5StringSizeDeterminant  decTypeId   -> raise(BugErrorException "Not implemented functionality") 
+    | DepOtherSizeDeterminant      decTypeId   -> raise(BugErrorException "Not implemented functionality")
+    | DepRefTypeArgument           decTypeId   -> raise(BugErrorException "Not implemented functionality")
+    | DepPresenceBool              decTypeId   -> 
+        //<v> = (<sSeqPath><sAcc>exist.<sChildName> == 1);
+        let v = vTarget.getValue l
+        let parDecTypeSeq =
+            match decTypeId with
+            | ReferenceToType (nodes) -> ReferenceToType (nodes |> List.rev |> List.tail |> List.rev)
+        let pDecParSeq = getAccessFromScopeNodeList parDecTypeSeq false l pSrcRoot
+        let updateStatement = acn_c.PresenceDependency v (pDecParSeq.p) (pDecParSeq.getAcces l) (ToC decTypeId.lastItem)
+        updateStatement
+    | DepPresenceInt               decTypeId   -> raise(BugErrorException "Not implemented functionality")
+    | DepPresenceStr               decTypeId   -> raise(BugErrorException "Not implemented functionality")
+    | DepChoiceDeteterminant       decTypeId   -> raise(BugErrorException "Not implemented functionality")
 
-let createSequenceFunction (r:Asn1AcnAst.AstRoot) (deps:Asn1AcnAst.AcnInsertedFieldDependencies) (l:ProgrammingLanguage) (codec:CommonTypes.Codec) (t:Asn1AcnAst.Asn1Type) (o:Asn1AcnAst.Sequence) (typeDefinition:TypeDefinitionCommon) (baseTypeUperFunc : AcnFunction option) (isValidFunc: IsValidFunction option) (children:SeqChildInfo list) (us:State)  =
+let getUpdateFunctionUsedInEncoding (r:Asn1AcnAst.AstRoot) (deps:Asn1AcnAst.AcnInsertedFieldDependencies) (l:ProgrammingLanguage) (m:Asn1AcnAst.Asn1Module) (acnChildOrAcnParameterId) (us:State) =
+    match deps.acnFields.TryFind acnChildOrAcnParameterId with
+    | None  -> raise(BugErrorException "unexpected error in getUpdateFunctionUsedInEncoding")
+    | Some dps -> 
+        match dps with
+        | []        -> raise(BugErrorException "unexpected error in createSequenceFunction")
+        | d1::[]    -> 
+            (fun (vTarget : FuncParamType) (pSrcRoot : FuncParamType)  -> 
+                handleSingleUpdateDependency l vTarget d1 pSrcRoot), us
+        | _         -> raise(BugErrorException "Not implemented functionality")
+
+
+
+let createSequenceFunction (r:Asn1AcnAst.AstRoot) (deps:Asn1AcnAst.AcnInsertedFieldDependencies) (l:ProgrammingLanguage) (codec:CommonTypes.Codec) (t:Asn1AcnAst.Asn1Type) (o:Asn1AcnAst.Sequence) (typeDefinition:TypeDefinitionCommon) (baseTypeUperFunc : AcnFunction option) (isValidFunc: IsValidFunction option) (children:SeqChildInfo list) (acnPrms:AcnParameter list) (us:State)  =
     (*
         1. all Acn inserted children are declared as local variables in the encoded and decode functions (declaration step)
         2. all Acn inserted children must be initialized appropriatelly in the encoding phase
@@ -280,9 +310,9 @@ let createSequenceFunction (r:Asn1AcnAst.AstRoot) (deps:Asn1AcnAst.AcnInsertedFi
     let funcBody (errCode:ErroCode) (p:FuncParamType) = 
         match baseFuncName with
         | None ->
-            let acnlocalVariables =
-                acnChildren |> 
-                List.map(fun x -> AcnInsertedChild((getAcnDeterminantName x.id), x.typeDefinitionBodyWithinSeq))
+            let acnlocalVariablesCh = acnChildren |>  List.map(fun x -> AcnInsertedChild(x.c_name, x.typeDefinitionBodyWithinSeq))
+            let acnlocalVariablesPrms = acnPrms |>  List.map(fun x -> AcnInsertedChild(x.c_name, x.typeDefinitionBodyWithinSeq))
+            let acnlocalVariables = acnlocalVariablesCh @ acnlocalVariablesPrms
             //let acnParams =  r.acnParameters |> List.filter(fun  prm -> prm.ModName ) 
 
             let printPresenceBit (child:Asn1Child) =
@@ -311,9 +341,6 @@ let createSequenceFunction (r:Asn1AcnAst.AstRoot) (deps:Asn1AcnAst.AcnInsertedFi
                             | Some chFunc   -> chFunc.funcBody (p.getSeqChild l child.c_name child.Type.isIA5String)
                             | None          -> None
 
-
-
-
                         //handle present-when acn property
                         let acnPresenceStatement = 
                             match child.Optionality with
@@ -321,8 +348,6 @@ let createSequenceFunction (r:Asn1AcnAst.AstRoot) (deps:Asn1AcnAst.AcnInsertedFi
                                 match opt.acnPresentWhen with
                                 | None    -> None
                                 | Some (PresenceWhenBool relPath)    -> 
-                                    //TODO multiple decoding types may use the same determinant.
-                                    // We must be updated from all types and if value is different return error
                                     let determinantId = deps.asn12AcnFieldDep.[(DepPresenceBool child.Type.id)]
                                     let extField = getAcnDeterminantName determinantId
                                     Some(sequence_presense_optChild_pres_bool p.p (p.getAcces l) child.c_name extField codec)
@@ -335,9 +360,6 @@ let createSequenceFunction (r:Asn1AcnAst.AstRoot) (deps:Asn1AcnAst.AcnInsertedFi
                                     *)
                             | _                 -> None
                         yield (acnPresenceStatement, [], [])
-
-
-
 
 
                         match childContentResult with
@@ -357,38 +379,16 @@ let createSequenceFunction (r:Asn1AcnAst.AstRoot) (deps:Asn1AcnAst.AcnInsertedFi
                             yield (childBody, childContent.localVariables, childContent.errCodes)
 
                     | AcnChild  acnChild    -> 
+                        //handle updates
+                        //acnChild.c_name
                         let childP = VALUE (getAcnDeterminantName acnChild.id)
                         let pRoot : FuncParamType = t.getParamType l codec  //????
-
-                        let handleSingleDependency d =
-                            match d with
-                            | DepIA5StringSizeDeterminant  decTypeId   -> raise(BugErrorException "Not implemented functionality") 
-                            | DepOtherSizeDeterminant      decTypeId   -> raise(BugErrorException "Not implemented functionality")
-                            | DepRefTypeArgument           decTypeId   -> raise(BugErrorException "Not implemented functionality")
-                            | DepPresenceBool              decTypeId   -> 
-                                //<v> = (<sSeqPath><sAcc>exist.<sChildName> == 1);
-                                let parDecTypeSeq =
-                                    match decTypeId with
-                                    | ReferenceToType (nodes) -> ReferenceToType (nodes |> List.rev |> List.tail |> List.rev)
-                                let pDecParSeq = getAccessFromScopeNodeList parDecTypeSeq false l pRoot
-                                let v = childP.getValue l
-                                let updateStatement = acn_c.PresenceDependency v (pDecParSeq.p) (pDecParSeq.getAcces l) (ToC decTypeId.lastItem)
-                                Some updateStatement
-                            | DepPresenceInt               decTypeId   -> raise(BugErrorException "Not implemented functionality")
-                            | DepPresenceStr               decTypeId   -> raise(BugErrorException "Not implemented functionality")
-                            | DepChoiceDeteterminant       decTypeId   -> raise(BugErrorException "Not implemented functionality")
-                                           
-                        //acn child update 
                         match codec with
                         | CommonTypes.Encode ->
-                            match deps.acnFields.TryFind acnChild.id with
-                            | None  -> raise(BugErrorException "unexpected error in createSequenceFunction")
-                            | Some dps -> 
-                                match dps with
-                                | []        -> raise(BugErrorException "unexpected error in createSequenceFunction")
-                                | d1::[]    -> yield (handleSingleDependency d1, [], [])
-                                | _         -> raise(BugErrorException "Not implemented functionality")
+                                let updateStatement = Some (acnChild.funcUpdateStatement childP pRoot)
+                                yield (updateStatement, [], [])
                         | CommonTypes.Decode -> ()
+
                         //acn child encode/decode
                         let chFunc = acnChild.funcBody codec
                         let childContentResult = chFunc childP
@@ -400,75 +400,6 @@ let createSequenceFunction (r:Asn1AcnAst.AstRoot) (deps:Asn1AcnAst.AcnInsertedFi
 
                 } |> Seq.toList
 
-                (*
-                match chFunc with
-                | None  -> []
-                | Some chFunc ->
-                    let childContentResult = 
-                        match child.acnInsertetField with
-                        | false -> chFunc.funcBody (p.getSeqChild l child.c_name child.chType.isIA5String)
-                        | true  -> chFunc.funcBody (VALUE (getAcnDeterminantName child.chType.id))
-                    seq {
-                        match childContentResult with
-                        | None              -> ()
-                        | Some childContent ->
-                            //in encoding acn inserted fields must first be update before been encoded
-                            match codec with
-                            | CommonTypes.Encode ->
-                                match child.acnInsertetField with
-                                | false -> ()
-                                | true  -> 
-                                    match r.acnLinks |> Seq.tryFind(fun l -> l.determinant = child.chType.id) with
-                                    | None  -> raise(BugErrorException "unexpected error in createSequenceFunction")
-                                    | Some lnk  ->
-                                        match lnk.linkType with
-                                        | Asn1AcnAst.PresenceBool              -> 
-                                            let parSeqId = lnk.decType.id.parentTypeId.Value
-
-                                            let seqPth = getFuncParamTypeFromReferenceToType r l codec parSeqId
-                                            let aaa = acn_c.PresenceDependency (getAcnDeterminantName child.chType.id) (seqPth.p) (seqPth.getAcces l) (ToC lnk.decType.id.lastItem)
-                                            let updateStatement = Some aaa
-                                            yield (updateStatement, [], [])
-                                        | Asn1AcnAst.RefTypeArgument prmName  ->
-                                            yield (Some (sprintf "/*%s*/" prmName),[],[])
-                                        | _                         -> raise(BugErrorException "Not implemented functionality")
-                            | CommonTypes.Decode -> ()
-
-                            //handle present-when acn property
-                            let acnPresenceStatement = 
-                                match child.optionality with
-                                | Some (Asn1AcnAst.Optional opt)   -> 
-                                    match opt.ancEncodingClass with
-                                    | Asn1AcnAst.OptionLikeUper    -> None
-                                    | Asn1AcnAst.OptionExtField    -> 
-                                        //TODO multiple decoding types may use the same determinant.
-                                        // We must be updated from all types and if value is different return error
-                                        match r.acnLinks |> Seq.tryFind(fun l -> l.decType.id = child.chType.id) with
-                                        | None  -> raise(BugErrorException "unexpected error in createSequenceFunction")
-                                        | Some lnk  ->
-                                            let extField = getAcnDeterminantName lnk.determinant
-                                            match lnk.linkType with
-                                            | Asn1AcnAst.PresenceBool              -> Some(sequence_presense_optChild_pres_bool p.p (p.getAcces l) child.c_name extField codec)
-                                            | Asn1AcnAst.PresenceInt intVal        -> Some(sequence_presense_optChild_pres_int p.p (p.getAcces l) child.c_name extField intVal codec)
-                                            | Asn1AcnAst.PresenceStr strval        -> Some(sequence_presense_optChild_pres_str p.p (p.getAcces l) child.c_name extField strval codec)
-                                            | _                         -> raise(BugErrorException "unexpected error in createSequenceFunction")
-                                | _                 -> None
-                            yield (acnPresenceStatement, [], [])
-
-                            let childBody = 
-                                match child.optionality with
-                                | None                       -> Some (sequence_mandatory_child child.c_name childContent.funcBody codec)
-                                | Some Asn1AcnAst.AlwaysAbsent     -> match codec with CommonTypes.Encode -> None                        | CommonTypes.Decode -> Some (sequence_optional_child p.p (p.getAcces l) child.c_name childContent.funcBody codec) 
-                                | Some Asn1AcnAst.AlwaysPresent    -> match codec with CommonTypes.Encode -> Some childContent.funcBody  | CommonTypes.Decode -> Some (sequence_optional_child p.p (p.getAcces l) child.c_name childContent.funcBody codec)
-                                | Some (Asn1AcnAst.Optional opt)   -> 
-                                    match opt.defaultValue with
-                                    | None                   -> Some (sequence_optional_child p.p (p.getAcces l) child.c_name childContent.funcBody codec)
-                                    | Some v                 -> 
-                                        let defInit= child.chType.initFunction.initFuncBody (p.getSeqChild l child.c_name child.chType.isIA5String) v
-                                        Some (sequence_default_child p.p (p.getAcces l) child.c_name childContent.funcBody defInit codec) 
-                            yield (childBody, childContent.localVariables, childContent.errCodes)
-                    } |> Seq.toList
-                *)
             let presenseBits = asn1Children |> List.choose printPresenceBit
             let childrenStatements0 = children |> List.collect handleChild
             let childrenStatements = childrenStatements0 |> List.choose(fun (s,_,_) -> s)
@@ -487,3 +418,131 @@ let createSequenceFunction (r:Asn1AcnAst.AstRoot) (deps:Asn1AcnAst.AcnInsertedFi
         | C     -> None
         | Ada   -> None
     createPrimitiveFunction r l codec t typeDefinition baseTypeUperFunc  isValidFunc  funcBody soSparkAnnotations  us
+
+
+(*
+-- 
+TEST-CASE DEFINITIONS ::= BEGIN
+        
+    MyPDU[] {    
+         tap[]        
+    }
+    
+    
+    TAP3File[]{
+         headerType [],  
+         sourceData <header.nrCalls> []
+    }
+    
+    HeaderType[]{
+        operatorID[],
+        nrCalls CallsSize []
+    }          
+             
+    SourceData<INTEGER:nElements2>[]
+    {
+
+         calls<nElements>[]
+    }
+    
+    CallsArray<INTEGER:nElements>[size nElements]
+    
+    Call[]
+END  
+
+
+//αν ένας τύπος έχει base type  έχει παράμετρο 
+// περίπτωση 1η inline encoding/decoding
+
+//ENCODING
+tap3FileEncode(TAP3File* pVal) {
+  
+  //encode headerType inline
+     encode_operatorID()
+	 
+	 //update nrCalls
+	 // από τον πίνακα AcnLinks βλέπουμε ότι το ACN child  nrCalls 
+	 // έχει εξάρτηση τύπου RefTypeArgument ("nElements")
+	 // δηλαδή AcnLink = {decType = TAP3File.sourceData;  determinant = TAP3File.header.nrCalls;  linkType  = RefTypeArgument ("nElements")}
+	 
+	 //1ος τρόπος : με κλήση βοηθητικής συνάρτης
+	 pVal->header.nrCalls := Tap3SourceData_getnElementsParam(pVal->sourceData);
+	 
+	 //2ος τρόπος : με inline κώδικα των βοηθητικών συναρτήσεων
+	 // o 2ος τρόπος είναι αυτός που θα προχωρήσουμε.
+	 pVal->header.nrCalls = pVal->sourceData.calls.nSize;
+	 
+	 
+	 encode_nrCalls()
+  //encode sourceData inline
+      //encode calls inline
+	     encode_calls();
+}
+
+Για κάθε TAS με ACN parameter δημιουργούμε βοηθητικές συναρτήσεις ανά παράμετρο
+
+Π1
+integer SourceData_getnElementsParam(SourceData pVal) {
+	return CallsArray_getnElements2Param(pVal->calls)
+}
+
+Π2
+integer CallsArray_getnElements2Param(CallsArray pVal) {
+   return pVal->nSize;
+}
+
+καθώς και (για την περίπτωση των inline encodings) lamda functions 
+getParmFuncBody -> string -> string -> string -> string 	// P , sAcc, param name, expression code with the value
+
+Π_nElements(p  = pVal->sourceData, sAcc ='.') ->  
+	Prokeitai gia RefTypeArgument dependency ara tha kalesoume thn Π_nElements2 όπου στο p argument θα κάνουμε append to 'calls'
+	Δηλαδή το αποτέλεσμα είναι
+	Π_nElements2(p = p+ 'calls', sAcc ='.')
+
+Π_nElements2(p = pVal-sourceData.nCalls, sAcc = '.') -> 
+	Prokeitai gia size determinant ara to expression tha einai:
+	  <p><sAcc>nSize
+
+
+
+
+//DECODING
+// δηλώνουμε την παράμετρο ως τοπικές μεταβλητές
+// όλες τις ACN parameters. Για να μην υπάρχει naming conflict
+// βάζουμε μπροστά το long path του εκάστοτε τύπου
+// αφού αφαιρέσουμε το tas name της ρίζας.
+// Δηλαδή δεν έχει νόημα να τις βαφτίζουμε TAP3File_sourceData_nElements αλλά sourceData_nElements
+tap3FileDecode(TAP3File* pVal) {
+   integer sourceData_nElements;
+   integer sourceData_calls_nElements;
+   
+   // decode header inline
+     decode_operatorID();
+	 decode_nrCalls();
+   // decode sourceData inline
+   // εφοσον κάνουμε inline decoding του sourceData (δηλαδή δεν καλούμε την base encoding function)
+   // θα πρέπει οι ACN parameters να αρχικοποιηθόύν
+   // Θα ψάξουμε στον πίνακα acnLinks να βρούμε μια εγγραφή όπου το id του decoding type (στην προκειμένη περίπτωση του sourceData)
+   // να είναι ίσο TAP3File.SourceData, να είναι τύπου RefTypeArgument και να ταυτίζεται το όνομα της παραμέτρου με το value του RefTypeArgument
+   // δηλαδή AcnLink = {decType = TAP3File.SourceData;  determinant = TAP3File.header.nrCalls;  linkType  = RefTypeArgument ("nElements")}
+      sourceData_nElements := pVal->header.nrCalls;
+	 //decode calls
+	 // Ομοίως για το inline encoding του CallsArray θα πρέπει πρώτα να αρχικοποιηθούν οι acn parameters
+	 // άρα θα πρέπει για κάθε παραμετρο του TAP3File.sourceData.calls να βρούμε εγγραφή 
+	 // με decoding type id = TAP3File.sourceData.calls και linkType  = RefTypeArgument (όνομα παραμέτρου)
+   // δηλαδή AcnLink = {decType = TAP3File.SourceData.calls;  determinant = TAP3File.sourceData.nElements;  linkType  = RefTypeArgument ("nElements")}
+     // στην προκειμένη περίπτωση το determinant έχει id -> MD(MyMODULE)::TA(TAP3File)::SEQ_CHILD(sourceData)::PRM(nElements)
+	 
+	 sourceData_calls_nElements = sourceData_nElements;
+	 //decode calls sequence using CallsArray_nElements as length determinant
+	    decode_calls();
+ }
+ 
+ Συμπέραμα --> 
+   όλοι οι Asn1Types μπορεί να έχουν ACN parameters και όχι μόνο τα Type Assignments.
+   
+
+
+
+
+*)
