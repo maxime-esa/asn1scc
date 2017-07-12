@@ -528,7 +528,7 @@ with
         | SequenceOf   t -> None
         | Sequence     t -> Some (t.acnEncFunction)
         | Choice       t -> None
-        | ReferenceType t-> None
+        | ReferenceType t-> Some (t.acnEncFunction)
 
     member this.acnDecFunction : AcnFunction option =
         match this.Kind with
@@ -543,7 +543,7 @@ with
         | SequenceOf   t -> None
         | Sequence     t -> Some (t.acnDecFunction)
         | Choice       t -> None
-        | ReferenceType t-> None
+        | ReferenceType t-> Some (t.acnEncFunction)
     member this.getAcnFunction (l:CommonTypes.Codec) =
         match l with
         | CommonTypes.Encode   -> this.acnEncFunction

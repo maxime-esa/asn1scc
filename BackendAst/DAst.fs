@@ -401,7 +401,7 @@ and AcnChild = {
     Type                        : Asn1AcnAst.AcnInsertedType
     typeDefinitionBodyWithinSeq : string
     funcBody                    : CommonTypes.Codec -> FuncParamType -> (AcnFuncBodyResult option)            // returns a list of validations statements
-    funcUpdateStatement         : FuncParamType -> FuncParamType -> string                                    // vTarget,  pSrcRoot, return the update statement 
+    funcUpdateStatement         : (FuncParamType -> FuncParamType -> string) option                                    // vTarget,  pSrcRoot, return the update statement 
 }
 
 and SeqChildInfo = 
@@ -490,6 +490,8 @@ and ReferenceType = {
     isValidFunction     : IsValidFunction option      
     uperEncFunction     : UPerFunction
     uperDecFunction     : UPerFunction
+    acnEncFunction      : AcnFunction
+    acnDecFunction      : AcnFunction
 
 }
 
@@ -500,7 +502,7 @@ and AcnParameter = {
     loc         : SrcLoc
     id          : ReferenceToType
     typeDefinitionBodyWithinSeq : string
-    funcUpdateStatement         : FuncParamType -> FuncParamType -> string                                    // vTarget,  pSrcRoot, return the update statement 
+    funcUpdateStatement         : (FuncParamType -> FuncParamType -> string) option                                    // vTarget,  pSrcRoot, return the update statement 
 }
     
 

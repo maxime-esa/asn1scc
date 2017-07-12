@@ -25,8 +25,8 @@ let private mapAcnParameter (r:Asn1AcnAst.AstRoot) (deps:Asn1AcnAst.AcnInsertedF
         typeDefinitionBodyWithinSeq = 
             match prm.asn1Type with
             | Asn1AcnAst.AcnPrmInteger  _ -> DAstTypeDefinition.createPrmAcnInteger r l 
-            | Asn1AcnAst.AcnPrmBoolean  _ -> DAstTypeDefinition.createAcnNull r l
-            | Asn1AcnAst.AcnPrmNullType _ -> DAstTypeDefinition.createAcnBoolean r l
+            | Asn1AcnAst.AcnPrmBoolean  _ -> DAstTypeDefinition.createAcnBoolean r l
+            | Asn1AcnAst.AcnPrmNullType _ -> DAstTypeDefinition.createAcnNull r l
             | Asn1AcnAst.AcnPrmRefType (md,ts)  -> DAstTypeDefinition.getTypeDefinitionName r l (ReferenceToType [MD md.Value; TA ts.Value])
 
 
@@ -326,8 +326,8 @@ let private createSequence (r:Asn1AcnAst.AstRoot) (deps:Asn1AcnAst.AcnInsertedFi
     let isValidFunction, s1     = DAstValidate.createSequenceFunction r l t o typeDefinition children None us
     let uperEncFunction, s2     = DAstUPer.createSequenceFunction r l Codec.Encode t o typeDefinition None isValidFunction children s1
     let uperDecFunction, s3     = DAstUPer.createSequenceFunction r l Codec.Decode t o typeDefinition None isValidFunction children s2
-    let acnEncFunction, s4      = DAstACN.createSequenceFunction r deps l Codec.Encode t o typeDefinition None isValidFunction children newPrms s3
-    let acnDecFunction, s5      = DAstACN.createSequenceFunction r deps l Codec.Decode t o typeDefinition None isValidFunction children newPrms s4
+    let acnEncFunction, s4      = DAstACN.createSequenceFunction r deps l Codec.Encode t o typeDefinition  isValidFunction children newPrms s3
+    let acnDecFunction, s5      = DAstACN.createSequenceFunction r deps l Codec.Decode t o typeDefinition  isValidFunction children newPrms s4
     let ret =
         {
             Sequence.baseInfo   = o
@@ -394,6 +394,8 @@ let private createReferenceType (r:Asn1AcnAst.AstRoot) (l:ProgrammingLanguage) (
     let isValidFunction, s1     = DAstValidate.createReferenceTypeFunction r l t o typeDefinition newBaseType us
     let uperEncFunction, s2     = DAstUPer.createReferenceFunction r l Codec.Encode t o typeDefinition isValidFunction newBaseType s1
     let uperDecFunction, s3     = DAstUPer.createReferenceFunction r l Codec.Decode t o typeDefinition isValidFunction newBaseType s2
+    let acnEncFunction, s4      = DAstACN.createReferenceFunction r l Codec.Encode t o typeDefinition  isValidFunction newBaseType s3
+    let acnDecFunction, s5      = DAstACN.createReferenceFunction r l Codec.Decode t o typeDefinition  isValidFunction newBaseType s4
 
     let ret = 
         {
@@ -407,8 +409,11 @@ let private createReferenceType (r:Asn1AcnAst.AstRoot) (l:ProgrammingLanguage) (
             isValidFunction     = isValidFunction
             uperEncFunction     = uperEncFunction
             uperDecFunction     = uperDecFunction 
+            acnEncFunction      = acnEncFunction.Value
+            acnDecFunction      = acnDecFunction.Value
+
         }
-    ((ReferenceType ret),[]), s3
+    ((ReferenceType ret),[]), s4
 
 
 let private mapType (r:Asn1AcnAst.AstRoot) (deps:Asn1AcnAst.AcnInsertedFieldDependencies) (l:ProgrammingLanguage) (m:Asn1AcnAst.Asn1Module) (t:Asn1AcnAst.Asn1Type, us:State) =

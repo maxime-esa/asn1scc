@@ -200,3 +200,67 @@ type Choice           with
 type Asn1Value with
     member this.getBackendName () =
         "unnamed_variable"
+
+
+
+type Asn1OrAcnOrPrmType =
+    | ACN_INSERTED_TYPE of AcnInsertedType
+    | ASN1_TYPE         of Asn1Type
+    | ACN_PARAMETER     of Asn1Type*AcnParameter
+
+
+let locateTypeByRefId (r:AstRoot) (ReferenceToType nodes) =
+    let origPath = ReferenceToType nodes
+    let rec locateType (parent:Asn1OrAcnOrPrmType) (nodes:ScopeNode list) =
+        match nodes with
+        | []                        -> parent
+        | (SEQ_CHILD chName)::rest  -> 
+            match parent with
+            | ASN1_TYPE t ->
+                match t.Kind with
+                | Sequence  seq ->
+                    match seq.children |> Seq.tryFind(fun ch -> ch.Name.Value = chName) with
+                    | Some (Asn1Child x)   -> locateType (ASN1_TYPE x.Type) rest
+                    | Some (AcnChild  x)   -> locateType (ACN_INSERTED_TYPE x.Type) rest
+                    | None      -> raise(UserException(sprintf "Invalid child name '%s'" chName ))
+                | _  -> raise(UserException(sprintf "Invalid path '%s'" origPath.AsString ))
+            | _  -> raise(UserException(sprintf "Invalid path '%s'" origPath.AsString ))
+        | (CH_CHILD chName)::rest  -> 
+            match parent with
+            | ASN1_TYPE t ->
+                match t.Kind with
+                | Choice  choice ->
+                    match choice.children |> Seq.tryFind(fun ch -> ch.Name.Value = chName) with
+                    | Some x   -> locateType (ASN1_TYPE x.Type) rest
+                    | None     -> raise(UserException(sprintf "Invalid child name '%s'" chName ))
+                | _  -> raise(UserException(sprintf "Invalid path '%s'" origPath.AsString ))
+            | _  -> raise(UserException(sprintf "Invalid path '%s'" origPath.AsString ))
+        | SQF::rest ->
+            match parent with
+            | ASN1_TYPE t ->
+                match t.Kind with
+                | SequenceOf sqof -> locateType (ASN1_TYPE sqof.child) rest
+                | _  -> raise(UserException(sprintf "Invalid path '%s'" origPath.AsString ))
+            | _  -> raise(UserException(sprintf "Invalid path '%s'" origPath.AsString ))
+        | (PRM prmName)::[] ->
+            match parent with
+            | ASN1_TYPE t ->
+                match t.acnParameters |> Seq.tryFind(fun p -> p.name = prmName) with
+                | Some p    -> ACN_PARAMETER (t, p)
+                | _  -> raise(UserException(sprintf "Invalid path '%s'" origPath.AsString ))
+            | _  -> raise(UserException(sprintf "Invalid path '%s'" origPath.AsString ))
+        | _     -> raise(UserException(sprintf "Invalid path '%s'" origPath.AsString ))
+
+    match nodes with
+    | (MD mdName)::(TA tasName)::restPath    -> 
+        let md = 
+            match r.Files |> List.collect(fun f -> f.Modules) |> Seq.tryFind (fun m -> m.Name.Value = mdName) with
+            | Some md -> md
+            | None    -> raise(UserException(sprintf "Invalid module name '%s'" mdName ))
+        let tas = 
+            match md.TypeAssignments |> Seq.tryFind(fun tas -> tas.Name.Value = tasName) with
+            | Some tas -> tas
+            | None    -> raise(UserException(sprintf "Invalid tas name '%s'" tasName ))
+        locateType (ASN1_TYPE tas.Type) restPath
+    | _                 -> raise(UserException(sprintf "Invalid module name " ))
+        
