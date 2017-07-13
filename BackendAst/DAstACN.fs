@@ -32,7 +32,7 @@ let getAcnDeterminantName (id : ReferenceToType) =
             ToC2(longName.Replace("#","elem"))
 
 
-let createPrimitiveFunction (r:Asn1AcnAst.AstRoot) (l:ProgrammingLanguage) (codec:CommonTypes.Codec) (t:Asn1AcnAst.Asn1Type) (typeDefinition:TypeDefinitionCommon) (isValidFunc: IsValidFunction option)  (funcBody:ErroCode->FuncParamType -> (AcnFuncBodyResult option)) soSparkAnnotations (us:State)  =
+let createPrimitiveFunction (r:Asn1AcnAst.AstRoot) (l:ProgrammingLanguage) (codec:CommonTypes.Codec) (t:Asn1AcnAst.Asn1Type) (typeDefinition:TypeDefinitionCommon) (isValidFunc: IsValidFunction option)  (funcBody:ErroCode->((Asn1AcnAst.RelativePath*Asn1AcnAst.AcnParameter) list) -> FuncParamType -> (AcnFuncBodyResult option)) soSparkAnnotations (us:State)  =
     let funcNameAndtasInfo   = getFuncName r l codec t.id
     let errCodeName         = ToC ("ERR_ACN" + (codec.suffix.ToUpper()) + "_" + ((t.id.AcnAbsPath |> Seq.skip 1 |> Seq.StrJoin("-")).Replace("#","elm")))
     let errCodeValue        = us.currErrCode
@@ -53,7 +53,7 @@ let createPrimitiveFunction (r:Asn1AcnAst.AstRoot) (l:ProgrammingLanguage) (code
             match funcNameAndtasInfo  with
             | None              -> None, None
             | Some funcName     -> 
-                let content = funcBody p  
+                let content = funcBody [] p  
                 match content with 
                 | None          -> None, None
                 | Some bodyResult  ->
@@ -86,7 +86,7 @@ let createPrimitiveFunction (r:Asn1AcnAst.AstRoot) (l:ProgrammingLanguage) (code
         }
     ret, {us with currErrCode = us.currErrCode + 1}
 
-let private createAcnIntegerFunctionInternal (r:Asn1AcnAst.AstRoot) (l:ProgrammingLanguage) (codec:CommonTypes.Codec) acnEncodingClass (uperfuncBody : FuncParamType -> (UPERFuncBodyResult option)) : (ErroCode -> FuncParamType -> (AcnFuncBodyResult option))  =
+let private createAcnIntegerFunctionInternal (r:Asn1AcnAst.AstRoot) (l:ProgrammingLanguage) (codec:CommonTypes.Codec) acnEncodingClass (uperfuncBody : FuncParamType -> (UPERFuncBodyResult option)) : (ErroCode -> ((Asn1AcnAst.RelativePath*Asn1AcnAst.AcnParameter) list) -> FuncParamType -> (AcnFuncBodyResult option))  =
     let PositiveInteger_ConstSize_8                  = match l with C -> acn_c.PositiveInteger_ConstSize_8                | Ada -> acn_c.PositiveInteger_ConstSize_8               
     let PositiveInteger_ConstSize_big_endian_16      = match l with C -> acn_c.PositiveInteger_ConstSize_big_endian_16    | Ada -> acn_c.PositiveInteger_ConstSize_big_endian_16   
     let PositiveInteger_ConstSize_little_endian_16   = match l with C -> acn_c.PositiveInteger_ConstSize_little_endian_16 | Ada -> acn_c.PositiveInteger_ConstSize_little_endian_16
@@ -114,7 +114,7 @@ let private createAcnIntegerFunctionInternal (r:Asn1AcnAst.AstRoot) (l:Programmi
     //let errCodeValue        = us.currErrCode
     //let errCode             = {ErroCode.errCodeName = errCodeName; errCodeValue = errCodeValue}
 
-    let funcBody (errCode:ErroCode) (p:FuncParamType)        = 
+    let funcBody (errCode:ErroCode) (acnArgs: (Asn1AcnAst.RelativePath*Asn1AcnAst.AcnParameter) list) (p:FuncParamType)        = 
         let pp = match codec with CommonTypes.Encode -> p.getValue l | CommonTypes.Decode -> p.getPointer l
         let funcBodyContent = 
             match acnEncodingClass with
@@ -167,7 +167,7 @@ let createAcnIntegerFunction (r:Asn1AcnAst.AstRoot) (l:ProgrammingLanguage) (cod
 let createIntegerFunction (r:Asn1AcnAst.AstRoot) (l:ProgrammingLanguage) (codec:CommonTypes.Codec) (t:Asn1AcnAst.Asn1Type) (o:Asn1AcnAst.Integer) (typeDefinition:TypeDefinitionCommon) (baseTypeUperFunc : AcnFunction option) (isValidFunc: IsValidFunction option) (uperFunc: UPerFunction) (us:State)  =
     let funcBody = createAcnIntegerFunctionInternal r l codec o.acnEncodingClass uperFunc.funcBody
     let soSparkAnnotations = None
-    createPrimitiveFunction r l codec t typeDefinition isValidFunc  (fun e p -> funcBody e p) soSparkAnnotations us
+    createPrimitiveFunction r l codec t typeDefinition isValidFunc  (fun e acnArgs p -> funcBody e acnArgs p) soSparkAnnotations us
 
 
 
@@ -197,7 +197,7 @@ let createAcnBooleanFunction (r:Asn1AcnAst.AstRoot) (l:ProgrammingLanguage) (cod
     let errCodeValue        = us.currErrCode
     let errCode             = {ErroCode.errCodeName = errCodeName; errCodeValue = errCodeValue}
 
-    let funcBody (errCode:ErroCode) (p:FuncParamType) = 
+    let funcBody (errCode:ErroCode) (acnArgs: (Asn1AcnAst.RelativePath*Asn1AcnAst.AcnParameter) list) (p:FuncParamType) = 
         let pp = match codec with CommonTypes.Encode -> p.getValue l | CommonTypes.Decode -> p.getPointer l
         let Boolean         = match l with C -> uper_c.Boolean          | Ada -> uper_a.Boolean
         let funcBodyContent = 
@@ -208,14 +208,14 @@ let createAcnBooleanFunction (r:Asn1AcnAst.AstRoot) (l:ProgrammingLanguage) (cod
 let createBooleanFunction (r:Asn1AcnAst.AstRoot) (l:ProgrammingLanguage) (codec:CommonTypes.Codec) (t:Asn1AcnAst.Asn1Type) (o:Asn1AcnAst.Boolean) (typeDefinition:TypeDefinitionCommon) (baseTypeUperFunc : AcnFunction option) (isValidFunc: IsValidFunction option) (us:State)  =
     // todo use BolleanAcnEncodingClass
 
-    let funcBody (errCode:ErroCode) (p:FuncParamType) = 
+    let funcBody (errCode:ErroCode) (acnArgs: (Asn1AcnAst.RelativePath*Asn1AcnAst.AcnParameter) list) (p:FuncParamType) = 
         let pp = match codec with CommonTypes.Encode -> p.getValue l | CommonTypes.Decode -> p.getPointer l
         let Boolean         = match l with C -> uper_c.Boolean          | Ada -> uper_a.Boolean
         let funcBodyContent = 
             Boolean pp errCode.errCodeName codec
         {AcnFuncBodyResult.funcBody = funcBodyContent; errCodes = [errCode]; localVariables = []}    
     let soSparkAnnotations = None
-    createPrimitiveFunction r l codec t typeDefinition  isValidFunc  (fun e p -> Some (funcBody e p)) soSparkAnnotations us
+    createPrimitiveFunction r l codec t typeDefinition  isValidFunc  (fun e acnArgs p -> Some (funcBody e acnArgs p)) soSparkAnnotations us
 
 (*
 let getFuncParamTypeFromReferenceToType (r:Asn1AcnAst.AstRoot) (l:ProgrammingLanguage) (c:CommonTypes.Codec) (ref:ReferenceToType) =
@@ -264,40 +264,47 @@ let locateParameter (r:Asn1AcnAst.AstRoot) (deps:Asn1AcnAst.AcnInsertedFieldDepe
     
     0
 
-let handleSingleUpdateDependency (r:Asn1AcnAst.AstRoot) (deps:Asn1AcnAst.AcnInsertedFieldDependencies) (l:ProgrammingLanguage) (m:Asn1AcnAst.Asn1Module) (vTarget:FuncParamType) d (pSrcRoot : FuncParamType) =
+let rec handleSingleUpdateDependency (r:Asn1AcnAst.AstRoot) (deps:Asn1AcnAst.AcnInsertedFieldDependencies) (l:ProgrammingLanguage) (m:Asn1AcnAst.Asn1Module) d  (us:State) =
     match d with
     | DepIA5StringSizeDeterminant  decTypeId   -> raise(BugErrorException "Not implemented functionality") 
     | DepOtherSizeDeterminant      decTypeId   -> raise(BugErrorException "Not implemented functionality")
-    | DepRefTypeArgument           decTypeId   -> 
-        let v = vTarget.getPointer l
-        let refTypePath = getAccessFromScopeNodeList decTypeId false l pSrcRoot
+    | DepRefTypeArgument           (decTypeId, acnPrm)   -> 
+        let prmUpdateStatement, ns1 = getUpdateFunctionUsedInEncoding r deps l m acnPrm.id us
+        match prmUpdateStatement with
+        | None  -> None, ns1
+        | Some prmUpdateStatement   -> 
+            let updateFunc (vTarget : FuncParamType) (pSrcRoot : FuncParamType)  = 
+                (*
+                let v = vTarget.getPointer l
+                let refTypePath = getAccessFromScopeNodeList decTypeId false l pSrcRoot
 
-        let tasName= 
-            match decTypeId.parentTypeId with
-            | Some refTypeId    -> 
-                refTypeId.tasInfo.Value.tasName
-            | _             -> raise(BugErrorException "??")
-        let prmName = ToC decTypeId.lastItem
-        let updateStatement = sprintf "/*%s -- %s*/" (acn_c.RefTypeArgument1 v tasName prmName (refTypePath.getPointer l)) decTypeId.AsString
-        
-        //let parameter = 
-
-        updateStatement
+                let tasName= 
+                    match decTypeId.parentTypeId with
+                    | Some refTypeId    -> 
+                        refTypeId.tasInfo.Value.tasName
+                    | _             -> raise(BugErrorException "??")
+                let prmName = ToC decTypeId.lastItem
+                let updateStatement = sprintf "/*%s -- %s*/" (acn_c.RefTypeArgument1 v tasName prmName (refTypePath.getPointer l)) decTypeId.AsString
+                updateStatement
+                *)
+                prmUpdateStatement vTarget pSrcRoot
+            Some updateFunc, ns1
     | DepPresenceBool              decTypeId   -> 
-        //<v> = (<sSeqPath><sAcc>exist.<sChildName> == 1);
-        let v = vTarget.getValue l
-        let parDecTypeSeq =
-            match decTypeId with
-            | ReferenceToType (nodes) -> ReferenceToType (nodes |> List.rev |> List.tail |> List.rev)
-        let pDecParSeq = getAccessFromScopeNodeList parDecTypeSeq false l pSrcRoot
-        let updateStatement = acn_c.PresenceDependency v (pDecParSeq.p) (pDecParSeq.getAcces l) (ToC decTypeId.lastItem)
-        updateStatement
+        let updateFunc (vTarget : FuncParamType) (pSrcRoot : FuncParamType)  = 
+            let v = vTarget.getValue l
+            let parDecTypeSeq =
+                match decTypeId with
+                | ReferenceToType (nodes) -> ReferenceToType (nodes |> List.rev |> List.tail |> List.rev)
+            let pDecParSeq = getAccessFromScopeNodeList parDecTypeSeq false l pSrcRoot
+            let updateStatement = acn_c.PresenceDependency v (pDecParSeq.p) (pDecParSeq.getAcces l) (ToC decTypeId.lastItem)
+            updateStatement
+        Some updateFunc, us
     | DepPresenceInt               decTypeId   -> raise(BugErrorException "Not implemented functionality")
     | DepPresenceStr               decTypeId   -> raise(BugErrorException "Not implemented functionality")
     | DepChoiceDeteterminant       decTypeId   -> raise(BugErrorException "Not implemented functionality")
 
-let getUpdateFunctionUsedInEncoding (r:Asn1AcnAst.AstRoot) (deps:Asn1AcnAst.AcnInsertedFieldDependencies) (l:ProgrammingLanguage) (m:Asn1AcnAst.Asn1Module) (acnChildOrAcnParameterId) (us:State) =
-    match deps.acnFields.TryFind acnChildOrAcnParameterId with
+and getUpdateFunctionUsedInEncoding (r:Asn1AcnAst.AstRoot) (deps:Asn1AcnAst.AcnInsertedFieldDependencies) (l:ProgrammingLanguage) (m:Asn1AcnAst.Asn1Module) (acnChildOrAcnParameterId) (us:State) =
+    match deps.acnFieldAndAcnParametersDependencies.TryFind acnChildOrAcnParameterId with
     | None  -> 
         //let errMessage = sprintf "No dependency found for ACN child or ACN parameter : %s" acnChildOrAcnParameterId.AsString
         //raise(BugErrorException errMessage)
@@ -306,7 +313,8 @@ let getUpdateFunctionUsedInEncoding (r:Asn1AcnAst.AstRoot) (deps:Asn1AcnAst.AcnI
         match dps with
         | []        -> raise(BugErrorException "unexpected error in createSequenceFunction")
         | d1::[]    -> 
-            Some ((fun (vTarget : FuncParamType) (pSrcRoot : FuncParamType)  ->  handleSingleUpdateDependency r deps l m vTarget d1 pSrcRoot)), us
+            let ret, ns = handleSingleUpdateDependency r deps l m d1 us
+            ret, ns
         | _         -> raise(BugErrorException "Not implemented functionality")
 
 
@@ -332,13 +340,13 @@ let createSequenceFunction (r:Asn1AcnAst.AstRoot) (deps:Asn1AcnAst.AcnInsertedFi
     let acnChildren = children |>  List.choose(fun x -> match x with AcnChild z -> Some z | Asn1Child _ -> None)
     let asn1Children = children |>  List.choose(fun x -> match x with Asn1Child z -> Some z | AcnChild _ -> None)
 
-    let funcBody (errCode:ErroCode) (p:FuncParamType) = 
+    let funcBody (errCode:ErroCode) (acnArgs: (Asn1AcnAst.RelativePath*Asn1AcnAst.AcnParameter) list) (p:FuncParamType) = 
         let acnlocalVariablesCh = acnChildren |>  List.map(fun x -> AcnInsertedChild(x.c_name, x.typeDefinitionBodyWithinSeq))
         
         let acnlocalVariablesPrms = 
             match t.id.tasInfo with
-            | Some  _ -> []   //if the encoding type is a top level type (i.e. TAS) then the encodig parameters are transformed into function parameters and not local variables.
-            | None    -> acnPrms |>  List.map(fun x -> AcnInsertedChild(x.c_name, x.typeDefinitionBodyWithinSeq))
+            | Some  _ -> [] // if the encoding type is a top level type (i.e. TAS) then the encodig parameters are transformed into function parameters and not local variables.
+            | None    -> [] // acnPrms |>  List.map(fun x -> AcnInsertedChild(x.c_name, x.typeDefinitionBodyWithinSeq))
         let acnlocalVariables = acnlocalVariablesCh @ acnlocalVariablesPrms
         //let acnParams =  r.acnParameters |> List.filter(fun  prm -> prm.ModName ) 
 
@@ -365,7 +373,7 @@ let createSequenceFunction (r:Asn1AcnAst.AstRoot) (deps:Asn1AcnAst.AcnInsertedFi
                     let chFunc = child.Type.getAcnFunction codec
                     let childContentResult = 
                         match chFunc with
-                        | Some chFunc   -> chFunc.funcBody (p.getSeqChild l child.c_name child.Type.isIA5String)
+                        | Some chFunc   -> chFunc.funcBody [] (p.getSeqChild l child.c_name child.Type.isIA5String)
                         | None          -> None
 
                     //handle present-when acn property
@@ -375,7 +383,7 @@ let createSequenceFunction (r:Asn1AcnAst.AstRoot) (deps:Asn1AcnAst.AcnInsertedFi
                             match opt.acnPresentWhen with
                             | None    -> None
                             | Some (PresenceWhenBool relPath)    -> 
-                                let determinantId = deps.asn12AcnFieldDep.[(DepPresenceBool child.Type.id)]
+                                let determinantId = deps.asn12AcnFieldDep.[child.Type.id]
                                 let extField = getAcnDeterminantName determinantId
                                 Some(sequence_presense_optChild_pres_bool p.p (p.getAcces l) child.c_name extField codec)
                                 (*
@@ -452,7 +460,20 @@ let createSequenceFunction (r:Asn1AcnAst.AstRoot) (deps:Asn1AcnAst.AcnInsertedFi
 
 
 let createReferenceFunction (r:Asn1AcnAst.AstRoot) (l:ProgrammingLanguage) (codec:CommonTypes.Codec) (t:Asn1AcnAst.Asn1Type) (o:Asn1AcnAst.ReferenceType) (typeDefinition:TypeDefinitionCommon) (isValidFunc: IsValidFunction option) (baseType:Asn1Type) (us:State)  =
-    baseType.getAcnFunction codec, us
+    match codec with
+    | Codec.Encode  -> baseType.getAcnFunction codec, us
+    | Codec.Decode  -> 
+        let paramsArgsPairs = List.zip o.acnArguments t.acnParameters
+        let baseTypeAcnFunction = baseType.getAcnFunction codec 
+        let ret =
+            match baseTypeAcnFunction with
+            | None  -> None
+            | Some baseTypeAcnFunction   ->
+                let funcBody (acnArgs: (Asn1AcnAst.RelativePath*Asn1AcnAst.AcnParameter) list) (p:FuncParamType) = 
+                    baseTypeAcnFunction.funcBody (acnArgs@paramsArgsPairs) p
+                Some  {baseTypeAcnFunction with funcBody = funcBody} 
+
+        ret, us
 
 
 (*

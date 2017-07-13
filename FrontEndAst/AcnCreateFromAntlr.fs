@@ -357,7 +357,10 @@ let private CreateTypeAssignment (allAcnFiles: ParameterizedAsn1Ast.AntlrParserR
                 //check that all parameters are used
                 let refs = encSpecITree.AllChildren |> List.filter(fun x -> x.Type = acnParser.LONG_FIELD && x.ChildCount=1) |> List.map(fun x -> x.GetChild(0).Text)
                 match refs |> Seq.tryFind(fun x -> x = prmName) with
-                | Some(_)   -> {Asn1AcnAst.AcnParameter.name = prmName; Asn1AcnAst.AcnParameter.asn1Type=CreateAcnParamType (x.GetChild(0)) ; Asn1AcnAst.AcnParameter.loc = loc}
+                | Some(_)   -> 
+                    //parameter id is initially set to an invalid value.
+                    //It takes the correct value when the ASN.1 is constructed.
+                    {Asn1AcnAst.AcnParameter.name = prmName; Asn1AcnAst.AcnParameter.asn1Type=CreateAcnParamType (x.GetChild(0)) ; Asn1AcnAst.AcnParameter.loc = loc; Asn1AcnAst.id = ReferenceToType([]) }
                 | None      -> raise(SemanticError(loc, sprintf "unreferenced parameter '%s'" prmName))
             paramList.Children |> List.map CreateParam
 
@@ -1092,7 +1095,7 @@ let rec private mergeType (asn1:Asn1Ast.AstRoot) (acn:AcnAst) (m:Asn1Ast.Asn1Mod
         id              = ReferenceToType curPath
         acnAligment     = tryGetProp combinedProperties (fun x -> match x with ALIGNTONEXT e -> Some e | _ -> None)
         Location        = t.Location
-        acnParameters   = acnParameters
+        acnParameters   = acnParameters |> List.map(fun prm -> {prm with id = (ReferenceToType (curPath@[(PRM prm.name)]))})
         tasInfo = tasInfo
     }
 

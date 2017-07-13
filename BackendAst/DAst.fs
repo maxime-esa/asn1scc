@@ -213,7 +213,10 @@ type AcnFunction = {
     funcName            : string option               // the name of the function. Valid only for TASes)
     func                : string option               // the body of the function
     funcDef             : string option               // function definition
-    funcBody            : FuncParamType -> (AcnFuncBodyResult option)            // returns a list of validations statements
+
+    // takes as input (a) any acn arguments and (b) the field where the encoding/decoding takes place
+    // returns a list of acn encoding statements
+    funcBody            : ((Asn1AcnAst.RelativePath*Asn1AcnAst.AcnParameter) list) -> FuncParamType -> (AcnFuncBodyResult option)            
 }
 
 type Integer = {

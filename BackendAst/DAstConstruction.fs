@@ -12,16 +12,13 @@ open DAstUtilFunctions
 let foldMap = Asn1Fold.foldMap
 
 let private mapAcnParameter (r:Asn1AcnAst.AstRoot) (deps:Asn1AcnAst.AcnInsertedFieldDependencies) (l:ProgrammingLanguage) (m:Asn1AcnAst.Asn1Module) (t:Asn1AcnAst.Asn1Type) (prm:Asn1AcnAst.AcnParameter) (us:State) =
-    let id = 
-            match t.id with
-            |ReferenceToType (nodes) -> ReferenceToType (nodes@[PRM prm.name])
-    let funcUpdateStatement, ns1 = DAstACN.getUpdateFunctionUsedInEncoding r deps l m id us
+    let funcUpdateStatement, ns1 = DAstACN.getUpdateFunctionUsedInEncoding r deps l m prm.id us
     {
         AcnParameter.asn1Type = prm.asn1Type; 
         name = prm.name; 
         loc = prm.loc
-        id = id
-        c_name = DAstACN.getAcnDeterminantName id
+        id = prm.id
+        c_name = DAstACN.getAcnDeterminantName prm.id
         typeDefinitionBodyWithinSeq = 
             match prm.asn1Type with
             | Asn1AcnAst.AcnPrmInteger  _ -> DAstTypeDefinition.createPrmAcnInteger r l 

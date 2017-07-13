@@ -543,7 +543,7 @@ with
         | SequenceOf   t -> None
         | Sequence     t -> Some (t.acnDecFunction)
         | Choice       t -> None
-        | ReferenceType t-> Some (t.acnEncFunction)
+        | ReferenceType t-> Some (t.acnDecFunction)
     member this.getAcnFunction (l:CommonTypes.Codec) =
         match l with
         | CommonTypes.Encode   -> this.acnEncFunction

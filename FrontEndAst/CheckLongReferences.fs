@@ -17,16 +17,16 @@ let private addParameter (cur:AcnInsertedFieldDependencies) (refType:ReferenceTo
     let newKey = 
         match refType with
         | ReferenceToType nodes ->ReferenceToType(nodes@[PRM p.name])
-    match cur.acnFields.TryFind newKey with
-    | None      -> {cur with acnFields = cur.acnFields.Add(newKey,[d]); asn12AcnFieldDep = cur.asn12AcnFieldDep.Add(d,newKey)}
-    | Some lst  -> {cur with acnFields = cur.acnFields.Add(newKey,lst@[d]); asn12AcnFieldDep = cur.asn12AcnFieldDep.Add(d,newKey)}
+    match cur.acnFieldAndAcnParametersDependencies.TryFind newKey with
+    | None      -> {cur with acnFieldAndAcnParametersDependencies = cur.acnFieldAndAcnParametersDependencies.Add(newKey,[d]); asn12AcnFieldDep = cur.asn12AcnFieldDep.Add(d.asn1TypeId,newKey)}
+    | Some lst  -> {cur with acnFieldAndAcnParametersDependencies = cur.acnFieldAndAcnParametersDependencies.Add(newKey,lst@[d]); asn12AcnFieldDep = cur.asn12AcnFieldDep.Add(d.asn1TypeId,newKey)}
 
 
 let private addAcnChild (cur:AcnInsertedFieldDependencies) (acnRefId:ReferenceToType) (d:DependencyKind) =
     let newKey = acnRefId
-    match cur.acnFields.TryFind newKey with
-    | None      -> {cur with acnFields = cur.acnFields.Add(newKey,[d]); asn12AcnFieldDep = cur.asn12AcnFieldDep.Add(d,newKey)}
-    | Some lst  -> {cur with acnFields = cur.acnFields.Add(newKey,lst@[d]); asn12AcnFieldDep = cur.asn12AcnFieldDep.Add(d,newKey)}
+    match cur.acnFieldAndAcnParametersDependencies.TryFind newKey with
+    | None      -> {cur with acnFieldAndAcnParametersDependencies = cur.acnFieldAndAcnParametersDependencies.Add(newKey,[d]); asn12AcnFieldDep = cur.asn12AcnFieldDep.Add(d.asn1TypeId,newKey)}
+    | Some lst  -> {cur with acnFieldAndAcnParametersDependencies = cur.acnFieldAndAcnParametersDependencies.Add(newKey,lst@[d]); asn12AcnFieldDep = cur.asn12AcnFieldDep.Add(d.asn1TypeId,newKey)}
 
 
 let private checkRelativePath (curState:AcnInsertedFieldDependencies) (parents: Asn1Type list) (visibleParameters:(ReferenceToType*AcnParameter) list) (RelativePath path : RelativePath) (d:DependencyKind) checkParameter checkAcnType =
@@ -201,7 +201,7 @@ let rec private checkType (parents: Asn1Type list) (curentPath : ScopeNode list)
                 | AcnBoolean    _, AcnPrmBoolean _   -> ()
                 | _             , AcnPrmRefType (md,ts)    -> ()    //WARNING NOT CHECKED
                 | _                                  -> raise(SemanticError(loc, (sprintf "Invalid argument type. Expecting %s got %s " (prm.asn1Type.ToString()) (c.Type.AsString))))
-            checkRelativePath curState parents visibleParameters   (RelativePath path) (DepRefTypeArgument t.id) checkParameter checkAcnType
+            checkRelativePath curState parents visibleParameters   (RelativePath path) (DepRefTypeArgument (t.id, prm)) checkParameter checkAcnType
 
         match ref.acnArguments.Length = ref.baseType.acnParameters.Length with
         | true  -> ()
@@ -212,7 +212,7 @@ let rec private checkType (parents: Asn1Type list) (curentPath : ScopeNode list)
 
 
 let checkAst (r:AstRoot) =
-    let emptyState = {AcnInsertedFieldDependencies.acnFields = Map.empty; asn12AcnFieldDep = Map.empty}
+    let emptyState = {AcnInsertedFieldDependencies.acnFieldAndAcnParametersDependencies = Map.empty; asn12AcnFieldDep = Map.empty}
 
     r.Files |>
         List.collect (fun f -> f.Modules) |>
