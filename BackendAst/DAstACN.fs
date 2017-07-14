@@ -264,11 +264,10 @@ let locateParameter (r:Asn1AcnAst.AstRoot) (deps:Asn1AcnAst.AcnInsertedFieldDepe
     
     0
 
-let rec handleSingleUpdateDependency (r:Asn1AcnAst.AstRoot) (deps:Asn1AcnAst.AcnInsertedFieldDependencies) (l:ProgrammingLanguage) (m:Asn1AcnAst.Asn1Module) d  (us:State) =
-    match d with
-    | DepIA5StringSizeDeterminant  decTypeId   -> raise(BugErrorException "Not implemented functionality") 
-    | DepOtherSizeDeterminant      decTypeId   -> raise(BugErrorException "Not implemented functionality")
-    | DepRefTypeArgument           (decTypeId, acnPrm)   -> 
+let rec handleSingleUpdateDependency (r:Asn1AcnAst.AstRoot) (deps:Asn1AcnAst.AcnInsertedFieldDependencies) (l:ProgrammingLanguage) (m:Asn1AcnAst.Asn1Module) (d:AcnDependency)  (us:State) =
+    match d.dependencyKind with
+    | AcnDepSizeDeterminant         -> raise(BugErrorException "Not implemented functionality")
+    | AcnDepRefTypeArgument           acnPrm   -> 
         let prmUpdateStatement, ns1 = getUpdateFunctionUsedInEncoding r deps l m acnPrm.id us
         match prmUpdateStatement with
         | None  -> None, ns1
@@ -289,33 +288,30 @@ let rec handleSingleUpdateDependency (r:Asn1AcnAst.AstRoot) (deps:Asn1AcnAst.Acn
                 *)
                 prmUpdateStatement vTarget pSrcRoot
             Some updateFunc, ns1
-    | DepPresenceBool              decTypeId   -> 
+    | AcnDepPresenceBool              -> 
         let updateFunc (vTarget : FuncParamType) (pSrcRoot : FuncParamType)  = 
             let v = vTarget.getValue l
             let parDecTypeSeq =
-                match decTypeId with
+                match d.asn1Type with
                 | ReferenceToType (nodes) -> ReferenceToType (nodes |> List.rev |> List.tail |> List.rev)
             let pDecParSeq = getAccessFromScopeNodeList parDecTypeSeq false l pSrcRoot
-            let updateStatement = acn_c.PresenceDependency v (pDecParSeq.p) (pDecParSeq.getAcces l) (ToC decTypeId.lastItem)
+            let updateStatement = acn_c.PresenceDependency v (pDecParSeq.p) (pDecParSeq.getAcces l) (ToC d.asn1Type.lastItem)
             updateStatement
         Some updateFunc, us
-    | DepPresenceInt               decTypeId   -> raise(BugErrorException "Not implemented functionality")
-    | DepPresenceStr               decTypeId   -> raise(BugErrorException "Not implemented functionality")
-    | DepChoiceDeteterminant       decTypeId   -> raise(BugErrorException "Not implemented functionality")
+    | AcnDepPresenceInt               intVal   -> raise(BugErrorException "Not implemented functionality")
+    | AcnDepPresenceStr               strVal   -> raise(BugErrorException "Not implemented functionality")
+    | AcnDepChoiceDeteterminant                -> raise(BugErrorException "Not implemented functionality")
 
 and getUpdateFunctionUsedInEncoding (r:Asn1AcnAst.AstRoot) (deps:Asn1AcnAst.AcnInsertedFieldDependencies) (l:ProgrammingLanguage) (m:Asn1AcnAst.Asn1Module) (acnChildOrAcnParameterId) (us:State) =
-    match deps.acnFieldAndAcnParametersDependencies.TryFind acnChildOrAcnParameterId with
-    | None  -> 
+    match deps.acnDependencies |> List.filter(fun d -> d.determinant = acnChildOrAcnParameterId) with
+    | []  -> 
         //let errMessage = sprintf "No dependency found for ACN child or ACN parameter : %s" acnChildOrAcnParameterId.AsString
         //raise(BugErrorException errMessage)
         None, us
-    | Some dps -> 
-        match dps with
-        | []        -> raise(BugErrorException "unexpected error in createSequenceFunction")
-        | d1::[]    -> 
-            let ret, ns = handleSingleUpdateDependency r deps l m d1 us
-            ret, ns
-        | _         -> raise(BugErrorException "Not implemented functionality")
+    | d1::[]    -> 
+        let ret, ns = handleSingleUpdateDependency r deps l m d1 us
+        ret, ns
+    | _         -> raise(BugErrorException "Not implemented functionality")
 
 
 
@@ -383,8 +379,15 @@ let createSequenceFunction (r:Asn1AcnAst.AstRoot) (deps:Asn1AcnAst.AcnInsertedFi
                             match opt.acnPresentWhen with
                             | None    -> None
                             | Some (PresenceWhenBool relPath)    -> 
-                                let determinantId = deps.asn12AcnFieldDep.[child.Type.id]
-                                let extField = getAcnDeterminantName determinantId
+                                let dependency = deps.acnDependencies |> List.find(fun d -> d.asn1Type = child.Type.id)
+                                let rec resolveParam (prmId:ReferenceToType) =
+                                    let nodes = match prmId with ReferenceToType nodes -> nodes
+                                    let lastNode = nodes |> List.rev |> List.head
+                                    match lastNode with
+                                    | PRM prmName   -> prmId
+                                    | _             -> prmId
+
+                                let extField = getAcnDeterminantName dependency.determinant
                                 Some(sequence_presense_optChild_pres_bool p.p (p.getAcces l) child.c_name extField codec)
                                 (*
                                 match lnk.linkType with
@@ -429,7 +432,7 @@ let createSequenceFunction (r:Asn1AcnAst.AstRoot) (deps:Asn1AcnAst.AcnInsertedFi
 
                     //acn child encode/decode
                     let chFunc = acnChild.funcBody codec
-                    let childContentResult = chFunc childP
+                    let childContentResult = chFunc[]  childP
                     match childContentResult with
                     | None              -> ()
                     | Some childContent ->
@@ -463,7 +466,7 @@ let createReferenceFunction (r:Asn1AcnAst.AstRoot) (l:ProgrammingLanguage) (code
     match codec with
     | Codec.Encode  -> baseType.getAcnFunction codec, us
     | Codec.Decode  -> 
-        let paramsArgsPairs = List.zip o.acnArguments t.acnParameters
+        let paramsArgsPairs = List.zip o.acnArguments o.baseType.acnParameters
         let baseTypeAcnFunction = baseType.getAcnFunction codec 
         let ret =
             match baseTypeAcnFunction with

@@ -647,10 +647,26 @@ with
         | DepPresenceStr               refId          -> refId
         | DepChoiceDeteterminant       refId          -> refId
 
+type AcnDependencyKind = 
+    | AcnDepSizeDeterminant                  // The asn1Type has a size dependency a SEQUENCE OF, BIT STRINT, OCTET STRING etc
+    | AcnDepRefTypeArgument of AcnParameter        // string is the param name
+    | AcnDepPresenceBool                     // points to a SEQEUNCE or Choice child
+    | AcnDepPresenceInt of BigInteger        // points to a SEQEUNCE or Choice child
+    | AcnDepPresenceStr of string
+    | AcnDepChoiceDeteterminant              // points to Enumerated type acting as CHOICE determinant.
+
+
+//The following type expresses the dependencies that exists between ASN.1 types and ACNs types and parameters
+type AcnDependency = {
+    asn1Type        : ReferenceToType          // an ASN.1 type that its decoding depends on the determinant
+    determinant     : ReferenceToType          // an ACN inserted type or an ACN parameter that acts as determinant
+    dependencyKind  : AcnDependencyKind
+}
 
 type AcnInsertedFieldDependencies = {
-    acnFieldAndAcnParametersDependencies    : Map<ReferenceToType, list<DependencyKind> >       //for each acninserted fields a list with their dependencies
-    asn12AcnFieldDep                        : Map<ReferenceToType, ReferenceToType>
+    //acnFieldAndAcnParametersDependencies    : Map<ReferenceToType, list<DependencyKind> >       //for each acninserted fields a list with their dependencies
+    //asn12AcnFieldDep                        : Map<ReferenceToType, ReferenceToType>
+    acnDependencies                         : AcnDependency list
 }
 
 

@@ -403,7 +403,7 @@ and AcnChild = {
     id                          : ReferenceToType
     Type                        : Asn1AcnAst.AcnInsertedType
     typeDefinitionBodyWithinSeq : string
-    funcBody                    : CommonTypes.Codec -> FuncParamType -> (AcnFuncBodyResult option)            // returns a list of validations statements
+    funcBody                    : CommonTypes.Codec -> ((Asn1AcnAst.RelativePath*Asn1AcnAst.AcnParameter) list) -> FuncParamType -> (AcnFuncBodyResult option)            // returns a list of validations statements
     funcUpdateStatement         : (FuncParamType -> FuncParamType -> string) option                                    // vTarget,  pSrcRoot, return the update statement 
 }
 

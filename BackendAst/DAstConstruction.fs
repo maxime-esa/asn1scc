@@ -35,13 +35,13 @@ let private createAcnChild (r:Asn1AcnAst.AstRoot) (deps:Asn1AcnAst.AcnInsertedFi
         match ch.Type with
         | Asn1AcnAst.AcnInteger  a -> DAstACN.createAcnIntegerFunction r l Codec.Encode ch.id a us
         | Asn1AcnAst.AcnBoolean  a -> DAstACN.createAcnBooleanFunction r l Codec.Encode ch.id a us
-        | Asn1AcnAst.AcnNullType a -> (fun p -> None), us
+        | Asn1AcnAst.AcnNullType a -> (fun args p -> None), us
         
     let funcBodyDecode, ns2 = 
         match ch.Type with
         | Asn1AcnAst.AcnInteger  a -> DAstACN.createAcnIntegerFunction r l Codec.Decode ch.id a ns1
         | Asn1AcnAst.AcnBoolean  a -> DAstACN.createAcnBooleanFunction r l Codec.Decode ch.id a ns1
-        | Asn1AcnAst.AcnNullType a -> (fun p -> None), us
+        | Asn1AcnAst.AcnNullType a -> (fun args p -> None), us
         
     let funcUpdateStatement, ns3 = DAstACN.getUpdateFunctionUsedInEncoding r deps l m ch.id ns2
 
