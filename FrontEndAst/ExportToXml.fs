@@ -214,6 +214,7 @@ let exportAcnNullType (a:StringLoc option) =
                          
 let exportAcnParameter (a:AcnParameter) =
     XElement(xname "AcnParameter", 
+        XAttribute(xname "id", a.id.AsString),
         XAttribute(xname "name", a.name),
         XAttribute(xname "type", (a.asn1Type.ToString())))    
 
@@ -287,6 +288,7 @@ let private exportType (t:Asn1Type) =
             match ch.Type with
             | AcnInteger  (a)        -> 
                 XElement(xname "ACN_COMPONENT", 
+                    XAttribute(xname "id", ch.id.AsString),
                     XAttribute(xname "name", ch.Name.Value),
                     XAttribute(xname "type", "INTEGER"), 
                     (exportAcnEndianness a.acnProperties.endiannessProp),
@@ -295,12 +297,14 @@ let private exportType (t:Asn1Type) =
                     (exportAcnAligment a.acnAligment)), us 
             | AcnNullType (a)        -> 
                 XElement(xname "ACN_COMPONENT", 
+                    XAttribute(xname "id", ch.id.AsString),
                     XAttribute(xname "name", ch.Name.Value),
                     XAttribute(xname "type", "NULL"),    
                     (exportAcnNullType a.acnProperties.encodingPattern),
                     (exportAcnAligment a.acnAligment)), us 
             | AcnBoolean  (a)       -> 
                 XElement(xname "ACN_COMPONENT", 
+                    XAttribute(xname "id", ch.id.AsString),
                     XAttribute(xname "name", ch.Name.Value),
                     XAttribute(xname "type", "BOOLEAN"), 
                     (exportAcnBooleanEncoding a.acnProperties.encodingPattern),
@@ -362,7 +366,29 @@ let private exportModule (m:Asn1Module) =
         XElement(xname "ValueAssigments",m.ValueAssignments |> List.map  exportVas)
     )
 
-let exportFile (r:AstRoot) (fileName:string) =
+let private exportAcnDependencyKind (d:AcnDependencyKind) =
+    match d with                   
+    | AcnDepSizeDeterminant        -> XElement(xname "SizeDependency")
+    | AcnDepRefTypeArgument prm    -> XElement(xname "RefTypeArgumentDependency", XAttribute(xname "prmId", prm.id.AsString))
+    | AcnDepPresenceBool           -> XElement(xname "PresenseBoolDependency")
+    | AcnDepPresenceInt intVal     -> XElement(xname "PresenseIntDependency", XAttribute(xname "intVal", intVal.ToString()))
+    | AcnDepPresenceStr strVal     -> XElement(xname "PresenseStringDependency", XAttribute(xname "prmId", strVal))
+    | AcnDepChoiceDeteterminant    -> XElement(xname "ChoiceEnumDependency")
+                                   
+let private exportAcnDependency (d:AcnDependency) =
+    XElement(xname "AcnDependency",
+        XAttribute(xname "Asn1TypeID", d.asn1Type.AsString),
+        XAttribute(xname "DeterminantId", d.determinant.AsString),
+        (exportAcnDependencyKind d.dependencyKind)
+    )
+
+let private exportAcnDependencies (deps:AcnInsertedFieldDependencies) =
+    XElement(xname "AcnDependencies",
+        (deps.acnDependencies |> List.map exportAcnDependency)
+    )
+
+
+let exportFile (r:AstRoot) (deps:AcnInsertedFieldDependencies) (fileName:string) =
     let wsRoot =
         XElement(xname "AstRoot",
             XAttribute(XNamespace.Xmlns + "xsi", xsi),
@@ -373,7 +399,9 @@ let exportFile (r:AstRoot) (fileName:string) =
                         XAttribute(xname "FileName", f.FileName),
                         XElement(xname "Modules",
                             f.Modules |> List.map  exportModule)
-                    )))
+                    )),
+            (exportAcnDependencies deps)
+            )
 
 
     let dec = new XDeclaration("1.0", "utf-8", "true")

@@ -373,31 +373,43 @@ let createSequenceFunction (r:Asn1AcnAst.AstRoot) (deps:Asn1AcnAst.AcnInsertedFi
                         | None          -> None
 
                     //handle present-when acn property
-                    let acnPresenceStatement = 
-                        match child.Optionality with
-                        | Some (Asn1AcnAst.Optional opt)   -> 
-                            match opt.acnPresentWhen with
-                            | None    -> None
-                            | Some (PresenceWhenBool relPath)    -> 
-                                let dependency = deps.acnDependencies |> List.find(fun d -> d.asn1Type = child.Type.id)
-                                let rec resolveParam (prmId:ReferenceToType) =
-                                    let nodes = match prmId with ReferenceToType nodes -> nodes
-                                    let lastNode = nodes |> List.rev |> List.head
-                                    match lastNode with
-                                    | PRM prmName   -> prmId
-                                    | _             -> prmId
-
-                                let extField = getAcnDeterminantName dependency.determinant
-                                Some(sequence_presense_optChild_pres_bool p.p (p.getAcces l) child.c_name extField codec)
-                                (*
-                                match lnk.linkType with
-                                | Asn1AcnAst.PresenceBool              -> Some(sequence_presense_optChild_pres_bool p.p (p.getAcces l) child.c_name extField codec)
-                                | Asn1AcnAst.PresenceInt intVal        -> Some(sequence_presense_optChild_pres_int p.p (p.getAcces l) child.c_name extField intVal codec)
-                                | Asn1AcnAst.PresenceStr strval        -> Some(sequence_presense_optChild_pres_str p.p (p.getAcces l) child.c_name extField strval codec)
-                                | _                         -> raise(BugErrorException "unexpected error in createSequenceFunction")
-                                *)
-                        | _                 -> None
-                    yield (acnPresenceStatement, [], [])
+                    match codec with
+                    | Codec.Encode  -> ()
+                    | Codec.Decode  ->
+                        let acnPresenceStatement = 
+                            match child.Optionality with
+                            | Some (Asn1AcnAst.Optional opt)   -> 
+                                match opt.acnPresentWhen with
+                                | None    -> None
+                                | Some (PresenceWhenBool relPath)    -> 
+                                    let dependency = deps.acnDependencies |> List.find(fun d -> d.asn1Type = child.Type.id)
+                                    let rec resolveParam (prmId:ReferenceToType) =
+                                        let nodes = match prmId with ReferenceToType nodes -> nodes
+                                        let lastNode = nodes |> List.rev |> List.head
+                                        match lastNode with
+                                        | PRM prmName   -> 
+                                            let newDeterminantId = 
+                                                deps.acnDependencies |> 
+                                                List.choose(fun d -> 
+                                                    match d.dependencyKind with
+                                                    | AcnDepRefTypeArgument prm when prm.id = prmId -> Some d.determinant
+                                                    | _                                             -> None) 
+                                            match newDeterminantId with
+                                            | det1::_   -> resolveParam det1
+                                            | _         -> prmId
+                                        | _             -> prmId
+                                    let extField = getAcnDeterminantName  (resolveParam dependency.determinant)
+                                    let dummt = acnArgs
+                                    Some(sequence_presense_optChild_pres_bool p.p (p.getAcces l) child.c_name extField codec)
+                                    (*
+                                    match lnk.linkType with
+                                    | Asn1AcnAst.PresenceBool              -> Some(sequence_presense_optChild_pres_bool p.p (p.getAcces l) child.c_name extField codec)
+                                    | Asn1AcnAst.PresenceInt intVal        -> Some(sequence_presense_optChild_pres_int p.p (p.getAcces l) child.c_name extField intVal codec)
+                                    | Asn1AcnAst.PresenceStr strval        -> Some(sequence_presense_optChild_pres_str p.p (p.getAcces l) child.c_name extField strval codec)
+                                    | _                         -> raise(BugErrorException "unexpected error in createSequenceFunction")
+                                    *)
+                            | _                 -> None
+                        yield (acnPresenceStatement, [], [])
 
 
                     match childContentResult with

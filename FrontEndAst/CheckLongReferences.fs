@@ -33,7 +33,7 @@ let private addAcnChild (cur:AcnInsertedFieldDependencies) (asn1Type:Asn1Type) (
     *)
     {cur with acnDependencies = {AcnDependency.asn1Type = asn1Type.id; determinant = acnRefId; dependencyKind = d}::cur.acnDependencies }
 
-let private checkRelativePath (curState:AcnInsertedFieldDependencies) (parents: Asn1Type list) (asn1TypeWithDependency:Asn1Type) (visibleParameters:(ReferenceToType*AcnParameter) list) (RelativePath path : RelativePath) (d:AcnDependencyKind) checkParameter checkAcnType =
+let private checkRelativePath (curState:AcnInsertedFieldDependencies) (parents: Asn1Type list) (asn1TypeWithDependency:Asn1Type ) (visibleParameters:(ReferenceToType*AcnParameter) list) (RelativePath path : RelativePath) (d:AcnDependencyKind) checkParameter checkAcnType =
     match path with
     | []        -> raise (BugErrorException("Invalid Argument"))
     | x1::[]    ->

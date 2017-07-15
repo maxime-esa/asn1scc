@@ -77,8 +77,8 @@
     <Compile Include="uPER.fs" />
     <Compile Include="AcnEncodingClasses.fs" />
     <Compile Include="CheckLongReferences.fs" />
-    <Compile Include="ExportToXml.fs" />
     <Compile Include="AcnCreateFromAntlr.fs" />
+    <Compile Include="ExportToXml.fs" />
     <Compile Include="FrontEntMain.fs" />
   </ItemGroup>
   <ItemGroup>

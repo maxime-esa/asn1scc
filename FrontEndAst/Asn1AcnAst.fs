@@ -628,24 +628,6 @@ type AstRoot = {
 }
 
 
-type DependencyKind = 
-    | DepIA5StringSizeDeterminant          of ReferenceToType     // points to an integer type that acts as a size determinant to a IA5StringType etc
-    | DepOtherSizeDeterminant              of ReferenceToType     // points to an integer type that acts as a size determinant to a SEQUENCE OF, BIT STRINT, OCTET STRING etc
-    | DepRefTypeArgument                   of ReferenceToType*AcnParameter      // 
-    | DepPresenceBool                      of ReferenceToType      // points to a SEQEUNCE child
-    | DepPresenceInt                       of ReferenceToType      // points to a Choice child
-    | DepPresenceStr                       of ReferenceToType      // points to a Choice child
-    | DepChoiceDeteterminant               of ReferenceToType      // points to Enumerated type acting as CHOICE determinant.
-with 
-    member this.asn1TypeId  =
-        match this with
-        | DepIA5StringSizeDeterminant  refId          -> refId
-        | DepOtherSizeDeterminant      refId          -> refId
-        | DepRefTypeArgument           (refId,_)      -> refId
-        | DepPresenceBool              refId          -> refId
-        | DepPresenceInt               refId          -> refId
-        | DepPresenceStr               refId          -> refId
-        | DepChoiceDeteterminant       refId          -> refId
 
 type AcnDependencyKind = 
     | AcnDepSizeDeterminant                  // The asn1Type has a size dependency a SEQUENCE OF, BIT STRINT, OCTET STRING etc
@@ -664,8 +646,6 @@ type AcnDependency = {
 }
 
 type AcnInsertedFieldDependencies = {
-    //acnFieldAndAcnParametersDependencies    : Map<ReferenceToType, list<DependencyKind> >       //for each acninserted fields a list with their dependencies
-    //asn12AcnFieldDep                        : Map<ReferenceToType, ReferenceToType>
     acnDependencies                         : AcnDependency list
 }
 

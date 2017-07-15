@@ -113,7 +113,7 @@ let main argv =
         // print front ent ast as xml 
         match args.AstXmlAbsFileName with
         | ""    -> ()
-        | _     -> ExportToXml.exportFile frontEntAst args.AstXmlAbsFileName
+        | _     -> ExportToXml.exportFile frontEntAst acnDeps args.AstXmlAbsFileName
 
         // construct backend ast
         let backends = 
