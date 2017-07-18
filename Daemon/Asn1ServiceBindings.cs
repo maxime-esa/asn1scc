@@ -14,8 +14,8 @@ namespace Daemon
 
         public void BindTo(HttpServer server)
         {
-            server.InstallHandler("/version", GetVersion);
-            server.InstallHandler("/ast", BuildAst);
+            server.InstallHandler("version", GetVersion);
+            server.InstallHandler("ast", BuildAst);
         }
 
         private void GetVersion(HttpListenerContext context)

@@ -12,6 +12,8 @@ namespace Daemon.Utils
             listener = new HttpListener();
 
             listener.Prefixes.Add(uri);
+
+            pathPrefix = new Uri(uri.Replace("+", "localhost")).AbsolutePath;
         }
 
         public void Serve()
@@ -55,7 +57,7 @@ namespace Daemon.Utils
             HttpListenerContext context = (HttpListenerContext)o;
             try
             {
-                var handler = handlers[context.Request.Url.AbsolutePath];
+                var handler = handlers[ExtractCommandPath(context.Request.Url.AbsolutePath)];
                 handler.Invoke(context);
                 context.Response.Close();
                 context = null;
@@ -72,8 +74,16 @@ namespace Daemon.Utils
             }
         }
 
+        private string ExtractCommandPath(string uriPath)
+        {
+            if (!uriPath.StartsWith(pathPrefix))
+                return "";
+            return uriPath.Substring(pathPrefix.Length);
+        }
+
         private volatile bool stopRequested = false;
         private HttpListener listener;
         private Dictionary<string, Action<HttpListenerContext>> handlers = new Dictionary<string, Action<HttpListenerContext>>();
+        private string pathPrefix;
     }
 }

@@ -18,7 +18,7 @@ namespace Daemon
         {
             this.server = server;
 
-            server.InstallHandler("/stayAlive", StayAlive);
+            server.InstallHandler("stayAlive", StayAlive);
 
             timer.Start();
         }
