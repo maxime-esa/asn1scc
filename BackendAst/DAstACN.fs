@@ -164,13 +164,33 @@ let createAcnIntegerFunction (r:Asn1AcnAst.AstRoot) (l:ProgrammingLanguage) (cod
 
 
 
-let createIntegerFunction (r:Asn1AcnAst.AstRoot) (l:ProgrammingLanguage) (codec:CommonTypes.Codec) (t:Asn1AcnAst.Asn1Type) (o:Asn1AcnAst.Integer) (typeDefinition:TypeDefinitionCommon) (baseTypeUperFunc : AcnFunction option) (isValidFunc: IsValidFunction option) (uperFunc: UPerFunction) (us:State)  =
+let createIntegerFunction (r:Asn1AcnAst.AstRoot) (l:ProgrammingLanguage) (codec:CommonTypes.Codec) (t:Asn1AcnAst.Asn1Type) (o:Asn1AcnAst.Integer) (typeDefinition:TypeDefinitionCommon)  (isValidFunc: IsValidFunction option) (uperFunc: UPerFunction) (us:State)  =
     let funcBody = createAcnIntegerFunctionInternal r l codec o.acnEncodingClass uperFunc.funcBody
     let soSparkAnnotations = None
     createPrimitiveFunction r l codec t typeDefinition isValidFunc  (fun e acnArgs p -> funcBody e acnArgs p) soSparkAnnotations us
 
 
 
+let createRealrFunction (r:Asn1AcnAst.AstRoot) (l:ProgrammingLanguage) (codec:CommonTypes.Codec) (t:Asn1AcnAst.Asn1Type) (o:Asn1AcnAst.Real) (typeDefinition:TypeDefinitionCommon)  (isValidFunc: IsValidFunction option) (uperFunc: UPerFunction) (us:State)  =
+    let Real_32_big_endian                  = match l with C -> acn_c.Real_32_big_endian                | Ada -> acn_c.Real_32_big_endian
+    let Real_64_big_endian                  = match l with C -> acn_c.Real_64_big_endian                | Ada -> acn_c.Real_64_big_endian
+    let Real_32_little_endian               = match l with C -> acn_c.Real_32_little_endian             | Ada -> acn_c.Real_32_little_endian
+    let Real_64_little_endian               = match l with C -> acn_c.Real_64_little_endian             | Ada -> acn_c.Real_64_little_endian
+    
+    let funcBody (errCode:ErroCode) (acnArgs: (Asn1AcnAst.RelativePath*Asn1AcnAst.AcnParameter) list) (p:FuncParamType)        = 
+        let pp = match codec with CommonTypes.Encode -> p.getValue l | CommonTypes.Decode -> p.getPointer l
+        let funcBodyContent = 
+            match o.acnEncodingClass with
+            | Real_IEEE754_32_big_endian            -> Some (Real_32_big_endian pp codec, [])
+            | Real_IEEE754_64_big_endian            -> Some (Real_64_big_endian pp codec, [])
+            | Real_IEEE754_32_little_endian         -> Some (Real_32_little_endian pp codec, [])
+            | Real_IEEE754_64_little_endian         -> Some (Real_64_little_endian pp codec, [])
+            | Real_uPER                             -> uperFunc.funcBody p |> Option.map(fun x -> x.funcBody, x.errCodes)
+        match funcBodyContent with
+        | None -> None
+        | Some (funcBodyContent,errCodes) -> Some ({AcnFuncBodyResult.funcBody = funcBodyContent; errCodes = errCode::errCodes; localVariables = []})
+    let soSparkAnnotations = None
+    createPrimitiveFunction r l codec t typeDefinition isValidFunc  (fun e acnArgs p -> funcBody e acnArgs p) soSparkAnnotations us
 
 
 let nestChildItems (l:ProgrammingLanguage) (codec:CommonTypes.Codec) children = 
@@ -216,6 +236,9 @@ let createBooleanFunction (r:Asn1AcnAst.AstRoot) (l:ProgrammingLanguage) (codec:
         {AcnFuncBodyResult.funcBody = funcBodyContent; errCodes = [errCode]; localVariables = []}    
     let soSparkAnnotations = None
     createPrimitiveFunction r l codec t typeDefinition  isValidFunc  (fun e acnArgs p -> Some (funcBody e acnArgs p)) soSparkAnnotations us
+
+
+
 
 (*
 let getFuncParamTypeFromReferenceToType (r:Asn1AcnAst.AstRoot) (l:ProgrammingLanguage) (c:CommonTypes.Codec) (ref:ReferenceToType) =

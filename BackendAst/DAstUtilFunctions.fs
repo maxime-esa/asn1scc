@@ -518,7 +518,7 @@ with
     member this.acnEncFunction : AcnFunction option =
         match this.Kind with
         | Integer      t -> Some (t.acnEncFunction)
-        | Real         t -> None
+        | Real         t -> Some (t.acnEncFunction)
         | IA5String    t -> None
         | OctetString  t -> None
         | NullType     t -> None
@@ -533,7 +533,7 @@ with
     member this.acnDecFunction : AcnFunction option =
         match this.Kind with
         | Integer      t -> Some (t.acnDecFunction)
-        | Real         t -> None
+        | Real         t -> Some (t.acnDecFunction)
         | IA5String    t -> None
         | OctetString  t -> None
         | NullType     t -> None
