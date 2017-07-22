@@ -1,0 +1,8 @@
+KAPPA DEFINITIONS AUTOMATIC TAGS::= BEGIN
+
+    MyInt ::= INTEGER
+    
+    kappa MyInt ::= 123456789012
+
+END
+
