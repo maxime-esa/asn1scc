@@ -306,6 +306,13 @@ type SeqChildInfo with
         | AcnChild x     -> None
 
 
+type Asn1AcnAst.NamedItem      with
+    member this.CEnumName l =
+        match l with
+        | C     -> this.c_name
+        | Ada   -> this.ada_name
+
+
 type Asn1AcnAst.Asn1Type with
     member this.getParamType (l:ProgrammingLanguage) (c:Codec) =
         match l with
@@ -519,12 +526,12 @@ with
         match this.Kind with
         | Integer      t -> Some (t.acnEncFunction)
         | Real         t -> Some (t.acnEncFunction)
-        | IA5String    t -> None
-        | OctetString  t -> None
-        | NullType     t -> None
-        | BitString    t -> None
+        | IA5String    t -> Some (t.acnEncFunction)
+        | OctetString  t -> Some (t.acnEncFunction)
+        | NullType     t -> Some (t.acnEncFunction)
+        | BitString    t -> Some (t.acnEncFunction)
         | Boolean      t -> Some (t.acnEncFunction)
-        | Enumerated   t -> None
+        | Enumerated   t -> Some (t.acnEncFunction)
         | SequenceOf   t -> None
         | Sequence     t -> Some (t.acnEncFunction)
         | Choice       t -> None
@@ -534,12 +541,12 @@ with
         match this.Kind with
         | Integer      t -> Some (t.acnDecFunction)
         | Real         t -> Some (t.acnDecFunction)
-        | IA5String    t -> None
-        | OctetString  t -> None
-        | NullType     t -> None
-        | BitString    t -> None
+        | IA5String    t -> Some (t.acnDecFunction)
+        | OctetString  t -> Some (t.acnDecFunction)
+        | NullType     t -> Some (t.acnDecFunction)
+        | BitString    t -> Some (t.acnDecFunction)
         | Boolean      t -> Some (t.acnDecFunction)
-        | Enumerated   t -> None
+        | Enumerated   t -> Some (t.acnDecFunction)
         | SequenceOf   t -> None
         | Sequence     t -> Some (t.acnDecFunction)
         | Choice       t -> None

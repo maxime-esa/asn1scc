@@ -253,6 +253,8 @@ type Enumerated = {
     isValidFunction     : IsValidFunction option      // it is optional because some types do not require an IsValid function (e.g. an unconstraint integer)
     uperEncFunction     : UPerFunction
     uperDecFunction     : UPerFunction
+    acnEncFunction      : AcnFunction
+    acnDecFunction      : AcnFunction
 }
 
 type Real = {
@@ -303,6 +305,8 @@ type NullType = {
     equalFunction       : EqualFunction
     uperEncFunction     : UPerFunction
     uperDecFunction     : UPerFunction
+    acnEncFunction      : AcnFunction
+    acnDecFunction      : AcnFunction
 
 }
 
@@ -320,6 +324,8 @@ type StringType = {
     isValidFunction     : IsValidFunction option      // it is optional because some types do not require an IsValid function (e.g. an unconstraint integer)
     uperEncFunction     : UPerFunction
     uperDecFunction     : UPerFunction
+    acnEncFunction      : AcnFunction
+    acnDecFunction      : AcnFunction
 
 }
 
@@ -338,6 +344,8 @@ type OctetString = {
     isValidFunction     : IsValidFunction option      // it is optional because some types do not require an IsValid function (e.g. an unconstraint integer)
     uperEncFunction     : UPerFunction
     uperDecFunction     : UPerFunction
+    acnEncFunction      : AcnFunction
+    acnDecFunction      : AcnFunction
 
 }
 
@@ -356,6 +364,8 @@ type BitString = {
     isValidFunction     : IsValidFunction option      // it is optional because some types do not require an IsValid function (e.g. an unconstraint integer)
     uperEncFunction     : UPerFunction
     uperDecFunction     : UPerFunction
+    acnEncFunction      : AcnFunction
+    acnDecFunction      : AcnFunction
 
 }
 

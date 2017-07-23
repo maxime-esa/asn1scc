@@ -1,12 +1,12 @@
 ﻿module Asn1AcnAstUtilFunctions
 
-open Asn1AcnAst
 open System.Numerics
 open Antlr.Runtime.Tree
 open Antlr.Runtime
 open System
 open FsUtils
 open CommonTypes
+open Asn1AcnAst
 
 
 
@@ -98,21 +98,25 @@ type AcnInsertedType with
         | AcnInteger        x -> x.acnMinSizeInBits
         | AcnNullType       x -> x.acnMinSizeInBits
         | AcnBoolean        x -> x.acnMinSizeInBits
+        | AcnReferenceToEnumerated x -> x.enumerated.acnMinSizeInBits
     member this.acnMaxSizeInBits =
         match this with
         | AcnInteger        x -> x.acnMaxSizeInBits
         | AcnNullType       x -> x.acnMaxSizeInBits
         | AcnBoolean        x -> x.acnMaxSizeInBits
+        | AcnReferenceToEnumerated x -> x.enumerated.acnMaxSizeInBits
     member this.acnAligment =
         match this with
         | AcnInteger        x -> x.acnAligment
         | AcnNullType       x -> x.acnAligment
         | AcnBoolean        x -> x.acnAligment
+        | AcnReferenceToEnumerated x -> x.acnAligment
     member this.Location =
         match this with
         | AcnInteger        x -> x.Location
         | AcnNullType       x -> x.Location
         | AcnBoolean        x -> x.Location
+        | AcnReferenceToEnumerated x -> x.tasName.Location
        
 type BitString with
     member this.MaxOctets = int (ceil ((double this.maxSize)/8.0))
@@ -197,6 +201,7 @@ type Choice           with
 //    member this.AllCons  = this.cons@this.withcons
 
 
+
 type Asn1Value with
     member this.getBackendName () =
         "unnamed_variable"
@@ -264,3 +269,63 @@ let locateTypeByRefId (r:AstRoot) (ReferenceToType nodes) =
         locateType (ASN1_TYPE tas.Type) restPath
     | _                 -> raise(UserException(sprintf "Invalid module name " ))
         
+
+
+type AstRoot with
+    member r.Modules = r.Files |> List.collect(fun f -> f.Modules)
+    member r.GetModuleByName(name:StringLoc)  = 
+        let (n,loc) = name.AsTupple
+        match r.Modules |> Seq.tryFind( fun m -> m.Name = name)  with
+        | Some(m) -> m
+        | None    -> raise(SemanticError(loc, sprintf "No Module Defined with name: %s" n ))
+
+type Asn1Module with
+    member m.TryGetTypeAssignmentByName name (r:AstRoot) =
+        match m.TypeAssignments|> Seq.tryFind(fun x -> x.Name = name) with
+        | Some t   -> Some t
+        | None      -> 
+            let othMods = m.Imports |> Seq.filter(fun imp -> imp.Types |> Seq.exists((=) name)) 
+                                |> Seq.map(fun imp -> imp.Name) |> Seq.toList
+            match othMods with
+            | firstMod::_   -> 
+                match r.Modules |> Seq.tryFind( fun m -> m.Name = firstMod)  with
+                | Some(m) -> m.TryGetTypeAssignmentByName name r
+                | None    -> None
+            | []            -> None
+
+    member m.GetTypeAssignmentByName name (r:AstRoot) =
+        match m.TypeAssignments|> Seq.tryFind(fun x -> x.Name = name) with
+        | Some(t)   -> t
+        | None      -> 
+            let othMods = m.Imports |> Seq.filter(fun imp -> imp.Types |> Seq.exists((=) name)) 
+                                |> Seq.map(fun imp -> imp.Name) |> Seq.toList
+            match othMods with
+            | firstMod::tail   -> r.GetModuleByName(firstMod).GetTypeAssignmentByName name r
+            | []               ->            
+                let (n,loc) = name.AsTupple
+                raise(SemanticError(loc, sprintf "No Type Assignment with name: %s is defined in Module %s" n m.Name.Value))
+    member m.GetValueAsigByName(name:StringLoc) (r:AstRoot) =
+        let (n,loc) = name.AsTupple
+        let value = m.ValueAssignments |> Seq.tryFind(fun x -> x.Name = name) 
+        match value with
+        | Some(v)       -> v
+        | None          ->
+            let othMods = m.Imports 
+                          |> Seq.filter(fun imp -> imp.Values |> Seq.exists(fun vname -> vname = name)) 
+                          |> Seq.map(fun imp -> imp.Name) |> Seq.toList
+            match othMods with
+            | firstMod::tail   -> r.GetModuleByName(firstMod).GetValueAsigByName name r
+            | []               -> raise (SemanticError(loc, sprintf "No value assignment with name '%s' exists" n))
+
+let rec GetActualType (t:Asn1Type) (r:AstRoot) =
+    match t.Kind with
+    | ReferenceType ref ->
+        let newmod = r.GetModuleByName(ref.modName)
+        let tas = newmod.GetTypeAssignmentByName ref.tasName r
+        GetActualType tas.Type r
+    | _                         -> t
+
+let GetActualTypeByName (r:AstRoot) modName tasName  =
+    let mdl = r.GetModuleByName(modName)
+    let tas = mdl.GetTypeAssignmentByName tasName r
+    GetActualType tas.Type r

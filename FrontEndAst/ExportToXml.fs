@@ -302,6 +302,19 @@ let private exportType (t:Asn1Type) =
                     XAttribute(xname "type", "NULL"),    
                     (exportAcnNullType a.acnProperties.encodingPattern),
                     (exportAcnAligment a.acnAligment)), us 
+
+            | AcnReferenceToEnumerated (a)        -> 
+                XElement(xname "ACN_COMPONENT", 
+                    XAttribute(xname "id", ch.id.AsString),
+                    XAttribute(xname "name", ch.Name.Value),
+                    XAttribute(xname "type", "Enumerated"),    
+                    (exportAcnAligment a.acnAligment),
+                    (exportAcnEndianness a.enumerated.acnProperties.endiannessProp),
+                    (exportAcnIntSizeProperty a.enumerated.acnProperties.sizeProp),
+                    (exportAcnIntEncoding a.enumerated.acnProperties.encodingProp),
+                    XElement(xname "Items", a.enumerated.items |> List.map(fun c ->  XElement(xname "Item", XAttribute(xname "name", c.Name.Value), XAttribute(xname "value", c.definitionValue))   )),
+                    XElement(xname "CONS", a.enumerated.cons |> List.map(printGenericConstraint printEnumVal )),
+                    XElement(xname "WITH_CONS", a.enumerated.withcons |> List.map(printGenericConstraint printEnumVal )) ), us 
             | AcnBoolean  (a)       -> 
                 XElement(xname "ACN_COMPONENT", 
                     XAttribute(xname "id", ch.id.AsString),
@@ -373,7 +386,7 @@ let private exportAcnDependencyKind (d:AcnDependencyKind) =
     | AcnDepPresenceBool           -> XElement(xname "PresenseBoolDependency")
     | AcnDepPresenceInt intVal     -> XElement(xname "PresenseIntDependency", XAttribute(xname "intVal", intVal.ToString()))
     | AcnDepPresenceStr strVal     -> XElement(xname "PresenseStringDependency", XAttribute(xname "prmId", strVal))
-    | AcnDepChoiceDeteterminant    -> XElement(xname "ChoiceEnumDependency")
+    | AcnDepChoiceDeteterminant _  -> XElement(xname "ChoiceEnumDependency")
                                    
 let private exportAcnDependency (d:AcnDependency) =
     XElement(xname "AcnDependency",

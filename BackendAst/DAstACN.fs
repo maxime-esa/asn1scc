@@ -170,6 +170,29 @@ let createIntegerFunction (r:Asn1AcnAst.AstRoot) (l:ProgrammingLanguage) (codec:
     createPrimitiveFunction r l codec t typeDefinition isValidFunc  (fun e acnArgs p -> funcBody e acnArgs p) soSparkAnnotations us
 
 
+let createEnumeratedFunction (r:Asn1AcnAst.AstRoot) (l:ProgrammingLanguage) (codec:CommonTypes.Codec) (t:Asn1AcnAst.Asn1Type) (o:Asn1AcnAst.Enumerated) (typeDefinition:TypeDefinitionCommon)  (isValidFunc: IsValidFunction option) (uperFunc: UPerFunction) (us:State)  =
+    let EnumeratedEncIdx                    = match l with C -> acn_c.EnumeratedEncIdx                | Ada -> acn_c.EnumeratedEncIdx
+    let EnumeratedEncValues                 = match l with C -> acn_c.EnumeratedEncValues             | Ada -> acn_c.EnumeratedEncValues
+    let Enumerated_item                     = match l with C -> acn_c.Enumerated_item                 | Ada -> acn_c.Enumerated_item
+    let intFuncBody = createAcnIntegerFunctionInternal r l codec o.acnEncodingClass uperFunc.funcBody
+    let funcBody (errCode:ErroCode) (acnArgs: (Asn1AcnAst.RelativePath*Asn1AcnAst.AcnParameter) list) (p:FuncParamType)        = 
+        let pp = match codec with CommonTypes.Encode -> p.getValue l | CommonTypes.Decode -> p.getPointer l
+        let typeDefinitionName = getTypeDefinitionName t.id.tasInfo typeDefinition
+        let funcBodyContent = 
+            match intFuncBody errCode acnArgs p with
+            | None      -> None
+            | Some(intAcnFuncBdResult) ->
+                let arrItems = o.items |> List.map(fun it -> Enumerated_item pp (it.CEnumName C) it.acnEncodeValue codec)
+                Some (EnumeratedEncIdx pp typeDefinitionName arrItems intAcnFuncBdResult.funcBody codec, intAcnFuncBdResult.errCodes)
+        match funcBodyContent with
+        | None -> None
+        | Some (funcBodyContent,errCodes) -> Some ({AcnFuncBodyResult.funcBody = funcBodyContent; errCodes = errCode::errCodes; localVariables = []})
+
+    let soSparkAnnotations = None
+    createPrimitiveFunction r l codec t typeDefinition  isValidFunc  funcBody soSparkAnnotations us
+
+
+
 
 let createRealrFunction (r:Asn1AcnAst.AstRoot) (l:ProgrammingLanguage) (codec:CommonTypes.Codec) (t:Asn1AcnAst.Asn1Type) (o:Asn1AcnAst.Real) (typeDefinition:TypeDefinitionCommon)  (isValidFunc: IsValidFunction option) (uperFunc: UPerFunction) (us:State)  =
     let Real_32_big_endian                  = match l with C -> acn_c.Real_32_big_endian                | Ada -> acn_c.Real_32_big_endian
@@ -226,18 +249,186 @@ let createAcnBooleanFunction (r:Asn1AcnAst.AstRoot) (l:ProgrammingLanguage) (cod
     (funcBody errCode), {us with currErrCode = us.currErrCode + 1}
 
 let createBooleanFunction (r:Asn1AcnAst.AstRoot) (l:ProgrammingLanguage) (codec:CommonTypes.Codec) (t:Asn1AcnAst.Asn1Type) (o:Asn1AcnAst.Boolean) (typeDefinition:TypeDefinitionCommon) (baseTypeUperFunc : AcnFunction option) (isValidFunc: IsValidFunction option) (us:State)  =
-    // todo use BolleanAcnEncodingClass
-
     let funcBody (errCode:ErroCode) (acnArgs: (Asn1AcnAst.RelativePath*Asn1AcnAst.AcnParameter) list) (p:FuncParamType) = 
         let pp = match codec with CommonTypes.Encode -> p.getValue l | CommonTypes.Decode -> p.getPointer l
+        let ptr = p.getPointer l
         let Boolean         = match l with C -> uper_c.Boolean          | Ada -> uper_a.Boolean
+        let acnBoolean      = match l with C -> acn_c.Boolean          | Ada -> acn_c.Boolean
         let funcBodyContent = 
-            Boolean pp errCode.errCodeName codec
+            match o.acnProperties.encodingPattern with
+            | None  -> Boolean pp errCode.errCodeName codec
+            | Some (TrueValue  bitVal)  ->
+                let arrBytes = bitStringValueToByteArray bitVal
+                let bEncValIsTrue, arruTrueValueAsByteArray, arruFalseValueAsByteArray, nSize =
+                    true, arrBytes, (arrBytes |> Array.map (~~~)), bitVal.Value.Length
+                acnBoolean pp ptr bEncValIsTrue (BigInteger nSize) arruTrueValueAsByteArray arruFalseValueAsByteArray codec
+            | Some (FalseValue   bitVal)    ->
+                let arrBytes = bitStringValueToByteArray bitVal
+                let bEncValIsTrue, arruTrueValueAsByteArray, arruFalseValueAsByteArray, nSize =
+                    false, arrBytes, (arrBytes |> Array.map (~~~)), bitVal.Value.Length
+                acnBoolean pp ptr bEncValIsTrue (BigInteger nSize) arruTrueValueAsByteArray arruFalseValueAsByteArray codec
+                
         {AcnFuncBodyResult.funcBody = funcBodyContent; errCodes = [errCode]; localVariables = []}    
     let soSparkAnnotations = None
     createPrimitiveFunction r l codec t typeDefinition  isValidFunc  (fun e acnArgs p -> Some (funcBody e acnArgs p)) soSparkAnnotations us
 
+let createNullTypeFunction (r:Asn1AcnAst.AstRoot) (l:ProgrammingLanguage) (codec:CommonTypes.Codec) (t:Asn1AcnAst.Asn1Type) (o:Asn1AcnAst.NullType) (typeDefinition:TypeDefinitionCommon) (isValidFunc: IsValidFunction option) (us:State)  =
+    let funcBody (errCode:ErroCode) (acnArgs: (Asn1AcnAst.RelativePath*Asn1AcnAst.AcnParameter) list) (p:FuncParamType) = 
+        let pp = match codec with CommonTypes.Encode -> p.getValue l | CommonTypes.Decode -> p.getPointer l
+        let nullType         = match l with C -> acn_c.Null          | Ada -> acn_c.Null
+        match o.acnProperties.encodingPattern with
+        | None      -> None
+        | Some encPattern   ->
+            let arrBytes = bitStringValueToByteArray encPattern
+            let ret = nullType arrBytes (BigInteger encPattern.Value.Length) codec
+            Some ({AcnFuncBodyResult.funcBody = ret; errCodes = [errCode]; localVariables = []})
+    let soSparkAnnotations = None
+    createPrimitiveFunction r l codec t typeDefinition  isValidFunc  funcBody soSparkAnnotations us
 
+
+let getExternaField (r:Asn1AcnAst.AstRoot) (deps:Asn1AcnAst.AcnInsertedFieldDependencies) asn1TypeIdWithDependency =
+    let dependency = deps.acnDependencies |> List.find(fun d -> d.asn1Type = asn1TypeIdWithDependency)
+    let rec resolveParam (prmId:ReferenceToType) =
+        let nodes = match prmId with ReferenceToType nodes -> nodes
+        let lastNode = nodes |> List.rev |> List.head
+        match lastNode with
+        | PRM prmName   -> 
+            let newDeterminantId = 
+                deps.acnDependencies |> 
+                List.choose(fun d -> 
+                    match d.dependencyKind with
+                    | AcnDepRefTypeArgument prm when prm.id = prmId -> Some d.determinant
+                    | _                                             -> None) 
+            match newDeterminantId with
+            | det1::_   -> resolveParam det1
+            | _         -> prmId
+        | _             -> prmId
+    getAcnDeterminantName  (resolveParam dependency.determinant)
+
+
+let createStringFunction (r:Asn1AcnAst.AstRoot) (deps:Asn1AcnAst.AcnInsertedFieldDependencies) (l:ProgrammingLanguage) (codec:CommonTypes.Codec) (t:Asn1AcnAst.Asn1Type) (o:Asn1AcnAst.StringType) (typeDefinition:TypeDefinitionCommon)  (isValidFunc: IsValidFunction option) (uperFunc: UPerFunction) (us:State)  =
+    let Acn_String_Ascii_FixSize                            = match l with C -> acn_c.Acn_String_Ascii_FixSize                          | Ada -> acn_c.Acn_String_Ascii_FixSize
+    let Acn_String_Ascii_Internal_Field_Determinant         = match l with C -> acn_c.Acn_String_Ascii_Internal_Field_Determinant       | Ada -> acn_c.Acn_String_Ascii_Internal_Field_Determinant
+    let Acn_String_Ascii_Null_Teminated                     = match l with C -> acn_c.Acn_String_Ascii_Null_Teminated                   | Ada -> acn_c.Acn_String_Ascii_Null_Teminated
+    let Acn_String_Ascii_External_Field_Determinant         = match l with C -> acn_c.Acn_String_Ascii_External_Field_Determinant       | Ada -> acn_c.Acn_String_Ascii_External_Field_Determinant
+    let Acn_String_CharIndex_External_Field_Determinant     = match l with C -> acn_c.Acn_String_CharIndex_External_Field_Determinant   | Ada -> acn_c.Acn_String_CharIndex_External_Field_Determinant
+    
+    let funcBody (errCode:ErroCode) (acnArgs: (Asn1AcnAst.RelativePath*Asn1AcnAst.AcnParameter) list) (p:FuncParamType)        = 
+        let pp = match codec with CommonTypes.Encode -> p.getValue l | CommonTypes.Decode -> p.getPointer l
+        let funcBodyContent = 
+            match o.acnEncodingClass with
+            | Acn_Enc_String_uPER                                              -> uperFunc.funcBody p |> Option.map(fun x -> x.funcBody, x.errCodes)
+            | Acn_Enc_String_uPER_Ascii                                        -> 
+                match o.maxSize = o.minSize with
+                | true      ->  Some (Acn_String_Ascii_FixSize pp (BigInteger o.maxSize) codec, [])
+                | false     ->  Some (Acn_String_Ascii_Internal_Field_Determinant pp (BigInteger o.maxSize) (BigInteger o.minSize) codec , [])
+            | Acn_Enc_String_Ascii_Null_Teminated                   nullChar   -> Some (Acn_String_Ascii_Null_Teminated pp (BigInteger o.maxSize) (nullChar.ToString()) codec, [])
+            | Acn_Enc_String_Ascii_External_Field_Determinant       _    -> 
+                let extField = getExternaField r deps t.id
+                Some(Acn_String_Ascii_External_Field_Determinant pp (BigInteger o.maxSize) extField codec, [])
+            | Acn_Enc_String_CharIndex_External_Field_Determinant   _    -> 
+                let extField = getExternaField r deps t.id
+                let arrAsciiCodes = o.uperCharSet |> Array.map(fun x -> BigInteger (System.Convert.ToInt32 x))
+                Some(Acn_String_CharIndex_External_Field_Determinant pp (BigInteger o.maxSize) arrAsciiCodes (BigInteger o.uperCharSet.Length) extField codec, [])
+        match funcBodyContent with
+        | None -> None
+        | Some (funcBodyContent,errCodes) -> Some ({AcnFuncBodyResult.funcBody = funcBodyContent; errCodes = errCode::errCodes; localVariables = []})
+    let soSparkAnnotations = None
+    createPrimitiveFunction r l codec t typeDefinition  isValidFunc  funcBody soSparkAnnotations us
+
+let createOctetStringFunction (r:Asn1AcnAst.AstRoot) (deps:Asn1AcnAst.AcnInsertedFieldDependencies) (l:ProgrammingLanguage) (codec:CommonTypes.Codec) (t:Asn1AcnAst.Asn1Type) (o:Asn1AcnAst.OctetString) (typeDefinition:TypeDefinitionCommon) (isValidFunc: IsValidFunction option) (uperFunc: UPerFunction) (us:State)  =
+    let oct_sqf_external_field                          = match l with C -> acn_c.oct_sqf_external_field       | Ada -> acn_c.oct_sqf_external_field
+    let InternalItem_oct_str                            = match l with C -> uper_c.InternalItem_oct_str        | Ada -> uper_a.InternalItem_oct_str
+    let i = sprintf "i%d" (t.id.SeqeuenceOfLevel + 1)
+    let lv = SequenceOfIndex (t.id.SeqeuenceOfLevel + 1, None)
+
+    let funcBody (errCode:ErroCode) (acnArgs: (Asn1AcnAst.RelativePath*Asn1AcnAst.AcnParameter) list) (p:FuncParamType)        = 
+        let pp = match codec with CommonTypes.Encode -> p.getValue l | CommonTypes.Decode -> p.getPointer l
+        let funcBodyContent = 
+            match o.acnEncodingClass with
+            | SZ_EC_uPER                                              -> uperFunc.funcBody p |> Option.map(fun x -> x.funcBody, x.errCodes)
+            | SZ_EC_ExternalField   _    -> 
+                let extField = getExternaField r deps t.id
+                let internalItem = InternalItem_oct_str p.p (p.getAcces l) i  errCode.errCodeName codec 
+                Some(oct_sqf_external_field pp i internalItem (if o.minSize=0 then None else Some (BigInteger o.minSize)) (BigInteger o.maxSize) extField codec, [])
+        match funcBodyContent with
+        | None -> None
+        | Some (funcBodyContent,errCodes) -> Some ({AcnFuncBodyResult.funcBody = funcBodyContent; errCodes = errCode::errCodes; localVariables = [lv]})
+    let soSparkAnnotations = None
+    createPrimitiveFunction r l codec t typeDefinition  isValidFunc  funcBody soSparkAnnotations us
+
+let createBitStringFunction (r:Asn1AcnAst.AstRoot) (deps:Asn1AcnAst.AcnInsertedFieldDependencies) (l:ProgrammingLanguage) (codec:CommonTypes.Codec) (t:Asn1AcnAst.Asn1Type) (o:Asn1AcnAst.BitString) (typeDefinition:TypeDefinitionCommon)  (isValidFunc: IsValidFunction option) (uperFunc: UPerFunction) (us:State)  =
+    let bit_string_external_field                          = match l with C -> acn_c.bit_string_external_field       | Ada -> acn_c.bit_string_external_field
+
+    let funcBody (errCode:ErroCode) (acnArgs: (Asn1AcnAst.RelativePath*Asn1AcnAst.AcnParameter) list) (p:FuncParamType)        = 
+        let pp = match codec with CommonTypes.Encode -> p.getValue l | CommonTypes.Decode -> p.getPointer l
+        let funcBodyContent = 
+            match o.acnEncodingClass with
+            | SZ_EC_uPER                                              -> uperFunc.funcBody p |> Option.map(fun x -> x.funcBody, x.errCodes)
+            | SZ_EC_ExternalField   _    -> 
+                let extField = getExternaField r deps t.id
+                Some(bit_string_external_field pp (if o.minSize=0 then None else Some (BigInteger o.minSize)) (BigInteger o.maxSize) extField codec, [])
+        match funcBodyContent with
+        | None -> None
+        | Some (funcBodyContent,errCodes) -> Some ({AcnFuncBodyResult.funcBody = funcBodyContent; errCodes = errCode::errCodes; localVariables = []})
+    let soSparkAnnotations = None
+    createPrimitiveFunction r l codec t typeDefinition  isValidFunc  funcBody soSparkAnnotations us
+
+
+
+let createSequenceOfFunction (r:Asn1AcnAst.AstRoot) (deps:Asn1AcnAst.AcnInsertedFieldDependencies) (l:ProgrammingLanguage) (codec:CommonTypes.Codec) (t:Asn1AcnAst.Asn1Type) (o:Asn1AcnAst.SequenceOf) (typeDefinition:TypeDefinitionCommon) (isValidFunc: IsValidFunction option) (uperFunc: UPerFunction) (child:Asn1Type) (us:State)  =
+    let external_field          = match l with C -> acn_c.oct_sqf_external_field       | Ada -> acn_c.oct_sqf_external_field
+    let fixedSize               = match l with C -> uper_c.octect_FixedSize            | Ada -> uper_a.octect_FixedSize
+    let varSize                 = match l with C -> uper_c.octect_VarSize              | Ada -> uper_a.octect_VarSize
+
+    let i = sprintf "i%d" (t.id.SeqeuenceOfLevel + 1)
+    let lv = SequenceOfIndex (t.id.SeqeuenceOfLevel + 1, None)
+
+    let funcBody (errCode:ErroCode) (acnArgs: (Asn1AcnAst.RelativePath*Asn1AcnAst.AcnParameter) list) (p:FuncParamType)        = 
+        let pp = match codec with CommonTypes.Encode -> p.getValue l | CommonTypes.Decode -> p.getPointer l
+        match child.getAcnFunction codec with
+        | None         -> None
+        | Some chFunc  ->
+            let internalItem = chFunc.funcBody acnArgs (p.getArrayItem l i child.isIA5String)
+            match o.acnEncodingClass with
+            | SZ_EC_uPER                                              -> 
+                let nStringLength =
+                    match o.minSize = o.maxSize with
+                    | true  -> []
+                    | false ->
+                        match l with
+                        | Ada  -> [IntegerLocalVariable ("nStringLength", None)]
+                        | C    -> [Asn1SIntLocalVariable ("nCount", None)]
+                match internalItem with
+                | None  -> 
+                        match o.minSize with
+                        | _ when o.maxSize < 65536 && o.maxSize=o.minSize  -> None
+                        | _ when o.maxSize < 65536 && o.maxSize<>o.minSize -> Some ({AcnFuncBodyResult.funcBody = "todo Encode only length"; errCodes = [errCode]; localVariables = nStringLength})    
+                        | _                                                -> raise(Exception "fragmentation not implemented yet")
+                | Some internalItem -> 
+                    let nSizeInBits = GetNumberOfBitsForNonNegativeInteger (BigInteger (o.maxSize - o.minSize))
+                    let localVariables = internalItem.localVariables
+                    let childErrCodes =  internalItem.errCodes
+                    let typeDefinitionName = getTypeDefinitionName t.id.tasInfo typeDefinition
+                    let ret = 
+                        match o.minSize with
+                        | _ when o.maxSize < 65536 && o.maxSize=o.minSize  -> fixedSize p.p typeDefinitionName i internalItem.funcBody (BigInteger o.minSize) (BigInteger child.uperMinSizeInBits) (BigInteger child.uperMaxSizeInBits) 0I codec 
+                        | _ when o.maxSize < 65536 && o.maxSize<>o.minSize  -> varSize p.p (p.getAcces l)  typeDefinitionName i internalItem.funcBody (BigInteger o.minSize) (BigInteger o.maxSize) nSizeInBits (BigInteger child.uperMinSizeInBits) (BigInteger child.uperMaxSizeInBits) 0I errCode.errCodeName codec 
+                        | _                                                -> raise(Exception "fragmentation not implemented yet")
+                    Some ({AcnFuncBodyResult.funcBody = ret; errCodes = errCode::childErrCodes; localVariables = lv::(nStringLength@localVariables)})    
+
+            | SZ_EC_ExternalField   _    -> 
+                match internalItem with
+                | None  -> None
+                | Some internalItem ->
+                    let localVariables  = internalItem.localVariables
+                    let childErrCodes   = internalItem.errCodes
+                    let internalItem    = internalItem.funcBody
+                    let extField        = getExternaField r deps t.id
+                    let funcBodyContent = external_field pp i internalItem (if o.minSize=0 then None else Some (BigInteger o.minSize)) (BigInteger o.maxSize) extField codec
+                    Some ({AcnFuncBodyResult.funcBody = funcBodyContent; errCodes = errCode::childErrCodes; localVariables = lv::localVariables})
+    let soSparkAnnotations = None
+    createPrimitiveFunction r l codec t typeDefinition  isValidFunc  funcBody soSparkAnnotations us
 
 
 (*
@@ -278,14 +469,7 @@ let getFuncParamTypeFromReferenceToType (r:Asn1AcnAst.AstRoot) (l:ProgrammingLan
         
 *)        
 
-//return an ASN.1 type
-let locateTypeByRefId (r:Asn1AcnAst.AstRoot) (ref:ReferenceToType) =
-    0
-
-
-let locateParameter (r:Asn1AcnAst.AstRoot) (deps:Asn1AcnAst.AcnInsertedFieldDependencies) (l:ProgrammingLanguage) (m:Asn1AcnAst.Asn1Module) (ref:ReferenceToType) =
     
-    0
 
 let rec handleSingleUpdateDependency (r:Asn1AcnAst.AstRoot) (deps:Asn1AcnAst.AcnInsertedFieldDependencies) (l:ProgrammingLanguage) (m:Asn1AcnAst.Asn1Module) (d:AcnDependency)  (us:State) =
     match d.dependencyKind with
@@ -323,7 +507,7 @@ let rec handleSingleUpdateDependency (r:Asn1AcnAst.AstRoot) (deps:Asn1AcnAst.Acn
         Some updateFunc, us
     | AcnDepPresenceInt               intVal   -> raise(BugErrorException "Not implemented functionality")
     | AcnDepPresenceStr               strVal   -> raise(BugErrorException "Not implemented functionality")
-    | AcnDepChoiceDeteterminant                -> raise(BugErrorException "Not implemented functionality")
+    | AcnDepChoiceDeteterminant       enm      -> raise(BugErrorException "Not implemented functionality")
 
 and getUpdateFunctionUsedInEncoding (r:Asn1AcnAst.AstRoot) (deps:Asn1AcnAst.AcnInsertedFieldDependencies) (l:ProgrammingLanguage) (m:Asn1AcnAst.Asn1Module) (acnChildOrAcnParameterId) (us:State) =
     match deps.acnDependencies |> List.filter(fun d -> d.determinant = acnChildOrAcnParameterId) with
@@ -404,25 +588,8 @@ let createSequenceFunction (r:Asn1AcnAst.AstRoot) (deps:Asn1AcnAst.AcnInsertedFi
                             | Some (Asn1AcnAst.Optional opt)   -> 
                                 match opt.acnPresentWhen with
                                 | None    -> None
-                                | Some (PresenceWhenBool relPath)    -> 
-                                    let dependency = deps.acnDependencies |> List.find(fun d -> d.asn1Type = child.Type.id)
-                                    let rec resolveParam (prmId:ReferenceToType) =
-                                        let nodes = match prmId with ReferenceToType nodes -> nodes
-                                        let lastNode = nodes |> List.rev |> List.head
-                                        match lastNode with
-                                        | PRM prmName   -> 
-                                            let newDeterminantId = 
-                                                deps.acnDependencies |> 
-                                                List.choose(fun d -> 
-                                                    match d.dependencyKind with
-                                                    | AcnDepRefTypeArgument prm when prm.id = prmId -> Some d.determinant
-                                                    | _                                             -> None) 
-                                            match newDeterminantId with
-                                            | det1::_   -> resolveParam det1
-                                            | _         -> prmId
-                                        | _             -> prmId
-                                    let extField = getAcnDeterminantName  (resolveParam dependency.determinant)
-                                    let dummt = acnArgs
+                                | Some (PresenceWhenBool _)    -> 
+                                    let extField = getExternaField r deps child.Type.id
                                     Some(sequence_presense_optChild_pres_bool p.p (p.getAcces l) child.c_name extField codec)
                                     (*
                                     match lnk.linkType with
@@ -496,6 +663,100 @@ let createSequenceFunction (r:Asn1AcnAst.AstRoot) (deps:Asn1AcnAst.AcnInsertedFi
     createPrimitiveFunction r l codec t typeDefinition  isValidFunc  funcBody soSparkAnnotations  us
 
 
+type private AcnChoiceEncClass =
+    | CEC_uper
+    | CEC_enum          of Asn1AcnAst.Enumerated
+    | CEC_presWhen
+
+let createChoiceFunction (r:Asn1AcnAst.AstRoot) (deps:Asn1AcnAst.AcnInsertedFieldDependencies) (l:ProgrammingLanguage) (codec:CommonTypes.Codec) (t:Asn1AcnAst.Asn1Type) (o:Asn1AcnAst.Choice) (typeDefinition:TypeDefinitionCommon) (isValidFunc: IsValidFunction option) (children:ChChildInfo list) (acnPrms:AcnParameter list) (us:State)  =
+    let choice_uper          =  match l with C -> acn_c.Choice                | Ada -> acn_c.Choice  
+    let choiceChild          =  match l with C -> acn_c.ChoiceChild           | Ada -> acn_c.ChoiceChild
+    let choice_Enum          =  match l with C -> acn_c.Choice_Enum           | Ada -> acn_c.Choice_Enum
+    let choiceChild_Enum     =  match l with C -> acn_c.ChoiceChild_Enum      | Ada -> acn_c.ChoiceChild_Enum
+    let choice_preWhen       =  match l with C -> acn_c.Choice_preWhen        | Ada -> acn_c.Choice_preWhen
+    let choiceChild_preWhen  =  match l with C -> acn_c.ChoiceChild_preWhen   | Ada -> acn_c.ChoiceChild_preWhen
+    let choiceChild_preWhen_int_condition  =  match l with C -> acn_c.ChoiceChild_preWhen_int_condition   | Ada -> acn_c.ChoiceChild_preWhen_int_condition
+    let choiceChild_preWhen_str_condition  =  match l with C -> acn_c.ChoiceChild_preWhen_str_condition   | Ada -> acn_c.ChoiceChild_preWhen_str_condition
+
+
+    let nMin = 0I
+    let nMax = BigInteger(Seq.length children) - 1I
+    let nBits = (GetNumberOfBitsForNonNegativeInteger (nMax-nMin))
+
+    let ec =  
+        match o.acnProperties.enumDeterminant with
+        | Some _            -> 
+            let dependency = deps.acnDependencies |> List.find(fun d -> d.asn1Type = t.id)
+            match dependency.dependencyKind with
+            | Asn1AcnAst.AcnDepChoiceDeteterminant enm  -> CEC_enum enm
+            | _                                         -> raise(BugErrorException("unexpected dependency type"))
+        | None              ->
+            match children |> Seq.exists(fun c -> not (Seq.isEmpty c.acnPresentWhenConditions)) with
+            | true           -> CEC_presWhen
+            | false          -> CEC_uper
+    let sChoiceIndexName = typeDefinition.name + "_index_tmp"
+    let localVariables =
+        match ec, codec with
+        | _, CommonTypes.Encode  -> []
+        | CEC_enum _, CommonTypes.Decode
+        | CEC_presWhen, CommonTypes.Decode
+        | CEC_uper, CommonTypes.Decode  -> [(Asn1SIntLocalVariable (sChoiceIndexName, None))]
+
+
+    let funcBody (errCode:ErroCode) (acnArgs: (Asn1AcnAst.RelativePath*Asn1AcnAst.AcnParameter) list) (p:FuncParamType) = 
+        let handleChild (idx:int) (child:ChChildInfo) =
+            seq {
+                let chFunc = child.chType.getAcnFunction codec
+                let childContentResult = 
+                    match chFunc with
+                    | Some chFunc   -> chFunc.funcBody [] (p.getSeqChild l child.c_name child.chType.isIA5String)
+                    | None          -> None
+
+                match childContentResult with
+                | None              -> ()
+                | Some childContent ->
+                    let childBody = 
+                        match ec with
+                        | CEC_uper  -> Some (choiceChild p.p child.presentWhenName (BigInteger idx) nMax childContent.funcBody codec)
+                        | CEC_enum enm -> 
+                            let enmItem = enm.items |> List.find(fun itm -> itm.Name.Value = child.Name.Value)
+                            Some (choiceChild_Enum p.p (enmItem.getBackendName l) child.presentWhenName childContent.funcBody codec)
+                        | CEC_presWhen  ->
+                            let handPresenseCond (cond:Asn1AcnAst.AcnPresentWhenConditionChoiceChild) =
+                                match cond with
+                                | PresenceInt  (_,intLoc)   -> 
+                                    //WARNING: THIS CODE will not work if the alternatives have more than once present conditions
+                                    let extField = getExternaField r deps child.chType.id
+                                    choiceChild_preWhen_int_condition extField intLoc.Value
+                                | PresenceStr  (_,strVal)   -> 
+                                    let extField = getExternaField r deps child.chType.id
+                                    choiceChild_preWhen_str_condition extField strVal.Value
+                            let conds = child.acnPresentWhenConditions |>List.map handPresenseCond
+                            Some (choiceChild_preWhen p.p child.presentWhenName childContent.funcBody conds (idx=0) codec)
+                    yield (childBody, childContent.localVariables, childContent.errCodes)
+            } |> Seq.toList
+
+        let childrenStatements0 = children |> List.mapi handleChild |> List.collect id
+        let childrenStatements = childrenStatements0 |> List.choose(fun (s,_,_) -> s)
+        let childrenLocalvars = childrenStatements0 |> List.collect(fun (_,s,_) -> s)
+        let childrenErrCodes = childrenStatements0 |> List.collect(fun (_,_,s) -> s)
+
+        let choiceContent =  
+            match ec with
+            | CEC_uper        -> choice_uper p.p childrenStatements nMax errCode.errCodeName codec
+            | CEC_enum   enm  -> 
+                let extField = getExternaField r deps t.id
+                choice_Enum p.p childrenStatements extField errCode.errCodeName codec
+            | CEC_presWhen    -> choice_preWhen p.p childrenStatements errCode.errCodeName codec
+        
+
+        Some ({AcnFuncBodyResult.funcBody = choiceContent; errCodes = errCode::childrenErrCodes; localVariables = localVariables@childrenLocalvars})    
+
+    let soSparkAnnotations = 
+        match l with
+        | C     -> None
+        | Ada   -> None
+    createPrimitiveFunction r l codec t typeDefinition  isValidFunc  funcBody soSparkAnnotations  us
 
 let createReferenceFunction (r:Asn1AcnAst.AstRoot) (l:ProgrammingLanguage) (codec:CommonTypes.Codec) (t:Asn1AcnAst.Asn1Type) (o:Asn1AcnAst.ReferenceType) (typeDefinition:TypeDefinitionCommon) (isValidFunc: IsValidFunction option) (baseType:Asn1Type) (us:State)  =
     match codec with

@@ -443,6 +443,14 @@ type Enumerated = {
     userDefinedValues   : bool      //if true, the user has associated at least one item with a value
 }
 
+type AcnReferenceToEnumerated = {
+    modName             : StringLoc
+    tasName             : StringLoc
+    enumerated          : Enumerated
+    acnAligment         : AcnAligment option
+}
+
+
 type AcnInteger = {
     acnProperties       : IntegerAcnProperties
     acnAligment         : AcnAligment option
@@ -468,17 +476,18 @@ type AcnNullType = {
     Location            : SrcLoc //Line no, Char pos
 }
 
-type AcnInsertedType = 
-    | AcnInteger           of AcnInteger
-    | AcnNullType          of AcnNullType
-    | AcnBoolean           of AcnBoolean
+type  AcnInsertedType = 
+    | AcnInteger                of AcnInteger
+    | AcnNullType               of AcnNullType
+    | AcnBoolean                of AcnBoolean
+    | AcnReferenceToEnumerated  of AcnReferenceToEnumerated
 with
     member this.AsString =
         match this with
-        | AcnInteger  _       -> "INTEGER"
-        | AcnNullType _       -> "NULL"
-        | AcnBoolean  _       -> "BOOLEAN"
-
+        | AcnInteger  _                 -> "INTEGER"
+        | AcnNullType _                 -> "NULL"
+        | AcnBoolean  _                 -> "BOOLEAN"
+        | AcnReferenceToEnumerated o    -> sprintf "%s.%s" o.modName.Value o.tasName.Value
 
 
 
@@ -635,7 +644,7 @@ type AcnDependencyKind =
     | AcnDepPresenceBool                     // points to a SEQEUNCE or Choice child
     | AcnDepPresenceInt of BigInteger        // points to a SEQEUNCE or Choice child
     | AcnDepPresenceStr of string
-    | AcnDepChoiceDeteterminant              // points to Enumerated type acting as CHOICE determinant.
+    | AcnDepChoiceDeteterminant   of Enumerated           // points to Enumerated type acting as CHOICE determinant.
 
 
 //The following type expresses the dependencies that exists between ASN.1 types and ACNs types and parameters
