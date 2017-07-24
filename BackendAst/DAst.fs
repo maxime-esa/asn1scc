@@ -384,6 +384,8 @@ type SequenceOf = {
     isValidFunction     : IsValidFunction option      
     uperEncFunction     : UPerFunction
     uperDecFunction     : UPerFunction
+    acnEncFunction      : AcnFunction
+    acnDecFunction      : AcnFunction
 
 }
 
@@ -489,6 +491,8 @@ and Choice = {
     isValidFunction     : IsValidFunction option      
     uperEncFunction     : UPerFunction
     uperDecFunction     : UPerFunction
+    acnEncFunction      : AcnFunction
+    acnDecFunction      : AcnFunction
 
 }
 

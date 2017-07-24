@@ -148,14 +148,14 @@ let rec private checkType (r:AstRoot) (parents: Asn1Type list) (curentPath : Sco
     | NumericString  a      ->
         match a.acnProperties.sizeProp with
         | Some (StrExternalField   relPath)    ->
-            sizeReference curState parents t visibleParameters (Some relPath) AcnDepSizeDeterminant
+            sizeReference curState parents t visibleParameters (Some relPath) AcnDepIA5StringSizeDeterminant
         | _          -> curState
     | OctetString    a      -> 
         sizeReference curState parents t visibleParameters a.acnProperties.sizeProp AcnDepSizeDeterminant
     | BitString      a      -> 
         sizeReference curState parents t visibleParameters a.acnProperties.sizeProp AcnDepSizeDeterminant
     | SequenceOf   seqOf    ->
-        let ns = sizeReference curState (parents@[t]) t visibleParameters seqOf.acnProperties.sizeProp AcnDepSizeDeterminant
+        let ns = sizeReference curState (parents) t visibleParameters seqOf.acnProperties.sizeProp AcnDepSizeDeterminant
         checkType r (parents@[t]) (curentPath@[SQF]) seqOf.child ns
     | Sequence   seq        ->
         seq.children |>

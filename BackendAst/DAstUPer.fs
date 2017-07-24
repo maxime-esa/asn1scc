@@ -217,9 +217,9 @@ let createOctetStringFunction (r:Asn1AcnAst.AstRoot) (l:ProgrammingLanguage) (co
     let i = sprintf "i%d" (t.id.SeqeuenceOfLevel + 1)
     let lv = SequenceOfIndex (t.id.SeqeuenceOfLevel + 1, None)
     let nStringLength =
-        match o.minSize = o.maxSize with
-        | true  -> []
-        | false ->
+        match o.minSize <> o.maxSize && codec = Codec.Decode with
+        | false  -> []
+        | true ->
             match l with
             | Ada  -> [IntegerLocalVariable ("nStringLength", None)]
             | C    -> [Asn1SIntLocalVariable ("nCount", None)]
@@ -250,9 +250,9 @@ let createBitStringFunction (r:Asn1AcnAst.AstRoot) (l:ProgrammingLanguage) (code
     let i = sprintf "i%d" (t.id.SeqeuenceOfLevel + 1)
     let lv = SequenceOfIndex (t.id.SeqeuenceOfLevel + 1, None)
     let nStringLength =
-        match o.minSize = o.maxSize with
-        | true  -> []
-        | false ->
+        match o.minSize <> o.maxSize && codec = Codec.Decode with
+        | false  -> []
+        | true ->
             match l with
             | Ada  -> [IntegerLocalVariable ("nStringLength", None)]
             | C    -> [Asn1SIntLocalVariable ("nCount", None)]
@@ -284,9 +284,9 @@ let createBitStringFunction (r:Asn1AcnAst.AstRoot) (l:ProgrammingLanguage) (code
 
 let createSequenceOfFunction (r:Asn1AcnAst.AstRoot) (l:ProgrammingLanguage) (codec:CommonTypes.Codec) (t:Asn1AcnAst.Asn1Type) (o:Asn1AcnAst.SequenceOf) (typeDefinition:TypeDefinitionCommon) (baseTypeUperFunc : UPerFunction option) (isValidFunc: IsValidFunction option) (child:Asn1Type) (us:State)  =
     let nStringLength =
-        match o.minSize = o.maxSize with
-        | true  -> []
-        | false ->
+        match o.minSize <> o.maxSize && codec = Codec.Decode with
+        | false  -> []
+        | true ->
             match l with
             | Ada  -> [IntegerLocalVariable ("nStringLength", None)]
             | C    -> [Asn1SIntLocalVariable ("nCount", None)]

@@ -155,7 +155,7 @@ type FuncParamType  with
 
 
 let getAccessFromScopeNodeList (ReferenceToType nodes)  (childTypeIsString: bool) (l:ProgrammingLanguage) (pVal : FuncParamType) =
-    let handleNode zeroBasedSeqeuenceOfLevel (pVal : FuncParamType) (n:ScopeNode) = 
+    let handleNode zeroBasedSeqeuenceOfLevel (pVal : FuncParamType) (n:ScopeNode) (childTypeIsString: bool) = 
         match n with
         | MD _
         | TA _
@@ -171,12 +171,13 @@ let getAccessFromScopeNodeList (ReferenceToType nodes)  (childTypeIsString: bool
     match nodes with
     | (MD md)::(TA tas)::(PRM prm)::[]  -> VALUE (ToC (md + "_" + tas + "_" + prm))
     | (MD md)::(TA tas):: xs            ->
+        let length = Seq.length xs
         let ret = 
             xs |> 
-            List.fold(fun (curPath, zeroBasedSeqeuenceOfLevel) n -> 
-                let newPath = handleNode zeroBasedSeqeuenceOfLevel curPath n
+            List.fold(fun (curPath, zeroBasedSeqeuenceOfLevel, idx) n -> 
+                let newPath = handleNode zeroBasedSeqeuenceOfLevel curPath n (childTypeIsString && idx=length)
                 let zeroBasedSeqeuenceOfLevel = match n with SQF -> zeroBasedSeqeuenceOfLevel + 1 | _ -> zeroBasedSeqeuenceOfLevel
-                (newPath, zeroBasedSeqeuenceOfLevel)) (pVal,0) |> fst
+                (newPath, zeroBasedSeqeuenceOfLevel, idx+1)) (pVal,0, 1) |> (fun (a,_,_) -> a)
         ret 
     | _                                 -> raise(BugErrorException "getAccessFromScopeNodeList")
 
@@ -532,9 +533,9 @@ with
         | BitString    t -> Some (t.acnEncFunction)
         | Boolean      t -> Some (t.acnEncFunction)
         | Enumerated   t -> Some (t.acnEncFunction)
-        | SequenceOf   t -> None
+        | SequenceOf   t -> Some (t.acnEncFunction)
         | Sequence     t -> Some (t.acnEncFunction)
-        | Choice       t -> None
+        | Choice       t -> Some (t.acnEncFunction)
         | ReferenceType t-> Some (t.acnEncFunction)
 
     member this.acnDecFunction : AcnFunction option =
@@ -547,9 +548,9 @@ with
         | BitString    t -> Some (t.acnDecFunction)
         | Boolean      t -> Some (t.acnDecFunction)
         | Enumerated   t -> Some (t.acnDecFunction)
-        | SequenceOf   t -> None
+        | SequenceOf   t -> Some (t.acnDecFunction)
         | Sequence     t -> Some (t.acnDecFunction)
-        | Choice       t -> None
+        | Choice       t -> Some (t.acnDecFunction)
         | ReferenceType t-> Some (t.acnDecFunction)
     member this.getAcnFunction (l:CommonTypes.Codec) =
         match l with

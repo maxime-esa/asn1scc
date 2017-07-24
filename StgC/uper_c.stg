@@ -3,7 +3,7 @@
 
 getStringSize(p) ::= "strlen(<p>)"
 
-getSizeableSize(p) ::= "<p>nCount"
+getSizeableSize(p, sAcc) ::= "<p><sAcc>nCount"
 
 Print_AlphabetCheckFunc_str(p) ::= "<p>[i]"
 

@@ -639,6 +639,7 @@ type AstRoot = {
 
 
 type AcnDependencyKind = 
+    | AcnDepIA5StringSizeDeterminant                  // The asn1Type has a size dependency a SEQUENCE OF, BIT STRINT, OCTET STRING etc
     | AcnDepSizeDeterminant                  // The asn1Type has a size dependency a SEQUENCE OF, BIT STRINT, OCTET STRING etc
     | AcnDepRefTypeArgument of AcnParameter        // string is the param name
     | AcnDepPresenceBool                     // points to a SEQEUNCE or Choice child

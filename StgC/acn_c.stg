@@ -627,29 +627,29 @@ str_external_field_decode(p, i, sInternalItem, nSizeMin, nSizeMax,  sExtFld) ::=
 >>
 
 
-oct_sqf_external_field_encode(p, i, sInternalItem, noSizeMin, nSizeMax, sExtFld) ::= <<
-<loopFixedItem(i=i, sInternalItem=sInternalItem, fixedSize=[p,"nCount"])>
+oct_sqf_external_field_encode(p, sAcc, i, sInternalItem, noSizeMin, nSizeMax, sExtFld) ::= <<
+<loopFixedItem(i=i, sInternalItem=sInternalItem, fixedSize=[p, sAcc, "nCount"])>
 >>
 
 
-oct_sqf_external_field_decode(p, i, sInternalItem, noSizeMin, nSizeMax, sExtFld) ::= <<
+oct_sqf_external_field_decode(p, sAcc, i, sInternalItem, noSizeMin, nSizeMax, sExtFld) ::= <<
 ret = (<if(noSizeMin)>(<noSizeMin>\<=<sExtFld>) && <endif>(<sExtFld>\<=<nSizeMax>));
 if (ret) {
-    <p>nCount = (int)<sExtFld>;
-    <loopFixedItem(i=i, sInternalItem=sInternalItem, fixedSize=[p,"nCount"])>
+    <p><sAcc>nCount = (int)<sExtFld>;
+    <loopFixedItem(i=i, sInternalItem=sInternalItem, fixedSize=[p,sAcc, "nCount"])>
 }
 >>
 
 
-bit_string_external_field_encode(p, noSizeMin, nSizeMax, sExtFld) ::= <<
-BitStream_AppendBits(pBitStrm, <p>arr, <p>nCount);
+bit_string_external_field_encode(p, sAcc, noSizeMin, nSizeMax, sExtFld) ::= <<
+BitStream_AppendBits(pBitStrm, <p><sAcc>arr, <p><sAcc>nCount);
 >>
 
-bit_string_external_field_decode(p, noSizeMin, nSizeMax, sExtFld) ::= <<
+bit_string_external_field_decode(p, sAcc, noSizeMin, nSizeMax, sExtFld) ::= <<
 ret = (<if(noSizeMin)>(<noSizeMin>\<=<sExtFld>) && <endif>(<sExtFld>\<=<nSizeMax>));
 if (ret) {
-    <p>nCount = (int)<sExtFld>;
-    ret = BitStream_ReadBits(pBitStrm, <p>arr, <p>nCount);
+    <p><sAcc>nCount = (int)<sExtFld>;
+    ret = BitStream_ReadBits(pBitStrm, <p><sAcc>arr, <p><sAcc>nCount);
     *pErrCode = ret ? 0 : ERR_INSUFFICIENT_DATA;
 }
 >>
