@@ -506,7 +506,9 @@ let rec handleSingleUpdateDependency (r:Asn1AcnAst.AstRoot) (deps:Asn1AcnAst.Acn
     let sizeDependency                  = match l with C -> acn_c.SizeDependency                | Ada -> acn_c.SizeDependency          
     let getSizeableSize                 = match l with C -> uper_c.getSizeableSize              | Ada -> uper_c.getSizeableSize          
     let getStringSize                   = match l with C -> uper_c.getStringSize                | Ada -> uper_c.getStringSize          
-
+    let choiceDependencyPres            = match l with C -> acn_c.ChoiceDependencyPres          | Ada -> acn_c.ChoiceDependencyPres
+    let choiceDependencyIntPres_child   = match l with C -> acn_c.ChoiceDependencyIntPres_child          | Ada -> acn_c.ChoiceDependencyIntPres_child
+    let choiceDependencyStrPres_child   = match l with C -> acn_c.ChoiceDependencyStrPres_child          | Ada -> acn_c.ChoiceDependencyStrPres_child
 
     match d.dependencyKind with
     | AcnDepRefTypeArgument           acnPrm   -> 
@@ -550,8 +552,20 @@ let rec handleSingleUpdateDependency (r:Asn1AcnAst.AstRoot) (deps:Asn1AcnAst.Acn
             let updateStatement = presenceDependency v (pDecParSeq.p) (pDecParSeq.getAcces l) (ToC d.asn1Type.lastItem)
             updateStatement
         Some updateFunc, us
-    | AcnDepPresenceInt               intVal   -> raise(BugErrorException "Not implemented functionality")
-    | AcnDepPresenceStr               strVal   -> raise(BugErrorException "Not implemented functionality")
+    | AcnDepPresence   (relPath, chc)               -> 
+        let updateFunc (vTarget : FuncParamType) (pSrcRoot : FuncParamType)  = 
+            let v = vTarget.getValue l
+            let choicePath = getAccessFromScopeNodeList d.asn1Type false l pSrcRoot
+            let arrsChildUpdates = 
+                chc.children |> 
+                List.map(fun ch -> 
+                    let pres = ch.acnPresentWhenConditions |> Seq.find(fun x -> x.relativePath = relPath)
+                    match pres with
+                    | PresenceInt   (_, intVal) -> choiceDependencyIntPres_child v ch.presentWhenName intVal.Value
+                    | PresenceStr   (_, strVal) -> choiceDependencyStrPres_child v ch.presentWhenName strVal.Value )
+            let updateStatement = choiceDependencyPres choicePath.p (choicePath.getAcces l) arrsChildUpdates
+            updateStatement
+        Some updateFunc, us
     | AcnDepChoiceDeteterminant       enm      -> raise(BugErrorException "Not implemented functionality")
 
 and getUpdateFunctionUsedInEncoding (r:Asn1AcnAst.AstRoot) (deps:Asn1AcnAst.AcnInsertedFieldDependencies) (l:ProgrammingLanguage) (m:Asn1AcnAst.Asn1Module) (acnChildOrAcnParameterId) (us:State) =
@@ -742,9 +756,9 @@ let createChoiceFunction (r:Asn1AcnAst.AstRoot) (deps:Asn1AcnAst.AcnInsertedFiel
     let sChoiceIndexName = typeDefinition.name + "_index_tmp"
     let localVariables =
         match ec, codec with
-        | _, CommonTypes.Encode  -> []
-        | CEC_enum _, CommonTypes.Decode
-        | CEC_presWhen, CommonTypes.Decode
+        | _, CommonTypes.Encode             -> []
+        | CEC_enum _, CommonTypes.Decode    -> []
+        | CEC_presWhen, CommonTypes.Decode  -> []
         | CEC_uper, CommonTypes.Decode  -> [(Asn1SIntLocalVariable (sChoiceIndexName, None))]
 
 
@@ -754,7 +768,7 @@ let createChoiceFunction (r:Asn1AcnAst.AstRoot) (deps:Asn1AcnAst.AcnInsertedFiel
                 let chFunc = child.chType.getAcnFunction codec
                 let childContentResult = 
                     match chFunc with
-                    | Some chFunc   -> chFunc.funcBody [] (p.getSeqChild l child.c_name child.chType.isIA5String)
+                    | Some chFunc   -> chFunc.funcBody [] (p.getChChild l child.c_name child.chType.isIA5String)
                     | None          -> None
 
                 match childContentResult with
@@ -762,22 +776,22 @@ let createChoiceFunction (r:Asn1AcnAst.AstRoot) (deps:Asn1AcnAst.AcnInsertedFiel
                 | Some childContent ->
                     let childBody = 
                         match ec with
-                        | CEC_uper  -> Some (choiceChild p.p child.presentWhenName (BigInteger idx) nMax childContent.funcBody codec)
+                        | CEC_uper  -> Some (choiceChild p.p (p.getAcces l) child.presentWhenName (BigInteger idx) nMax childContent.funcBody codec)
                         | CEC_enum enm -> 
                             let enmItem = enm.items |> List.find(fun itm -> itm.Name.Value = child.Name.Value)
-                            Some (choiceChild_Enum p.p (enmItem.getBackendName l) child.presentWhenName childContent.funcBody codec)
+                            Some (choiceChild_Enum p.p (p.getAcces l) (enmItem.getBackendName l) child.presentWhenName childContent.funcBody codec)
                         | CEC_presWhen  ->
                             let handPresenseCond (cond:Asn1AcnAst.AcnPresentWhenConditionChoiceChild) =
                                 match cond with
                                 | PresenceInt  (_,intLoc)   -> 
                                     //WARNING: THIS CODE will not work if the alternatives have more than once present conditions
-                                    let extField = getExternaField r deps child.chType.id
+                                    let extField = getExternaField r deps t.id
                                     choiceChild_preWhen_int_condition extField intLoc.Value
                                 | PresenceStr  (_,strVal)   -> 
-                                    let extField = getExternaField r deps child.chType.id
+                                    let extField = getExternaField r deps t.id
                                     choiceChild_preWhen_str_condition extField strVal.Value
                             let conds = child.acnPresentWhenConditions |>List.map handPresenseCond
-                            Some (choiceChild_preWhen p.p child.presentWhenName childContent.funcBody conds (idx=0) codec)
+                            Some (choiceChild_preWhen p.p (p.getAcces l) child.presentWhenName childContent.funcBody conds (idx=0) codec)
                     yield (childBody, childContent.localVariables, childContent.errCodes)
             } |> Seq.toList
 
@@ -788,11 +802,11 @@ let createChoiceFunction (r:Asn1AcnAst.AstRoot) (deps:Asn1AcnAst.AcnInsertedFiel
 
         let choiceContent =  
             match ec with
-            | CEC_uper        -> choice_uper p.p childrenStatements nMax errCode.errCodeName codec
+            | CEC_uper        -> choice_uper p.p (p.getAcces l) childrenStatements nMax errCode.errCodeName codec
             | CEC_enum   enm  -> 
                 let extField = getExternaField r deps t.id
-                choice_Enum p.p childrenStatements extField errCode.errCodeName codec
-            | CEC_presWhen    -> choice_preWhen p.p childrenStatements errCode.errCodeName codec
+                choice_Enum p.p (p.getAcces l) childrenStatements extField errCode.errCodeName codec
+            | CEC_presWhen    -> choice_preWhen p.p  (p.getAcces l) childrenStatements errCode.errCodeName codec
         
 
         Some ({AcnFuncBodyResult.funcBody = choiceContent; errCodes = errCode::childrenErrCodes; localVariables = localVariables@childrenLocalvars})    

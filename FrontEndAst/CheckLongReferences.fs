@@ -99,6 +99,62 @@ let sizeReference (curState:AcnInsertedFieldDependencies) (parents: Asn1Type lis
             | _              -> raise(SemanticError(loc, (sprintf "Invalid argument type. Expecting INTEGER got %s "  (c.Type.AsString))))
         checkRelativePath curState parents t visibleParameters   (RelativePath path) checkParameter checkAcnType
 
+
+let checkChoicePresentWhen (r:AstRoot) (curState:AcnInsertedFieldDependencies) (parents: Asn1Type list) (t:Asn1Type)  (ch:Choice) (visibleParameters:(ReferenceToType*AcnParameter) list)    =
+    match ch.acnProperties.enumDeterminant with
+    | Some _        -> 
+        //1 check that there is no child with present-when property
+        match ch.children |> List.collect(fun z -> z.acnPresentWhenConditions) with
+        | c1::_         -> raise(SemanticError(c1.location, (sprintf "‘present-when’ attribute cannot appear when ‘determinant’ is present in the parent choice type"  )))
+        | []            -> curState
+    | None          -> 
+        //2 check that all children have the same present when attributes
+        match ch.children with
+        | []        -> curState
+        | c1::cs    ->
+            let firstChildPresentWhenAttr = c1.acnPresentWhenConditions |> List.sortBy(fun z -> z.relativePath.AsString) |> List.map(fun z -> (z.kind, z.relativePath))
+            cs |> 
+            Seq.iter(fun c ->
+                let curChildPresentWhenAttr = c.acnPresentWhenConditions |> List.sortBy(fun z -> z.relativePath.AsString) |> List.map(fun z -> (z.kind, z.relativePath))
+                match curChildPresentWhenAttr = firstChildPresentWhenAttr with
+                | true  -> ()
+                | false -> 
+                    match curChildPresentWhenAttr, firstChildPresentWhenAttr with
+                    | [], []    -> ()
+                    | [], (_,z)::_   -> raise(SemanticError(z.location, (sprintf "‘present-when’ attributes must appear in all alternatives" )))
+                    | (_,z)::_,_     -> raise(SemanticError(z.location, (sprintf "‘present-when’ attributes must appear in all alternatives" ))) )
+
+
+            let checkAcnPresentWhenConditionChoiceChild (curState:AcnInsertedFieldDependencies) (a:AcnPresentWhenConditionChoiceChild) =
+                match a with
+                | PresenceInt   ((RelativePath path),intVal) -> 
+                    let loc = path.Head.Location
+                    let checkParameter (p:AcnParameter) = 
+                        match p.asn1Type with
+                        | AcnPrmInteger _ -> AcnDepPresence ((RelativePath path), ch)
+                        | _              -> raise(SemanticError(loc, (sprintf "Invalid argument type. Expecting INTEGER got %s "  (p.asn1Type.ToString()))))
+                    let rec checkAcnType (c:AcnChild) =
+                        match c.Type with
+                        | AcnInteger    _ -> AcnDepPresence ((RelativePath path), ch)
+                        | _              -> raise(SemanticError(loc, (sprintf "Invalid argument type. Expecting INTEGER got %s "  (c.Type.AsString))))
+                    checkRelativePath curState parents t visibleParameters   (RelativePath path)  checkParameter checkAcnType
+                | PresenceStr   ((RelativePath path), strVal)-> 
+                    let loc = path.Head.Location
+                    let checkParameter (p:AcnParameter) = 
+                        match p.asn1Type with
+                        | AcnPrmRefType _ -> AcnDepPresence ((RelativePath path), ch)
+                        | _              -> raise(SemanticError(loc, (sprintf "Invalid argument type. Expecting STRING got %s "  (p.asn1Type.ToString()))))
+                    let rec checkAcnType (c:AcnChild) =
+                        match c.Type with
+                        | _              -> raise(SemanticError(loc, (sprintf "Invalid argument type. Expecting STRING got %s "  (c.Type.AsString))))
+                    checkRelativePath curState parents t visibleParameters   (RelativePath path)  checkParameter checkAcnType
+
+
+            c1.acnPresentWhenConditions |>
+            List.fold(fun ns pc -> checkAcnPresentWhenConditionChoiceChild ns pc ) curState
+            
+
+    
 let choiceEnumReference (r:AstRoot) (curState:AcnInsertedFieldDependencies) (parents: Asn1Type list) (t:Asn1Type) (children  : ChChildInfo list) (visibleParameters:(ReferenceToType*AcnParameter) list)  (rp :RelativePath  option)  =
     let checkEnumNamesConsistency loc (nmItems:NamedItem list) =
         match children.Length <> nmItems.Length with
@@ -181,35 +237,10 @@ let rec private checkType (r:AstRoot) (parents: Asn1Type list) (curentPath : Sco
             checkType r (parents@[t]) (curentPath@[SEQ_CHILD ac.Name.Value])  ac.Type ns1
         ) curState
     | Choice ch ->
-        let ns = choiceEnumReference r curState (parents@[t]) t ch.children visibleParameters ch.acnProperties.enumDeterminant
-        ch.children |>
-        List.fold (fun ns ch -> 
-            let checkAcnPresentWhenConditionChoiceChild (curState:AcnInsertedFieldDependencies) (a:AcnPresentWhenConditionChoiceChild) =
-                match a with
-                | PresenceInt   ((RelativePath path),intVal) -> 
-                    let loc = path.Head.Location
-                    let checkParameter (p:AcnParameter) = 
-                        match p.asn1Type with
-                        | AcnPrmInteger _ -> AcnDepPresenceInt intVal.Value
-                        | _              -> raise(SemanticError(loc, (sprintf "Invalid argument type. Expecting INTEGER got %s "  (p.asn1Type.ToString()))))
-                    let rec checkAcnType (c:AcnChild) =
-                        match c.Type with
-                        | AcnInteger    _ -> AcnDepPresenceInt intVal.Value
-                        | _              -> raise(SemanticError(loc, (sprintf "Invalid argument type. Expecting INTEGER got %s "  (c.Type.AsString))))
-                    checkRelativePath curState parents t visibleParameters   (RelativePath path)  checkParameter checkAcnType
-                | PresenceStr   ((RelativePath path), strVal)-> 
-                    let loc = path.Head.Location
-                    let checkParameter (p:AcnParameter) = 
-                        match p.asn1Type with
-                        | AcnPrmRefType _ -> AcnDepPresenceStr strVal.Value
-                        | _              -> raise(SemanticError(loc, (sprintf "Invalid argument type. Expecting STRING got %s "  (p.asn1Type.ToString()))))
-                    let rec checkAcnType (c:AcnChild) =
-                        match c.Type with
-                        | _              -> raise(SemanticError(loc, (sprintf "Invalid argument type. Expecting STRING got %s "  (c.Type.AsString))))
-                    checkRelativePath curState parents ch.Type visibleParameters   (RelativePath path)  checkParameter checkAcnType
-            
-            let ns1 = ch.acnPresentWhenConditions |> List.fold (fun ns x -> checkAcnPresentWhenConditionChoiceChild ns x) ns
-            checkType r (parents@[t]) (curentPath@[CH_CHILD ch.Name.Value])  ch.Type ns1) ns
+        let ns0 = checkChoicePresentWhen r curState (parents) t ch visibleParameters 
+        let ns1 = choiceEnumReference r ns0 (parents) t ch.children visibleParameters ch.acnProperties.enumDeterminant
+        ch.children|>
+        List.fold (fun ns ac -> checkType r (parents@[t]) (curentPath@[SEQ_CHILD ac.Name.Value])  ac.Type ns ) ns1
     | ReferenceType ref -> 
         let checkArgument (curState:AcnInsertedFieldDependencies) ((RelativePath path : RelativePath), (prm:AcnParameter)) =
             let loc = path.Head.Location

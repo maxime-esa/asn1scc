@@ -385,8 +385,7 @@ let private exportAcnDependencyKind (d:AcnDependencyKind) =
     | AcnDepSizeDeterminant        -> XElement(xname "SizeDependency")
     | AcnDepRefTypeArgument prm    -> XElement(xname "RefTypeArgumentDependency", XAttribute(xname "prmId", prm.id.AsString))
     | AcnDepPresenceBool           -> XElement(xname "PresenseBoolDependency")
-    | AcnDepPresenceInt intVal     -> XElement(xname "PresenseIntDependency", XAttribute(xname "intVal", intVal.ToString()))
-    | AcnDepPresenceStr strVal     -> XElement(xname "PresenseStringDependency", XAttribute(xname "prmId", strVal))
+    | AcnDepPresence   _           -> XElement(xname "ChoicePresenseDependency")
     | AcnDepChoiceDeteterminant _  -> XElement(xname "ChoiceEnumDependency")
                                    
 let private exportAcnDependency (d:AcnDependency) =

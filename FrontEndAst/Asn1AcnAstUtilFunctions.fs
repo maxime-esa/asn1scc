@@ -202,6 +202,22 @@ type Choice           with
 
 
 
+type AcnPresentWhenConditionChoiceChild with
+    member this.relativePath = 
+        match this with
+        | PresenceInt   (rp,_)
+        | PresenceStr   (rp,_)  -> rp
+    member this.location = 
+        match this with
+        | PresenceInt   (rp,intLoc) -> intLoc.Location
+        | PresenceStr   (rp,strLoc) -> strLoc.Location
+    member this.kind = 
+        match this with
+        | PresenceInt   _ -> 1
+        | PresenceStr   _ -> 2
+
+
+
 type Asn1Value with
     member this.getBackendName () =
         "unnamed_variable"

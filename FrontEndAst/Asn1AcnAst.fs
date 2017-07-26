@@ -21,6 +21,8 @@ type RelativePath =
 with
     member this.AsString = 
         match this with  RelativePath p -> p |> Seq.StrJoin "."
+    member this.location = 
+        match this with  RelativePath p -> p |> List.map(fun z -> z.Location) |> List.head
     override this.ToString() = this.AsString
 
 type AcnEndianness =
@@ -638,13 +640,14 @@ type AstRoot = {
 
 
 
+    
+
 type AcnDependencyKind = 
     | AcnDepIA5StringSizeDeterminant                  // The asn1Type has a size dependency a SEQUENCE OF, BIT STRINT, OCTET STRING etc
     | AcnDepSizeDeterminant                  // The asn1Type has a size dependency a SEQUENCE OF, BIT STRINT, OCTET STRING etc
     | AcnDepRefTypeArgument of AcnParameter        // string is the param name
     | AcnDepPresenceBool                     // points to a SEQEUNCE or Choice child
-    | AcnDepPresenceInt of BigInteger        // points to a SEQEUNCE or Choice child
-    | AcnDepPresenceStr of string
+    | AcnDepPresence        of (RelativePath*Choice)
     | AcnDepChoiceDeteterminant   of Enumerated           // points to Enumerated type acting as CHOICE determinant.
 
 

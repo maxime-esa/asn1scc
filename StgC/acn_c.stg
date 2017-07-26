@@ -754,21 +754,21 @@ if (<p><sAcc>exist.<sChName>) {
 
 /* Choice like uper*/
 
-ChoiceChild_encode(p, sChildID, nChildIndex, nLastItemIndex, sChildContent) ::= <<
+ChoiceChild_encode(p, sAcc, sChildID, nChildIndex, nLastItemIndex, sChildContent) ::= <<
 case <sChildID>:
 	BitStream_EncodeConstraintWholeNumber(pBitStrm, <nChildIndex>, 0, <nLastItemIndex>);
 	<sChildContent>
 	break;
 >>
-ChoiceChild_decode(p, sChildID, nChildIndex, nLastItemIndex, sChildContent) ::= <<
+ChoiceChild_decode(p, sAcc, sChildID, nChildIndex, nLastItemIndex, sChildContent) ::= <<
 case <nChildIndex>:
-	<p>kind = <sChildID>;
+	<p><sAcc>kind = <sChildID>;
 	<sChildContent>
 	break;
 >>
 
-Choice_encode(p, arrsChildren, nLastItemIndex, sErrCode) ::= <<
-switch(<p>kind) 
+Choice_encode(p, sAcc, arrsChildren, nLastItemIndex, sErrCode) ::= <<
+switch(<p><sAcc>kind) 
 {
 <arrsChildren: {ch|<ch>}; separator="\n">
 default:
@@ -777,7 +777,7 @@ default:
 }
 >>
 
-Choice_decode(p, arrsChildren, nLastItemIndex, sErrCode) ::= <<
+Choice_decode(p, sAcc, arrsChildren, nLastItemIndex, sErrCode) ::= <<
 ret = BitStream_DecodeConstraintWholeNumber(pBitStrm, &nChoiceIndex, 0, <nLastItemIndex>);
 *pErrCode = ret ? 0 : ERR_INSUFFICIENT_DATA;
 if (ret) {
@@ -794,7 +794,7 @@ if (ret) {
 /* Choice with presense determinants */
 
 
-ChoiceChild_preWhen_encode(p, sChildID, sChildBody, arrsConditions, bFirst) ::= <<
+ChoiceChild_preWhen_encode(p, sAcc, sChildID, sChildBody, arrsConditions, bFirst) ::= <<
 case <sChildID>:
 	<sChildBody>
 	break;
@@ -805,16 +805,16 @@ ChoiceChild_preWhen_bool_condition(sExtFld) ::= "<sExtFld>"
 ChoiceChild_preWhen_int_condition(sExtFld, nVal) ::= "(<sExtFld> == <nVal>)"
 ChoiceChild_preWhen_str_condition(sExtFld, sVal) ::= "(strcmp(<sExtFld>, \"<sVal>\") == 0)"
 
-ChoiceChild_preWhen_decode(p, sChildID, sChildBody, arrsConditions, bFirst) ::= <<
+ChoiceChild_preWhen_decode(p, sAcc, sChildID, sChildBody, arrsConditions, bFirst) ::= <<
 <if(!bFirst)>else <endif>if (<arrsConditions; separator=" && ">) {
-    <p>kind = <sChildID>;
+    <p><sAcc>kind = <sChildID>;
     <sChildBody>
 }
 >>
 
 
-Choice_preWhen_encode(p, arrsChildren, sErrCode) ::= <<
-switch(<p>kind) 
+Choice_preWhen_encode(p, sAcc, arrsChildren, sErrCode) ::= <<
+switch(<p><sAcc>kind) 
 {
 <arrsChildren; separator="\n">
 default:
@@ -823,7 +823,7 @@ default:
 }
 >>
 
-Choice_preWhen_decode(p, arrsChildren, sErrCode) ::= <<
+Choice_preWhen_decode(p, sAcc, arrsChildren, sErrCode) ::= <<
 *pErrCode = 0;
 <arrsChildren; separator="\n">
 else {
@@ -837,22 +837,22 @@ else {
 
 
 
-ChoiceChild_Enum_encode(p, sEnmName, sChildID, sChildBody) ::= <<
+ChoiceChild_Enum_encode(p, sAcc, sEnmName, sChildID, sChildBody) ::= <<
 case <sChildID>:    
 	<sChildBody>
 	break;
 >>
 
-ChoiceChild_Enum_decode(p, sEnmName, sChildID, sChildBody) ::= <<
+ChoiceChild_Enum_decode(p, sAcc, sEnmName, sChildID, sChildBody) ::= <<
 case <sEnmName>:
-	<p>kind = <sChildID>;
+	<p><sAcc>kind = <sChildID>;
 	<sChildBody>
 	break;
 >>
 
 
-Choice_Enum_encode(p, arrsChildren, sEnmExtFld, sErrCode) ::= <<
-switch(<p>kind) 
+Choice_Enum_encode(p, sAcc, arrsChildren, sEnmExtFld, sErrCode) ::= <<
+switch(<p><sAcc>kind) 
 {
     <arrsChildren; separator="\n">
 default:
@@ -861,7 +861,7 @@ default:
 }
 >>
 
-Choice_Enum_decode(p, arrsChildren, sEnmExtFld, sErrCode) ::= <<
+Choice_Enum_decode(p, sAcc, arrsChildren, sEnmExtFld, sErrCode) ::= <<
 switch(<sEnmExtFld>)
 {
     <arrsChildren; separator="\n">
@@ -943,20 +943,20 @@ PresenceDependency(v, sSeqPath, sAcc, sChildName) ::= <<
 <v> = (<sSeqPath><sAcc>exist.<sChildName> == 1);
 >>
 
-ChoiceDependencyIntPres_child(v, sChildName, nChildRetVal) ::= <<
-case <sChildName>:
+ChoiceDependencyIntPres_child(v, sChildNamePrese, nChildRetVal) ::= <<
+case <sChildNamePrese>:
 	<v> = <nChildRetVal>; 
     break;
 >>
 
-ChoiceDependencyStrPres_child(v, sChildName, sChildRetVal) ::= <<
-case <sChildName>:
+ChoiceDependencyStrPres_child(v, sChildNamePrese, sChildRetVal) ::= <<
+case <sChildNamePrese>:
 	strcpy(<v>, <sChildRetVal>);
     break;
 >>
 
-ChoiceDependencyPres(sTasName, arrsChoiceItems) ::= <<
-switch (pVal->kind) {
+ChoiceDependencyPres(sChPath, sAcc, arrsChoiceItems) ::= <<
+switch (<sChPath><sAcc>kind) {
     <arrsChoiceItems; separator="\n">
     default:
         ret = FALSE;                            //COVERAGE_IGNORE
