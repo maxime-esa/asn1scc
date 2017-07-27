@@ -452,6 +452,12 @@ type AcnReferenceToEnumerated = {
     acnAligment         : AcnAligment option
 }
 
+type AcnReferenceToIA5String = {
+    modName             : StringLoc
+    tasName             : StringLoc
+    str                 : StringType
+    acnAligment         : AcnAligment option
+}
 
 type AcnInteger = {
     acnProperties       : IntegerAcnProperties
@@ -483,6 +489,7 @@ type  AcnInsertedType =
     | AcnNullType               of AcnNullType
     | AcnBoolean                of AcnBoolean
     | AcnReferenceToEnumerated  of AcnReferenceToEnumerated
+    | AcnReferenceToIA5String   of AcnReferenceToIA5String
 with
     member this.AsString =
         match this with
@@ -490,6 +497,7 @@ with
         | AcnNullType _                 -> "NULL"
         | AcnBoolean  _                 -> "BOOLEAN"
         | AcnReferenceToEnumerated o    -> sprintf "%s.%s" o.modName.Value o.tasName.Value
+        | AcnReferenceToIA5String  o    -> sprintf "%s.%s" o.modName.Value o.tasName.Value
 
 
 

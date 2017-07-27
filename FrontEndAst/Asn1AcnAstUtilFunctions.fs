@@ -99,24 +99,28 @@ type AcnInsertedType with
         | AcnNullType       x -> x.acnMinSizeInBits
         | AcnBoolean        x -> x.acnMinSizeInBits
         | AcnReferenceToEnumerated x -> x.enumerated.acnMinSizeInBits
+        | AcnReferenceToIA5String x -> x.str.acnMinSizeInBits
     member this.acnMaxSizeInBits =
         match this with
         | AcnInteger        x -> x.acnMaxSizeInBits
         | AcnNullType       x -> x.acnMaxSizeInBits
         | AcnBoolean        x -> x.acnMaxSizeInBits
         | AcnReferenceToEnumerated x -> x.enumerated.acnMaxSizeInBits
+        | AcnReferenceToIA5String x -> x.str.acnMaxSizeInBits
     member this.acnAligment =
         match this with
         | AcnInteger        x -> x.acnAligment
         | AcnNullType       x -> x.acnAligment
         | AcnBoolean        x -> x.acnAligment
         | AcnReferenceToEnumerated x -> x.acnAligment
+        | AcnReferenceToIA5String x -> x.acnAligment
     member this.Location =
         match this with
         | AcnInteger        x -> x.Location
         | AcnNullType       x -> x.Location
         | AcnBoolean        x -> x.Location
         | AcnReferenceToEnumerated x -> x.tasName.Location
+        | AcnReferenceToIA5String x -> x.tasName.Location
        
 type BitString with
     member this.MaxOctets = int (ceil ((double this.maxSize)/8.0))

@@ -315,6 +315,15 @@ let private exportType (t:Asn1Type) =
                     XElement(xname "Items", a.enumerated.items |> List.map(fun c ->  XElement(xname "Item", XAttribute(xname "name", c.Name.Value), XAttribute(xname "value", c.definitionValue))   )),
                     XElement(xname "CONS", a.enumerated.cons |> List.map(printGenericConstraint printEnumVal )),
                     XElement(xname "WITH_CONS", a.enumerated.withcons |> List.map(printGenericConstraint printEnumVal )) ), us 
+
+            | AcnReferenceToIA5String (a)        -> 
+                XElement(xname "ACN_COMPONENT", 
+                    XAttribute(xname "id", ch.id.AsString),
+                    XAttribute(xname "name", ch.Name.Value),
+                    XAttribute(xname "type", "IA5String"),    
+                    (exportAcnAligment a.acnAligment) ), us 
+
+
             | AcnBoolean  (a)       -> 
                 XElement(xname "ACN_COMPONENT", 
                     XAttribute(xname "id", ch.id.AsString),

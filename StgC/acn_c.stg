@@ -951,7 +951,7 @@ case <sChildNamePrese>:
 
 ChoiceDependencyStrPres_child(v, sChildNamePrese, sChildRetVal) ::= <<
 case <sChildNamePrese>:
-	strcpy(<v>, <sChildRetVal>);
+	strcpy(<v>, "<sChildRetVal>");
     break;
 >>
 

@@ -271,7 +271,10 @@ let private creareAcnProperty (acnConstants : Map<string, BigInteger>) (t:ITree)
             match t.Type with
             | acnParser.LONG_FIELD  -> GP_PresenceBool(CreateLongField t)
             | acnParser.EQUAL       -> GP_PresenceInt ((CreateLongField(t.GetChild 0)), CreateAcnIntegerConstant (t.GetChild 1))
-            | acnParser.PRESENT_WHEN_STR_EQUAL -> GP_PresenceStr ((CreateLongField(t.GetChild 0)), (t.GetChild 1).TextL )
+            | acnParser.PRESENT_WHEN_STR_EQUAL -> 
+                let txt = (t.GetChild 1).Text.Replace("\"","")
+                let txtL = { StringLoc.Value = txt; Location = (t.GetChild 1).Location}
+                GP_PresenceStr ((CreateLongField(t.GetChild 0)), txtL )
             | _                     -> raise(BugErrorException("creareAcnProperty_PRESENT_WHEN"))
         PRESENT_WHEN (t.Children |> List.map CreateAcnPresenseCondition )
 
@@ -792,6 +795,11 @@ let rec private mapAcnParamTypeToAcnAcnInsertedType (asn1:Asn1Ast.AstRoot) (acn:
             let cons =  asn1Type0.Constraints |> List.collect (fixConstraint asn1) |> List.map (ConstraintsMapping.getEnumConstraint asn1 asn1Type0)
             let enumerated = mergeEnumerated asn1 nmItems ts.Location (Some ts.Location) (Some {AcnTypeEncodingSpec.acnProperties = props; children = []; loc=ts.Location}) props cons []
             AcnReferenceToEnumerated({AcnReferenceToEnumerated.modName = md; tasName = ts; enumerated = enumerated; acnAligment= acnAligment})
+        | Asn1Ast.IA5String     ->
+            let cons =  asn1Type0.Constraints |> List.collect (fixConstraint asn1) |> List.map (ConstraintsMapping.getIA5StringConstraint asn1 asn1Type0)
+            let defaultCharSet = [|for i in 0..127 -> System.Convert.ToChar(i) |]
+            let str = mergeStringType asn1 ts.Location (Some ts.Location) props cons [] defaultCharSet
+            AcnReferenceToIA5String({AcnReferenceToIA5String.modName = md; tasName = ts; str = str; acnAligment= acnAligment})
         | _                               ->
             let newParma  = 
                 match asn1Type0.Kind with

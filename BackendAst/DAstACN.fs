@@ -349,24 +349,101 @@ let createStringFunction (r:Asn1AcnAst.AstRoot) (deps:Asn1AcnAst.AcnInsertedFiel
         let pp = match codec with CommonTypes.Encode -> p.getValue l | CommonTypes.Decode -> p.getPointer l
         let funcBodyContent = 
             match o.acnEncodingClass with
-            | Acn_Enc_String_uPER                                              -> uperFunc.funcBody p |> Option.map(fun x -> x.funcBody, x.errCodes)
+            | Acn_Enc_String_uPER                                              -> uperFunc.funcBody p |> Option.map(fun x -> x.funcBody, x.errCodes, x.localVariables)
             | Acn_Enc_String_uPER_Ascii                                        -> 
                 match o.maxSize = o.minSize with
-                | true      ->  Some (Acn_String_Ascii_FixSize pp (BigInteger o.maxSize) codec, [])
-                | false     ->  Some (Acn_String_Ascii_Internal_Field_Determinant pp (BigInteger o.maxSize) (BigInteger o.minSize) codec , [])
-            | Acn_Enc_String_Ascii_Null_Teminated                   nullChar   -> Some (Acn_String_Ascii_Null_Teminated pp (BigInteger o.maxSize) (nullChar.ToString()) codec, [])
+                | true      ->  Some (Acn_String_Ascii_FixSize pp (BigInteger o.maxSize) codec, [], [])
+                | false     ->  Some (Acn_String_Ascii_Internal_Field_Determinant pp (BigInteger o.maxSize) (BigInteger o.minSize) codec , [], [])
+            | Acn_Enc_String_Ascii_Null_Teminated                   nullChar   -> Some (Acn_String_Ascii_Null_Teminated pp (BigInteger o.maxSize) (nullChar.ToString()) codec, [], [])
             | Acn_Enc_String_Ascii_External_Field_Determinant       _    -> 
                 let extField = getExternaField r deps t.id
-                Some(Acn_String_Ascii_External_Field_Determinant pp (BigInteger o.maxSize) extField codec, [])
+                Some(Acn_String_Ascii_External_Field_Determinant pp (BigInteger o.maxSize) extField codec, [], [])
             | Acn_Enc_String_CharIndex_External_Field_Determinant   _    -> 
                 let extField = getExternaField r deps t.id
                 let arrAsciiCodes = o.uperCharSet |> Array.map(fun x -> BigInteger (System.Convert.ToInt32 x))
-                Some(Acn_String_CharIndex_External_Field_Determinant pp (BigInteger o.maxSize) arrAsciiCodes (BigInteger o.uperCharSet.Length) extField codec, [])
+                Some(Acn_String_CharIndex_External_Field_Determinant pp (BigInteger o.maxSize) arrAsciiCodes (BigInteger o.uperCharSet.Length) extField codec, [], [])
+        match funcBodyContent with
+        | None -> None
+        | Some (funcBodyContent,errCodes, localVars) -> Some ({AcnFuncBodyResult.funcBody = funcBodyContent; errCodes = errCode::errCodes; localVariables = localVars})
+    let soSparkAnnotations = None
+    createPrimitiveFunction r l codec t typeDefinition  isValidFunc  funcBody soSparkAnnotations us
+
+
+let createAcnStringFunction (r:Asn1AcnAst.AstRoot) (deps:Asn1AcnAst.AcnInsertedFieldDependencies) (l:ProgrammingLanguage) (codec:CommonTypes.Codec) (typeId : ReferenceToType) (t:Asn1AcnAst.AcnReferenceToIA5String)  (us:State)  =
+    let errCodeName         = ToC ("ERR_ACN" + (codec.suffix.ToUpper()) + "_" + ((typeId.AcnAbsPath |> Seq.skip 1 |> Seq.StrJoin("-")).Replace("#","elm")))
+    let errCodeValue        = us.currErrCode
+    let errCode             = {ErroCode.errCodeName = errCodeName; errCodeValue = errCodeValue}
+    let Acn_String_Ascii_FixSize                            = match l with C -> acn_c.Acn_String_Ascii_FixSize                          | Ada -> acn_c.Acn_String_Ascii_FixSize
+    let Acn_String_Ascii_Internal_Field_Determinant         = match l with C -> acn_c.Acn_String_Ascii_Internal_Field_Determinant       | Ada -> acn_c.Acn_String_Ascii_Internal_Field_Determinant
+    let Acn_String_Ascii_Null_Teminated                     = match l with C -> acn_c.Acn_String_Ascii_Null_Teminated                   | Ada -> acn_c.Acn_String_Ascii_Null_Teminated
+    let Acn_String_Ascii_External_Field_Determinant         = match l with C -> acn_c.Acn_String_Ascii_External_Field_Determinant       | Ada -> acn_c.Acn_String_Ascii_External_Field_Determinant
+    let Acn_String_CharIndex_External_Field_Determinant     = match l with C -> acn_c.Acn_String_CharIndex_External_Field_Determinant   | Ada -> acn_c.Acn_String_CharIndex_External_Field_Determinant
+
+    let o = t.str
+    let uper_funcBody (errCode:ErroCode) (p:FuncParamType) = 
+        let i = sprintf "i%d" (typeId.SeqeuenceOfLevel + 1)
+        let lv = SequenceOfIndex (typeId.SeqeuenceOfLevel + 1, None)
+        let charIndex =
+            match l with
+            | C     -> []
+            | Ada   -> [IntegerLocalVariable ("charIndex", None)]
+        let nStringLength =
+            match o.minSize = o.maxSize with
+            | true  -> []
+            | false ->
+                match l with
+                | Ada  -> [IntegerLocalVariable ("nStringLength", None)]
+                | C    -> [Asn1SIntLocalVariable ("nStringLength", None)]
+        let InternalItem_string_no_alpha = match l with C -> uper_c.InternalItem_string_no_alpha        | Ada -> uper_a.InternalItem_string_no_alpha
+        let InternalItem_string_with_alpha = match l with C -> uper_c.InternalItem_string_with_alpha        | Ada -> uper_a.InternalItem_string_with_alpha
+        let str_FixedSize       = match l with C -> uper_c.str_FixedSize        | Ada -> uper_a.str_FixedSize
+        let str_VarSize         = match l with C -> uper_c.str_VarSize          | Ada -> uper_a.str_VarSize
+        //let Fragmentation_sqf   = match l with C -> uper_c.Fragmentation_sqf    | Ada -> uper_a.Fragmentation_sqf
+        let typeDefinitionName = ToC2(r.args.TypePrefix + t.tasName.Value)
+
+        let nBits = GetNumberOfBitsForNonNegativeInteger (BigInteger (o.uperCharSet.Length-1))
+        let internalItem =
+            match o.uperCharSet.Length = 128 with
+            | true  -> InternalItem_string_no_alpha p.p i  codec 
+            | false -> 
+                let nBits = GetNumberOfBitsForNonNegativeInteger (BigInteger (o.uperCharSet.Length-1))
+                let arrAsciiCodes = o.uperCharSet |> Array.map(fun x -> BigInteger (System.Convert.ToInt32 x))
+                InternalItem_string_with_alpha p.p typeDefinitionName i (BigInteger (o.uperCharSet.Length-1)) arrAsciiCodes (BigInteger (o.uperCharSet.Length)) nBits  codec
+        let nSizeInBits = GetNumberOfBitsForNonNegativeInteger (BigInteger (o.maxSize - o.minSize))
+        let funcBodyContent = 
+            match o.minSize with
+            | _ when o.maxSize < 65536 && o.maxSize=o.minSize  -> str_FixedSize p.p typeDefinitionName i internalItem (BigInteger o.minSize) nBits nBits 0I codec 
+            | _ when o.maxSize < 65536 && o.maxSize<>o.minSize  -> str_VarSize p.p typeDefinitionName i internalItem (BigInteger o.minSize) (BigInteger o.maxSize) nSizeInBits nBits nBits 0I codec 
+            | _                                                -> raise(Exception "fragmentation not implemented yet")
+        {UPERFuncBodyResult.funcBody = funcBodyContent; errCodes = [errCode]; localVariables = lv::charIndex@nStringLength}    
+
+
+    let funcBody (errCode:ErroCode) (acnArgs: (Asn1AcnAst.RelativePath*Asn1AcnAst.AcnParameter) list) (p:FuncParamType)        = 
+        let pp = match codec with CommonTypes.Encode -> p.getValue l | CommonTypes.Decode -> p.getPointer l
+        let funcBodyContent = 
+            match t.str.acnEncodingClass with
+            | Acn_Enc_String_uPER_Ascii                                        -> 
+                match t.str.maxSize = t.str.minSize with
+                | true      ->  Some (Acn_String_Ascii_FixSize pp (BigInteger t.str.maxSize) codec, [])
+                | false     ->  Some (Acn_String_Ascii_Internal_Field_Determinant pp (BigInteger t.str.maxSize) (BigInteger t.str.minSize) codec , [])
+            | Acn_Enc_String_Ascii_Null_Teminated                   nullChar   -> Some (Acn_String_Ascii_Null_Teminated pp (BigInteger t.str.maxSize) (nullChar.ToString()) codec, [])
+            | Acn_Enc_String_Ascii_External_Field_Determinant       _    -> 
+                let extField = getExternaField r deps typeId
+                Some(Acn_String_Ascii_External_Field_Determinant pp (BigInteger t.str.maxSize) extField codec, [])
+            | Acn_Enc_String_CharIndex_External_Field_Determinant   _    -> 
+                let extField = getExternaField r deps typeId
+                let arrAsciiCodes = t.str.uperCharSet |> Array.map(fun x -> BigInteger (System.Convert.ToInt32 x))
+                Some(Acn_String_CharIndex_External_Field_Determinant pp (BigInteger t.str.maxSize) arrAsciiCodes (BigInteger t.str.uperCharSet.Length) extField codec, [])
+            | Acn_Enc_String_uPER                                              -> 
+                let x = (uper_funcBody errCode) p 
+                Some(x.funcBody, x.errCodes)
         match funcBodyContent with
         | None -> None
         | Some (funcBodyContent,errCodes) -> Some ({AcnFuncBodyResult.funcBody = funcBodyContent; errCodes = errCode::errCodes; localVariables = []})
-    let soSparkAnnotations = None
-    createPrimitiveFunction r l codec t typeDefinition  isValidFunc  funcBody soSparkAnnotations us
+
+
+    (funcBody errCode), {us with currErrCode = us.currErrCode + 1}
+
 
 let createOctetStringFunction (r:Asn1AcnAst.AstRoot) (deps:Asn1AcnAst.AcnInsertedFieldDependencies) (l:ProgrammingLanguage) (codec:CommonTypes.Codec) (t:Asn1AcnAst.Asn1Type) (o:Asn1AcnAst.OctetString) (typeDefinition:TypeDefinitionCommon) (isValidFunc: IsValidFunction option) (uperFunc: UPerFunction) (us:State)  =
     let oct_sqf_external_field                          = match l with C -> acn_c.oct_sqf_external_field       | Ada -> acn_c.oct_sqf_external_field
@@ -784,7 +861,6 @@ let createChoiceFunction (r:Asn1AcnAst.AstRoot) (deps:Asn1AcnAst.AcnInsertedFiel
                             let handPresenseCond (cond:Asn1AcnAst.AcnPresentWhenConditionChoiceChild) =
                                 match cond with
                                 | PresenceInt  (_,intLoc)   -> 
-                                    //WARNING: THIS CODE will not work if the alternatives have more than once present conditions
                                     let extField = getExternaField r deps t.id
                                     choiceChild_preWhen_int_condition extField intLoc.Value
                                 | PresenceStr  (_,strVal)   -> 

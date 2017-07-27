@@ -142,10 +142,16 @@ let checkChoicePresentWhen (r:AstRoot) (curState:AcnInsertedFieldDependencies) (
                     let loc = path.Head.Location
                     let checkParameter (p:AcnParameter) = 
                         match p.asn1Type with
-                        | AcnPrmRefType _ -> AcnDepPresence ((RelativePath path), ch)
+                        | AcnPrmRefType (md,ts) -> 
+                            let actType = GetActualTypeByName r md ts 
+                            match actType.Kind with
+                            | IA5String str ->  AcnDepPresence ((RelativePath path), ch)
+                            | _              -> raise(SemanticError(loc, (sprintf "Invalid argument type. Expecting STRING got %s "  (p.asn1Type.ToString()))))
                         | _              -> raise(SemanticError(loc, (sprintf "Invalid argument type. Expecting STRING got %s "  (p.asn1Type.ToString()))))
                     let rec checkAcnType (c:AcnChild) =
                         match c.Type with
+                        | AcnReferenceToIA5String    str -> 
+                            AcnDepPresence ((RelativePath path), ch)
                         | _              -> raise(SemanticError(loc, (sprintf "Invalid argument type. Expecting STRING got %s "  (c.Type.AsString))))
                     checkRelativePath curState parents t visibleParameters   (RelativePath path)  checkParameter checkAcnType
 
