@@ -182,11 +182,14 @@ let createEnumeratedFunction (r:Asn1AcnAst.AstRoot) (l:ProgrammingLanguage) (cod
             match intFuncBody errCode acnArgs p with
             | None      -> None
             | Some(intAcnFuncBdResult) ->
-                let arrItems = o.items |> List.map(fun it -> Enumerated_item pp (it.CEnumName C) it.acnEncodeValue codec)
-                Some (EnumeratedEncIdx pp typeDefinitionName arrItems intAcnFuncBdResult.funcBody codec, intAcnFuncBdResult.errCodes)
+                match o.encodeValues with
+                | false -> Some (intAcnFuncBdResult.funcBody, intAcnFuncBdResult.errCodes, intAcnFuncBdResult.localVariables)
+                | true  ->
+                    let arrItems = o.items |> List.map(fun it -> Enumerated_item pp (it.CEnumName C) it.acnEncodeValue codec)
+                    Some (EnumeratedEncValues pp typeDefinitionName arrItems intAcnFuncBdResult.funcBody codec, intAcnFuncBdResult.errCodes, intAcnFuncBdResult.localVariables)
         match funcBodyContent with
         | None -> None
-        | Some (funcBodyContent,errCodes) -> Some ({AcnFuncBodyResult.funcBody = funcBodyContent; errCodes = errCode::errCodes; localVariables = []})
+        | Some (funcBodyContent,errCodes, localVariables) -> Some ({AcnFuncBodyResult.funcBody = funcBodyContent; errCodes = errCode::errCodes; localVariables = localVariables})
 
     let soSparkAnnotations = None
     createPrimitiveFunction r l codec t typeDefinition  isValidFunc  funcBody soSparkAnnotations us
@@ -199,27 +202,40 @@ let createAcnEnumeratedFunction (r:Asn1AcnAst.AstRoot) (l:ProgrammingLanguage) (
     let EnumeratedEncIdx                    = match l with C -> acn_c.EnumeratedEncIdx                | Ada -> acn_c.EnumeratedEncIdx
     let EnumeratedEncValues                 = match l with C -> acn_c.EnumeratedEncValues             | Ada -> acn_c.EnumeratedEncValues
     let Enumerated_item                     = match l with C -> acn_c.Enumerated_item                 | Ada -> acn_c.Enumerated_item
+    let typeDefinitionName = ToC2(r.args.TypePrefix + t.tasName.Value)
 
     let uperFuncBody (p:FuncParamType) = 
+        let o = t.enumerated
         let pp = match codec with CommonTypes.Encode -> p.getValue l | CommonTypes.Decode -> p.getPointer l
-        let IntUnconstraint = match l with C -> uper_c.IntUnconstraint          | Ada -> uper_a.IntUnconstraint
-        let funcBodyContent = IntUnconstraint pp errCode.errCodeName codec
-        Some {UPERFuncBodyResult.funcBody = funcBodyContent; errCodes = [errCode]; localVariables = []}    
+        let Enumerated         = match l with C -> uper_c.Enumerated          | Ada -> uper_a.Enumerated
+        let Enumerated_item    = match l with C -> uper_c.Enumerated_item          | Ada -> uper_a.Enumerated_item
+        let nMin = 0I
+        let nMax = BigInteger(Seq.length o.items) - 1I
+        let nLastItemIndex      = nMax
+        let items = 
+            o.items |> List.mapi(fun i itm -> Enumerated_item (p.getValue l) (itm.getBackendName l) (BigInteger i) nLastItemIndex codec) 
+        let nBits = (GetNumberOfBitsForNonNegativeInteger (nMax-nMin))
+        let sFirstItemName = o.items.Head.getBackendName l
+        let funcBodyContent = Enumerated (p.getValue l) typeDefinitionName items nMin nMax nBits errCode.errCodeName nLastItemIndex sFirstItemName codec
+        Some ({UPERFuncBodyResult.funcBody = funcBodyContent; errCodes = [errCode]; localVariables = []})
 
     let intFuncBody = createAcnIntegerFunctionInternal r l codec t.enumerated.acnEncodingClass uperFuncBody
 
     let funcBody (errCode:ErroCode) (acnArgs: (Asn1AcnAst.RelativePath*Asn1AcnAst.AcnParameter) list) (p:FuncParamType)        = 
         let pp = match codec with CommonTypes.Encode -> p.getValue l | CommonTypes.Decode -> p.getPointer l
-        let typeDefinitionName = ToC2(r.args.TypePrefix + t.tasName.Value)
         let funcBodyContent = 
             match intFuncBody errCode acnArgs p with
             | None      -> None
             | Some(intAcnFuncBdResult) ->
-                let arrItems = t.enumerated.items |> List.map(fun it -> Enumerated_item pp (it.CEnumName C) it.acnEncodeValue codec)
-                Some (EnumeratedEncIdx pp typeDefinitionName arrItems intAcnFuncBdResult.funcBody codec, intAcnFuncBdResult.errCodes)
+                let o = t.enumerated
+                match o.encodeValues with
+                | false -> Some (intAcnFuncBdResult.funcBody, intAcnFuncBdResult.errCodes, intAcnFuncBdResult.localVariables)
+                | true  ->
+                    let arrItems = o.items |> List.map(fun it -> Enumerated_item pp (it.CEnumName C) it.acnEncodeValue codec)
+                    Some (EnumeratedEncValues pp typeDefinitionName arrItems intAcnFuncBdResult.funcBody codec, intAcnFuncBdResult.errCodes, intAcnFuncBdResult.localVariables)
         match funcBodyContent with
         | None -> None
-        | Some (funcBodyContent,errCodes) -> Some ({AcnFuncBodyResult.funcBody = funcBodyContent; errCodes = errCode::errCodes; localVariables = []})
+        | Some (funcBodyContent,errCodes, localVariables) -> Some ({AcnFuncBodyResult.funcBody = funcBodyContent; errCodes = errCode::errCodes; localVariables = localVariables})
 
 
     (funcBody errCode), {us with currErrCode = us.currErrCode + 1}
@@ -586,6 +602,8 @@ let rec handleSingleUpdateDependency (r:Asn1AcnAst.AstRoot) (deps:Asn1AcnAst.Acn
     let choiceDependencyPres            = match l with C -> acn_c.ChoiceDependencyPres          | Ada -> acn_c.ChoiceDependencyPres
     let choiceDependencyIntPres_child   = match l with C -> acn_c.ChoiceDependencyIntPres_child          | Ada -> acn_c.ChoiceDependencyIntPres_child
     let choiceDependencyStrPres_child   = match l with C -> acn_c.ChoiceDependencyStrPres_child          | Ada -> acn_c.ChoiceDependencyStrPres_child
+    let choiceDependencyEnum            = match l with C -> acn_c.ChoiceDependencyEnum          | Ada -> acn_c.ChoiceDependencyEnum
+    let choiceDependencyEnum_Item       = match l with C -> acn_c.ChoiceDependencyEnum_Item          | Ada -> acn_c.ChoiceDependencyEnum_Item
 
     match d.dependencyKind with
     | AcnDepRefTypeArgument           acnPrm   -> 
@@ -643,14 +661,22 @@ let rec handleSingleUpdateDependency (r:Asn1AcnAst.AstRoot) (deps:Asn1AcnAst.Acn
             let updateStatement = choiceDependencyPres choicePath.p (choicePath.getAcces l) arrsChildUpdates
             updateStatement
         Some updateFunc, us
-    | AcnDepChoiceDeteterminant       enm      -> raise(BugErrorException "Not implemented functionality")
+    | AcnDepChoiceDeteterminant       (enm,chc)      -> 
+        let updateFunc (vTarget : FuncParamType) (pSrcRoot : FuncParamType)  = 
+            let v = vTarget.getValue l
+            let choicePath = getAccessFromScopeNodeList d.asn1Type false l pSrcRoot
+            let arrsChildUpdates = 
+                chc.children |> 
+                List.map(fun ch -> 
+                    let enmItem = enm.items |> List.find(fun itm -> itm.Name.Value = ch.Name.Value)
+                    choiceDependencyEnum_Item v ch.presentWhenName (enmItem.getBackendName l) )
+            let updateStatement = choiceDependencyEnum choicePath.p (choicePath.getAcces l) arrsChildUpdates
+            updateStatement
+        Some updateFunc, us
 
 and getUpdateFunctionUsedInEncoding (r:Asn1AcnAst.AstRoot) (deps:Asn1AcnAst.AcnInsertedFieldDependencies) (l:ProgrammingLanguage) (m:Asn1AcnAst.Asn1Module) (acnChildOrAcnParameterId) (us:State) =
     match deps.acnDependencies |> List.filter(fun d -> d.determinant = acnChildOrAcnParameterId) with
-    | []  -> 
-        //let errMessage = sprintf "No dependency found for ACN child or ACN parameter : %s" acnChildOrAcnParameterId.AsString
-        //raise(BugErrorException errMessage)
-        None, us
+    | []  -> None, us
     | d1::[]    -> 
         let ret, ns = handleSingleUpdateDependency r deps l m d1 us
         ret, ns
@@ -824,7 +850,7 @@ let createChoiceFunction (r:Asn1AcnAst.AstRoot) (deps:Asn1AcnAst.AcnInsertedFiel
         | Some _            -> 
             let dependency = deps.acnDependencies |> List.find(fun d -> d.asn1Type = t.id)
             match dependency.dependencyKind with
-            | Asn1AcnAst.AcnDepChoiceDeteterminant enm  -> CEC_enum enm
+            | Asn1AcnAst.AcnDepChoiceDeteterminant (enm,_)  -> CEC_enum enm
             | _                                         -> raise(BugErrorException("unexpected dependency type"))
         | None              ->
             match children |> Seq.exists(fun c -> not (Seq.isEmpty c.acnPresentWhenConditions)) with

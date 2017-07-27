@@ -656,7 +656,7 @@ type AcnDependencyKind =
     | AcnDepRefTypeArgument of AcnParameter        // string is the param name
     | AcnDepPresenceBool                     // points to a SEQEUNCE or Choice child
     | AcnDepPresence        of (RelativePath*Choice)
-    | AcnDepChoiceDeteterminant   of Enumerated           // points to Enumerated type acting as CHOICE determinant.
+    | AcnDepChoiceDeteterminant   of (Enumerated*Choice)           // points to Enumerated type acting as CHOICE determinant.
 
 
 //The following type expresses the dependencies that exists between ASN.1 types and ACNs types and parameters

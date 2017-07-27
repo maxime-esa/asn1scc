@@ -442,6 +442,15 @@ case <nItemIdxOrVal>:
 >>
 
 EnumeratedEncIdx_encode(p, sTasName, arrsItem, sActualCodecFunc) ::= <<
+<sActualCodecFunc>
+>>
+
+EnumeratedEncIdx_decode(p, sTasName, arrsItem, sActualCodecFunc) ::= <<
+<sActualCodecFunc>
+>>
+
+
+EnumeratedEncValues_encode(p, sTasName, arrsItem, sActualCodecFunc) ::= <<
 switch(<p>) { 
     <arrsItem; separator="\n">
     default:
@@ -449,23 +458,6 @@ switch(<p>) {
         *pErrCode = ERR_INVALID_ENUM_VALUE;      //COVERAGE_IGNORE
 }
 <sActualCodecFunc>
->>
-
-EnumeratedEncIdx_decode(p, sTasName, arrsItem, sActualCodecFunc) ::= <<
-<sActualCodecFunc>
-if (ret) {
-    switch (intVal) {
-        <arrsItem; separator="\n">
-    default:
-        ret = FALSE;                            //COVERAGE_IGNORE
-        *pErrCode = ERR_INVALID_ENUM_VALUE;      //COVERAGE_IGNORE
-    };
-}
->>
-
-
-EnumeratedEncValues_encode(p, sTasName, arrsItem, sActualCodecFunc) ::= <<
-<EnumeratedEncIdx_encode(p=p, sTasName=sTasName, arrsItem=arrsItem, sActualCodecFunc=sActualCodecFunc)>
 >>
 
 EnumeratedEncValues_decode(p, sTasName, arrsItem, sActualCodecFunc) ::= <<
@@ -929,8 +921,8 @@ case <sChildCID>:
     break;
 >>
 
-ChoiceDependencyEnum(sTasName, arrsChoiceEnumItems) ::= <<
-switch (pVal->kind) {
+ChoiceDependencyEnum(sChPath, sAcc, arrsChoiceEnumItems) ::= <<
+switch (<sChPath><sAcc>kind) {
     <arrsChoiceEnumItems; separator="\n">
     default:
         ret = FALSE;                            //COVERAGE_IGNORE

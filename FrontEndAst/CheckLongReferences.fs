@@ -161,7 +161,8 @@ let checkChoicePresentWhen (r:AstRoot) (curState:AcnInsertedFieldDependencies) (
             
 
     
-let choiceEnumReference (r:AstRoot) (curState:AcnInsertedFieldDependencies) (parents: Asn1Type list) (t:Asn1Type) (children  : ChChildInfo list) (visibleParameters:(ReferenceToType*AcnParameter) list)  (rp :RelativePath  option)  =
+let choiceEnumReference (r:AstRoot) (curState:AcnInsertedFieldDependencies) (parents: Asn1Type list) (t:Asn1Type) (ch:Choice) (visibleParameters:(ReferenceToType*AcnParameter) list)  (rp :RelativePath  option)  =
+    let children = ch.children
     let checkEnumNamesConsistency loc (nmItems:NamedItem list) =
         match children.Length <> nmItems.Length with
         | true  -> raise(SemanticError(loc, (sprintf "Enum determinant items do not match with choice alternative names " )))
@@ -182,14 +183,14 @@ let choiceEnumReference (r:AstRoot) (curState:AcnInsertedFieldDependencies) (par
                 match actType.Kind with
                 | Enumerated enm  -> 
                     checkEnumNamesConsistency ts.Location enm.items
-                    AcnDepChoiceDeteterminant enm
+                    AcnDepChoiceDeteterminant (enm,ch)
                 | _              -> raise(SemanticError(loc, (sprintf "Invalid argument type. Expecting ENUMERATED got %s "  (p.asn1Type.ToString()))))
             | _              -> raise(SemanticError(loc, (sprintf "Invalid argument type. Expecting ENUMERATED got %s "  (p.asn1Type.ToString()))))
         let checkAcnType (c:AcnChild) =
             match c.Type with
             | AcnReferenceToEnumerated    enm -> 
                 checkEnumNamesConsistency c.Name.Location enm.enumerated.items
-                AcnDepChoiceDeteterminant enm.enumerated
+                AcnDepChoiceDeteterminant (enm.enumerated,ch)
             | _              -> raise(SemanticError(loc, (sprintf "Invalid argument type. Expecting ENUMERATED got %s "  (c.Type.AsString))))
         checkRelativePath curState parents t visibleParameters   (RelativePath path) checkParameter checkAcnType
 
@@ -244,7 +245,7 @@ let rec private checkType (r:AstRoot) (parents: Asn1Type list) (curentPath : Sco
         ) curState
     | Choice ch ->
         let ns0 = checkChoicePresentWhen r curState (parents) t ch visibleParameters 
-        let ns1 = choiceEnumReference r ns0 (parents) t ch.children visibleParameters ch.acnProperties.enumDeterminant
+        let ns1 = choiceEnumReference r ns0 (parents) t ch visibleParameters ch.acnProperties.enumDeterminant
         ch.children|>
         List.fold (fun ns ac -> checkType r (parents@[t]) (curentPath@[SEQ_CHILD ac.Name.Value])  ac.Type ns ) ns1
     | ReferenceType ref -> 
