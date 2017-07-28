@@ -175,18 +175,23 @@ let createEnumeratedFunction (r:Asn1AcnAst.AstRoot) (l:ProgrammingLanguage) (cod
     let EnumeratedEncValues                 = match l with C -> acn_c.EnumeratedEncValues             | Ada -> acn_c.EnumeratedEncValues
     let Enumerated_item                     = match l with C -> acn_c.Enumerated_item                 | Ada -> acn_c.Enumerated_item
     let intFuncBody = createAcnIntegerFunctionInternal r l codec o.acnEncodingClass uperFunc.funcBody
+    let intVal = "intVal"
     let funcBody (errCode:ErroCode) (acnArgs: (Asn1AcnAst.RelativePath*Asn1AcnAst.AcnParameter) list) (p:FuncParamType)        = 
         let pp = match codec with CommonTypes.Encode -> p.getValue l | CommonTypes.Decode -> p.getPointer l
         let typeDefinitionName = getTypeDefinitionName t.id.tasInfo typeDefinition
         let funcBodyContent = 
-            match intFuncBody errCode acnArgs p with
+            let newP =
+                match o.encodeValues with
+                | false -> p
+                | true  -> p
+            match intFuncBody errCode acnArgs newP with
             | None      -> None
             | Some(intAcnFuncBdResult) ->
                 match o.encodeValues with
                 | false -> Some (intAcnFuncBdResult.funcBody, intAcnFuncBdResult.errCodes, intAcnFuncBdResult.localVariables)
                 | true  ->
                     let arrItems = o.items |> List.map(fun it -> Enumerated_item pp (it.CEnumName C) it.acnEncodeValue codec)
-                    Some (EnumeratedEncValues pp typeDefinitionName arrItems intAcnFuncBdResult.funcBody codec, intAcnFuncBdResult.errCodes, intAcnFuncBdResult.localVariables)
+                    Some (EnumeratedEncValues pp typeDefinitionName arrItems intAcnFuncBdResult.funcBody codec, intAcnFuncBdResult.errCodes, (Asn1SIntLocalVariable (intVal,None))::intAcnFuncBdResult.localVariables)
         match funcBodyContent with
         | None -> None
         | Some (funcBodyContent,errCodes, localVariables) -> Some ({AcnFuncBodyResult.funcBody = funcBodyContent; errCodes = errCode::errCodes; localVariables = localVariables})
@@ -554,45 +559,6 @@ let createSequenceOfFunction (r:Asn1AcnAst.AstRoot) (deps:Asn1AcnAst.AcnInserted
     createPrimitiveFunction r l codec t typeDefinition  isValidFunc  funcBody soSparkAnnotations us
 
 
-(*
-let getFuncParamTypeFromReferenceToType (r:Asn1AcnAst.AstRoot) (l:ProgrammingLanguage) (c:CommonTypes.Codec) (ref:ReferenceToType) =
-    let isString =
-        match (r.typesMap.[ref]) with
-        | Asn1AcnAst.IA5String  _ -> true
-        | _                 -> false
-    match ref with
-    | ReferenceToType path ->
-        match path with
-        | (MD mdName)::(TA tasName)::(PRM prmName)::[]   -> VALUE prmName
-        | (MD mdName)::(TA tasName)::rest   -> 
-            let tasId = ReferenceToType ((MD mdName)::(TA tasName)::[])
-            let tas = r.typesMap.[tasId]
-            let pTas = tas.getParamType  l c
-            let rec foo_aux (p:FuncParamType) (rest:GenericFold2.ScopeNode list) idx =
-                match rest with
-                | []    -> p, idx
-                | x::xs  ->
-                    let isString = isString && (xs=[])
-                    match x with
-                    | GenericFold2.SEQ_CHILD chname -> 
-                        let newp = p.getSeqChild l chname isString
-                        foo_aux newp xs idx
-                    | GenericFold2.CH_CHILD chname  -> 
-                        let newp = p.getChChild l chname isString
-                        foo_aux newp xs idx
-                    | GenericFold2.SQF              -> 
-                        let i = sprintf "i%d" idx
-                        let newp = p.getArrayItem l i isString
-                        foo_aux newp xs (idx + 1)
-                    | _     ->
-                        raise(BugErrorException (sprintf "Invalid reference %s. Broken part is '%s'" (ref.ToString()) (rest |> Seq.StrJoin ".") ))
-            foo_aux pTas rest 1 |> fst
-        | _     -> raise(BugErrorException (sprintf "Invalid reference %s" (ref.ToString()) ))
-            
-        
-*)        
-
-    
 
 let rec handleSingleUpdateDependency (r:Asn1AcnAst.AstRoot) (deps:Asn1AcnAst.AcnInsertedFieldDependencies) (l:ProgrammingLanguage) (m:Asn1AcnAst.Asn1Module) (d:AcnDependency)  (us:State) =
     let presenceDependency              = match l with C -> acn_c.PresenceDependency            | Ada -> acn_c.PresenceDependency          
@@ -612,19 +578,6 @@ let rec handleSingleUpdateDependency (r:Asn1AcnAst.AstRoot) (deps:Asn1AcnAst.Acn
         | None  -> None, ns1
         | Some prmUpdateStatement   -> 
             let updateFunc (vTarget : FuncParamType) (pSrcRoot : FuncParamType)  = 
-                (*
-                let v = vTarget.getPointer l
-                let refTypePath = getAccessFromScopeNodeList decTypeId false l pSrcRoot
-
-                let tasName= 
-                    match decTypeId.parentTypeId with
-                    | Some refTypeId    -> 
-                        refTypeId.tasInfo.Value.tasName
-                    | _             -> raise(BugErrorException "??")
-                let prmName = ToC decTypeId.lastItem
-                let updateStatement = sprintf "/*%s -- %s*/" (acn_c.RefTypeArgument1 v tasName prmName (refTypePath.getPointer l)) decTypeId.AsString
-                updateStatement
-                *)
                 prmUpdateStatement vTarget pSrcRoot
             Some updateFunc, ns1
     | AcnDepSizeDeterminant         -> 
@@ -753,13 +706,6 @@ let createSequenceFunction (r:Asn1AcnAst.AstRoot) (deps:Asn1AcnAst.AcnInsertedFi
                                 | Some (PresenceWhenBool _)    -> 
                                     let extField = getExternaField r deps child.Type.id
                                     Some(sequence_presense_optChild_pres_bool p.p (p.getAcces l) child.c_name extField codec)
-                                    (*
-                                    match lnk.linkType with
-                                    | Asn1AcnAst.PresenceBool              -> Some(sequence_presense_optChild_pres_bool p.p (p.getAcces l) child.c_name extField codec)
-                                    | Asn1AcnAst.PresenceInt intVal        -> Some(sequence_presense_optChild_pres_int p.p (p.getAcces l) child.c_name extField intVal codec)
-                                    | Asn1AcnAst.PresenceStr strval        -> Some(sequence_presense_optChild_pres_str p.p (p.getAcces l) child.c_name extField strval codec)
-                                    | _                         -> raise(BugErrorException "unexpected error in createSequenceFunction")
-                                    *)
                             | _                 -> None
                         yield (acnPresenceStatement, [], [])
 
@@ -814,9 +760,6 @@ let createSequenceFunction (r:Asn1AcnAst.AstRoot) (deps:Asn1AcnAst.AcnInsertedFi
         match seqContent with
         | None  -> None
         | Some ret -> Some ({AcnFuncBodyResult.funcBody = ret; errCodes = errCode::childrenErrCodes; localVariables = localVariables@childrenLocalvars})    
-        //| Some baseFuncName ->
-        //    let funcBodyContent = callBaseTypeFunc l (p.getPointer l) baseFuncName codec
-        //    Some ({AcnFuncBodyResult.funcBody = funcBodyContent; errCodes = [errCode]; localVariables = []})
             
     let soSparkAnnotations = 
         match l with
