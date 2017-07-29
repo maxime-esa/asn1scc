@@ -170,32 +170,40 @@ let createIntegerFunction (r:Asn1AcnAst.AstRoot) (l:ProgrammingLanguage) (codec:
     createPrimitiveFunction r l codec t typeDefinition isValidFunc  (fun e acnArgs p -> funcBody e acnArgs p) soSparkAnnotations us
 
 
-let createEnumeratedFunction (r:Asn1AcnAst.AstRoot) (l:ProgrammingLanguage) (codec:CommonTypes.Codec) (t:Asn1AcnAst.Asn1Type) (o:Asn1AcnAst.Enumerated) (typeDefinition:TypeDefinitionCommon)  (isValidFunc: IsValidFunction option) (uperFunc: UPerFunction) (us:State)  =
-    let EnumeratedEncIdx                    = match l with C -> acn_c.EnumeratedEncIdx                | Ada -> acn_c.EnumeratedEncIdx
+let createEnumComn (r:Asn1AcnAst.AstRoot) (l:ProgrammingLanguage) (codec:CommonTypes.Codec) (typeId : ReferenceToType) (o:Asn1AcnAst.Enumerated) (typeDefinitionName:string)  =
     let EnumeratedEncValues                 = match l with C -> acn_c.EnumeratedEncValues             | Ada -> acn_c.EnumeratedEncValues
     let Enumerated_item                     = match l with C -> acn_c.Enumerated_item                 | Ada -> acn_c.Enumerated_item
-    let intFuncBody = createAcnIntegerFunctionInternal r l codec o.acnEncodingClass uperFunc.funcBody
+    //let IntFullyConstraint                  = match l with C -> uper_c.IntFullyConstraint       | Ada -> uper_a.IntFullyConstraint
+    let IntFullyConstraintPos   = match l with C -> uper_c.IntFullyConstraintPos    | Ada -> uper_a.IntFullyConstraint
+    let min = o.items |> List.map(fun x -> x.acnEncodeValue) |> Seq.min
+    let max = o.items |> List.map(fun x -> x.acnEncodeValue) |> Seq.max
     let intVal = "intVal"
+    let localVar =
+        match min >= 0I with
+        | true  -> Asn1UIntLocalVariable (intVal,None)
+        | false -> Asn1SIntLocalVariable (intVal,None)
+    let pVal = VALUE intVal
     let funcBody (errCode:ErroCode) (acnArgs: (Asn1AcnAst.RelativePath*Asn1AcnAst.AcnParameter) list) (p:FuncParamType)        = 
-        let pp = match codec with CommonTypes.Encode -> p.getValue l | CommonTypes.Decode -> p.getPointer l
-        let typeDefinitionName = getTypeDefinitionName t.id.tasInfo typeDefinition
+        let uperInt (p:FuncParamType) = 
+            let pp = match codec with CommonTypes.Encode -> p.getValue l | CommonTypes.Decode -> p.getPointer l
+            let funcBody = IntFullyConstraintPos pp min max (GetNumberOfBitsForNonNegativeInteger (max-min))  errCode.errCodeName codec
+            Some({UPERFuncBodyResult.funcBody = funcBody; errCodes = [errCode]; localVariables= []})
+        let intFuncBody = 
+            createAcnIntegerFunctionInternal r l codec o.acnEncodingClass uperInt
         let funcBodyContent = 
-            let newP =
-                match o.encodeValues with
-                | false -> p
-                | true  -> p
-            match intFuncBody errCode acnArgs newP with
+            match intFuncBody errCode acnArgs pVal with
             | None      -> None
             | Some(intAcnFuncBdResult) ->
-                match o.encodeValues with
-                | false -> Some (intAcnFuncBdResult.funcBody, intAcnFuncBdResult.errCodes, intAcnFuncBdResult.localVariables)
-                | true  ->
-                    let arrItems = o.items |> List.map(fun it -> Enumerated_item pp (it.CEnumName C) it.acnEncodeValue codec)
-                    Some (EnumeratedEncValues pp typeDefinitionName arrItems intAcnFuncBdResult.funcBody codec, intAcnFuncBdResult.errCodes, (Asn1SIntLocalVariable (intVal,None))::intAcnFuncBdResult.localVariables)
+                let arrItems = o.items |> List.map(fun it -> Enumerated_item (p.getValue l) (it.CEnumName C) it.acnEncodeValue codec)
+                Some (EnumeratedEncValues p.p typeDefinitionName arrItems intAcnFuncBdResult.funcBody codec, intAcnFuncBdResult.errCodes, localVar::intAcnFuncBdResult.localVariables)
         match funcBodyContent with
         | None -> None
         | Some (funcBodyContent,errCodes, localVariables) -> Some ({AcnFuncBodyResult.funcBody = funcBodyContent; errCodes = errCode::errCodes; localVariables = localVariables})
+    funcBody
 
+let createEnumeratedFunction (r:Asn1AcnAst.AstRoot) (l:ProgrammingLanguage) (codec:CommonTypes.Codec) (t:Asn1AcnAst.Asn1Type) (o:Asn1AcnAst.Enumerated) (typeDefinition:TypeDefinitionCommon)  (isValidFunc: IsValidFunction option) (uperFunc: UPerFunction) (us:State)  =
+    let typeDefinitionName = getTypeDefinitionName t.id.tasInfo typeDefinition
+    let funcBody = createEnumComn r l codec t.id o typeDefinitionName
     let soSparkAnnotations = None
     createPrimitiveFunction r l codec t typeDefinition  isValidFunc  funcBody soSparkAnnotations us
 
@@ -204,45 +212,8 @@ let createAcnEnumeratedFunction (r:Asn1AcnAst.AstRoot) (l:ProgrammingLanguage) (
     let errCodeName         = ToC ("ERR_ACN" + (codec.suffix.ToUpper()) + "_" + ((typeId.AcnAbsPath |> Seq.skip 1 |> Seq.StrJoin("-")).Replace("#","elm")))
     let errCodeValue        = us.currErrCode
     let errCode             = {ErroCode.errCodeName = errCodeName; errCodeValue = errCodeValue}
-    let EnumeratedEncIdx                    = match l with C -> acn_c.EnumeratedEncIdx                | Ada -> acn_c.EnumeratedEncIdx
-    let EnumeratedEncValues                 = match l with C -> acn_c.EnumeratedEncValues             | Ada -> acn_c.EnumeratedEncValues
-    let Enumerated_item                     = match l with C -> acn_c.Enumerated_item                 | Ada -> acn_c.Enumerated_item
     let typeDefinitionName = ToC2(r.args.TypePrefix + t.tasName.Value)
-
-    let uperFuncBody (p:FuncParamType) = 
-        let o = t.enumerated
-        let pp = match codec with CommonTypes.Encode -> p.getValue l | CommonTypes.Decode -> p.getPointer l
-        let Enumerated         = match l with C -> uper_c.Enumerated          | Ada -> uper_a.Enumerated
-        let Enumerated_item    = match l with C -> uper_c.Enumerated_item          | Ada -> uper_a.Enumerated_item
-        let nMin = 0I
-        let nMax = BigInteger(Seq.length o.items) - 1I
-        let nLastItemIndex      = nMax
-        let items = 
-            o.items |> List.mapi(fun i itm -> Enumerated_item (p.getValue l) (itm.getBackendName l) (BigInteger i) nLastItemIndex codec) 
-        let nBits = (GetNumberOfBitsForNonNegativeInteger (nMax-nMin))
-        let sFirstItemName = o.items.Head.getBackendName l
-        let funcBodyContent = Enumerated (p.getValue l) typeDefinitionName items nMin nMax nBits errCode.errCodeName nLastItemIndex sFirstItemName codec
-        Some ({UPERFuncBodyResult.funcBody = funcBodyContent; errCodes = [errCode]; localVariables = []})
-
-    let intFuncBody = createAcnIntegerFunctionInternal r l codec t.enumerated.acnEncodingClass uperFuncBody
-
-    let funcBody (errCode:ErroCode) (acnArgs: (Asn1AcnAst.RelativePath*Asn1AcnAst.AcnParameter) list) (p:FuncParamType)        = 
-        let pp = match codec with CommonTypes.Encode -> p.getValue l | CommonTypes.Decode -> p.getPointer l
-        let funcBodyContent = 
-            match intFuncBody errCode acnArgs p with
-            | None      -> None
-            | Some(intAcnFuncBdResult) ->
-                let o = t.enumerated
-                match o.encodeValues with
-                | false -> Some (intAcnFuncBdResult.funcBody, intAcnFuncBdResult.errCodes, intAcnFuncBdResult.localVariables)
-                | true  ->
-                    let arrItems = o.items |> List.map(fun it -> Enumerated_item pp (it.CEnumName C) it.acnEncodeValue codec)
-                    Some (EnumeratedEncValues pp typeDefinitionName arrItems intAcnFuncBdResult.funcBody codec, intAcnFuncBdResult.errCodes, intAcnFuncBdResult.localVariables)
-        match funcBodyContent with
-        | None -> None
-        | Some (funcBodyContent,errCodes, localVariables) -> Some ({AcnFuncBodyResult.funcBody = funcBodyContent; errCodes = errCode::errCodes; localVariables = localVariables})
-
-
+    let funcBody = createEnumComn r l codec typeId t.enumerated typeDefinitionName
     (funcBody errCode), {us with currErrCode = us.currErrCode + 1}
 
 

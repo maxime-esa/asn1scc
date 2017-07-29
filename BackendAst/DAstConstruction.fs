@@ -277,6 +277,7 @@ let private createEnumerated (r:Asn1AcnAst.AstRoot) (l:ProgrammingLanguage) (m:A
     let isValidFunction, s1     = DAstValidate.createEnumeratedFunction r l t o typeDefinition None us
     let uperEncFunction, s2     = DAstUPer.createEnumeratedFunction r l Codec.Encode t o typeDefinition None isValidFunction s1
     let uperDecFunction, s3     = DAstUPer.createEnumeratedFunction r l Codec.Decode t o typeDefinition None isValidFunction s2
+
     let acnEncFunction, s4      = DAstACN.createEnumeratedFunction r l Codec.Encode t o typeDefinition isValidFunction uperEncFunction s3
     let acnDecFunction, s5      = DAstACN.createEnumeratedFunction r l Codec.Decode t o typeDefinition isValidFunction uperDecFunction s4
 

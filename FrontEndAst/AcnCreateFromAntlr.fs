@@ -611,6 +611,11 @@ let private mergeBooleanType (acnErrLoc: SrcLoc option) (props:GenericAcnPropert
 
 
 let private mergeEnumerated (asn1:Asn1Ast.AstRoot) (items: Asn1Ast.NamedItem list) (loc:SrcLoc) (acnErrLoc: SrcLoc option) (acnType:AcnTypeEncodingSpec option) (props:GenericAcnProperty list) cons withcons  =
+    let endodeValues = 
+        match tryGetProp props (fun x -> match x with ENCODE_VALUES -> Some true | _ -> None) with
+        | Some  true    -> true
+        | _             -> false
+
     let allocatedValuesToAllEnumItems (namedItems:Asn1Ast.NamedItem list) = 
         let createAsn1ValueByBigInt biVal = {Asn1Ast.Asn1Value.Kind = Asn1Ast.IntegerValue (IntLoc.ByValue biVal); Asn1Ast.Location = emptyLocation; Asn1Ast.id = ReferenceToValue([],[])}
         let allocated   = namedItems |> List.filter(fun x -> x._value.IsSome)
@@ -637,14 +642,16 @@ let private mergeEnumerated (asn1:Asn1Ast.AstRoot) (items: Asn1Ast.NamedItem lis
         | Some acnType ->
             let acnEncodeValue = 
                 match tryGetProp props (fun x -> match x with ENCODE_VALUES -> Some true | _ -> None) with
-                | Some _    -> (BigInteger i)
-                | None      -> definitionValue
+                | Some _    -> 
+                    match acnType.children |> Seq.tryFind(fun z -> z.name.Value = itm.Name.Value) with
+                    | Some acnNameItem    -> 
+                        match tryGetProp acnNameItem.childEncodingSpec.acnProperties (fun x -> match x with ENUM_SET_VALUE newIntVal -> Some newIntVal | _ -> None) with
+                        | Some intVal   -> intVal.Value
+                        | None          -> definitionValue
+                    | None      -> definitionValue
+                | None      -> (BigInteger i)
             {NamedItem.Name = itm.Name; Comments = itm.Comments; c_name = itm.c_name; ada_name = itm.ada_name; definitionValue = definitionValue; acnEncodeValue = acnEncodeValue}        
 
-    let endodeValues = 
-        match tryGetProp props (fun x -> match x with ENCODE_VALUES -> Some true | _ -> None) with
-        | Some  true    -> true
-        | _             -> false
     let acnProperties = 
         match acnErrLoc with
         | Some acnErrLoc    ->
@@ -654,12 +661,12 @@ let private mergeEnumerated (asn1:Asn1Ast.AstRoot) (items: Asn1Ast.NamedItem lis
                 endiannessProp                       = getEndianessProperty props
             }
         | None  -> {IntegerAcnProperties.encodingProp = None; sizeProp = None; endiannessProp = None }
-    let items, userDefinedValues = 
+    let items0, userDefinedValues = 
         match items |> Seq.exists (fun nm -> nm._value.IsSome) with
         | false -> allocatedValuesToAllEnumItems items, false 
         | true -> allocatedValuesToAllEnumItems items, true
     let uperSizeInBits = int32(GetNumberOfBitsForNonNegativeInteger(BigInteger((Seq.length items) - 1)))
-    let items = items|> List.mapi mapItem
+    let items = items0|> List.mapi mapItem
     
     let aligment = tryGetProp props (fun x -> match x with ALIGNTONEXT e -> Some e | _ -> None)
     let acnEncodingClass,  acnMinSizeInBits, acnMaxSizeInBits= AcnEncodingClasses.GetEnumeratedEncodingClass items aligment loc acnProperties uperSizeInBits uperSizeInBits endodeValues
