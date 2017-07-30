@@ -658,11 +658,19 @@ type AcnDependencyKind =
     | AcnDepPresence        of (RelativePath*Choice)
     | AcnDepChoiceDeteterminant   of (Enumerated*Choice)           // points to Enumerated type acting as CHOICE determinant.
 
+type Determinant =
+    | AcnChildDeterminant       of AcnChild
+    | AcnParameterDeterminant   of AcnParameter
+    with 
+        member this.id = 
+            match this with
+            | AcnChildDeterminant       c  -> c.id
+            | AcnParameterDeterminant   p  -> p.id
 
 //The following type expresses the dependencies that exists between ASN.1 types and ACNs types and parameters
 type AcnDependency = {
     asn1Type        : ReferenceToType          // an ASN.1 type that its decoding depends on the determinant
-    determinant     : ReferenceToType          // an ACN inserted type or an ACN parameter that acts as determinant
+    determinant     : Determinant          // an ACN inserted type or an ACN parameter that acts as determinant
     dependencyKind  : AcnDependencyKind
 }
 

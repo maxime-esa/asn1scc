@@ -411,6 +411,7 @@ and SeqChildInfo = {
 
 *)
 
+
 and AcnChild = {
     Name                        : StringLoc
     c_name                      : string
@@ -418,7 +419,7 @@ and AcnChild = {
     Type                        : Asn1AcnAst.AcnInsertedType
     typeDefinitionBodyWithinSeq : string
     funcBody                    : CommonTypes.Codec -> ((Asn1AcnAst.RelativePath*Asn1AcnAst.AcnParameter) list) -> FuncParamType -> (AcnFuncBodyResult option)            // returns a list of validations statements
-    funcUpdateStatement         : (FuncParamType -> FuncParamType -> string) option                                    // vTarget,  pSrcRoot, return the update statement 
+    funcUpdateStatement         : AcnChildUpdateResult option                                    // vTarget,  pSrcRoot, return the update statement 
 }
 
 and SeqChildInfo = 
@@ -514,6 +515,11 @@ and ReferenceType = {
 
 }
 
+and AcnChildUpdateResult = {
+    func        : FuncParamType -> FuncParamType -> string
+    errCodes    : ErroCode list
+}
+
 and AcnParameter = {
     name        : string
     c_name      : string
@@ -521,7 +527,7 @@ and AcnParameter = {
     loc         : SrcLoc
     id          : ReferenceToType
     typeDefinitionBodyWithinSeq : string
-    funcUpdateStatement         : (FuncParamType -> FuncParamType -> string) option                                    // vTarget,  pSrcRoot, return the update statement 
+    funcUpdateStatement         : AcnChildUpdateResult option                                    // vTarget,  pSrcRoot, return the update statement 
 }
     
 

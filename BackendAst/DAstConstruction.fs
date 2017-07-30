@@ -19,15 +19,9 @@ let private mapAcnParameter (r:Asn1AcnAst.AstRoot) (deps:Asn1AcnAst.AcnInsertedF
         loc = prm.loc
         id = prm.id
         c_name = DAstACN.getAcnDeterminantName prm.id
-        typeDefinitionBodyWithinSeq = 
-            match prm.asn1Type with
-            | Asn1AcnAst.AcnPrmInteger  _ -> DAstTypeDefinition.createPrmAcnInteger r l 
-            | Asn1AcnAst.AcnPrmBoolean  _ -> DAstTypeDefinition.createAcnBoolean r l
-            | Asn1AcnAst.AcnPrmNullType _ -> DAstTypeDefinition.createAcnNull r l
-            | Asn1AcnAst.AcnPrmRefType (md,ts)  -> DAstTypeDefinition.getTypeDefinitionName r l (ReferenceToType [MD md.Value; TA ts.Value])
+        typeDefinitionBodyWithinSeq = DAstACN.getDeterminantTypeDefinitionBodyWithinSeq r l (Asn1AcnAst.AcnParameterDeterminant prm)
 
-
-        funcUpdateStatement = funcUpdateStatement
+        funcUpdateStatement = funcUpdateStatement 
     }, ns1
 
 let private createAcnChild (r:Asn1AcnAst.AstRoot) (deps:Asn1AcnAst.AcnInsertedFieldDependencies) (l:ProgrammingLanguage) (m:Asn1AcnAst.Asn1Module) (ch:Asn1AcnAst.AcnChild) (us:State) =
@@ -54,15 +48,9 @@ let private createAcnChild (r:Asn1AcnAst.AstRoot) (deps:Asn1AcnAst.AcnInsertedFi
         
             AcnChild.Name  = ch.Name
             id             = ch.id
-            c_name = DAstACN.getAcnDeterminantName ch.id
+            c_name         = DAstACN.getAcnDeterminantName ch.id
             Type           = ch.Type
-            typeDefinitionBodyWithinSeq = 
-                match ch.Type with
-                | Asn1AcnAst.AcnInteger  a -> DAstTypeDefinition.createAcnInteger r l a
-                | Asn1AcnAst.AcnNullType _ -> DAstTypeDefinition.createAcnNull r l
-                | Asn1AcnAst.AcnBoolean  _ -> DAstTypeDefinition.createAcnBoolean r l
-                | Asn1AcnAst.AcnReferenceToEnumerated a -> ToC2(r.args.TypePrefix + a.tasName.Value)
-                | Asn1AcnAst.AcnReferenceToIA5String a -> ToC2(r.args.TypePrefix + a.tasName.Value)
+            typeDefinitionBodyWithinSeq = DAstACN.getDeterminantTypeDefinitionBodyWithinSeq r l (Asn1AcnAst.AcnChildDeterminant ch)
             funcBody = fun codec -> match codec with Codec.Encode -> funcBodyEncode | Codec.Decode -> funcBodyDecode
             funcUpdateStatement = funcUpdateStatement
         }

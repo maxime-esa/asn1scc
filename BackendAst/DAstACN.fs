@@ -32,6 +32,44 @@ let getAcnDeterminantName (id : ReferenceToType) =
             ToC2(longName.Replace("#","elem"))
 
 
+let getDeterminantTypeDefinitionBodyWithinSeq (r:Asn1AcnAst.AstRoot) (l:ProgrammingLanguage) (det:Determinant) = 
+    match det with
+    | AcnChildDeterminant       ch ->
+        match ch.Type with
+        | Asn1AcnAst.AcnInteger  a -> DAstTypeDefinition.createAcnInteger r l a
+        | Asn1AcnAst.AcnNullType _ -> DAstTypeDefinition.createAcnNull r l
+        | Asn1AcnAst.AcnBoolean  _ -> DAstTypeDefinition.createAcnBoolean r l
+        | Asn1AcnAst.AcnReferenceToEnumerated a -> ToC2(r.args.TypePrefix + a.tasName.Value)
+        | Asn1AcnAst.AcnReferenceToIA5String a -> ToC2(r.args.TypePrefix + a.tasName.Value)
+
+    | AcnParameterDeterminant   prm ->
+        match prm.asn1Type with
+        | Asn1AcnAst.AcnPrmInteger  _       -> DAstTypeDefinition.createPrmAcnInteger r l 
+        | Asn1AcnAst.AcnPrmBoolean  _       -> DAstTypeDefinition.createAcnBoolean r l
+        | Asn1AcnAst.AcnPrmNullType _       -> DAstTypeDefinition.createAcnNull r l
+        | Asn1AcnAst.AcnPrmRefType (md,ts)  -> DAstTypeDefinition.getTypeDefinitionName r l (ReferenceToType [MD md.Value; TA ts.Value])
+
+
+let getDeterminantTypeCheckEqual (r:Asn1AcnAst.AstRoot) (l:ProgrammingLanguage) (det:Determinant) = 
+    let multiAcnUpdate_checkEqual_pri     =  match l with C -> acn_c.MultiAcnUpdate_checkEqual_pri        | Ada -> acn_c.MultiAcnUpdate_checkEqual_pri
+    let multiAcnUpdate_checkEqual_str     =  match l with C -> acn_c.MultiAcnUpdate_checkEqual_str        | Ada -> acn_c.MultiAcnUpdate_checkEqual_str
+    match det with
+    | AcnChildDeterminant       ch ->
+        match ch.Type with
+        | Asn1AcnAst.AcnInteger  a  -> multiAcnUpdate_checkEqual_pri
+        | Asn1AcnAst.AcnNullType _  -> multiAcnUpdate_checkEqual_pri
+        | Asn1AcnAst.AcnBoolean  _  -> multiAcnUpdate_checkEqual_pri
+        | Asn1AcnAst.AcnReferenceToEnumerated a -> multiAcnUpdate_checkEqual_pri
+        | Asn1AcnAst.AcnReferenceToIA5String a -> multiAcnUpdate_checkEqual_str
+
+    | AcnParameterDeterminant   prm ->
+        match prm.asn1Type with
+        | Asn1AcnAst.AcnPrmInteger  _       -> multiAcnUpdate_checkEqual_pri
+        | Asn1AcnAst.AcnPrmBoolean  _       -> multiAcnUpdate_checkEqual_pri
+        | Asn1AcnAst.AcnPrmNullType _       -> multiAcnUpdate_checkEqual_pri
+        | Asn1AcnAst.AcnPrmRefType (md,ts)  -> multiAcnUpdate_checkEqual_pri
+
+
 let createPrimitiveFunction (r:Asn1AcnAst.AstRoot) (l:ProgrammingLanguage) (codec:CommonTypes.Codec) (t:Asn1AcnAst.Asn1Type) (typeDefinition:TypeDefinitionCommon) (isValidFunc: IsValidFunction option)  (funcBody:ErroCode->((Asn1AcnAst.RelativePath*Asn1AcnAst.AcnParameter) list) -> FuncParamType -> (AcnFuncBodyResult option)) soSparkAnnotations (us:State)  =
     let funcNameAndtasInfo   = getFuncName r l codec t.id
     let errCodeName         = ToC ("ERR_ACN" + (codec.suffix.ToUpper()) + "_" + ((t.id.AcnAbsPath |> Seq.skip 1 |> Seq.StrJoin("-")).Replace("#","elm")))
@@ -324,10 +362,10 @@ let getExternaField (r:Asn1AcnAst.AstRoot) (deps:Asn1AcnAst.AcnInsertedFieldDepe
                     | AcnDepRefTypeArgument prm when prm.id = prmId -> Some d.determinant
                     | _                                             -> None) 
             match newDeterminantId with
-            | det1::_   -> resolveParam det1
+            | det1::_   -> resolveParam det1.id
             | _         -> prmId
         | _             -> prmId
-    getAcnDeterminantName  (resolveParam dependency.determinant)
+    getAcnDeterminantName  (resolveParam dependency.determinant.id)
 
 
 let createStringFunction (r:Asn1AcnAst.AstRoot) (deps:Asn1AcnAst.AcnInsertedFieldDependencies) (l:ProgrammingLanguage) (codec:CommonTypes.Codec) (t:Asn1AcnAst.Asn1Type) (o:Asn1AcnAst.StringType) (typeDefinition:TypeDefinitionCommon)  (isValidFunc: IsValidFunction option) (uperFunc: UPerFunction) (us:State)  =
@@ -530,7 +568,6 @@ let createSequenceOfFunction (r:Asn1AcnAst.AstRoot) (deps:Asn1AcnAst.AcnInserted
     createPrimitiveFunction r l codec t typeDefinition  isValidFunc  funcBody soSparkAnnotations us
 
 
-
 let rec handleSingleUpdateDependency (r:Asn1AcnAst.AstRoot) (deps:Asn1AcnAst.AcnInsertedFieldDependencies) (l:ProgrammingLanguage) (m:Asn1AcnAst.Asn1Module) (d:AcnDependency)  (us:State) =
     let presenceDependency              = match l with C -> acn_c.PresenceDependency            | Ada -> acn_c.PresenceDependency          
     let sizeDependency                  = match l with C -> acn_c.SizeDependency                | Ada -> acn_c.SizeDependency          
@@ -549,18 +586,18 @@ let rec handleSingleUpdateDependency (r:Asn1AcnAst.AstRoot) (deps:Asn1AcnAst.Acn
         | None  -> None, ns1
         | Some prmUpdateStatement   -> 
             let updateFunc (vTarget : FuncParamType) (pSrcRoot : FuncParamType)  = 
-                prmUpdateStatement vTarget pSrcRoot
-            Some updateFunc, ns1
+                prmUpdateStatement.func vTarget pSrcRoot
+            Some ({AcnChildUpdateResult.func = updateFunc; errCodes=[]}), ns1
     | AcnDepSizeDeterminant         -> 
         let updateFunc (vTarget : FuncParamType) (pSrcRoot : FuncParamType)  = 
             let pSizeable = getAccessFromScopeNodeList d.asn1Type false l pSrcRoot
             sizeDependency (vTarget.getValue l) (getSizeableSize pSizeable.p (pSizeable.getAcces l))
-        Some updateFunc, us
+        Some ({AcnChildUpdateResult.func = updateFunc; errCodes=[]}), us
     | AcnDepIA5StringSizeDeterminant    ->
         let updateFunc (vTarget : FuncParamType) (pSrcRoot : FuncParamType)  = 
             let pSizeable = getAccessFromScopeNodeList d.asn1Type true l pSrcRoot
             sizeDependency (vTarget.getValue l) (getStringSize pSizeable.p)
-        Some updateFunc, us
+        Some ({AcnChildUpdateResult.func = updateFunc; errCodes=[]}), us
     | AcnDepPresenceBool              -> 
         let updateFunc (vTarget : FuncParamType) (pSrcRoot : FuncParamType)  = 
             let v = vTarget.getValue l
@@ -570,7 +607,7 @@ let rec handleSingleUpdateDependency (r:Asn1AcnAst.AstRoot) (deps:Asn1AcnAst.Acn
             let pDecParSeq = getAccessFromScopeNodeList parDecTypeSeq false l pSrcRoot
             let updateStatement = presenceDependency v (pDecParSeq.p) (pDecParSeq.getAcces l) (ToC d.asn1Type.lastItem)
             updateStatement
-        Some updateFunc, us
+        Some ({AcnChildUpdateResult.func = updateFunc; errCodes=[]}), us
     | AcnDepPresence   (relPath, chc)               -> 
         let updateFunc (vTarget : FuncParamType) (pSrcRoot : FuncParamType)  = 
             let v = vTarget.getValue l
@@ -584,7 +621,7 @@ let rec handleSingleUpdateDependency (r:Asn1AcnAst.AstRoot) (deps:Asn1AcnAst.Acn
                     | PresenceStr   (_, strVal) -> choiceDependencyStrPres_child v ch.presentWhenName strVal.Value )
             let updateStatement = choiceDependencyPres choicePath.p (choicePath.getAcces l) arrsChildUpdates
             updateStatement
-        Some updateFunc, us
+        Some ({AcnChildUpdateResult.func = updateFunc; errCodes=[]}), us
     | AcnDepChoiceDeteterminant       (enm,chc)      -> 
         let updateFunc (vTarget : FuncParamType) (pSrcRoot : FuncParamType)  = 
             let v = vTarget.getValue l
@@ -596,15 +633,59 @@ let rec handleSingleUpdateDependency (r:Asn1AcnAst.AstRoot) (deps:Asn1AcnAst.Acn
                     choiceDependencyEnum_Item v ch.presentWhenName (enmItem.getBackendName l) )
             let updateStatement = choiceDependencyEnum choicePath.p (choicePath.getAcces l) arrsChildUpdates
             updateStatement
-        Some updateFunc, us
+        Some ({AcnChildUpdateResult.func = updateFunc; errCodes=[]}), us
 
-and getUpdateFunctionUsedInEncoding (r:Asn1AcnAst.AstRoot) (deps:Asn1AcnAst.AcnInsertedFieldDependencies) (l:ProgrammingLanguage) (m:Asn1AcnAst.Asn1Module) (acnChildOrAcnParameterId) (us:State) =
-    match deps.acnDependencies |> List.filter(fun d -> d.determinant = acnChildOrAcnParameterId) with
+and getUpdateFunctionUsedInEncoding (r:Asn1AcnAst.AstRoot) (deps:Asn1AcnAst.AcnInsertedFieldDependencies) (l:ProgrammingLanguage) (m:Asn1AcnAst.Asn1Module) (acnChildOrAcnParameterId) (us:State) : (AcnChildUpdateResult option*State)=
+    let multiAcnUpdate       = match l with C -> acn_c.MultiAcnUpdate          | Ada -> acn_c.MultiAcnUpdate
+
+    match deps.acnDependencies |> List.filter(fun d -> d.determinant.id = acnChildOrAcnParameterId) with
     | []  -> None, us
     | d1::[]    -> 
         let ret, ns = handleSingleUpdateDependency r deps l m d1 us
         ret, ns
-    | _         -> raise(BugErrorException "Not implemented functionality")
+    | d1::dds         -> 
+        let errCodeName         = ToC ("ERR_ACN" + (Encode.suffix.ToUpper()) + "_UPDATE_" + ((acnChildOrAcnParameterId.AcnAbsPath |> Seq.skip 1 |> Seq.StrJoin("-")).Replace("#","elm")))
+        let errCodeValue        = us.currErrCode
+        let errCode             = {ErroCode.errCodeName = errCodeName; errCodeValue = errCodeValue}
+        let us = {us with currErrCode = us.currErrCode + 1}
+
+        let ds = d1::dds
+        let localVars = 
+            ds |> 
+            List.mapi(fun i d1 -> 
+                let c_name = sprintf "%s%02d" (getAcnDeterminantName acnChildOrAcnParameterId) i
+                let typegetDeterminantTypeDefinitionBodyWithinSeq = getDeterminantTypeDefinitionBodyWithinSeq r l d1.determinant
+                AcnInsertedChild (c_name, typegetDeterminantTypeDefinitionBodyWithinSeq)) |>
+            List.map(fun lv -> lv.GetDeclaration l)
+        let localUpdateFuns,ns =
+            ds |>
+            List.fold(fun (updates, ns) d1 -> 
+                let f1, nns = handleSingleUpdateDependency r deps l m d1 ns 
+                updates@[f1], nns) ([],us)
+
+        let multiUpdateFunc (vTarget : FuncParamType) (pSrcRoot : FuncParamType)  = 
+            let v = vTarget.getValue l
+            let arrsLocalUpdateStatements = 
+                localUpdateFuns |> 
+                List.mapi(fun i fn -> 
+                    let c_name = sprintf "%s%02d" (getAcnDeterminantName acnChildOrAcnParameterId) i
+                    let lv = VALUE c_name
+                    match fn with
+                    | None      -> None
+                    | Some fn   -> Some(fn.func lv pSrcRoot)) |>
+                List.choose id
+            let v0 = sprintf "%s%02d" (getAcnDeterminantName acnChildOrAcnParameterId) 0
+            let arrsLocalCheckEquality = 
+                dds |> 
+                List.mapi (fun i d -> 
+                    let cmp = getDeterminantTypeCheckEqual r l d.determinant
+                    let vi = sprintf "%s%02d" (getAcnDeterminantName acnChildOrAcnParameterId) (i+1)
+                    cmp v0 vi )
+            let updateStatement = multiAcnUpdate vTarget.p errCodeName localVars arrsLocalUpdateStatements arrsLocalCheckEquality
+            updateStatement
+
+        let ret = Some(({AcnChildUpdateResult.func = multiUpdateFunc; errCodes=[errCode]}))
+        ret, ns
 
 
 
@@ -704,11 +785,11 @@ let createSequenceFunction (r:Asn1AcnAst.AstRoot) (deps:Asn1AcnAst.AcnInsertedFi
                     let pRoot : FuncParamType = t.getParamType l codec  //????
                     match codec with
                     | CommonTypes.Encode ->
-                            let updateStatement = 
+                            let updateStatement, lvs, lerCodes = 
                                 match acnChild.funcUpdateStatement with
-                                | Some funcUpdateStatement -> Some (funcUpdateStatement childP pRoot)
-                                | None                     -> None
-                            yield (updateStatement, [], [])
+                                | Some funcUpdateStatement -> Some (funcUpdateStatement.func childP pRoot), [], funcUpdateStatement.errCodes
+                                | None                     -> None, [], []
+                            yield (updateStatement, lvs, lerCodes)
                     | CommonTypes.Decode -> ()
 
                     //acn child encode/decode

@@ -14,10 +14,10 @@ open Asn1AcnAstUtilFunctions
 
 
 let private addParameter (cur:AcnInsertedFieldDependencies) (asn1Type:Asn1Type) (p:AcnParameter) (d:AcnDependencyKind) =
-    {cur with acnDependencies = {AcnDependency.asn1Type = asn1Type.id; determinant = p.id; dependencyKind = d}::cur.acnDependencies }
+    {cur with acnDependencies = {AcnDependency.asn1Type = asn1Type.id; determinant = (AcnParameterDeterminant p); dependencyKind = d}::cur.acnDependencies }
 
-let private addAcnChild (cur:AcnInsertedFieldDependencies) (asn1Type:Asn1Type) (acnRefId:ReferenceToType) (d:AcnDependencyKind) =
-    {cur with acnDependencies = {AcnDependency.asn1Type = asn1Type.id; determinant = acnRefId; dependencyKind = d}::cur.acnDependencies }
+let private addAcnChild (cur:AcnInsertedFieldDependencies) (asn1Type:Asn1Type) (acnChild:AcnChild) (d:AcnDependencyKind) =
+    {cur with acnDependencies = {AcnDependency.asn1Type = asn1Type.id; determinant = (AcnChildDeterminant acnChild); dependencyKind = d}::cur.acnDependencies }
 
 let private checkRelativePath (curState:AcnInsertedFieldDependencies) (parents: Asn1Type list) (asn1TypeWithDependency:Asn1Type ) (visibleParameters:(ReferenceToType*AcnParameter) list) (RelativePath path : RelativePath) checkParameter checkAcnType =
     match path with
@@ -41,7 +41,7 @@ let private checkRelativePath (curState:AcnInsertedFieldDependencies) (parents: 
                         | Asn1Child ch  -> raise(SemanticError(x1.Location, (sprintf "Invalid reference '%s' to ASN.1 type. ACN references must point to ACN inserted types or parameters" x1.Value)))
                         | AcnChild ch  -> 
                             let d = checkAcnType ch
-                            addAcnChild curState asn1TypeWithDependency ch.id d
+                            addAcnChild curState asn1TypeWithDependency ch d
                     | None      -> raise(SemanticError(x1.Location, (sprintf "Invalid reference '%s'" x1.Value)))
                 | _                 -> raise(SemanticError(x1.Location, (sprintf "Invalid reference '%s'" x1.Value)))
     | x1::_  -> 
@@ -68,7 +68,7 @@ let private checkRelativePath (curState:AcnInsertedFieldDependencies) (parents: 
                         | Asn1Child ch  -> raise(SemanticError(x1.Location, (sprintf "Invalid reference '%s' to ASN.1 type. ACN references must point to ACN inserted types or parameters" x1.Value)))
                         | AcnChild ch  -> 
                             let d = checkAcnType ch
-                            addAcnChild curState asn1TypeWithDependency ch.id d
+                            addAcnChild curState asn1TypeWithDependency ch d
                 | x1::xs     ->
                     match seq.children |> Seq.tryFind(fun c -> c.Name = x1) with
                     | None -> raise(SemanticError(x1.Location, (sprintf "Invalid reference '%s'" (path |> Seq.StrJoin "."))))

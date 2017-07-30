@@ -400,7 +400,7 @@ let private exportAcnDependencyKind (d:AcnDependencyKind) =
 let private exportAcnDependency (d:AcnDependency) =
     XElement(xname "AcnDependency",
         XAttribute(xname "Asn1TypeID", d.asn1Type.AsString),
-        XAttribute(xname "DeterminantId", d.determinant.AsString),
+        XAttribute(xname "DeterminantId", d.determinant.id.AsString),
         (exportAcnDependencyKind d.dependencyKind)
     )
 
