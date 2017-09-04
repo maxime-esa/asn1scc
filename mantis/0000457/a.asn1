@@ -1,0 +1,10 @@
+
+Composites DEFINITIONS AUTOMATIC TAGS ::= BEGIN
+
+
+Unsigned64IntegerType ::= INTEGER (0..18446744073709551615)
+
+
+
+
+END
