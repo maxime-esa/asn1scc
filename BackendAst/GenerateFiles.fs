@@ -49,7 +49,7 @@ let rec collectEqualFuncs (t:Asn1Type) =
         yield t.equalFunction
     } |> Seq.toList
 
-let private printUnit (r:DAst.AstRoot) (l:ProgrammingLanguage) outDir (pu:ProgramUnit) =
+let private printUnit (r:DAst.AstRoot) (l:ProgrammingLanguage) (encodings: CommonTypes.Asn1Encoding list) outDir (pu:ProgramUnit)  =
     let tases = pu.sortedTypeAssignments
     
     let vases = pu.valueAssignments 
@@ -59,6 +59,9 @@ let private printUnit (r:DAst.AstRoot) (l:ProgrammingLanguage) outDir (pu:Progra
         List.collect (fun z -> z.anonymousVariables)  |>
         Seq.distinctBy(fun z -> z.valueName) |>
         Seq.toList
+    
+    let requiresUPER = encodings |> Seq.exists ( (=) Asn1Encoding.UPER)
+    let requiresAcn = encodings |> Seq.exists ( (=) Asn1Encoding.ACN)
 
     //header file
     //let typeDefs = tases |> List.choose(fun t -> t.getTypeDefinition l)
@@ -72,10 +75,19 @@ let private printUnit (r:DAst.AstRoot) (l:ProgrammingLanguage) outDir (pu:Progra
                 match tas.Type.isValidFunction with
                 | None      -> None
                 | Some f    -> f.funcDef
-            let uPerEncFunc = tas.Type.uperEncFunction.funcDef
-            let uPerDecFunc = tas.Type.uperDecFunction.funcDef
-            let acnEncFunc = match tas.Type.acnEncFunction with None -> None | Some x -> x.funcDef
-            let acnDecFunc = match tas.Type.acnDecFunction with None -> None | Some x -> x.funcDef
+
+
+            let uPerEncFunc = match requiresUPER with true -> tas.Type.uperEncFunction.funcDef | false -> None
+            let uPerDecFunc = match requiresUPER with true -> tas.Type.uperDecFunction.funcDef | false -> None
+
+            let acnEncFunc = 
+                match requiresAcn, tas.Type.acnEncFunction with 
+                | true, Some x -> x.funcDef
+                | _  -> None
+            let acnDecFunc = 
+                match requiresAcn, tas.Type.acnDecFunction with 
+                | true, Some x -> x.funcDef
+                | _ -> None 
 
             let allProcs = equal_defs@([init_def;isValid;uPerEncFunc;uPerDecFunc;acnEncFunc; acnDecFunc] |> List.choose id)
             match l with
@@ -123,13 +135,19 @@ let private printUnit (r:DAst.AstRoot) (l:ProgrammingLanguage) outDir (pu:Progra
             let eqFuncs = collectEqualFuncs t.Type |> List.choose(fun ef -> ef.isEqualFunc)
             let isValid = match t.Type.isValidFunction with None -> None | Some isVal -> isVal.func
             let uperEncDec codec         =  
-                match codec with
-                | CommonTypes.Encode    -> t.Type.uperEncFunction.func
-                | CommonTypes.Decode    -> t.Type.uperDecFunction.func
+                match requiresUPER with
+                | true  ->
+                    match codec with
+                    | CommonTypes.Encode    -> t.Type.uperEncFunction.func
+                    | CommonTypes.Decode    -> t.Type.uperDecFunction.func
+                | false -> None
             let ancEncDec codec         = 
-                match codec with
-                | CommonTypes.Encode    -> match t.Type.acnEncFunction with None -> None | Some x -> x.func
-                | CommonTypes.Decode    -> match t.Type.acnDecFunction with None -> None | Some x -> x.func
+                match requiresAcn with
+                | true ->
+                    match codec with
+                    | CommonTypes.Encode    -> match t.Type.acnEncFunction with None -> None | Some x -> x.func
+                    | CommonTypes.Decode    -> match t.Type.acnDecFunction with None -> None | Some x -> x.func
+                | false     -> None
             let allProcs =  eqFuncs@([initialize; isValid;(uperEncDec CommonTypes.Encode); (uperEncDec CommonTypes.Decode);(ancEncDec CommonTypes.Encode); (ancEncDec CommonTypes.Decode)] |> List.choose id)
             match l with
             | C     ->  body_c.printTass allProcs 
@@ -172,8 +190,8 @@ let private CreateAdaMain (r:AstRoot) bGenTestCases outDir =
     let outFileName = Path.Combine(outDir, "mainprogram.adb")
     File.WriteAllText(outFileName, content.Replace("\r",""))
 
-let generateAll outDir (r:DAst.AstRoot)   =
-    r.programUnits |> Seq.iter (printUnit r r.lang outDir)
+let generateAll outDir (r:DAst.AstRoot) (encodings: CommonTypes.Asn1Encoding list)  =
+    r.programUnits |> Seq.iter (printUnit r r.lang encodings outDir)
     //print extra such make files etc
     //print_debug.DoWork r outDir "debug.txt"
     match r.lang with

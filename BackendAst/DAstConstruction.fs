@@ -524,8 +524,8 @@ let private mapFile (r:Asn1AcnAst.AstRoot) (deps:Asn1AcnAst.AcnInsertedFieldDepe
         Modules = newModules
     }, ns
 
-let DoWork (r:Asn1AcnAst.AstRoot) (deps:Asn1AcnAst.AcnInsertedFieldDependencies) (lang:CommonTypes.ProgrammingLanguage) : AstRoot=
 
+let DoWork (r:Asn1AcnAst.AstRoot) (deps:Asn1AcnAst.AcnInsertedFieldDependencies) (lang:CommonTypes.ProgrammingLanguage) (encodings: CommonTypes.Asn1Encoding list) : AstRoot=
     let l =
         match lang with
         | CommonTypes.ProgrammingLanguage.C     -> DAst.ProgrammingLanguage.C

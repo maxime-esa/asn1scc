@@ -120,15 +120,15 @@ let main argv =
             cliArgs |> 
             List.choose (fun a -> 
                 match a with
-                | C_lang        -> Some (DAstConstruction.DoWork frontEntAst acnDeps CommonTypes.ProgrammingLanguage.C)
-                | Ada_Lang      -> Some (DAstConstruction.DoWork frontEntAst acnDeps CommonTypes.ProgrammingLanguage.Ada)
+                | C_lang        -> Some (DAstConstruction.DoWork frontEntAst acnDeps CommonTypes.ProgrammingLanguage.C args.encodings)
+                | Ada_Lang      -> Some (DAstConstruction.DoWork frontEntAst acnDeps CommonTypes.ProgrammingLanguage.Ada args.encodings)
                 | _             -> None)
 
         //generate code
         let outDir = parserResults.GetResult(<@Out@>, defaultValue = ".")
         backends |> 
             Seq.iter (fun r -> 
-                GenerateFiles.generateAll outDir r
+                GenerateFiles.generateAll outDir r args.encodings
                 exportRTL outDir r.lang)
 
 
