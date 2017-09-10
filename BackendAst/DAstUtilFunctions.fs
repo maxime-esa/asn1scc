@@ -350,6 +350,30 @@ type Asn1AcnAst.Asn1Type with
                 | Asn1AcnAst.Sequence     _ -> POINTER "pVal"
                 | Asn1AcnAst.Choice       _ -> POINTER "pVal"
                 | Asn1AcnAst.ReferenceType r -> r.baseType.getParamType l c
+    member this.getParamValue (p:FuncParamType) (l:ProgrammingLanguage) (c:Codec) =
+        match l with
+        | Ada   -> p.p
+        | C     ->
+            match c with
+            | Encode  ->
+                match this.Kind with
+                | Asn1AcnAst.Integer      _ -> p.getValue l
+                | Asn1AcnAst.Real         _ -> p.getValue l
+                | Asn1AcnAst.IA5String    _ -> p.getValue l //FIXARRAY "val"
+                | Asn1AcnAst.NumericString _ -> p.getValue l// FIXARRAY "val"
+                | Asn1AcnAst.OctetString  _ -> p.getPointer l
+                | Asn1AcnAst.NullType     _ -> p.getValue l
+                | Asn1AcnAst.BitString    _ -> p.getPointer l
+                | Asn1AcnAst.Boolean      _ -> p.getValue l
+                | Asn1AcnAst.Enumerated   _ -> p.getValue l
+                | Asn1AcnAst.SequenceOf   _ -> p.getPointer l
+                | Asn1AcnAst.Sequence     _ -> p.getPointer l
+                | Asn1AcnAst.Choice       _ -> p.getPointer l
+                | Asn1AcnAst.ReferenceType r -> r.baseType.getParamValue p l c
+            | Decode  ->
+                p.getPointer l
+        
+
 
 type Asn1Type
 with

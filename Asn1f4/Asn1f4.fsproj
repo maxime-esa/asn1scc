@@ -25,8 +25,8 @@
     <PlatformTarget>AnyCPU</PlatformTarget>
     <DocumentationFile>bin\Debug\Asn1f4.XML</DocumentationFile>
     <Prefer32Bit>true</Prefer32Bit>
-    <StartWorkingDirectory>c:\prj\GitHub\asn1scc\tmp3\acn\7</StartWorkingDirectory>
-    <StartArguments>-c -o oc a.asn1 a.acn</StartArguments>
+    <StartWorkingDirectory>C:\prj\GitHub\asn1scc\tmp2\uper</StartWorkingDirectory>
+    <StartArguments>-x a.xml -c -uPER -o c/ a.asn1</StartArguments>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
     <DebugType>pdbonly</DebugType>

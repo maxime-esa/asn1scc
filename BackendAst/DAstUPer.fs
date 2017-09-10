@@ -458,6 +458,25 @@ let createChoiceFunction (r:Asn1AcnAst.AstRoot) (l:ProgrammingLanguage) (codec:C
 
     createPrimitiveFunction r l codec t typeDefinition baseTypeUperFunc  isValidFunc  funcBody soSparkAnnotations  us
 
+(*
+let getFuncName (r:Asn1AcnAst.AstRoot) (l:ProgrammingLanguage) (codec:CommonTypes.Codec) (typeId:ReferenceToType) =
+    typeId.tasInfo |> Option.map (fun x -> ToC2(r.args.TypePrefix + x.tasName + codec.suffix))
+
+*)
 
 let createReferenceFunction (r:Asn1AcnAst.AstRoot) (l:ProgrammingLanguage) (codec:CommonTypes.Codec) (t:Asn1AcnAst.Asn1Type) (o:Asn1AcnAst.ReferenceType) (typeDefinition:TypeDefinitionCommon) (isValidFunc: IsValidFunction option) (baseType:Asn1Type) (us:State)  =
-    baseType.getUperFunction codec, us
+    let typeDefinitionName = ToC2(r.args.TypePrefix + o.tasName.Value)
+    let baseFncName = typeDefinitionName + codec.suffix
+
+    let t1              = Asn1AcnAstUtilFunctions.GetActualTypeByName r o.modName o.tasName
+    let t1WithExtensios = o.baseType;
+    match TypesEquivalence.uperEquivalence t1 t1WithExtensios with
+    | true  ->
+        let soSparkAnnotations = None
+        let funcBody (errCode:ErroCode) (p:FuncParamType) = 
+            let funcBodyContent = callBaseTypeFunc l (t.getParamValue p l codec) baseFncName codec
+            Some {UPERFuncBodyResult.funcBody = funcBodyContent; errCodes = [errCode]; localVariables = []}    
+
+        createPrimitiveFunction r l codec t typeDefinition None  isValidFunc  funcBody soSparkAnnotations  us
+    | false -> 
+        baseType.getUperFunction codec, us
