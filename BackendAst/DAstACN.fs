@@ -103,7 +103,7 @@ let createPrimitiveFunction (r:Asn1AcnAst.AstRoot) (l:ProgrammingLanguage) (code
                         | Asn1AcnAst.AcnPrmInteger    loc          -> emitPrm p.c_name intType
                         | Asn1AcnAst.AcnPrmBoolean    loc          -> emitPrm p.c_name boolType
                         | Asn1AcnAst.AcnPrmNullType   loc          -> raise(SemanticError (loc, "Invalid type for parameter"))
-                        | Asn1AcnAst.AcnPrmRefType(md,ts)           -> emitPrm p.c_name ts.Value
+                        | Asn1AcnAst.AcnPrmRefType(md,ts)          -> emitPrm p.c_name (ToC2(r.args.TypePrefix + ts.Value))
 
                     let lvars = bodyResult.localVariables |> List.map(fun (lv:LocalVariable) -> lv.GetDeclaration l) |> Seq.distinct
                     let prms = t.acnParameters |> List.map handleAcnParameter

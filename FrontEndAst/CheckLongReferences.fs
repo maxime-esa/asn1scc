@@ -99,6 +99,13 @@ let sizeReference (curState:AcnInsertedFieldDependencies) (parents: Asn1Type lis
             | _              -> raise(SemanticError(loc, (sprintf "Invalid argument type. Expecting INTEGER got %s "  (c.Type.AsString))))
         checkRelativePath curState parents t visibleParameters   (RelativePath path) checkParameter checkAcnType
 
+let checkParamIsActuallyInteger (r:AstRoot) (prmMod:StringLoc) (tasName:StringLoc) =
+    match r.Modules |> Seq.tryFind(fun z -> z.Name.Value = prmMod.Value) with
+    | None      -> raise(SemanticError (prmMod.Location, (sprintf "No module defined with name '%s'"  prmMod.Value)))
+    | Some md   ->
+        match md.TypeAssignments |> Seq.tryFind(fun z -> z.Name.Value = tasName.Value) with
+        | None      -> raise(SemanticError (tasName.Location, (sprintf "No type assignment defined with name '%s' in module '%s'"  tasName.Value prmMod.Value)))
+        | Some ts   -> ()
 
 let checkChoicePresentWhen (r:AstRoot) (curState:AcnInsertedFieldDependencies) (parents: Asn1Type list) (t:Asn1Type)  (ch:Choice) (visibleParameters:(ReferenceToType*AcnParameter) list)    =
     match ch.acnProperties.enumDeterminant with
@@ -131,7 +138,10 @@ let checkChoicePresentWhen (r:AstRoot) (curState:AcnInsertedFieldDependencies) (
                     let loc = path.Head.Location
                     let checkParameter (p:AcnParameter) = 
                         match p.asn1Type with
-                        | AcnPrmInteger _ -> AcnDepPresence ((RelativePath path), ch)
+                        | AcnPrmInteger _                   -> AcnDepPresence ((RelativePath path), ch)
+                        | AcnPrmRefType    (prmMod, prmTas) ->
+                            checkParamIsActuallyInteger r prmMod prmTas
+                            AcnDepPresence ((RelativePath path), ch)
                         | _              -> raise(SemanticError(loc, (sprintf "Invalid argument type. Expecting INTEGER got %s "  (p.asn1Type.ToString()))))
                     let rec checkAcnType (c:AcnChild) =
                         match c.Type with

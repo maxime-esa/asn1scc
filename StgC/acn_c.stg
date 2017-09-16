@@ -454,8 +454,8 @@ EnumeratedEncValues_encode(p, sTasName, arrsItem, sActualCodecFunc) ::= <<
 switch(<p>) { 
     <arrsItem; separator="\n">
     default:
-        ret = FALSE;                            //COVERAGE_IGNORE
-        *pErrCode = ERR_INVALID_ENUM_VALUE;      //COVERAGE_IGNORE
+        ret = FALSE;                            /*COVERAGE_IGNORE*/
+        *pErrCode = ERR_INVALID_ENUM_VALUE;      /*COVERAGE_IGNORE*/
 }
 <sActualCodecFunc>
 >>
@@ -466,8 +466,8 @@ if (ret) {
     switch (intVal) {
         <arrsItem; separator="\n">
     default:
-        ret = FALSE;                            //COVERAGE_IGNORE
-        *pErrCode = ERR_INVALID_ENUM_VALUE;      //COVERAGE_IGNORE
+        ret = FALSE;                            /*COVERAGE_IGNORE*/
+        *pErrCode = ERR_INVALID_ENUM_VALUE;      /*COVERAGE_IGNORE*/
     }
 }
 >>
@@ -764,8 +764,8 @@ switch(<p><sAcc>kind)
 {
 <arrsChildren: {ch|<ch>}; separator="\n">
 default:
-    *pErrCode = ERR_INVALID_CHOICE_ALTERNATIVE;         //COVERAGE_IGNORE
-    ret = FALSE;                    //COVERAGE_IGNORE
+    *pErrCode = ERR_INVALID_CHOICE_ALTERNATIVE;         /*COVERAGE_IGNORE*/
+    ret = FALSE;                    /*COVERAGE_IGNORE*/
 }
 >>
 
@@ -777,8 +777,8 @@ if (ret) {
     {
     <arrsChildren: {ch|<ch>}; separator="\n">
     default:
-        *pErrCode = ERR_INVALID_CHOICE_ALTERNATIVE;     //COVERAGE_IGNORE
-        ret = FALSE;                //COVERAGE_IGNORE
+        *pErrCode = ERR_INVALID_CHOICE_ALTERNATIVE;     /*COVERAGE_IGNORE*/
+        ret = FALSE;                /*COVERAGE_IGNORE*/
     }
 }
 >>
@@ -810,8 +810,8 @@ switch(<p><sAcc>kind)
 {
 <arrsChildren; separator="\n">
 default:
-    *pErrCode = ERR_INVALID_CHOICE_ALTERNATIVE;         //COVERAGE_IGNORE
-    ret = FALSE;                    //COVERAGE_IGNORE
+    *pErrCode = ERR_INVALID_CHOICE_ALTERNATIVE;         /*COVERAGE_IGNORE*/
+    ret = FALSE;                    /*COVERAGE_IGNORE*/
 }
 >>
 
@@ -819,8 +819,8 @@ Choice_preWhen_decode(p, sAcc, arrsChildren, sErrCode) ::= <<
 *pErrCode = 0;
 <arrsChildren; separator="\n">
 else {
-    *pErrCode = ERR_INVALID_CHOICE_ALTERNATIVE;         //COVERAGE_IGNORE
-    ret = FALSE;                    //COVERAGE_IGNORE
+    *pErrCode = ERR_INVALID_CHOICE_ALTERNATIVE;         /*COVERAGE_IGNORE*/
+    ret = FALSE;                    /*COVERAGE_IGNORE*/
 }
 >>
 
@@ -848,8 +848,8 @@ switch(<p><sAcc>kind)
 {
     <arrsChildren; separator="\n">
 default:
-    *pErrCode = ERR_INVALID_ENUM_VALUE;         //COVERAGE_IGNORE
-    ret = FALSE;                    //COVERAGE_IGNORE
+    *pErrCode = ERR_INVALID_ENUM_VALUE;         /*COVERAGE_IGNORE*/
+    ret = FALSE;                    /*COVERAGE_IGNORE*/
 }
 >>
 
@@ -858,8 +858,8 @@ switch(<sEnmExtFld>)
 {
     <arrsChildren; separator="\n">
 default:
-    *pErrCode = ERR_INVALID_ENUM_VALUE;         //COVERAGE_IGNORE
-    ret = FALSE;                    //COVERAGE_IGNORE
+    *pErrCode = ERR_INVALID_ENUM_VALUE;         /*COVERAGE_IGNORE*/
+    ret = FALSE;                    /*COVERAGE_IGNORE*/
 }
 >>
 
@@ -888,7 +888,7 @@ PrintAcn_update_param_body_choice(arrsChildUpdateStatements) ::= <<
 switch (pVal->kind) {
 	<arrsChildUpdateStatements; separator="\n">
     default:
-        ret = FALSE;                 //COVERAGE_IGNORE
+        ret = FALSE;                 /*COVERAGE_IGNORE*/
 }
 >>
 
@@ -925,7 +925,7 @@ ChoiceDependencyEnum(sChPath, sAcc, arrsChoiceEnumItems) ::= <<
 switch (<sChPath><sAcc>kind) {
     <arrsChoiceEnumItems; separator="\n">
     default:
-        ret = FALSE;                            //COVERAGE_IGNORE
+        ret = FALSE;                            /*COVERAGE_IGNORE*/
 }
 >>
 
@@ -951,7 +951,7 @@ ChoiceDependencyPres(sChPath, sAcc, arrsChoiceItems) ::= <<
 switch (<sChPath><sAcc>kind) {
     <arrsChoiceItems; separator="\n">
     default:
-        ret = FALSE;                            //COVERAGE_IGNORE
+        ret = FALSE;                            /*COVERAGE_IGNORE*/
 }
 >>
 

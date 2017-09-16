@@ -15,6 +15,7 @@ type CliArguments =
     | [<AltCommandLine("-equal")>]Equal_Func 
     | [<AltCommandLine("-typePrefix")>]Type_Prefix of prefix:string
     | [<AltCommandLine("-x")>] Xml_Ast of xmlFilename:string
+    | [<AltCommandLine("-renamePolicy")>] Rename_Policy of int
 
     | [<MainCommand; ExactlyOnce; Last>] Files of files:string list
 with
@@ -31,6 +32,8 @@ with
             | Type_Prefix _    -> "adds 'prefix' to all generated C or Ada/SPARK data types."
             | Equal_Func       -> "generate functions for testing type equality."
             | Xml_Ast _        -> "dump internal AST in an xml file"
+            | Rename_Policy _  -> "Specify rename policy for enums 0 no rename (Ada default), 1 rename only conflicting enumerants (C default), 2 rename all enumerants of an enum with at lest one conflicting enumerant"
+
 
 
 let checkArguement arg =
@@ -49,6 +52,7 @@ let checkArguement arg =
     | Files files      -> 
         files |> Seq.iter(fun f -> match File.Exists f with true -> () | false -> raise (UserException (sprintf "File '%s' does not exist." f)))
     | Type_Prefix _    -> ()
+    | Rename_Policy _   -> ()
 
 
 
