@@ -207,6 +207,10 @@ type Choice           with
 
 
 type AcnPresentWhenConditionChoiceChild with
+    member this.valueAsString = 
+        match this with
+        | PresenceInt   (_,v)  -> v.Value.ToString()
+        | PresenceStr   (_,v)  -> v.Value
     member this.relativePath = 
         match this with
         | PresenceInt   (rp,_)

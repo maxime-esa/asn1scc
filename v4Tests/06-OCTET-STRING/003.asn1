@@ -1,0 +1,12 @@
+TEST-CASE DEFINITIONS AUTOMATIC TAGS::= BEGIN
+
+	MyPDU ::= OCTET STRING (SIZE(7))
+	
+	pdu1 MyPDU ::= 'AABBCCDDEEFF88'H
+	
+END
+
+
+--TCLS     MyPDU[]
+--TCLS    MyPDU[size 7]               
+--TCLFC    MyPDU[size 20]               $$$ File:sample1.acn, line:4, size property value should be set to 7

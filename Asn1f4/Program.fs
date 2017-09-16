@@ -148,7 +148,6 @@ let main argv =
             Console.Error.WriteLine(ex.Message)
             2
         | SemanticError (loc,msg)            ->
-            Console.Error.WriteLine(msg)
             Console.Error.WriteLine("File:{0}, line:{1}, {2}", Path.GetFileName(loc.srcFilename), loc.srcLine, msg);
             3
         (*

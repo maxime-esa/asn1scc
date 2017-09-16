@@ -115,6 +115,14 @@ let checkChoicePresentWhen (r:AstRoot) (curState:AcnInsertedFieldDependencies) (
         | c1::_         -> raise(SemanticError(c1.location, (sprintf "‘present-when’ attribute cannot appear when ‘determinant’ is present in the parent choice type"  )))
         | []            -> curState
     | None          -> 
+        let childrenConditions = ch.children |> List.map(fun z -> z.acnPresentWhenConditions |> List.map(fun pc -> (pc.kind, pc.relativePath.AsString, pc.valueAsString)) |> List.sortBy (fun (_,p,_) -> p) |> Seq.toList)
+        let duplicateCondtions =  childrenConditions |> Seq.groupBy id |> Seq.map(fun (key, vals) -> Seq.length vals) |> Seq.filter(fun z -> z > 1) |> Seq.length
+        match duplicateCondtions > 0 with
+        | false     -> ()
+        | true      -> raise(SemanticError(ch.acnLoc.Value, (sprintf "Duplicate condition found in choice alternatives" )))
+
+
+
         //2 check that all children have the same present when attributes
         match ch.children with
         | []        -> curState
@@ -165,6 +173,7 @@ let checkChoicePresentWhen (r:AstRoot) (curState:AcnInsertedFieldDependencies) (
                         | _              -> raise(SemanticError(loc, (sprintf "Invalid argument type. Expecting STRING got %s "  (c.Type.AsString))))
                     checkRelativePath curState parents t visibleParameters   (RelativePath path)  checkParameter checkAcnType
 
+            
 
             c1.acnPresentWhenConditions |>
             List.fold(fun ns pc -> checkAcnPresentWhenConditionChoiceChild ns pc ) curState
@@ -249,7 +258,7 @@ let rec private checkType (r:AstRoot) (parents: Asn1Type list) (curentPath : Sco
                             match c.Type with
                             | AcnBoolean    _ -> AcnDepPresenceBool
                             | _              -> raise(SemanticError(loc, (sprintf "Invalid argument type. Expecting BOOLEAN got %s "  (c.Type.AsString))))
-                        checkRelativePath ns parents ac.Type visibleParameters   (RelativePath path)  checkParameter checkAcnType 
+                        checkRelativePath ns (parents@[t]) ac.Type visibleParameters   (RelativePath path)  checkParameter checkAcnType 
                 | _                     -> ns
             checkType r (parents@[t]) (curentPath@[SEQ_CHILD ac.Name.Value])  ac.Type ns1
         ) curState

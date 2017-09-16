@@ -232,7 +232,7 @@ let createEnumComn (r:Asn1AcnAst.AstRoot) (l:ProgrammingLanguage) (codec:CommonT
             match intFuncBody errCode acnArgs pVal with
             | None      -> None
             | Some(intAcnFuncBdResult) ->
-                let arrItems = o.items |> List.map(fun it -> Enumerated_item (p.getValue l) (it.CEnumName C) it.acnEncodeValue codec)
+                let arrItems = o.items |> List.map(fun it -> Enumerated_item (p.getValue l) (it.getBackendName l) it.acnEncodeValue codec)
                 Some (EnumeratedEncValues p.p typeDefinitionName arrItems intAcnFuncBdResult.funcBody codec, intAcnFuncBdResult.errCodes, localVar::intAcnFuncBdResult.localVariables)
         match funcBodyContent with
         | None -> None
@@ -313,6 +313,7 @@ let createAcnBooleanFunction (r:Asn1AcnAst.AstRoot) (l:ProgrammingLanguage) (cod
 let createBooleanFunction (r:Asn1AcnAst.AstRoot) (l:ProgrammingLanguage) (codec:CommonTypes.Codec) (t:Asn1AcnAst.Asn1Type) (o:Asn1AcnAst.Boolean) (typeDefinition:TypeDefinitionCommon) (baseTypeUperFunc : AcnFunction option) (isValidFunc: IsValidFunction option) (us:State)  =
     let funcBody (errCode:ErroCode) (acnArgs: (Asn1AcnAst.RelativePath*Asn1AcnAst.AcnParameter) list) (p:FuncParamType) = 
         let pp = match codec with CommonTypes.Encode -> p.getValue l | CommonTypes.Decode -> p.getPointer l
+        let pvalue = p.getValue l
         let ptr = p.getPointer l
         let Boolean         = match l with C -> uper_c.Boolean          | Ada -> uper_a.Boolean
         let acnBoolean      = match l with C -> acn_c.Boolean          | Ada -> acn_c.Boolean
@@ -323,16 +324,35 @@ let createBooleanFunction (r:Asn1AcnAst.AstRoot) (l:ProgrammingLanguage) (codec:
                 let arrBytes = bitStringValueToByteArray bitVal
                 let bEncValIsTrue, arruTrueValueAsByteArray, arruFalseValueAsByteArray, nSize =
                     true, arrBytes, (arrBytes |> Array.map (~~~)), bitVal.Value.Length
-                acnBoolean pp ptr bEncValIsTrue (BigInteger nSize) arruTrueValueAsByteArray arruFalseValueAsByteArray codec
+                acnBoolean pvalue ptr bEncValIsTrue (BigInteger nSize) arruTrueValueAsByteArray arruFalseValueAsByteArray codec
             | Some (FalseValue   bitVal)    ->
                 let arrBytes = bitStringValueToByteArray bitVal
                 let bEncValIsTrue, arruTrueValueAsByteArray, arruFalseValueAsByteArray, nSize =
                     false, arrBytes, (arrBytes |> Array.map (~~~)), bitVal.Value.Length
-                acnBoolean pp ptr bEncValIsTrue (BigInteger nSize) arruTrueValueAsByteArray arruFalseValueAsByteArray codec
+                acnBoolean pvalue ptr bEncValIsTrue (BigInteger nSize) arruTrueValueAsByteArray arruFalseValueAsByteArray codec
                 
         {AcnFuncBodyResult.funcBody = funcBodyContent; errCodes = [errCode]; localVariables = []}    
     let soSparkAnnotations = None
     createPrimitiveFunction r l codec t typeDefinition  isValidFunc  (fun e acnArgs p -> Some (funcBody e acnArgs p)) soSparkAnnotations us
+
+
+
+
+let createAcnNullTypeFunction (r:Asn1AcnAst.AstRoot) (l:ProgrammingLanguage) (codec:CommonTypes.Codec)  (typeId : ReferenceToType) (o:Asn1AcnAst.AcnNullType)  (us:State)  =
+    let errCodeName         = ToC ("ERR_ACN" + (codec.suffix.ToUpper()) + "_" + ((typeId.AcnAbsPath |> Seq.skip 1 |> Seq.StrJoin("-")).Replace("#","elm")))
+    let errCodeValue        = us.currErrCode
+    let errCode             = {ErroCode.errCodeName = errCodeName; errCodeValue = errCodeValue}
+
+    let funcBody (errCode:ErroCode) (acnArgs: (Asn1AcnAst.RelativePath*Asn1AcnAst.AcnParameter) list) (p:FuncParamType) = 
+        let pp = match codec with CommonTypes.Encode -> p.getValue l | CommonTypes.Decode -> p.getPointer l
+        let nullType         = match l with C -> acn_c.Null          | Ada -> acn_c.Null
+        match o.acnProperties.encodingPattern with
+        | None      -> None
+        | Some encPattern   ->
+            let arrBytes = bitStringValueToByteArray encPattern
+            let ret = nullType arrBytes (BigInteger encPattern.Value.Length) codec
+            Some ({AcnFuncBodyResult.funcBody = ret; errCodes = [errCode]; localVariables = []})
+    (funcBody errCode), {us with currErrCode = us.currErrCode + 1}
 
 let createNullTypeFunction (r:Asn1AcnAst.AstRoot) (l:ProgrammingLanguage) (codec:CommonTypes.Codec) (t:Asn1AcnAst.Asn1Type) (o:Asn1AcnAst.NullType) (typeDefinition:TypeDefinitionCommon) (isValidFunc: IsValidFunction option) (us:State)  =
     let funcBody (errCode:ErroCode) (acnArgs: (Asn1AcnAst.RelativePath*Asn1AcnAst.AcnParameter) list) (p:FuncParamType) = 
@@ -348,8 +368,9 @@ let createNullTypeFunction (r:Asn1AcnAst.AstRoot) (l:ProgrammingLanguage) (codec
     createPrimitiveFunction r l codec t typeDefinition  isValidFunc  funcBody soSparkAnnotations us
 
 
-let getExternaField (r:Asn1AcnAst.AstRoot) (deps:Asn1AcnAst.AcnInsertedFieldDependencies) asn1TypeIdWithDependency =
-    let dependency = deps.acnDependencies |> List.find(fun d -> d.asn1Type = asn1TypeIdWithDependency)
+let getExternaField0 (r:Asn1AcnAst.AstRoot) (deps:Asn1AcnAst.AcnInsertedFieldDependencies) asn1TypeIdWithDependency func1 =
+    let dependencies = deps.acnDependencies |> List.filter(fun d -> d.asn1Type = asn1TypeIdWithDependency && func1 d )
+    let dependency = deps.acnDependencies |> List.find(fun d -> d.asn1Type = asn1TypeIdWithDependency && func1 d )
     let rec resolveParam (prmId:ReferenceToType) =
         let nodes = match prmId with ReferenceToType nodes -> nodes
         let lastNode = nodes |> List.rev |> List.head
@@ -367,6 +388,16 @@ let getExternaField (r:Asn1AcnAst.AstRoot) (deps:Asn1AcnAst.AcnInsertedFieldDepe
         | _             -> prmId
     getAcnDeterminantName  (resolveParam dependency.determinant.id)
 
+let getExternaFieldChoizePresentWhen (r:Asn1AcnAst.AstRoot) (deps:Asn1AcnAst.AcnInsertedFieldDependencies) asn1TypeIdWithDependency  relPath=
+    let filterDependency (d:AcnDependency) =
+        match d.dependencyKind with
+        | AcnDepPresence (relPath0, _)   -> relPath = relPath0
+        | _                              -> true
+    getExternaField0 r deps asn1TypeIdWithDependency filterDependency
+
+
+let getExternaField (r:Asn1AcnAst.AstRoot) (deps:Asn1AcnAst.AcnInsertedFieldDependencies) asn1TypeIdWithDependency =
+    getExternaField0 r deps asn1TypeIdWithDependency (fun z -> true)
 
 let createStringFunction (r:Asn1AcnAst.AstRoot) (deps:Asn1AcnAst.AcnInsertedFieldDependencies) (l:ProgrammingLanguage) (codec:CommonTypes.Codec) (t:Asn1AcnAst.Asn1Type) (o:Asn1AcnAst.StringType) (typeDefinition:TypeDefinitionCommon)  (isValidFunc: IsValidFunction option) (uperFunc: UPerFunction) (us:State)  =
     let Acn_String_Ascii_FixSize                            = match l with C -> acn_c.Acn_String_Ascii_FixSize                          | Ada -> acn_c.Acn_String_Ascii_FixSize
@@ -587,7 +618,7 @@ let rec handleSingleUpdateDependency (r:Asn1AcnAst.AstRoot) (deps:Asn1AcnAst.Acn
         | Some prmUpdateStatement   -> 
             let updateFunc (vTarget : FuncParamType) (pSrcRoot : FuncParamType)  = 
                 prmUpdateStatement.func vTarget pSrcRoot
-            Some ({AcnChildUpdateResult.func = updateFunc; errCodes=[]}), ns1
+            Some ({AcnChildUpdateResult.func = updateFunc; errCodes=prmUpdateStatement.errCodes}), ns1
     | AcnDepSizeDeterminant         -> 
         let updateFunc (vTarget : FuncParamType) (pSrcRoot : FuncParamType)  = 
             let pSizeable = getAccessFromScopeNodeList d.asn1Type false l pSrcRoot
@@ -650,6 +681,7 @@ and getUpdateFunctionUsedInEncoding (r:Asn1AcnAst.AstRoot) (deps:Asn1AcnAst.AcnI
         let us = {us with currErrCode = us.currErrCode + 1}
 
         let ds = d1::dds
+        let c_name0 = sprintf "%s%02d" (getAcnDeterminantName acnChildOrAcnParameterId) 0
         let localVars = 
             ds |> 
             List.mapi(fun i d1 -> 
@@ -681,7 +713,7 @@ and getUpdateFunctionUsedInEncoding (r:Asn1AcnAst.AstRoot) (deps:Asn1AcnAst.AcnI
                     let cmp = getDeterminantTypeCheckEqual r l d.determinant
                     let vi = sprintf "%s%02d" (getAcnDeterminantName acnChildOrAcnParameterId) (i+1)
                     cmp v0 vi )
-            let updateStatement = multiAcnUpdate vTarget.p errCodeName localVars arrsLocalUpdateStatements arrsLocalCheckEquality
+            let updateStatement = multiAcnUpdate vTarget.p c_name0 errCodeName localVars arrsLocalUpdateStatements arrsLocalCheckEquality
             updateStatement
 
         let ret = Some(({AcnChildUpdateResult.func = multiUpdateFunc; errCodes=[errCode]}))
@@ -711,7 +743,7 @@ let createSequenceFunction (r:Asn1AcnAst.AstRoot) (deps:Asn1AcnAst.AcnInsertedFi
     let asn1Children = children |>  List.choose(fun x -> match x with Asn1Child z -> Some z | AcnChild _ -> None)
 
     let funcBody (errCode:ErroCode) (acnArgs: (Asn1AcnAst.RelativePath*Asn1AcnAst.AcnParameter) list) (p:FuncParamType) = 
-        let acnlocalVariablesCh = acnChildren |>  List.map(fun x -> AcnInsertedChild(x.c_name, x.typeDefinitionBodyWithinSeq))
+        let acnlocalVariablesCh = acnChildren |>  List.filter(fun x -> match x.Type with Asn1AcnAst.AcnNullType _ -> false | _ -> true) |>  List.map(fun x -> AcnInsertedChild(x.c_name, x.typeDefinitionBodyWithinSeq))
         
         let acnlocalVariablesPrms = 
             match t.id.tasInfo with
@@ -794,7 +826,7 @@ let createSequenceFunction (r:Asn1AcnAst.AstRoot) (deps:Asn1AcnAst.AcnInsertedFi
 
                     //acn child encode/decode
                     let chFunc = acnChild.funcBody codec
-                    let childContentResult = chFunc[]  childP
+                    let childContentResult = chFunc []  childP
                     match childContentResult with
                     | None              -> ()
                     | Some childContent ->
@@ -881,11 +913,11 @@ let createChoiceFunction (r:Asn1AcnAst.AstRoot) (deps:Asn1AcnAst.AcnInsertedFiel
                         | CEC_presWhen  ->
                             let handPresenseCond (cond:Asn1AcnAst.AcnPresentWhenConditionChoiceChild) =
                                 match cond with
-                                | PresenceInt  (_,intLoc)   -> 
-                                    let extField = getExternaField r deps t.id
+                                | PresenceInt  (relPath, intLoc)   -> 
+                                    let extField = getExternaFieldChoizePresentWhen r deps t.id relPath
                                     choiceChild_preWhen_int_condition extField intLoc.Value
-                                | PresenceStr  (_,strVal)   -> 
-                                    let extField = getExternaField r deps t.id
+                                | PresenceStr  (relPath, strVal)   -> 
+                                    let extField = getExternaFieldChoizePresentWhen r deps t.id relPath
                                     choiceChild_preWhen_str_condition extField strVal.Value
                             let conds = child.acnPresentWhenConditions |>List.map handPresenseCond
                             Some (choiceChild_preWhen p.p (p.getAcces l) child.presentWhenName childContent.funcBody conds (idx=0) codec)

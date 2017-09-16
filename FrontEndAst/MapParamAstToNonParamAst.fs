@@ -202,8 +202,8 @@ and MapChildInfo (r:ParameterizedAsn1Ast.AstRoot)  typeScope (isSequence) (c:Par
 and MapNamedItem (r:ParameterizedAsn1Ast.AstRoot) typeScope (n:ParameterizedAsn1Ast.NamedItem) :Asn1Ast.NamedItem =
     {
         Asn1Ast.NamedItem.Name = n.Name
-        c_name = n.Name.Value
-        ada_name = n.Name.Value
+        c_name = ToC n.Name.Value
+        ada_name = ToC n.Name.Value
         _value = match n._value with
                  | None -> None
                  | Some(x)  -> Some (MapAsn1Value r ParameterizedAsn1Ast.Integer typeScope (visitNamedItemValue n) x)

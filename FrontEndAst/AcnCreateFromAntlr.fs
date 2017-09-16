@@ -807,10 +807,40 @@ let rec private mapAcnParamTypeToAcnAcnInsertedType (asn1:Asn1Ast.AstRoot) (acn:
             let defaultCharSet = [|for i in 0..127 -> System.Convert.ToChar(i) |]
             let str = mergeStringType asn1 ts.Location (Some ts.Location) props cons [] defaultCharSet
             AcnReferenceToIA5String({AcnReferenceToIA5String.modName = md; tasName = ts; str = str; acnAligment= acnAligment})
+        | Asn1Ast.Integer       ->
+            let cons =  asn1Type0.Constraints |> List.collect (fixConstraint asn1) |> List.map (ConstraintsMapping.getIntegerTypeConstraint asn1 asn1Type0)
+            let uperRange    = uPER.getIntTypeConstraintUperRange cons  ts.Location
+            let alignmentSize = AcnEncodingClasses.getAlignmentSize acnAligment
+            let uperMinSizeInBits, uperMaxSizeInBits = uPER.getRequiredBitsForIntUperEncoding asn1.args.integerSizeInBytes uperRange
+            let acnProperties = {IntegerAcnProperties.encodingProp = getIntEncodingProperty ts.Location props; sizeProp = getIntSizeProperty ts.Location props; endiannessProp = getEndianessProperty props}
+            let isUnsigned =
+                match acnProperties.encodingProp with
+                | Some encProp -> 
+                    match encProp with
+                    | PosInt            -> true
+                    | TwosComplement    -> false
+                    | IntAscii          -> false
+                    | BCD               -> true
+                | None         ->
+                    match acnProperties.sizeProp.IsNone && acnProperties.endiannessProp.IsNone with     
+                    | true  -> 
+                        match uperRange with
+                        | Concrete  (a,b) when a >= 0I -> true      //[a, b]
+                        | Concrete  _                  -> false
+                        | NegInf    _                  -> false    //(-inf, b]
+                        | PosInf   a when a >= 0I  -> true     //[a, +inf)
+                        | PosInf  _                    -> false    //[a, +inf)
+                        | Full    _                    -> false    // (-inf, +inf)
+                    | false -> raise(SemanticError(ts.Location, "Mandatory ACN property 'encoding' is missing"))
+                    
+            let acnEncodingClass,  acnMinSizeInBits, acnMaxSizeInBits  =           
+                AcnEncodingClasses.GetIntEncodingClass acnAligment ts.Location acnProperties uperMinSizeInBits uperMaxSizeInBits isUnsigned
+            
+            AcnInteger ({AcnInteger.acnProperties=acnProperties; acnAligment=acnAligment; acnEncodingClass = acnEncodingClass;  Location = ts.Location; acnMinSizeInBits=acnMinSizeInBits; acnMaxSizeInBits = acnMaxSizeInBits})
         | _                               ->
             let newParma  = 
                 match asn1Type0.Kind with
-                | Asn1Ast.Integer           -> AcnPrmInteger ts.Location
+                //| Asn1Ast.Integer           -> AcnPrmInteger ts.Location
                 | Asn1Ast.NullType          -> AcnPrmNullType ts.Location
                 | Asn1Ast.Boolean           -> AcnPrmBoolean ts.Location
                 | Asn1Ast.ReferenceType rf  -> AcnPrmRefType (rf.modName, rf.tasName)
@@ -1085,7 +1115,7 @@ let rec private mergeType (asn1:Asn1Ast.AstRoot) (acn:AcnAst) (m:Asn1Ast.Asn1Mod
                             | None   -> raise(SemanticError(acnChild.name.Location, (sprintf "invalid name %s" acnChild.name.Value))))
             let acnProperties = 
                 {ChoiceAcnProperties.enumDeterminant = tryGetProp combinedProperties (fun x -> match x with CHOICE_DETERMINANT e -> Some e | _ -> None)}
-
+            let acnLoc = acnType |> Option.map (fun z -> z.loc)
             let indexSize = int (GetNumberOfBitsForNonNegativeInteger(BigInteger(Seq.length children)))
             let minChildSize = mergedChildren  |> List.map(fun x -> x.Type.uperMinSizeInBits) |> Seq.min
             let maxChildSize = mergedChildren  |> List.map(fun x -> x.Type.uperMaxSizeInBits) |> Seq.max
@@ -1093,7 +1123,7 @@ let rec private mergeType (asn1:Asn1Ast.AstRoot) (acn:AcnAst) (m:Asn1Ast.Asn1Mod
             let aligment = tryGetProp combinedProperties (fun x -> match x with ALIGNTONEXT e -> Some e | _ -> None)
             let acnMinSizeInBits, acnMaxSizeInBits = AcnEncodingClasses.GetChoiceEncodingClass  mergedChildren aligment t.Location acnProperties
 
-            Choice ({Choice.children = mergedChildren; acnProperties = acnProperties;   cons=cons; withcons = wcons;uperMaxSizeInBits=indexSize+maxChildSize; uperMinSizeInBits=indexSize+minChildSize; acnMinSizeInBits =acnMinSizeInBits; acnMaxSizeInBits=acnMaxSizeInBits})
+            Choice ({Choice.children = mergedChildren; acnProperties = acnProperties;   cons=cons; withcons = wcons;uperMaxSizeInBits=indexSize+maxChildSize; uperMinSizeInBits=indexSize+minChildSize; acnMinSizeInBits =acnMinSizeInBits; acnMaxSizeInBits=acnMaxSizeInBits; acnLoc = acnLoc})
         | Asn1Ast.ReferenceType rf    -> 
             let acnArguments = acnArgs
             let oldBaseType  = Asn1Ast.GetBaseTypeByName rf.modName rf.tasName asn1

@@ -23,7 +23,7 @@ INCLUDEFLAGS= -I .
 # Separate compile options per configuration
 CFLAGS += -g -Wall -Werror -Wextra  -Wuninitialized -Wcast-qual -Wformat=2 -Wshadow -Wundef -Wuninitialized -fdiagnostics-show-option -D_DEBUG ${INCLUDEFLAGS} -O0 -fprofile-arcs -ftest-coverage
 
-CFLAGS2 += -g -Wall -Werror -Wextra -pedantic -Wno-long-long -Wuninitialized -Wcast-qual -Wformat=2 -Wshadow -Wundef -Wuninitialized -fdiagnostics-show-option -D_DEBUG ${INCLUDEFLAGS} -O0 -fprofile-arcs -ftest-coverage
+CFLAGS2 += -g -Wall -Werror -Wextra -Wno-long-long -Wuninitialized -Wcast-qual -Wformat=2 -Wshadow -Wundef -Wuninitialized -fdiagnostics-show-option -D_DEBUG ${INCLUDEFLAGS} -O0 -fprofile-arcs -ftest-coverage
 
 LDFLAGS += -g -ftest-coverage -fprofile-arcs
 

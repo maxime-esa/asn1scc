@@ -586,6 +586,7 @@ and Choice = {
 
     acnMaxSizeInBits    : int
     acnMinSizeInBits    : int
+    acnLoc              : SrcLoc option
 }
 
 and ChChildInfo = {
@@ -669,7 +670,7 @@ type Determinant =
 
 //The following type expresses the dependencies that exists between ASN.1 types and ACNs types and parameters
 type AcnDependency = {
-    asn1Type        : ReferenceToType          // an ASN.1 type that its decoding depends on the determinant
+    asn1Type        : ReferenceToType      // an ASN.1 type that its decoding depends on the determinant
     determinant     : Determinant          // an ACN inserted type or an ACN parameter that acts as determinant
     dependencyKind  : AcnDependencyKind
 }
