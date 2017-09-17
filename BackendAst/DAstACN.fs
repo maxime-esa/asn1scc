@@ -89,8 +89,8 @@ let createPrimitiveFunction (r:Asn1AcnAst.AstRoot) (l:ProgrammingLanguage) (code
     let sInitilialExp = ""
     let  func, funcDef  = 
             match funcNameAndtasInfo  with
-            | None              -> None, None
-            | Some funcName     -> 
+            |  None              -> None, None
+            |  Some funcName     -> 
                 let content = funcBody [] p  
                 match content with 
                 | None          -> None, None
@@ -205,7 +205,7 @@ let createAcnIntegerFunction (r:Asn1AcnAst.AstRoot) (l:ProgrammingLanguage) (cod
 let createIntegerFunction (r:Asn1AcnAst.AstRoot) (l:ProgrammingLanguage) (codec:CommonTypes.Codec) (t:Asn1AcnAst.Asn1Type) (o:Asn1AcnAst.Integer) (typeDefinition:TypeDefinitionCommon)  (isValidFunc: IsValidFunction option) (uperFunc: UPerFunction) (us:State)  =
     let funcBody = createAcnIntegerFunctionInternal r l codec o.acnEncodingClass uperFunc.funcBody
     let soSparkAnnotations = None
-    createPrimitiveFunction r l codec t typeDefinition isValidFunc  (fun e acnArgs p -> funcBody e acnArgs p) soSparkAnnotations us
+    createPrimitiveFunction r l codec t typeDefinition isValidFunc  (fun e acnArgs p -> funcBody e acnArgs p) soSparkAnnotations  us
 
 
 let createEnumComn (r:Asn1AcnAst.AstRoot) (l:ProgrammingLanguage) (codec:CommonTypes.Codec) (typeId : ReferenceToType) (o:Asn1AcnAst.Enumerated) (typeDefinitionName:string)  =
@@ -243,7 +243,7 @@ let createEnumeratedFunction (r:Asn1AcnAst.AstRoot) (l:ProgrammingLanguage) (cod
     let typeDefinitionName = getTypeDefinitionName t.id.tasInfo typeDefinition
     let funcBody = createEnumComn r l codec t.id o typeDefinitionName
     let soSparkAnnotations = None
-    createPrimitiveFunction r l codec t typeDefinition  isValidFunc  funcBody soSparkAnnotations us
+    createPrimitiveFunction r l codec t typeDefinition  isValidFunc  funcBody soSparkAnnotations  us
 
 
 let createAcnEnumeratedFunction (r:Asn1AcnAst.AstRoot) (l:ProgrammingLanguage) (codec:CommonTypes.Codec) (typeId : ReferenceToType) (t:Asn1AcnAst.AcnReferenceToEnumerated)  (us:State)  =
@@ -719,7 +719,11 @@ and getUpdateFunctionUsedInEncoding (r:Asn1AcnAst.AstRoot) (deps:Asn1AcnAst.AcnI
         let ret = Some(({AcnChildUpdateResult.func = multiUpdateFunc; errCodes=[errCode]}))
         ret, ns
 
-
+type private AcnSequenceStatement =
+    | AcnPresenceStatement
+    | Asn1ChildEncodeStatement
+    | AcnChildUpdateStatement
+    | AcnChildEncodeStatement
 
 let createSequenceFunction (r:Asn1AcnAst.AstRoot) (deps:Asn1AcnAst.AcnInsertedFieldDependencies) (l:ProgrammingLanguage) (codec:CommonTypes.Codec) (t:Asn1AcnAst.Asn1Type) (o:Asn1AcnAst.Sequence) (typeDefinition:TypeDefinitionCommon) (isValidFunc: IsValidFunction option) (children:SeqChildInfo list) (acnPrms:AcnParameter list) (us:State)  =
     (*
@@ -791,7 +795,7 @@ let createSequenceFunction (r:Asn1AcnAst.AstRoot) (deps:Asn1AcnAst.AcnInsertedFi
                                     let extField = getExternaField r deps child.Type.id
                                     Some(sequence_presense_optChild_pres_bool p.p (p.getAcces l) child.c_name extField codec)
                             | _                 -> None
-                        yield (acnPresenceStatement, [], [])
+                        yield (AcnPresenceStatement, acnPresenceStatement, [], [])
 
 
                     match childContentResult with
@@ -808,20 +812,22 @@ let createSequenceFunction (r:Asn1AcnAst.AstRoot) (deps:Asn1AcnAst.AcnInsertedFi
                                 | Some v                 -> 
                                     let defInit= child.Type.initFunction.initFuncBody (p.getSeqChild l child.c_name child.Type.isIA5String) (mapValue v).kind
                                     Some (sequence_default_child p.p (p.getAcces l) child.c_name childContent.funcBody defInit codec) 
-                        yield (childBody, childContent.localVariables, childContent.errCodes)
+                        yield (Asn1ChildEncodeStatement, childBody, childContent.localVariables, childContent.errCodes)
 
                 | AcnChild  acnChild    -> 
                     //handle updates
                     //acnChild.c_name
                     let childP = VALUE (getAcnDeterminantName acnChild.id)
-                    let pRoot : FuncParamType = t.getParamType l codec  //????
+
                     match codec with
-                    | CommonTypes.Encode ->
-                            let updateStatement, lvs, lerCodes = 
-                                match acnChild.funcUpdateStatement with
-                                | Some funcUpdateStatement -> Some (funcUpdateStatement.func childP pRoot), [], funcUpdateStatement.errCodes
-                                | None                     -> None, [], []
-                            yield (updateStatement, lvs, lerCodes)
+                    | CommonTypes.Encode -> 
+                        let pRoot : FuncParamType = t.getParamType l codec  //????
+                        let updateStatement, lvs, lerCodes = 
+                            match acnChild.funcUpdateStatement with
+                            | Some funcUpdateStatement -> Some (funcUpdateStatement.func childP pRoot), [], funcUpdateStatement.errCodes
+                            | None                     -> None, [], []
+
+                        yield (AcnChildUpdateStatement, updateStatement, lvs, lerCodes)
                     | CommonTypes.Decode -> ()
 
                     //acn child encode/decode
@@ -831,19 +837,37 @@ let createSequenceFunction (r:Asn1AcnAst.AstRoot) (deps:Asn1AcnAst.AcnInsertedFi
                     | None              -> ()
                     | Some childContent ->
                         let childBody = Some (sequence_mandatory_child acnChild.c_name childContent.funcBody codec)
-                        yield (childBody, childContent.localVariables, childContent.errCodes)
+                        yield (AcnChildEncodeStatement, childBody, childContent.localVariables, childContent.errCodes)
 
             } |> Seq.toList
 
+        // find acn inserted fields, which are not NULL types and which have no dependency.
+        // For those fields we shoud generated no anc encode/decode function
+        // Otherwise, the encoding function is wrong since an unitialized value is encoded.
+        let existsAcnChildWithNoUpdates =
+            acnChildren |>
+            List.filter (fun acnChild -> match acnChild.Type with Asn1AcnAst.AcnNullType _ -> false | _ -> true) |>
+            List.exists(fun acnChild -> 
+                let childP = VALUE (getAcnDeterminantName acnChild.id)
+                let pRoot : FuncParamType = t.getParamType l codec  
+                let updateStatement = 
+                    match acnChild.funcUpdateStatement with
+                    | Some funcUpdateStatement -> Some (funcUpdateStatement.func childP pRoot)
+                    | None                     -> None
+                updateStatement.IsNone)
+
         let presenseBits = asn1Children |> List.choose printPresenceBit
         let childrenStatements0 = children |> List.collect handleChild
-        let childrenStatements = childrenStatements0 |> List.choose(fun (s,_,_) -> s)
-        let childrenLocalvars = childrenStatements0 |> List.collect(fun (_,s,_) -> s)
-        let childrenErrCodes = childrenStatements0 |> List.collect(fun (_,_,s) -> s)
+        let childrenStatements = childrenStatements0 |> List.choose(fun (_, s,_,_) -> s)
+        let childrenLocalvars = childrenStatements0 |> List.collect(fun (_, _,s,_) -> s)
+        let childrenErrCodes = childrenStatements0 |> List.collect(fun (_, _,_,s) -> s)
         let seqContent =  (presenseBits@childrenStatements) |> nestChildItems l codec 
-        match seqContent with
-        | None  -> None
-        | Some ret -> Some ({AcnFuncBodyResult.funcBody = ret; errCodes = errCode::childrenErrCodes; localVariables = localVariables@childrenLocalvars})    
+        match existsAcnChildWithNoUpdates with
+        | true      -> None
+        | false     ->
+            match seqContent with
+            | None  -> None
+            | Some ret -> Some ({AcnFuncBodyResult.funcBody = ret; errCodes = errCode::childrenErrCodes; localVariables = localVariables@childrenLocalvars})    
             
     let soSparkAnnotations = 
         match l with
@@ -992,100 +1016,5 @@ TEST-CASE DEFINITIONS ::= BEGIN
     
     Call[]
 END  
-
-
-//αν ένας τύπος έχει base type  έχει παράμετρο 
-// περίπτωση 1η inline encoding/decoding
-
-//ENCODING
-tap3FileEncode(TAP3File* pVal) {
-  
-  //encode headerType inline
-     encode_operatorID()
-	 
-	 //update nrCalls
-	 // από τον πίνακα AcnLinks βλέπουμε ότι το ACN child  nrCalls 
-	 // έχει εξάρτηση τύπου RefTypeArgument ("nElements")
-	 // δηλαδή AcnLink = {decType = TAP3File.sourceData;  determinant = TAP3File.header.nrCalls;  linkType  = RefTypeArgument ("nElements")}
-	 
-	 //1ος τρόπος : με κλήση βοηθητικής συνάρτης
-	 pVal->header.nrCalls := Tap3SourceData_getnElementsParam(pVal->sourceData);
-	 
-	 //2ος τρόπος : με inline κώδικα των βοηθητικών συναρτήσεων
-	 // o 2ος τρόπος είναι αυτός που θα προχωρήσουμε.
-	 pVal->header.nrCalls = pVal->sourceData.calls.nSize;
-	 
-	 
-	 encode_nrCalls()
-  //encode sourceData inline
-      //encode calls inline
-	     encode_calls();
-}
-
-Για κάθε TAS με ACN parameter δημιουργούμε βοηθητικές συναρτήσεις ανά παράμετρο
-
-Π1
-integer SourceData_getnElementsParam(SourceData pVal) {
-	return CallsArray_getnElements2Param(pVal->calls)
-}
-
-Π2
-integer CallsArray_getnElements2Param(CallsArray pVal) {
-   return pVal->nSize;
-}
-
-καθώς και (για την περίπτωση των inline encodings) lamda functions 
-getParmFuncBody -> string -> string -> string -> string 	// P , sAcc, param name, expression code with the value
-
-Π_nElements(p  = pVal->sourceData, sAcc ='.') ->  
-	Prokeitai gia RefTypeArgument dependency ara tha kalesoume thn Π_nElements2 όπου στο p argument θα κάνουμε append to 'calls'
-	Δηλαδή το αποτέλεσμα είναι
-	Π_nElements2(p = p+ 'calls', sAcc ='.')
-
-Π_nElements2(p = pVal-sourceData.nCalls, sAcc = '.') -> 
-	Prokeitai gia size determinant ara to expression tha einai:
-	  <p><sAcc>nSize
-
-
-
-
-//DECODING
-// δηλώνουμε την παράμετρο ως τοπικές μεταβλητές
-// όλες τις ACN parameters. Για να μην υπάρχει naming conflict
-// βάζουμε μπροστά το long path του εκάστοτε τύπου
-// αφού αφαιρέσουμε το tas name της ρίζας.
-// Δηλαδή δεν έχει νόημα να τις βαφτίζουμε TAP3File_sourceData_nElements αλλά sourceData_nElements
-tap3FileDecode(TAP3File* pVal) {
-   integer sourceData_nElements;
-   integer sourceData_calls_nElements;
-   
-   // decode header inline
-     decode_operatorID();
-	 decode_nrCalls();
-   // decode sourceData inline
-   // εφοσον κάνουμε inline decoding του sourceData (δηλαδή δεν καλούμε την base encoding function)
-   // θα πρέπει οι ACN parameters να αρχικοποιηθόύν
-   // Θα ψάξουμε στον πίνακα acnLinks να βρούμε μια εγγραφή όπου το id του decoding type (στην προκειμένη περίπτωση του sourceData)
-   // να είναι ίσο TAP3File.SourceData, να είναι τύπου RefTypeArgument και να ταυτίζεται το όνομα της παραμέτρου με το value του RefTypeArgument
-   // δηλαδή AcnLink = {decType = TAP3File.SourceData;  determinant = TAP3File.header.nrCalls;  linkType  = RefTypeArgument ("nElements")}
-      sourceData_nElements := pVal->header.nrCalls;
-	 //decode calls
-	 // Ομοίως για το inline encoding του CallsArray θα πρέπει πρώτα να αρχικοποιηθούν οι acn parameters
-	 // άρα θα πρέπει για κάθε παραμετρο του TAP3File.sourceData.calls να βρούμε εγγραφή 
-	 // με decoding type id = TAP3File.sourceData.calls και linkType  = RefTypeArgument (όνομα παραμέτρου)
-   // δηλαδή AcnLink = {decType = TAP3File.SourceData.calls;  determinant = TAP3File.sourceData.nElements;  linkType  = RefTypeArgument ("nElements")}
-     // στην προκειμένη περίπτωση το determinant έχει id -> MD(MyMODULE)::TA(TAP3File)::SEQ_CHILD(sourceData)::PRM(nElements)
-	 
-	 sourceData_calls_nElements = sourceData_nElements;
-	 //decode calls sequence using CallsArray_nElements as length determinant
-	    decode_calls();
- }
- 
- Συμπέραμα --> 
-   όλοι οι Asn1Types μπορεί να έχουν ACN parameters και όχι μόνο τα Type Assignments.
-   
-
-
-
 
 *)

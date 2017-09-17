@@ -494,7 +494,7 @@ let createReferenceType (r:Asn1AcnAst.AstRoot) (l:ProgrammingLanguage) (t:Asn1Ac
             match t.tasInfo with
             | Some tasInfo    -> ToC2(r.args.TypePrefix + tasInfo.tasName)
             | None            -> ToC2(r.args.TypePrefix + o.tasName.Value)
-        let refTypeAssignment = o.tasName.Value
+        let refTypeAssignment = ToC2(r.args.TypePrefix + o.tasName.Value)
         let completeDefinition                       = getCompleteDefinition l SUBTYPE refTypeAssignment typeDefinitionName None []
         {
             TypeDefinitionCommon.name                = typeDefinitionName

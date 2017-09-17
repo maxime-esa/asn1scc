@@ -115,7 +115,7 @@ let checkChoicePresentWhen (r:AstRoot) (curState:AcnInsertedFieldDependencies) (
         | c1::_         -> raise(SemanticError(c1.location, (sprintf "‘present-when’ attribute cannot appear when ‘determinant’ is present in the parent choice type"  )))
         | []            -> curState
     | None          -> 
-        let childrenConditions = ch.children |> List.map(fun z -> z.acnPresentWhenConditions |> List.map(fun pc -> (pc.kind, pc.relativePath.AsString, pc.valueAsString)) |> List.sortBy (fun (_,p,_) -> p) |> Seq.toList)
+        let childrenConditions = ch.children |>  List.filter(fun z -> z.acnPresentWhenConditions.Length > 0) |> List.map(fun z -> z.acnPresentWhenConditions |> List.map(fun pc -> (pc.kind, pc.relativePath.AsString, pc.valueAsString)) |> List.sortBy (fun (_,p,_) -> p) |> Seq.toList)
         let duplicateCondtions =  childrenConditions |> Seq.groupBy id |> Seq.map(fun (key, vals) -> Seq.length vals) |> Seq.filter(fun z -> z > 1) |> Seq.length
         match duplicateCondtions > 0 with
         | false     -> ()
