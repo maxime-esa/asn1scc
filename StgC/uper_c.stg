@@ -532,7 +532,7 @@ octect_VarSize_decode(p, sAcc, sTasName, i, sInternalItem, nSizeMin, nSizeMax, n
 ret = BitStream_DecodeConstraintWholeNumber(pBitStrm, &nCount, <nSizeMin>, <nSizeMax>);
 *pErrCode = ret ? 0 : <sErrCode>;
 <p><sAcc>nCount = (long)nCount;
-<loopFixedItem(i=i, sInternalItem=sInternalItem, fixedSize="nCount")>
+<loopFixedItem(i=i, sInternalItem=sInternalItem, fixedSize=[p, sAcc, "nCount"])>
 >>
 
 

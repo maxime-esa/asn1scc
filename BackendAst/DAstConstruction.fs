@@ -374,8 +374,8 @@ let private createChoice (r:Asn1AcnAst.AstRoot) (deps:Asn1AcnAst.AcnInsertedFiel
     let isValidFunction, s1     = DAstValidate.createChoiceFunction r l t o typeDefinition children None us
     let uperEncFunction, s2     = DAstUPer.createChoiceFunction r l Codec.Encode t o typeDefinition None isValidFunction children s1
     let uperDecFunction, s3     = DAstUPer.createChoiceFunction r l Codec.Decode t o typeDefinition None isValidFunction children s2
-    let acnEncFunction, s4      = DAstACN.createChoiceFunction r deps l Codec.Encode t o typeDefinition  isValidFunction children newPrms s3
-    let acnDecFunction, s5      = DAstACN.createChoiceFunction r deps l Codec.Decode t o typeDefinition  isValidFunction children newPrms s4
+    let acnEncFunction, s4      = DAstACN.createChoiceFunction r deps l Codec.Encode t o typeDefinition  isValidFunction children newPrms  s3
+    let acnDecFunction, s5      = DAstACN.createChoiceFunction r deps l Codec.Decode t o typeDefinition  isValidFunction children newPrms  s4
     let ret =
         {
             Choice.baseInfo     = o

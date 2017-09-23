@@ -116,7 +116,10 @@ let isEqualBodySequence  (l:ProgrammingLanguage) (children:SeqChildInfo list) (c
                 let content, lv = printChild x  (Some childrenCont)
                 Some (content, lv@lvars)
         
-    let childrenConent =   children |> List.choose(fun c -> match c with Asn1Child x -> Some x | AcnChild _ -> None) |> List.choose(fun c -> c.isEqualBodyStats childAccess v1 v2 )  
+    let childrenConent =   
+        children |> 
+        List.choose(fun c -> match c with Asn1Child x -> Some x | AcnChild _ -> None) |> 
+        List.choose(fun c -> c.isEqualBodyStats childAccess v1 v2 )  
     printChildren childrenConent
 
 
@@ -325,9 +328,11 @@ let createChoiceEqualFunction (r:Asn1AcnAst.AstRoot) (l:ProgrammingLanguage) (t:
 
 let createReferenceTypeEqualFunction (r:Asn1AcnAst.AstRoot) (l:ProgrammingLanguage) (t:Asn1AcnAst.Asn1Type) (o:Asn1AcnAst.ReferenceType)  (baseType:Asn1Type) =
     let typeDefinitionName = 
-        match t.tasInfo with
-        | Some tasInfo    -> ToC2(r.args.TypePrefix + tasInfo.tasName)
-        | None            -> ToC2(r.args.TypePrefix + o.tasName.Value)
+        //match t.tasInfo with
+        //| Some tasInfo    -> ToC2(r.args.TypePrefix + tasInfo.tasName)
+        //| None            -> ToC2(r.args.TypePrefix + o.tasName.Value)
+        ToC2(r.args.TypePrefix + o.tasName.Value)
+
     let baseEqName = typeDefinitionName + "_Equal"
 
     match baseType.Kind with
@@ -344,7 +349,8 @@ let createReferenceTypeEqualFunction (r:Asn1AcnAst.AstRoot) (l:ProgrammingLangua
             | None  -> (fun a b c -> None)
             | Some _    ->
                 let eqBody acc p1 p2 = 
-                    Some(callBaseTypeFunc l (getAddres l p1) (getAddres l p2) baseEqName, [])
+                    let exp = callBaseTypeFunc l (getAddres l p1) (getAddres l p2) baseEqName
+                    Some(makeExpressionToStatement l exp, [])
                 eqBody
         {
             EqualFunction.isEqualFuncName  = None
@@ -355,8 +361,7 @@ let createReferenceTypeEqualFunction (r:Asn1AcnAst.AstRoot) (l:ProgrammingLangua
         }    
     | SequenceOf _
     | Sequence _
-    | Choice   _    
-    | ReferenceType _ ->
+    | Choice   _      ->
         let    isEqualBody                   = 
                 match baseType.equalFunction.isEqualFuncName with
                 | None  -> (fun a b c -> None)
@@ -373,5 +378,7 @@ let createReferenceTypeEqualFunction (r:Asn1AcnAst.AstRoot) (l:ProgrammingLangua
             isEqualFunc                    = None
             isEqualFuncDef                 = None
         }    
+    | ReferenceType rf ->
+             baseType.equalFunction
     //| ReferenceType ref     ->
     //    ref.baseType.equalFunction

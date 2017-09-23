@@ -124,7 +124,7 @@ let createPrimitiveFunction (r:Asn1AcnAst.AstRoot) (l:ProgrammingLanguage) (code
         }
     ret, {us with currErrCode = us.currErrCode + 1}
 
-let private createAcnIntegerFunctionInternal (r:Asn1AcnAst.AstRoot) (l:ProgrammingLanguage) (codec:CommonTypes.Codec) acnEncodingClass (uperfuncBody : FuncParamType -> (UPERFuncBodyResult option)) : (ErroCode -> ((Asn1AcnAst.RelativePath*Asn1AcnAst.AcnParameter) list) -> FuncParamType -> (AcnFuncBodyResult option))  =
+let private createAcnIntegerFunctionInternal (r:Asn1AcnAst.AstRoot) (l:ProgrammingLanguage) (codec:CommonTypes.Codec) acnEncodingClass (uperfuncBody : ErroCode -> FuncParamType -> (UPERFuncBodyResult option)) : (ErroCode -> ((Asn1AcnAst.RelativePath*Asn1AcnAst.AcnParameter) list) -> FuncParamType -> (AcnFuncBodyResult option))  =
     let PositiveInteger_ConstSize_8                  = match l with C -> acn_c.PositiveInteger_ConstSize_8                | Ada -> acn_c.PositiveInteger_ConstSize_8               
     let PositiveInteger_ConstSize_big_endian_16      = match l with C -> acn_c.PositiveInteger_ConstSize_big_endian_16    | Ada -> acn_c.PositiveInteger_ConstSize_big_endian_16   
     let PositiveInteger_ConstSize_little_endian_16   = match l with C -> acn_c.PositiveInteger_ConstSize_little_endian_16 | Ada -> acn_c.PositiveInteger_ConstSize_little_endian_16
@@ -156,32 +156,32 @@ let private createAcnIntegerFunctionInternal (r:Asn1AcnAst.AstRoot) (l:Programmi
         let pp = match codec with CommonTypes.Encode -> p.getValue l | CommonTypes.Decode -> p.getPointer l
         let funcBodyContent = 
             match acnEncodingClass with
-            |Asn1AcnAst.Integer_uPER                                       ->  uperfuncBody p |> Option.map(fun x -> x.funcBody, x.errCodes)
-            |Asn1AcnAst.PositiveInteger_ConstSize_8                        ->  Some(PositiveInteger_ConstSize_8 pp None codec, [])
-            |Asn1AcnAst.PositiveInteger_ConstSize_big_endian_16            ->  Some(PositiveInteger_ConstSize_big_endian_16 pp None codec, [])
-            |Asn1AcnAst.PositiveInteger_ConstSize_little_endian_16         ->  Some(PositiveInteger_ConstSize_little_endian_16 pp None codec, [])
-            |Asn1AcnAst.PositiveInteger_ConstSize_big_endian_32            ->  Some(PositiveInteger_ConstSize_big_endian_32 pp None codec, [])
-            |Asn1AcnAst.PositiveInteger_ConstSize_little_endian_32         ->  Some(PositiveInteger_ConstSize_little_endian_32 pp None codec, [])
-            |Asn1AcnAst.PositiveInteger_ConstSize_big_endian_64            ->  Some(PositiveInteger_ConstSize_big_endian_64 pp None codec, [])
-            |Asn1AcnAst.PositiveInteger_ConstSize_little_endian_64         ->  Some(PositiveInteger_ConstSize_little_endian_64 pp None codec, [])
-            |Asn1AcnAst.PositiveInteger_ConstSize bitSize                  ->  Some(PositiveInteger_ConstSize pp (BigInteger bitSize) None codec, [])
-            |Asn1AcnAst.TwosComplement_ConstSize_8                         ->  Some(TwosComplement_ConstSize_8 pp None codec, [])
-            |Asn1AcnAst.TwosComplement_ConstSize_big_endian_16             ->  Some(TwosComplement_ConstSize_big_endian_16 pp None codec, [])
-            |Asn1AcnAst.TwosComplement_ConstSize_little_endian_16          ->  Some(TwosComplement_ConstSize_little_endian_16 pp None codec, [])
-            |Asn1AcnAst.TwosComplement_ConstSize_big_endian_32             ->  Some(TwosComplement_ConstSize_big_endian_32 pp None codec, [])
-            |Asn1AcnAst.TwosComplement_ConstSize_little_endian_32          ->  Some(TwosComplement_ConstSize_little_endian_32 pp None codec, [])
-            |Asn1AcnAst.TwosComplement_ConstSize_big_endian_64             ->  Some(TwosComplement_ConstSize_big_endian_64 pp None codec, [])
-            |Asn1AcnAst.TwosComplement_ConstSize_little_endian_64          ->  Some(TwosComplement_ConstSize_little_endian_64 pp None codec, [])
-            |Asn1AcnAst.TwosComplement_ConstSize bitSize                   ->  Some(TwosComplement_ConstSize pp (BigInteger bitSize) None codec, [])
-            |Asn1AcnAst.ASCII_ConstSize size                               ->  Some(ASCII_ConstSize pp ((BigInteger size)/8I) None codec, [])
-            |Asn1AcnAst.ASCII_VarSize_NullTerminated nullByte              ->  Some(ASCII_VarSize_NullTerminated pp None codec, [])
-            |Asn1AcnAst.ASCII_UINT_ConstSize size                          ->  Some(ASCII_UINT_ConstSize pp ((BigInteger size)/8I) None codec, [])
-            |Asn1AcnAst.ASCII_UINT_VarSize_NullTerminated nullByte         ->  Some(ASCII_UINT_VarSize_NullTerminated pp  None codec, [])
-            |Asn1AcnAst.BCD_ConstSize size                                 ->  Some(BCD_ConstSize pp ((BigInteger size)/4I) None codec, [])
-            |Asn1AcnAst.BCD_VarSize_NullTerminated nullByte                ->  Some(BCD_VarSize_NullTerminated pp None codec, [])
+            |Asn1AcnAst.Integer_uPER                                       ->  uperfuncBody errCode p |> Option.map(fun x -> x.funcBody, x.errCodes)
+            |Asn1AcnAst.PositiveInteger_ConstSize_8                        ->  Some(PositiveInteger_ConstSize_8 pp None codec, [errCode])
+            |Asn1AcnAst.PositiveInteger_ConstSize_big_endian_16            ->  Some(PositiveInteger_ConstSize_big_endian_16 pp None codec, [errCode])
+            |Asn1AcnAst.PositiveInteger_ConstSize_little_endian_16         ->  Some(PositiveInteger_ConstSize_little_endian_16 pp None codec, [errCode])
+            |Asn1AcnAst.PositiveInteger_ConstSize_big_endian_32            ->  Some(PositiveInteger_ConstSize_big_endian_32 pp None codec, [errCode])
+            |Asn1AcnAst.PositiveInteger_ConstSize_little_endian_32         ->  Some(PositiveInteger_ConstSize_little_endian_32 pp None codec, [errCode])
+            |Asn1AcnAst.PositiveInteger_ConstSize_big_endian_64            ->  Some(PositiveInteger_ConstSize_big_endian_64 pp None codec, [errCode])
+            |Asn1AcnAst.PositiveInteger_ConstSize_little_endian_64         ->  Some(PositiveInteger_ConstSize_little_endian_64 pp None codec, [errCode])
+            |Asn1AcnAst.PositiveInteger_ConstSize bitSize                  ->  Some(PositiveInteger_ConstSize pp (BigInteger bitSize) None codec, [errCode])
+            |Asn1AcnAst.TwosComplement_ConstSize_8                         ->  Some(TwosComplement_ConstSize_8 pp None codec, [errCode])
+            |Asn1AcnAst.TwosComplement_ConstSize_big_endian_16             ->  Some(TwosComplement_ConstSize_big_endian_16 pp None codec, [errCode])
+            |Asn1AcnAst.TwosComplement_ConstSize_little_endian_16          ->  Some(TwosComplement_ConstSize_little_endian_16 pp None codec, [errCode])
+            |Asn1AcnAst.TwosComplement_ConstSize_big_endian_32             ->  Some(TwosComplement_ConstSize_big_endian_32 pp None codec, [errCode])
+            |Asn1AcnAst.TwosComplement_ConstSize_little_endian_32          ->  Some(TwosComplement_ConstSize_little_endian_32 pp None codec, [errCode])
+            |Asn1AcnAst.TwosComplement_ConstSize_big_endian_64             ->  Some(TwosComplement_ConstSize_big_endian_64 pp None codec, [errCode])
+            |Asn1AcnAst.TwosComplement_ConstSize_little_endian_64          ->  Some(TwosComplement_ConstSize_little_endian_64 pp None codec, [errCode])
+            |Asn1AcnAst.TwosComplement_ConstSize bitSize                   ->  Some(TwosComplement_ConstSize pp (BigInteger bitSize) None codec, [errCode])
+            |Asn1AcnAst.ASCII_ConstSize size                               ->  Some(ASCII_ConstSize pp ((BigInteger size)/8I) None codec, [errCode])
+            |Asn1AcnAst.ASCII_VarSize_NullTerminated nullByte              ->  Some(ASCII_VarSize_NullTerminated pp None codec, [errCode])
+            |Asn1AcnAst.ASCII_UINT_ConstSize size                          ->  Some(ASCII_UINT_ConstSize pp ((BigInteger size)/8I) None codec, [errCode])
+            |Asn1AcnAst.ASCII_UINT_VarSize_NullTerminated nullByte         ->  Some(ASCII_UINT_VarSize_NullTerminated pp  None codec, [errCode])
+            |Asn1AcnAst.BCD_ConstSize size                                 ->  Some(BCD_ConstSize pp ((BigInteger size)/4I) None codec, [errCode])
+            |Asn1AcnAst.BCD_VarSize_NullTerminated nullByte                ->  Some(BCD_VarSize_NullTerminated pp None codec, [errCode])
         match funcBodyContent with
         | None -> None
-        | Some (funcBodyContent,errCodes) -> Some ({AcnFuncBodyResult.funcBody = funcBodyContent; errCodes = errCode::errCodes; localVariables = []})
+        | Some (funcBodyContent,errCodes) -> Some ({AcnFuncBodyResult.funcBody = funcBodyContent; errCodes = errCodes; localVariables = []})
     //let funcBody = (funcBody errCode)
     funcBody
 
@@ -191,7 +191,7 @@ let createAcnIntegerFunction (r:Asn1AcnAst.AstRoot) (l:ProgrammingLanguage) (cod
     let errCodeValue        = us.currErrCode
     let errCode             = {ErroCode.errCodeName = errCodeName; errCodeValue = errCodeValue}
 
-    let uperFuncBody (p:FuncParamType) = 
+    let uperFuncBody (errCode) (p:FuncParamType) = 
         let pp = match codec with CommonTypes.Encode -> p.getValue l | CommonTypes.Decode -> p.getPointer l
         let IntUnconstraint = match l with C -> uper_c.IntUnconstraint          | Ada -> uper_a.IntUnconstraint
         let funcBodyContent = IntUnconstraint pp errCode.errCodeName codec
@@ -203,7 +203,7 @@ let createAcnIntegerFunction (r:Asn1AcnAst.AstRoot) (l:ProgrammingLanguage) (cod
 
 
 let createIntegerFunction (r:Asn1AcnAst.AstRoot) (l:ProgrammingLanguage) (codec:CommonTypes.Codec) (t:Asn1AcnAst.Asn1Type) (o:Asn1AcnAst.Integer) (typeDefinition:TypeDefinitionCommon)  (isValidFunc: IsValidFunction option) (uperFunc: UPerFunction) (us:State)  =
-    let funcBody = createAcnIntegerFunctionInternal r l codec o.acnEncodingClass uperFunc.funcBody
+    let funcBody = createAcnIntegerFunctionInternal r l codec o.acnEncodingClass uperFunc.funcBody_e
     let soSparkAnnotations = None
     createPrimitiveFunction r l codec t typeDefinition isValidFunc  (fun e acnArgs p -> funcBody e acnArgs p) soSparkAnnotations  us
 
@@ -222,7 +222,7 @@ let createEnumComn (r:Asn1AcnAst.AstRoot) (l:ProgrammingLanguage) (codec:CommonT
         | false -> Asn1SIntLocalVariable (intVal,None)
     let pVal = VALUE intVal
     let funcBody (errCode:ErroCode) (acnArgs: (Asn1AcnAst.RelativePath*Asn1AcnAst.AcnParameter) list) (p:FuncParamType)        = 
-        let uperInt (p:FuncParamType) = 
+        let uperInt (errCode:ErroCode) (p:FuncParamType) = 
             let pp = match codec with CommonTypes.Encode -> p.getValue l | CommonTypes.Decode -> p.getPointer l
             let funcBody = IntFullyConstraintPos pp min max (GetNumberOfBitsForNonNegativeInteger (max-min))  errCode.errCodeName codec
             Some({UPERFuncBodyResult.funcBody = funcBody; errCodes = [errCode]; localVariables= []})
@@ -515,14 +515,15 @@ let createOctetStringFunction (r:Asn1AcnAst.AstRoot) (deps:Asn1AcnAst.AcnInserte
     let funcBody (errCode:ErroCode) (acnArgs: (Asn1AcnAst.RelativePath*Asn1AcnAst.AcnParameter) list) (p:FuncParamType)        = 
         let funcBodyContent = 
             match o.acnEncodingClass with
-            | SZ_EC_uPER                                              -> uperFunc.funcBody p |> Option.map(fun x -> x.funcBody, x.errCodes)
+            | SZ_EC_uPER                                              -> uperFunc.funcBody_e errCode p |> Option.map(fun x -> x.funcBody, x.errCodes, x.localVariables)
             | SZ_EC_ExternalField   _    -> 
                 let extField = getExternaField r deps t.id
                 let internalItem = InternalItem_oct_str p.p (p.getAcces l) i  errCode.errCodeName codec 
-                Some(oct_sqf_external_field p.p (p.getAcces l) i internalItem (if o.minSize=0 then None else Some (BigInteger o.minSize)) (BigInteger o.maxSize) extField codec, [])
+                let fncBody = oct_sqf_external_field p.p (p.getAcces l) i internalItem (if o.minSize=0 then None else Some (BigInteger o.minSize)) (BigInteger o.maxSize) extField codec
+                Some(fncBody, [errCode],[])
         match funcBodyContent with
         | None -> None
-        | Some (funcBodyContent,errCodes) -> Some ({AcnFuncBodyResult.funcBody = funcBodyContent; errCodes = errCode::errCodes; localVariables = [lv]})
+        | Some (funcBodyContent,errCodes, localVariables) -> Some ({AcnFuncBodyResult.funcBody = funcBodyContent; errCodes = errCodes; localVariables = lv::localVariables})
     let soSparkAnnotations = None
     createPrimitiveFunction r l codec t typeDefinition  isValidFunc  funcBody soSparkAnnotations us
 
@@ -561,9 +562,10 @@ let createSequenceOfFunction (r:Asn1AcnAst.AstRoot) (deps:Asn1AcnAst.AcnInserted
             match o.acnEncodingClass with
             | SZ_EC_uPER                                              -> 
                 let nStringLength =
-                    match o.minSize = o.maxSize with
-                    | true  -> []
-                    | false ->
+                    match codec, o.minSize = o.maxSize with
+                    | Encode, _  -> []
+                    | Decode, true  -> []
+                    | Decode,false ->
                         match l with
                         | Ada  -> [IntegerLocalVariable ("nStringLength", None)]
                         | C    -> [Asn1SIntLocalVariable ("nCount", None)]
@@ -881,7 +883,7 @@ type private AcnChoiceEncClass =
     | CEC_enum          of Asn1AcnAst.Enumerated
     | CEC_presWhen
 
-let createChoiceFunction (r:Asn1AcnAst.AstRoot) (deps:Asn1AcnAst.AcnInsertedFieldDependencies) (l:ProgrammingLanguage) (codec:CommonTypes.Codec) (t:Asn1AcnAst.Asn1Type) (o:Asn1AcnAst.Choice) (typeDefinition:TypeDefinitionCommon) (isValidFunc: IsValidFunction option) (children:ChChildInfo list) (acnPrms:AcnParameter list) (us:State)  =
+let createChoiceFunction (r:Asn1AcnAst.AstRoot) (deps:Asn1AcnAst.AcnInsertedFieldDependencies) (l:ProgrammingLanguage) (codec:CommonTypes.Codec) (t:Asn1AcnAst.Asn1Type) (o:Asn1AcnAst.Choice) (typeDefinition:TypeDefinitionCommon) (isValidFunc: IsValidFunction option) (children:ChChildInfo list) (acnPrms:AcnParameter list)  (us:State)  =
     let choice_uper          =  match l with C -> acn_c.Choice                | Ada -> acn_c.Choice  
     let choiceChild          =  match l with C -> acn_c.ChoiceChild           | Ada -> acn_c.ChoiceChild
     let choice_Enum          =  match l with C -> acn_c.Choice_Enum           | Ada -> acn_c.Choice_Enum
@@ -895,6 +897,7 @@ let createChoiceFunction (r:Asn1AcnAst.AstRoot) (deps:Asn1AcnAst.AcnInsertedFiel
     let nMin = 0I
     let nMax = BigInteger(Seq.length children) - 1I
     let nBits = (GetNumberOfBitsForNonNegativeInteger (nMax-nMin))
+    let sChoiceIndexName = typeDefinition.name + "_index_tmp"
 
     let ec =  
         match o.acnProperties.enumDeterminant with
@@ -907,7 +910,7 @@ let createChoiceFunction (r:Asn1AcnAst.AstRoot) (deps:Asn1AcnAst.AcnInsertedFiel
             match children |> Seq.exists(fun c -> not (Seq.isEmpty c.acnPresentWhenConditions)) with
             | true           -> CEC_presWhen
             | false          -> CEC_uper
-    let sChoiceIndexName = typeDefinition.name + "_index_tmp"
+
     let localVariables =
         match ec, codec with
         | _, CommonTypes.Encode             -> []
@@ -955,14 +958,15 @@ let createChoiceFunction (r:Asn1AcnAst.AstRoot) (deps:Asn1AcnAst.AcnInsertedFiel
 
         let choiceContent =  
             match ec with
-            | CEC_uper        -> choice_uper p.p (p.getAcces l) childrenStatements nMax errCode.errCodeName codec
+            | CEC_uper        -> 
+                //let ret = choice p.p (p.getAcces l) childrenContent (BigInteger (children.Length - 1)) sChoiceIndexName errCode.errCodeName typeDefinitionName nBits  codec
+                choice_uper p.p (p.getAcces l) childrenStatements nMax sChoiceIndexName errCode.errCodeName codec
             | CEC_enum   enm  -> 
                 let extField = getExternaField r deps t.id
                 choice_Enum p.p (p.getAcces l) childrenStatements extField errCode.errCodeName codec
             | CEC_presWhen    -> choice_preWhen p.p  (p.getAcces l) childrenStatements errCode.errCodeName codec
-        
-
         Some ({AcnFuncBodyResult.funcBody = choiceContent; errCodes = errCode::childrenErrCodes; localVariables = localVariables@childrenLocalvars})    
+
 
     let soSparkAnnotations = 
         match l with

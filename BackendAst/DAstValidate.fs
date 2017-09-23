@@ -315,7 +315,16 @@ let createIntegerFunction (r:Asn1AcnAst.AstRoot) (l:ProgrammingLanguage) (t:Asn1
         match o.isUnsigned with
         | true         -> o.AllCons |> List.map simplifytUnsignedIntegerTypeConstraint |> List.choose (fun sc -> match sc with SicAlwaysTrue -> None | SciConstraint c -> Some c)
         | false         -> o.AllCons
-    createPrimitiveFunction r l t.id allCons (foldRangeCon l (fun v -> v.ToString()) (fun v -> v.ToString())) typeDefinition [] baseTypeValFunc us
+
+    let integerToString (i:BigInteger) = 
+        match l with
+        | Ada   -> i.ToString()
+        | C     ->
+            match o.isUnsigned with
+            | true   -> sprintf "%sUL" (i.ToString())
+            | false  -> sprintf "%sLL" (i.ToString())
+
+    createPrimitiveFunction r l t.id allCons (foldRangeCon l integerToString integerToString) typeDefinition [] baseTypeValFunc us
 
 let createRealFunction (r:Asn1AcnAst.AstRoot) (l:ProgrammingLanguage) (t:Asn1AcnAst.Asn1Type) (o:Asn1AcnAst.Real) (typeDefinition:TypeDefinitionCommon) (baseTypeValFunc : IsValidFunction option) (us:State)  =
     createPrimitiveFunction r l t.id o.AllCons (foldRangeCon l (fun v -> v.ToString("E20", NumberFormatInfo.InvariantInfo)) (fun v -> v.ToString("E20", NumberFormatInfo.InvariantInfo))) typeDefinition [] baseTypeValFunc us

@@ -72,7 +72,7 @@ def RunTestCase(asn1, acn, behavior, expErrMsg):
     path_to_asn1scc = spawn.find_executable('Asn1f4.exe')
     res = mysystem(
         launcher + path_to_asn1scc +
-        " -" + language + "  -ACN -typePrefix gmamais_ " +
+        " -" + language + " -uPER -ACN -typePrefix gmamais_ " +
         "-renamePolicy 2 " + "-equal -atc -o '" + resolvedir(targetDir) +
         "' '" + resolvedir(asn1File) + "' '" + resolvedir(acnFile) +
         "' >tmp.err 2>&1", True)

@@ -759,25 +759,25 @@ case <nChildIndex>:
 	break;
 >>
 
-Choice_encode(p, sAcc, arrsChildren, nLastItemIndex, sErrCode) ::= <<
+Choice_encode(p, sAcc, arrsChildren, nLastItemIndex, sChoiceIndexName, sErrCode) ::= <<
 switch(<p><sAcc>kind) 
 {
 <arrsChildren: {ch|<ch>}; separator="\n">
 default:
-    *pErrCode = ERR_INVALID_CHOICE_ALTERNATIVE;         /*COVERAGE_IGNORE*/
+    *pErrCode = <sErrCode>;         /*COVERAGE_IGNORE*/
     ret = FALSE;                    /*COVERAGE_IGNORE*/
 }
 >>
 
-Choice_decode(p, sAcc, arrsChildren, nLastItemIndex, sErrCode) ::= <<
-ret = BitStream_DecodeConstraintWholeNumber(pBitStrm, &nChoiceIndex, 0, <nLastItemIndex>);
-*pErrCode = ret ? 0 : ERR_INSUFFICIENT_DATA;
+Choice_decode(p, sAcc, arrsChildren, nLastItemIndex, sChoiceIndexName, sErrCode) ::= <<
+ret = BitStream_DecodeConstraintWholeNumber(pBitStrm, &<sChoiceIndexName>, 0, <nLastItemIndex>);
+*pErrCode = ret ? 0 : <sErrCode>;
 if (ret) {
-    switch(nChoiceIndex) 
+    switch(<sChoiceIndexName>) 
     {
     <arrsChildren: {ch|<ch>}; separator="\n">
     default:
-        *pErrCode = ERR_INVALID_CHOICE_ALTERNATIVE;     /*COVERAGE_IGNORE*/
+        *pErrCode = <sErrCode>;     /*COVERAGE_IGNORE*/
         ret = FALSE;                /*COVERAGE_IGNORE*/
     }
 }

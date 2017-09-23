@@ -29,7 +29,7 @@ let callBaseTypeFunc l = match l with C -> uper_c.call_base_type_func | Ada -> u
 //2.Fragmentation
 
 
-let createPrimitiveFunction (r:Asn1AcnAst.AstRoot) (l:ProgrammingLanguage) (codec:CommonTypes.Codec) (t:Asn1AcnAst.Asn1Type) (typeDefinition:TypeDefinitionCommon) (baseTypeUperFunc : UPerFunction option) (isValidFunc: IsValidFunction option)  (funcBody:ErroCode->FuncParamType -> (UPERFuncBodyResult option)) soSparkAnnotations (us:State)  =
+let createPrimitiveFunction (r:Asn1AcnAst.AstRoot) (l:ProgrammingLanguage) (codec:CommonTypes.Codec) (t:Asn1AcnAst.Asn1Type) (typeDefinition:TypeDefinitionCommon) (baseTypeUperFunc : UPerFunction option) (isValidFunc: IsValidFunction option)  (funcBody_e:ErroCode->FuncParamType -> (UPERFuncBodyResult option)) soSparkAnnotations (us:State)  =
     let funcName            = getFuncName r l codec t.id
     let errCodeName         = ToC ("ERR_UPER" + (codec.suffix.ToUpper()) + "_" + ((t.id.AcnAbsPath |> Seq.skip 1 |> Seq.StrJoin("-")).Replace("#","elm")))
     let errCodeValue        = us.currErrCode
@@ -39,7 +39,7 @@ let createPrimitiveFunction (r:Asn1AcnAst.AstRoot) (l:ProgrammingLanguage) (code
     let EmitTypeAssignment_primitive_def = match l with C -> uper_c.EmitTypeAssignment_primitive_def    | Ada -> uper_a.EmitTypeAssignment_def
     let EmitTypeAssignment_def_err_code  = match l with C -> uper_c.EmitTypeAssignment_def_err_code    | Ada -> uper_a.EmitTypeAssignment_def_err_code
 
-    let funcBody = (funcBody errCode)
+    let funcBody = (funcBody_e errCode)
     let p : FuncParamType = t.getParamType l codec
     let topLevAcc = p.getAcces l
     let varName = p.p
@@ -69,6 +69,7 @@ let createPrimitiveFunction (r:Asn1AcnAst.AstRoot) (l:ProgrammingLanguage) (code
             func                       = func 
             funcDef                    = funcDef
             funcBody                   = funcBody
+            funcBody_e                 = funcBody_e
         }
     ret, {us with currErrCode = us.currErrCode + 1}
 
@@ -249,14 +250,14 @@ let createOctetStringFunction (r:Asn1AcnAst.AstRoot) (l:ProgrammingLanguage) (co
 
 let createBitStringFunction (r:Asn1AcnAst.AstRoot) (l:ProgrammingLanguage) (codec:CommonTypes.Codec) (t:Asn1AcnAst.Asn1Type) (o:Asn1AcnAst.BitString) (typeDefinition:TypeDefinitionCommon) (baseTypeUperFunc : UPerFunction option) (isValidFunc: IsValidFunction option) (us:State)  =
     let i = sprintf "i%d" (t.id.SeqeuenceOfLevel + 1)
-    let lv = SequenceOfIndex (t.id.SeqeuenceOfLevel + 1, None)
-    let nStringLength =
+    let localVariables =
         match o.minSize <> o.maxSize && codec = Codec.Decode with
         | false  -> []
         | true ->
+            let lv = SequenceOfIndex (t.id.SeqeuenceOfLevel + 1, None)
             match l with
-            | Ada  -> [IntegerLocalVariable ("nStringLength", None)]
-            | C    -> [Asn1SIntLocalVariable ("nCount", None)]
+            | Ada  -> lv::[IntegerLocalVariable ("nStringLength", None)]
+            | C    -> lv::[Asn1SIntLocalVariable ("nCount", None)]
     let funcBody (errCode:ErroCode) (p:FuncParamType) = 
         let funcBodyContent = 
             match l with
@@ -274,7 +275,7 @@ let createBitStringFunction (r:Asn1AcnAst.AstRoot) (l:ProgrammingLanguage) (code
                 | _ when o.maxSize < 65536 && o.maxSize=o.minSize   -> uper_c.bitString_FixSize p.p (p.getAcces l) (BigInteger o.minSize) errCode.errCodeName codec 
                 | _ when o.maxSize < 65536 && o.maxSize<>o.minSize  -> uper_c.bitString_VarSize p.p (p.getAcces l) (BigInteger o.minSize) (BigInteger o.maxSize) errCode.errCodeName codec 
                 | _                                                -> raise(Exception "fragmentation not implemented yet")
-        {UPERFuncBodyResult.funcBody = funcBodyContent; errCodes = [errCode]; localVariables = lv::nStringLength}    
+        {UPERFuncBodyResult.funcBody = funcBodyContent; errCodes = [errCode]; localVariables = localVariables}    
     let soSparkAnnotations = 
         match l with
         | C     -> None

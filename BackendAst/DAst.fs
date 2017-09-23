@@ -201,6 +201,7 @@ type UPerFunction = {
     func                : string option               // the body of the function
     funcDef             : string option               // function definition in header file
     funcBody            : FuncParamType -> (UPERFuncBodyResult option)            // returns a list of validations statements
+    funcBody_e          : ErroCode -> FuncParamType -> (UPERFuncBodyResult option)
 }
 
 type AcnFuncBodyResult = {
