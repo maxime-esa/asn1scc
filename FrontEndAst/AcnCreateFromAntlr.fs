@@ -428,7 +428,7 @@ let private  getEndianessProperty (props:GenericAcnProperty list) =
     tryGetProp props (fun x -> match x with ENDIANNES e -> Some e | _ -> None)  
 
 
-let private getIntSizeProperty errLoc (props:GenericAcnProperty list) = 
+let private getIntSizeProperty  errLoc (props:GenericAcnProperty list) = 
     match tryGetProp props (fun x -> match x with SIZE e -> Some e | _ -> None) with
     | None  -> None
     | Some (GP_Fixed           v)   -> Some(Fixed (int v.Value))
@@ -490,6 +490,8 @@ let private getStringEncodingProperty errLoc (props:GenericAcnProperty list) =
     | Some (GP_Ascii          ) -> Some (StrAscii)
 
 let private mergeInteger (asn1:Asn1Ast.AstRoot) (loc:SrcLoc) (acnErrLoc: SrcLoc option) (props:GenericAcnProperty list) cons withcons =
+    let rootCons = cons |> List.filter(fun c -> match c with RangeRootConstraint _  | RangeRootConstraint2 _ -> true | _ -> false)
+    let uperRange    = uPER.getIntTypeConstraintUperRange cons  loc
     let acnProperties = 
         match acnErrLoc with
         | Some acnErrLoc    ->
@@ -499,8 +501,6 @@ let private mergeInteger (asn1:Asn1Ast.AstRoot) (loc:SrcLoc) (acnErrLoc: SrcLoc 
                 endiannessProp                       = getEndianessProperty props
             }
         | None  -> {IntegerAcnProperties.encodingProp = None; sizeProp = None; endiannessProp = None }
-    let rootCons = cons |> List.filter(fun c -> match c with RangeRootConstraint _  | RangeRootConstraint2 _ -> true | _ -> false)
-    let uperRange    = uPER.getIntTypeConstraintUperRange cons  loc
     let uperMinSizeInBits, uperMaxSizeInBits = 
         match rootCons with
         | []  -> uPER.getRequiredBitsForIntUperEncoding asn1.args.integerSizeInBytes uperRange
@@ -660,21 +660,23 @@ let private mergeEnumerated (asn1:Asn1Ast.AstRoot) (items: Asn1Ast.NamedItem lis
                 | None      -> (BigInteger i)
             {NamedItem.Name = itm.Name; Comments = itm.Comments; c_name = itm.c_name; ada_name = itm.ada_name; definitionValue = definitionValue; acnEncodeValue = acnEncodeValue}        
 
-    let acnProperties = 
-        match acnErrLoc with
-        | Some acnErrLoc    ->
-            {
-                IntegerAcnProperties.encodingProp    = getIntEncodingProperty acnErrLoc props
-                sizeProp                             = getIntSizeProperty acnErrLoc props
-                endiannessProp                       = getEndianessProperty props
-            }
-        | None  -> {IntegerAcnProperties.encodingProp = None; sizeProp = None; endiannessProp = None }
     let items0, userDefinedValues = 
         match items |> Seq.exists (fun nm -> nm._value.IsSome) with
         | false -> allocatedValuesToAllEnumItems items, false 
         | true -> allocatedValuesToAllEnumItems items, true
     let uperSizeInBits = int32(GetNumberOfBitsForNonNegativeInteger(BigInteger((Seq.length items) - 1)))
     let items = items0|> List.mapi mapItem
+    
+    let acnProperties = 
+        match acnErrLoc with
+        | Some acnErrLoc    ->
+            {
+                IntegerAcnProperties.encodingProp    = getIntEncodingProperty acnErrLoc props
+                sizeProp                             = 
+                    getIntSizeProperty  acnErrLoc props
+                endiannessProp                       = getEndianessProperty props
+            }
+        | None  -> {IntegerAcnProperties.encodingProp = None; sizeProp = None; endiannessProp = None }
     
     let aligment = tryGetProp props (fun x -> match x with ALIGNTONEXT e -> Some e | _ -> None)
     let acnEncodingClass,  acnMinSizeInBits, acnMaxSizeInBits= AcnEncodingClasses.GetEnumeratedEncodingClass items aligment loc acnProperties uperSizeInBits uperSizeInBits endodeValues
