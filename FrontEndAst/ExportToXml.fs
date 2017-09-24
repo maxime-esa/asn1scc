@@ -339,6 +339,9 @@ let private exportType (t:Asn1Type) =
                                 ), us )
         (fun ch nt us -> XElement(xname "CHOICE_ALTERNATIVE",
                             XAttribute(xname "name", ch.Name.Value),
+                            XAttribute(xname "present_when_name", ch.present_when_name),
+                            XAttribute(xname "ada_name", ch.ada_name),
+                            XAttribute(xname "c_name", ch.c_name),
                             (ch.acnPresentWhenConditions |> List.map exportChoiceChildPresentWhenCondition),
                             nt), us )
         (fun ref nt us -> XElement(xname "REFERENCE_TYPE",
@@ -415,6 +418,7 @@ let exportFile (r:AstRoot) (deps:AcnInsertedFieldDependencies) (fileName:string)
         XElement(xname "AstRoot",
             XAttribute(XNamespace.Xmlns + "xsi", xsi),
             XAttribute(xnameNs "noNamespaceSchemaLocation" xsiUrl, customWsSchemaLocation),
+            XAttribute(xname "rename_policy", (sprintf "%A" r.args.renamePolicy)),
             r.Files |>
             List.map(fun f ->
                     XElement(xname "Asn1File",

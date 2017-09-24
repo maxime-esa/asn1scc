@@ -410,22 +410,22 @@ let createStringFunction (r:Asn1AcnAst.AstRoot) (deps:Asn1AcnAst.AcnInsertedFiel
         let pp = match codec with CommonTypes.Encode -> p.getValue l | CommonTypes.Decode -> p.getPointer l
         let funcBodyContent = 
             match o.acnEncodingClass with
-            | Acn_Enc_String_uPER                                              -> uperFunc.funcBody p |> Option.map(fun x -> x.funcBody, x.errCodes, x.localVariables)
+            | Acn_Enc_String_uPER                                              -> uperFunc.funcBody_e errCode p |> Option.map(fun x -> x.funcBody, x.errCodes, x.localVariables)
             | Acn_Enc_String_uPER_Ascii                                        -> 
                 match o.maxSize = o.minSize with
-                | true      ->  Some (Acn_String_Ascii_FixSize pp (BigInteger o.maxSize) codec, [], [])
-                | false     ->  Some (Acn_String_Ascii_Internal_Field_Determinant pp (BigInteger o.maxSize) (BigInteger o.minSize) codec , [], [])
-            | Acn_Enc_String_Ascii_Null_Teminated                   nullChar   -> Some (Acn_String_Ascii_Null_Teminated pp (BigInteger o.maxSize) (nullChar.ToString()) codec, [], [])
+                | true      ->  Some (Acn_String_Ascii_FixSize pp (BigInteger o.maxSize) codec, [errCode], [])
+                | false     ->  Some (Acn_String_Ascii_Internal_Field_Determinant pp (BigInteger o.maxSize) (BigInteger o.minSize) codec , [errCode], [])
+            | Acn_Enc_String_Ascii_Null_Teminated                   nullChar   -> Some (Acn_String_Ascii_Null_Teminated pp (BigInteger o.maxSize) (nullChar.ToString()) codec, [errCode], [])
             | Acn_Enc_String_Ascii_External_Field_Determinant       _    -> 
                 let extField = getExternaField r deps t.id
-                Some(Acn_String_Ascii_External_Field_Determinant pp (BigInteger o.maxSize) extField codec, [], [])
+                Some(Acn_String_Ascii_External_Field_Determinant pp (BigInteger o.maxSize) extField codec, [errCode], [])
             | Acn_Enc_String_CharIndex_External_Field_Determinant   _    -> 
                 let extField = getExternaField r deps t.id
                 let arrAsciiCodes = o.uperCharSet |> Array.map(fun x -> BigInteger (System.Convert.ToInt32 x))
-                Some(Acn_String_CharIndex_External_Field_Determinant pp (BigInteger o.maxSize) arrAsciiCodes (BigInteger o.uperCharSet.Length) extField codec, [], [])
+                Some(Acn_String_CharIndex_External_Field_Determinant pp (BigInteger o.maxSize) arrAsciiCodes (BigInteger o.uperCharSet.Length) extField codec, [errCode], [])
         match funcBodyContent with
         | None -> None
-        | Some (funcBodyContent,errCodes, localVars) -> Some ({AcnFuncBodyResult.funcBody = funcBodyContent; errCodes = errCode::errCodes; localVariables = localVars})
+        | Some (funcBodyContent,errCodes, localVars) -> Some ({AcnFuncBodyResult.funcBody = funcBodyContent; errCodes = errCodes; localVariables = localVars})
     let soSparkAnnotations = None
     createPrimitiveFunction r l codec t typeDefinition  isValidFunc  funcBody soSparkAnnotations us
 
@@ -534,13 +534,13 @@ let createBitStringFunction (r:Asn1AcnAst.AstRoot) (deps:Asn1AcnAst.AcnInsertedF
         //let pp = match codec with CommonTypes.Encode -> p.getValue l | CommonTypes.Decode -> p.getPointer l
         let funcBodyContent = 
             match o.acnEncodingClass with
-            | SZ_EC_uPER                                              -> uperFunc.funcBody p |> Option.map(fun x -> x.funcBody, x.errCodes)
+            | SZ_EC_uPER                                              -> uperFunc.funcBody_e errCode p |> Option.map(fun x -> x.funcBody, x.errCodes)
             | SZ_EC_ExternalField   _    -> 
                 let extField = getExternaField r deps t.id
-                Some(bit_string_external_field p.p (p.getAcces l) (if o.minSize=0 then None else Some (BigInteger o.minSize)) (BigInteger o.maxSize) extField codec, [])
+                Some(bit_string_external_field p.p (p.getAcces l) (if o.minSize=0 then None else Some (BigInteger o.minSize)) (BigInteger o.maxSize) extField codec, [errCode])
         match funcBodyContent with
         | None -> None
-        | Some (funcBodyContent,errCodes) -> Some ({AcnFuncBodyResult.funcBody = funcBodyContent; errCodes = errCode::errCodes; localVariables = []})
+        | Some (funcBodyContent,errCodes) -> Some ({AcnFuncBodyResult.funcBody = funcBodyContent; errCodes = errCodes; localVariables = []})
     let soSparkAnnotations = None
     createPrimitiveFunction r l codec t typeDefinition  isValidFunc  funcBody soSparkAnnotations us
 

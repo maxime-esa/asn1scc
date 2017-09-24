@@ -371,7 +371,11 @@ let createOctetStringFunction (r:Asn1AcnAst.AstRoot) (l:ProgrammingLanguage) (t:
                     match id with
                     | ReferenceToValue (typePath,(VA2 vasName)::[]) -> None
                     | ReferenceToValue(ts,vs)                       ->
-                        Some ({AnonymousVariable.valueName = (recValue.getBackendName l); valueExpresion = (printValue None recValue.kind); typeDefinitionName = typeDefinition.typeDefinitionBodyWithinSeq}))
+                        let typeDefinitionName = 
+                            match t.tasInfo with
+                            | Some tasInfo    -> ToC2(r.args.TypePrefix + tasInfo.tasName)
+                            | None            -> typeDefinition.typeDefinitionBodyWithinSeq
+                        Some ({AnonymousVariable.valueName = (recValue.getBackendName l); valueExpresion = (printValue None recValue.kind); typeDefinitionName = typeDefinitionName}))
     let compareSingValueFunc (p:String) acc (v:Asn1AcnAst.OctetStringValue, (id,loc)) =
         let recValue = {Asn1Value.kind = OctetStringValue (v |> List.map(fun z -> z.Value)); id=id;loc=loc}
         let vstr = 
@@ -399,7 +403,11 @@ let createBitStringFunction (r:Asn1AcnAst.AstRoot) (l:ProgrammingLanguage) (t:As
                     match id with
                     | ReferenceToValue (typePath,(VA2 vasName)::[]) -> None
                     | ReferenceToValue(ts,vs)                       ->
-                        Some ({AnonymousVariable.valueName = (recValue.getBackendName l); valueExpresion = (printValue None recValue.kind); typeDefinitionName = typeDefinition.typeDefinitionBodyWithinSeq}))
+                        let typeDefinitionName = 
+                            match t.tasInfo with
+                            | Some tasInfo    -> ToC2(r.args.TypePrefix + tasInfo.tasName)
+                            | None            -> typeDefinition.typeDefinitionBodyWithinSeq
+                        Some ({AnonymousVariable.valueName = (recValue.getBackendName l); valueExpresion = (printValue None recValue.kind); typeDefinitionName = typeDefinitionName}))
     let compareSingValueFunc (p:String) acc (v:Asn1AcnAst.BitStringValue, (id,loc)) =
         let recValue = {Asn1Value.kind = BitStringValue (v.Value ); id=id;loc=loc}
         let vstr = 

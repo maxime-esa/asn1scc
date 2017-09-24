@@ -97,7 +97,7 @@ let createIntegerFunction (r:Asn1AcnAst.AstRoot) (l:ProgrammingLanguage) (codec:
                 | Some expFunc -> (Some (expFunc (p.getValue l)))
         let IntBod uperRange extCon =
             match uperRange with
-            | Concrete(min, max) when min=max                    -> IntNoneRequired pp min   errCode.errCodeName codec 
+            | Concrete(min, max) when min=max                    -> IntNoneRequired (p.getValue l) min   errCode.errCodeName codec 
             | Concrete(min, max) when min>=0I && (not extCon)    -> IntFullyConstraintPos pp min max (GetNumberOfBitsForNonNegativeInteger (max-min))  errCode.errCodeName codec
             | Concrete(min, max)                                 -> IntFullyConstraint pp min max (GetNumberOfBitsForNonNegativeInteger (max-min))  errCode.errCodeName codec
             | PosInf(a)  when a>=0I && (not extCon)  -> IntSemiConstraintPos pp a  errCode.errCodeName codec

@@ -468,7 +468,7 @@ and ChChildInfo = {
     Name                        : StringLoc
     c_name                      : string
     ada_name                    : string                     
-    present_when_name           : string // Does not contain the "_PRESENT". Not to be used directly by backends.
+    _present_when_name_private  : string // Does not contain the "_PRESENT". Not to be used directly by backends. Backends should use presentWhenName
     acnPresentWhenConditions    : Asn1AcnAst.AcnPresentWhenConditionChoiceChild list
     Comments                    : string array
 
@@ -538,6 +538,9 @@ and Asn1Type = {
     acnAligment     : Asn1AcnAst.AcnAligment option
     acnParameters   : AcnParameter list
     Location        : SrcLoc //Line no, Char pos
+
+    //when tasInfo has a value it indicates that this type is
+    //a specialization of a reference type.
     tasInfo         : TypeAssignmentInfo option
     Kind            : Asn1TypeKind
 }

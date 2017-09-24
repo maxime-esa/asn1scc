@@ -403,7 +403,7 @@ let private createChoiceChild (r:Asn1AcnAst.AstRoot) (l:ProgrammingLanguage) (m:
             ChChildInfo.Name     = ch.Name
             c_name             = ch.c_name
             ada_name           = ch.ada_name
-            present_when_name  = ch.present_when_name
+            _present_when_name_private  = ch.present_when_name
             acnPresentWhenConditions = ch.acnPresentWhenConditions
             chType              = newChildType
             Comments            = ch.Comments

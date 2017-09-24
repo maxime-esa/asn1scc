@@ -285,10 +285,10 @@ type TypeAssignment with
     member ref.AsTypeAssignmentInfo modName=  {TypeAssignmentInfo.modName = modName; tasName = ref.Name.Value}
 
 type Asn1AcnAst.ChChildInfo with
-    member this.presentWhenName = (ToC this.Name.Value) + "_PRESENT"
+    member this.presentWhenName = (ToC this.present_when_name) + "_PRESENT"
 
 type ChChildInfo with
-    member this.presentWhenName = (ToC this.Name.Value) + "_PRESENT"
+    member this.presentWhenName = (ToC this._present_when_name_private) + "_PRESENT"
 
 type SeqChildInfo with
     member this.acnInsertetField =
