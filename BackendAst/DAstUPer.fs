@@ -254,10 +254,11 @@ let createBitStringFunction (r:Asn1AcnAst.AstRoot) (l:ProgrammingLanguage) (code
         match o.minSize <> o.maxSize && codec = Codec.Decode with
         | false  -> []
         | true ->
-            let lv = SequenceOfIndex (t.id.SeqeuenceOfLevel + 1, None)
             match l with
-            | Ada  -> lv::[IntegerLocalVariable ("nStringLength", None)]
-            | C    -> lv::[Asn1SIntLocalVariable ("nCount", None)]
+            | Ada  -> 
+                let lv = SequenceOfIndex (t.id.SeqeuenceOfLevel + 1, None)
+                lv::[IntegerLocalVariable ("nStringLength", None)]
+            | C    -> [Asn1SIntLocalVariable ("nCount", None)]
     let funcBody (errCode:ErroCode) (p:FuncParamType) = 
         let funcBodyContent = 
             match l with

@@ -16,7 +16,6 @@ END
 --TCLFC    MyPDU[encoding pos-int, size 36]         $$$ File:sample1.acn, line:4, The applied ACN encoding does not allow values larger than 68719476735 to be encoded, while the corresponding ASN.1 type allows values up to 68719476736
 
 --TCLFC     MyPDU[encoding ASCII, size 88]       $$$ File:sample1.acn, line:4, The applied ACN encoding does not allow values larger than 9999999999 to be encoded, while the corresponding ASN.1 type allows values up to 68719476736
---TCLFC    CONSTANT WSIZE ::=37 CONSTANT WSIZE2 ::=37 - 1 MyPDU[encoding twos-complement, size WSIZE2]      $$$ File:sample1.acn, line:4, The applied ACN encoding does not allow values larger than 34359738367 to be encoded, while the corresponding ASN.1 type allows values up to 68719476736
 --TCLS     MyPDU[encoding ASCII, size 104]
 --TCLS     MyPDU[encoding BCD, size 44]
 --TCLS     MyPDU[encoding BCD, size 48]
@@ -28,7 +27,7 @@ END
 --TCLFC     MyPDU[encoding BCD, size -200]     $$$  File sample1.acn, line 4:21 no viable alternative at input 'size'
 --TCLS     MyPDU[encoding pos-int, size 37]
 --TCLS     MyPDU[]
---TCLFC     CONSTANT WSIZE ::=37 CONSTANT WSIZE2 ::=37+1 MyPDU[encoding twos-complement, size WSIZE2]  $$$ Acn property twos-complement cannot be applied to non negative INTEGER types
+--TCLFC     CONSTANT WSIZE ::=37 CONSTANT WSIZE2 ::=37+1 MyPDU[encoding twos-complement, size WSIZE2]  $$$ File:sample1.acn, line:4, Acn property twos-complement cannot be applied to non negative INTEGER types
 --TCLS     MyPDU[encoding pos-int, size 64]		
 --TCLFC    MyPDU[encoding pos-int, size h9hd]       $$$ File:sample1.acn, line:4, Expecting an Integer value or an ACN constant as value for the size property
 
@@ -36,6 +35,7 @@ END
 -- TCLS     MyPDU[encoding ASCII, size null-terminated]
 -- TCLFC     MyPDU[encoding ASCII, size 200]      $$$ File:sample1.acn, line:4, Resulting integer encoding can have values up to 999999999999999999999999 which is larger than MAXINT (9223372036854775807)
 
+--TCLFC    CONSTANT WSIZE ::=37 CONSTANT WSIZE2 ::=37 - 1 MyPDU[encoding twos-complement, size WSIZE2]      $$$ File:sample1.acn, line:4, Acn property twos-complement cannot be applied to non negative INTEGER types
 
         
 --   TC   Test Case 

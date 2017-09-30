@@ -1,6 +1,7 @@
 ﻿module CommonTypes
 open FsUtils
-
+open System
+open System.Numerics
 
 let c_keyworkds =  [ "auto"; "break"; "case"; "char"; "const"; "continue"; "default"; "do"; "double"; "else"; "enum"; "extern"; "float"; "for"; "goto"; "if"; "int"; "long"; "register"; "return"; "short"; "signed"; "sizeof"; "static"; "struct"; "switch"; "typedef"; "union"; "unsigned"; "void"; "volatile"; "while"; ]
 let ada_keyworkds =  [ "abort"; "else"; "new"; "return"; "abs"; "elsif"; "not"; "reverse"; "abstract"; "end"; "null"; "accept"; "entry"; "select"; "access"; "exception"; "of"; "separate"; "aliased"; "exit"; "or"; "some"; "all"; "others"; "subtype"; "and"; "for"; "out"; "synchronized"; "array"; "function"; "overriding"; "at"; "tagged"; "generic"; "package"; "task"; "begin"; "goto"; "pragma"; "terminate"; "body"; "private"; "then"; "if"; "procedure"; "type"; "case"; "in"; "protected"; "constant"; "interface"; "until"; "is"; "raise"; "use"; "declare"; "range"; "delay"; "limited"; "record"; "when"; "delta"; "loop"; "rem"; "while"; "digits"; "renames"; "with"; "do"; "mod"; "requeue"; "xor" ]
@@ -71,6 +72,30 @@ type CommandLineSettings = {
     integerSizeInBytes : int            //currently only the value of 8 bytes (64 bits) is supported
     renamePolicy :  EnumRenamePolicy
 }
+with 
+  member this.SIntMax =
+    match this.integerSizeInBytes with
+    | 8     -> BigInteger(Int64.MaxValue)
+    | 4     -> BigInteger(Int32.MaxValue)
+    | _     -> BigInteger.Pow(2I, this.integerSizeInBytes*8 - 1) - 1I
+  member this.SIntMin =
+    match this.integerSizeInBytes with
+    | 8     -> BigInteger(Int64.MinValue)
+    | 4     -> BigInteger(Int32.MinValue)
+    | _     -> -BigInteger.Pow(2I, this.integerSizeInBytes*8 - 1)
+  member this.UIntMax =
+    match this.integerSizeInBytes with
+    | 8     -> BigInteger(UInt64.MaxValue)
+    | 4     -> BigInteger(UInt32.MaxValue)
+    | _     -> BigInteger.Pow(2I, this.integerSizeInBytes*8) - 1I
+  member this.IntMax (isUnsigned:bool) =
+    match isUnsigned with
+    | true          -> this.UIntMax
+    | false         -> this.SIntMax
+  member this.IntMix (isUnsigned:bool) =
+    match isUnsigned with
+    | true          -> 0I
+    | false         -> this.SIntMin
 
 type ScopeNode =
     | MD of string          //MODULE

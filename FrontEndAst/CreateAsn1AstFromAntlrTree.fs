@@ -24,13 +24,23 @@ open CommonTypes
 
 //#nowarn "40"
 
-
+(*
 let rec getAsTupples<'T> (list:list<'T>) (empty:'T) =
     match list with
     | [] ->  []
     | head::[]  -> [(head,empty)]
     | a1::a2::tail -> (a1,a2)::getAsTupples tail empty
+*)
 
+let rec getAsTupples<'T> (list:array<'T>) (empty:'T) =
+    let mutable x = 0
+    seq {
+        while x < list.Length do
+            let a = list.[x]
+            let b = if x+1 < list.Length then list.[x+1] else empty
+            yield (a,b)
+            x <- x + 2
+    } |> Seq.toList
 
 let ConstraintNodes = [ asn1Parser.EXT_MARK; asn1Parser.UnionMark; asn1Parser.ALL_EXCEPT; asn1Parser.IntersectionMark; asn1Parser.EXCEPT;
                         asn1Parser.VALUE_RANGE_EXPR; asn1Parser.SUBTYPE_EXPR; asn1Parser.SIZE_EXPR; asn1Parser.PERMITTED_ALPHABET_EXPR;
@@ -235,7 +245,7 @@ and CreateValue (astRoot:list<ITree>) (tree:ITree ) : Asn1Value=
                 ChValue(chName, value)
             | asn1Parser.OctectStringLiteral    -> 
                 let strVal = GetActualString(tree.Text)
-                let chars = strVal.ToCharArray() |> Array.toList 
+                let chars = strVal.ToCharArray() 
                 let bytes = getAsTupples chars '0' |> List.map (fun (x1,x2)-> tree.GetValueL (System.Byte.Parse(x1.ToString()+x2.ToString(), System.Globalization.NumberStyles.AllowHexSpecifier))) 
                 OctetStringValue(bytes)
             | asn1Parser.EMPTY_LIST             ->  EmptyList

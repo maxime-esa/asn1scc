@@ -340,6 +340,7 @@ type uperRange<'a> =
     | Full                      // (-inf, +inf)
 
 
+
 type Integer = {
     acnProperties       : IntegerAcnProperties
     cons                : IntegerTypeConstraint list

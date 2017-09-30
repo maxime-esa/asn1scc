@@ -58,10 +58,12 @@ let GetIntEncodingClass (aligment: AcnAligment option) errLoc (p  : IntegerAcnPr
             | TwosComplement, Fixed(64), LittleEndianness    ->  TwosComplement_ConstSize_little_endian_64, 64, 64
             | TwosComplement, Fixed(fxVal) , BigEndianness   ->  TwosComplement_ConstSize fxVal, fxVal, fxVal
             | TwosComplement, IntNullTerminated _, _         ->  raise(SemanticError(errLoc, "Acn properties twos-complement and null-terminated are mutually exclusive"))
-            | IntAscii, Fixed(fxVal) , BigEndianness   ->  
+            | IntAscii, Fixed(fxVal) , BigEndianness  when fxVal % 8 <> 0       ->  raise(SemanticError(errLoc, "size value should be multiple of 8"))
+            | IntAscii, Fixed(fxVal) , BigEndianness         ->  
                 match bUINT with
                 | true                                          -> ASCII_UINT_ConstSize fxVal, fxVal, fxVal
                 | false                                         -> ASCII_ConstSize  fxVal, fxVal, fxVal
+            | BCD, Fixed(fxVal) , BigEndianness   when fxVal % 4 <> 0       ->  raise(SemanticError(errLoc, "size value should be multiple of 4"))
             | BCD, Fixed(fxVal) , BigEndianness                 ->  BCD_ConstSize fxVal, fxVal, fxVal
             | BCD, IntNullTerminated b, BigEndianness           ->  BCD_VarSize_NullTerminated b, 4, 19*4
             | IntAscii, IntNullTerminated b, BigEndianness         ->  
@@ -77,7 +79,7 @@ let GetIntEncodingClass (aligment: AcnAligment option) errLoc (p  : IntegerAcnPr
 let GetEnumeratedEncodingClass (items:NamedItem list) (aligment: AcnAligment option) errLoc (p  : IntegerAcnProperties) uperMinSizeInBits uperMaxSizeInBits endodeValues =
     match endodeValues with
     | false -> 
-        GetIntEncodingClass aligment errLoc p uperMinSizeInBits uperMaxSizeInBits false
+        GetIntEncodingClass aligment errLoc p uperMinSizeInBits uperMaxSizeInBits true
     | true  -> 
         let minVal = items |> List.map(fun x -> x.acnEncodeValue) |> List.min
         let maxVal = items |> List.map(fun x -> x.acnEncodeValue) |> List.max

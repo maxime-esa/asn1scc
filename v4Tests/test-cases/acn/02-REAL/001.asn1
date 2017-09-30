@@ -14,4 +14,4 @@ END
 --  TCLS     MyPDU[encoding IEEE754-1985-32]   /*In this test cases the final comparison failes due to conversion from double to float*/
 
 
---TCLFC     MyPDU[encoding ASCII, size 100]    $$$  File:sample1.acn, line:4, Acn property 'size' cannot be applied here
+--TCLFC     MyPDU[encoding ASCII, size 100]    $$$  File:sample1.acn, line:4, Acn property 'size' cannot be applied to REAL types
