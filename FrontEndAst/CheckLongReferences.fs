@@ -184,12 +184,12 @@ let choiceEnumReference (r:AstRoot) (curState:AcnInsertedFieldDependencies) (par
     let children = ch.children
     let checkEnumNamesConsistency loc (nmItems:NamedItem list) =
         match children.Length <> nmItems.Length with
-        | true  -> raise(SemanticError(loc, (sprintf "Enum determinant items do not match with choice alternative names " )))
+        | true  -> raise(SemanticError(loc, (sprintf "expecting an enumerated field with names matching the choice names" )))
         | false ->
             let allNamesMatch = List.zip (children |> List.map(fun z -> z.Name.Value)) (nmItems |> List.map(fun z -> z.Name.Value)) |> Seq.forall(fun (x1,x2) -> x1 = x2)
             match allNamesMatch with
             | true  -> ()
-            | false -> raise(SemanticError(loc, (sprintf "Enum determinant items do not match with choice alternative names " )))
+            | false -> raise(SemanticError(loc, (sprintf "expecting an enumerated field with names matching the choice names" )))
 
     match rp with
     | None      -> curState
