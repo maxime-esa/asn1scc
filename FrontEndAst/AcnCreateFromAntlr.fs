@@ -1032,7 +1032,8 @@ let rec private mergeType (asn1:Asn1Ast.AstRoot) (acn:AcnAst) (m:Asn1Ast.Asn1Mod
                 | Some acnType  -> 
                     match acnType.children with
                     | []    -> None, []
-                    | c1::_ -> Some c1.childEncodingSpec, c1.argumentList
+                    | c1::[] -> Some c1.childEncodingSpec, c1.argumentList
+                    | c1::c2::_      -> raise(SemanticError(c1.name.Location, (sprintf "%s Unexpected field name" c2.name.Value)))
             let newChType : Asn1Type = mergeType asn1 acn m chType (curPath@[SQF]) childEncSpec [] childWithCons  acnArgs [] None
 
             let sizeUperRange = uPER.getSequenceOfUperRange cons t.Location
@@ -1106,7 +1107,7 @@ let rec private mergeType (asn1:Asn1Ast.AstRoot) (acn:AcnAst) (m:Asn1Ast.Asn1Mod
                     let checkForPresentWhenConditions () =
                         match acnPresentWhenConditions with
                         | []    -> ()
-                        | _     -> raise(SemanticError(cc.Value.name.Location, (sprintf "present-when attribute cannot be applied here since component %s is not optional " cc.Value.name.Value)))
+                        | _     -> raise(SemanticError(cc.Value.name.Location, (sprintf "present-when attribute cannot be applied here since component %s is not optional" cc.Value.name.Value)))
 
                     match newOptionality with
                     | None  

@@ -13,25 +13,26 @@ open DAstUtilFunctions
 
 let private getTypeDependencies (t:Asn1Type) : (TypeAssignmentInfo list )  
     =
+    let prms = t.acnParameters |> List.choose(fun z -> match z.asn1Type with Asn1AcnAst.AcnPrmRefType (mdName,tsName) -> Some ({TypeAssignmentInfo.modName = mdName.Value; tasName = tsName.Value}) | _ -> None )    
     DastFold.foldAsn1Type
         t
         ()
-        (fun o newBase us -> [])
-        (fun o newBase us -> [])
-        (fun o newBase us -> [])
-        (fun o newBase us -> [])
-        (fun o newBase us -> [])
-        (fun o newBase us -> [])
-        (fun o newBase us -> [])
-        (fun o newBase us -> [])
-        (fun o sqo child ->  child)
-        (fun _ _ ch newChild -> newChild, ())
-        (fun _ _ _ _ -> [], ())
-        (fun o sq (children,_) -> children |> List.collect id)
-        (fun _ _ ch newChild -> newChild, ())
-        (fun o ch (children, _) -> children|> List.collect id)
-        (fun o ref baseType -> ref.AsTypeAssignmentInfo::baseType)
-        (fun o newKind  -> newKind)
+        (fun o newBase us -> prms)
+        (fun o newBase us -> prms)
+        (fun o newBase us -> prms)
+        (fun o newBase us -> prms)
+        (fun o newBase us -> prms)
+        (fun o newBase us -> prms)
+        (fun o newBase us -> prms)
+        (fun o newBase us -> prms)
+        (fun o sqo child ->  child@prms)
+        (fun _ _ ch newChild -> newChild@prms, ())
+        (fun _ _ _ _ -> prms, ())
+        (fun o sq (children,_) -> (children |> List.collect id)@prms)
+        (fun _ _ ch newChild -> newChild@prms, ())
+        (fun o ch (children, _) -> (children|> List.collect id)@prms)
+        (fun o ref baseType -> (ref.AsTypeAssignmentInfo::baseType)@prms)
+        (fun o newKind  -> newKind@prms)
 
 
         

@@ -27,17 +27,14 @@ let createInitFunctionCommon (r:Asn1AcnAst.AstRoot) (l:ProgrammingLanguage)   (o
     let varName = p.p
     let sStar = p.getStar l
 
-    let  func  = 
+    let  func, funcDef  = 
             match funcName  with
-            | None              -> None
+            | None              -> None, None
             | Some funcName     -> 
-                let content = funcBody p iv
-                Some(initTypeAssignment varName sStar funcName  typeDefinition.name content )
-    let  funcDef  = 
-            match funcName with
-            | None              -> None
-            | Some funcName     -> 
-                Some(initTypeAssignment_def varName sStar funcName  typeDefinition.name)
+                let content:string = funcBody p iv
+                match (content.Trim()) with
+                | ""        -> None, None
+                | _         -> Some(initTypeAssignment varName sStar funcName  typeDefinition.name content ), Some(initTypeAssignment_def varName sStar funcName  typeDefinition.name)
 
 
     {
@@ -76,7 +73,7 @@ let createIA5StringInitFunc (r:Asn1AcnAst.AstRoot) (l:ProgrammingLanguage) (t:As
                 iv
             | _                 -> raise(BugErrorException "UnexpectedValue")
         let arrNuls = [0 .. (o.maxSize- vl.Length)]|>Seq.map(fun x -> variables_a.PrintStringValueNull())
-        initIA5String (p.getPointer l) (vl.Replace("\"","\"\"")) arrNuls
+        initIA5String (p.getValue l) (vl.Replace("\"","\"\"")) arrNuls
     createInitFunctionCommon r l t typeDefinition funcBody iv 
 
 let createOctetStringInitFunc (r:Asn1AcnAst.AstRoot) (l:ProgrammingLanguage) (t:Asn1AcnAst.Asn1Type) (o :Asn1AcnAst.OctetString ) (typeDefinition:TypeDefinitionCommon) iv = 

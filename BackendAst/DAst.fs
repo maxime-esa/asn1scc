@@ -9,6 +9,12 @@ open CommonTypes
 //open Constraints
 
 
+type State = {
+    curSeqOfLevel : int
+    currErrorCode   : int
+    curErrCodeNames : Set<String>
+}
+
 
 
 
@@ -433,7 +439,7 @@ and Asn1Child = {
     c_name                      : string
     ada_name                    : string                     
     isEqualBodyStats            : string -> string  -> string -> (string*(LocalVariable list)) option  // 
-    isValidBodyStats            : int -> (SeqChoiceChildInfoIsValid option * int)
+    isValidBodyStats            : State -> (SeqChoiceChildInfoIsValid option * State)
     Type                        : Asn1Type
     Optionality                 : Asn1AcnAst.Asn1Optionality option
     Comments                    : string array
@@ -476,7 +482,7 @@ and ChChildInfo = {
     
     //DAst properties
     isEqualBodyStats    : string -> string -> string -> string*(LocalVariable list) // 
-    isValidBodyStats    : int -> (SeqChoiceChildInfoIsValid option * int)
+    isValidBodyStats    : State -> (SeqChoiceChildInfoIsValid option * State)
 }
 
 and Choice = {
@@ -560,13 +566,17 @@ and Asn1TypeKind =
     | Choice            of Choice
     | ReferenceType     of ReferenceType
 
-type State = {
-    curSeqOfLevel : int
-    currentTypes  : Asn1Type list
-    currErrCode   : int
 
-}
 
+let getNextValidErrorCode (cur:State) (errCodeName:string) =
+    let rec getErroCode (errCodeName:string) = 
+        match cur.curErrCodeNames.Contains errCodeName with
+        | false -> {ErroCode.errCodeName = errCodeName; errCodeValue = cur.currErrorCode}
+        | true  -> 
+            getErroCode (errCodeName + "_2")
+
+    let errCode = getErroCode errCodeName
+    errCode, {cur with currErrorCode = cur.currErrorCode + 1; curErrCodeNames = cur.curErrCodeNames.Add errCode.errCodeName}
 
 type TypeAssignment = {
     Name:StringLoc

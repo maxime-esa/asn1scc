@@ -73,8 +73,7 @@ let getDeterminantTypeCheckEqual (r:Asn1AcnAst.AstRoot) (l:ProgrammingLanguage) 
 let createPrimitiveFunction (r:Asn1AcnAst.AstRoot) (l:ProgrammingLanguage) (codec:CommonTypes.Codec) (t:Asn1AcnAst.Asn1Type) (typeDefinition:TypeDefinitionCommon) (isValidFunc: IsValidFunction option)  (funcBody:ErroCode->((Asn1AcnAst.RelativePath*Asn1AcnAst.AcnParameter) list) -> FuncParamType -> (AcnFuncBodyResult option)) soSparkAnnotations (us:State)  =
     let funcNameAndtasInfo   = getFuncName r l codec t.id
     let errCodeName         = ToC ("ERR_ACN" + (codec.suffix.ToUpper()) + "_" + ((t.id.AcnAbsPath |> Seq.skip 1 |> Seq.StrJoin("-")).Replace("#","elm")))
-    let errCodeValue        = us.currErrCode
-    let errCode             = {ErroCode.errCodeName = errCodeName; errCodeValue = errCodeValue}
+    let errCode, ns = getNextValidErrorCode us errCodeName
 
     let EmitTypeAssignment_primitive     =  match l with C -> acn_c.EmitTypeAssignment_primitive        | Ada -> acn_c.EmitTypeAssignment_primitive
     let EmitTypeAssignment_primitive_def =  match l with C -> acn_c.EmitTypeAssignment_primitive_def    | Ada -> acn_c.EmitTypeAssignment_primitive_def
@@ -122,7 +121,7 @@ let createPrimitiveFunction (r:Asn1AcnAst.AstRoot) (l:ProgrammingLanguage) (code
             funcDef                    = funcDef
             funcBody                   = funcBody
         }
-    ret, {us with currErrCode = us.currErrCode + 1}
+    ret, ns
 
 let private createAcnIntegerFunctionInternal (r:Asn1AcnAst.AstRoot) (l:ProgrammingLanguage) (codec:CommonTypes.Codec) acnEncodingClass (uperfuncBody : ErroCode -> FuncParamType -> (UPERFuncBodyResult option)) : (ErroCode -> ((Asn1AcnAst.RelativePath*Asn1AcnAst.AcnParameter) list) -> FuncParamType -> (AcnFuncBodyResult option))  =
     let PositiveInteger_ConstSize_8                  = match l with C -> acn_c.PositiveInteger_ConstSize_8                | Ada -> acn_c.PositiveInteger_ConstSize_8               
@@ -188,8 +187,7 @@ let private createAcnIntegerFunctionInternal (r:Asn1AcnAst.AstRoot) (l:Programmi
 
 let createAcnIntegerFunction (r:Asn1AcnAst.AstRoot) (l:ProgrammingLanguage) (codec:CommonTypes.Codec) (typeId : ReferenceToType) (t:Asn1AcnAst.AcnInteger)  (us:State)  =
     let errCodeName         = ToC ("ERR_ACN" + (codec.suffix.ToUpper()) + "_" + ((typeId.AcnAbsPath |> Seq.skip 1 |> Seq.StrJoin("-")).Replace("#","elm")))
-    let errCodeValue        = us.currErrCode
-    let errCode             = {ErroCode.errCodeName = errCodeName; errCodeValue = errCodeValue}
+    let errCode, ns = getNextValidErrorCode us errCodeName
 
     let uperFuncBody (errCode) (p:FuncParamType) = 
         let pp = match codec with CommonTypes.Encode -> p.getValue l | CommonTypes.Decode -> p.getPointer l
@@ -198,7 +196,7 @@ let createAcnIntegerFunction (r:Asn1AcnAst.AstRoot) (l:ProgrammingLanguage) (cod
         Some {UPERFuncBodyResult.funcBody = funcBodyContent; errCodes = [errCode]; localVariables = []}    
 
     let funcBody = createAcnIntegerFunctionInternal r l codec t.acnEncodingClass uperFuncBody
-    (funcBody errCode), {us with currErrCode = us.currErrCode + 1}
+    (funcBody errCode), ns
 
 
 
@@ -248,11 +246,10 @@ let createEnumeratedFunction (r:Asn1AcnAst.AstRoot) (l:ProgrammingLanguage) (cod
 
 let createAcnEnumeratedFunction (r:Asn1AcnAst.AstRoot) (l:ProgrammingLanguage) (codec:CommonTypes.Codec) (typeId : ReferenceToType) (t:Asn1AcnAst.AcnReferenceToEnumerated)  (us:State)  =
     let errCodeName         = ToC ("ERR_ACN" + (codec.suffix.ToUpper()) + "_" + ((typeId.AcnAbsPath |> Seq.skip 1 |> Seq.StrJoin("-")).Replace("#","elm")))
-    let errCodeValue        = us.currErrCode
-    let errCode             = {ErroCode.errCodeName = errCodeName; errCodeValue = errCodeValue}
+    let errCode, ns = getNextValidErrorCode us errCodeName
     let typeDefinitionName = ToC2(r.args.TypePrefix + t.tasName.Value)
     let funcBody = createEnumComn r l codec typeId t.enumerated typeDefinitionName
-    (funcBody errCode), {us with currErrCode = us.currErrCode + 1}
+    (funcBody errCode), ns
 
 
 
@@ -299,8 +296,7 @@ let nestChildItems (l:ProgrammingLanguage) (codec:CommonTypes.Codec) children =
 
 let createAcnBooleanFunction (r:Asn1AcnAst.AstRoot) (l:ProgrammingLanguage) (codec:CommonTypes.Codec)  (typeId : ReferenceToType) (o:Asn1AcnAst.AcnBoolean)  (us:State)  =
     let errCodeName         = ToC ("ERR_ACN" + (codec.suffix.ToUpper()) + "_" + ((typeId.AcnAbsPath |> Seq.skip 1 |> Seq.StrJoin("-")).Replace("#","elm")))
-    let errCodeValue        = us.currErrCode
-    let errCode             = {ErroCode.errCodeName = errCodeName; errCodeValue = errCodeValue}
+    let errCode, ns = getNextValidErrorCode us errCodeName
 
     let funcBody (errCode:ErroCode) (acnArgs: (Asn1AcnAst.RelativePath*Asn1AcnAst.AcnParameter) list) (p:FuncParamType) = 
         let pp = match codec with CommonTypes.Encode -> p.getValue l | CommonTypes.Decode -> p.getPointer l
@@ -308,7 +304,7 @@ let createAcnBooleanFunction (r:Asn1AcnAst.AstRoot) (l:ProgrammingLanguage) (cod
         let funcBodyContent = 
             Boolean pp errCode.errCodeName codec
         Some {AcnFuncBodyResult.funcBody = funcBodyContent; errCodes = [errCode]; localVariables = []}    
-    (funcBody errCode), {us with currErrCode = us.currErrCode + 1}
+    (funcBody errCode), ns
 
 let createBooleanFunction (r:Asn1AcnAst.AstRoot) (l:ProgrammingLanguage) (codec:CommonTypes.Codec) (t:Asn1AcnAst.Asn1Type) (o:Asn1AcnAst.Boolean) (typeDefinition:TypeDefinitionCommon) (baseTypeUperFunc : AcnFunction option) (isValidFunc: IsValidFunction option) (us:State)  =
     let funcBody (errCode:ErroCode) (acnArgs: (Asn1AcnAst.RelativePath*Asn1AcnAst.AcnParameter) list) (p:FuncParamType) = 
@@ -340,8 +336,7 @@ let createBooleanFunction (r:Asn1AcnAst.AstRoot) (l:ProgrammingLanguage) (codec:
 
 let createAcnNullTypeFunction (r:Asn1AcnAst.AstRoot) (l:ProgrammingLanguage) (codec:CommonTypes.Codec)  (typeId : ReferenceToType) (o:Asn1AcnAst.AcnNullType)  (us:State)  =
     let errCodeName         = ToC ("ERR_ACN" + (codec.suffix.ToUpper()) + "_" + ((typeId.AcnAbsPath |> Seq.skip 1 |> Seq.StrJoin("-")).Replace("#","elm")))
-    let errCodeValue        = us.currErrCode
-    let errCode             = {ErroCode.errCodeName = errCodeName; errCodeValue = errCodeValue}
+    let errCode, ns = getNextValidErrorCode us errCodeName
 
     let funcBody (errCode:ErroCode) (acnArgs: (Asn1AcnAst.RelativePath*Asn1AcnAst.AcnParameter) list) (p:FuncParamType) = 
         let pp = match codec with CommonTypes.Encode -> p.getValue l | CommonTypes.Decode -> p.getPointer l
@@ -352,7 +347,7 @@ let createAcnNullTypeFunction (r:Asn1AcnAst.AstRoot) (l:ProgrammingLanguage) (co
             let arrBytes = bitStringValueToByteArray encPattern
             let ret = nullType arrBytes (BigInteger encPattern.Value.Length) codec
             Some ({AcnFuncBodyResult.funcBody = ret; errCodes = [errCode]; localVariables = []})
-    (funcBody errCode), {us with currErrCode = us.currErrCode + 1}
+    (funcBody errCode), ns
 
 let createNullTypeFunction (r:Asn1AcnAst.AstRoot) (l:ProgrammingLanguage) (codec:CommonTypes.Codec) (t:Asn1AcnAst.Asn1Type) (o:Asn1AcnAst.NullType) (typeDefinition:TypeDefinitionCommon) (isValidFunc: IsValidFunction option) (us:State)  =
     let funcBody (errCode:ErroCode) (acnArgs: (Asn1AcnAst.RelativePath*Asn1AcnAst.AcnParameter) list) (p:FuncParamType) = 
@@ -432,8 +427,7 @@ let createStringFunction (r:Asn1AcnAst.AstRoot) (deps:Asn1AcnAst.AcnInsertedFiel
 
 let createAcnStringFunction (r:Asn1AcnAst.AstRoot) (deps:Asn1AcnAst.AcnInsertedFieldDependencies) (l:ProgrammingLanguage) (codec:CommonTypes.Codec) (typeId : ReferenceToType) (t:Asn1AcnAst.AcnReferenceToIA5String)  (us:State)  =
     let errCodeName         = ToC ("ERR_ACN" + (codec.suffix.ToUpper()) + "_" + ((typeId.AcnAbsPath |> Seq.skip 1 |> Seq.StrJoin("-")).Replace("#","elm")))
-    let errCodeValue        = us.currErrCode
-    let errCode             = {ErroCode.errCodeName = errCodeName; errCodeValue = errCodeValue}
+    let errCode, ns = getNextValidErrorCode us errCodeName
     let Acn_String_Ascii_FixSize                            = match l with C -> acn_c.Acn_String_Ascii_FixSize                          | Ada -> acn_c.Acn_String_Ascii_FixSize
     let Acn_String_Ascii_Internal_Field_Determinant         = match l with C -> acn_c.Acn_String_Ascii_Internal_Field_Determinant       | Ada -> acn_c.Acn_String_Ascii_Internal_Field_Determinant
     let Acn_String_Ascii_Null_Teminated                     = match l with C -> acn_c.Acn_String_Ascii_Null_Teminated                   | Ada -> acn_c.Acn_String_Ascii_Null_Teminated
@@ -503,7 +497,7 @@ let createAcnStringFunction (r:Asn1AcnAst.AstRoot) (deps:Asn1AcnAst.AcnInsertedF
         | Some (funcBodyContent,errCodes) -> Some ({AcnFuncBodyResult.funcBody = funcBodyContent; errCodes = errCode::errCodes; localVariables = []})
 
 
-    (funcBody errCode), {us with currErrCode = us.currErrCode + 1}
+    (funcBody errCode), ns
 
 
 let createOctetStringFunction (r:Asn1AcnAst.AstRoot) (deps:Asn1AcnAst.AcnInsertedFieldDependencies) (l:ProgrammingLanguage) (codec:CommonTypes.Codec) (t:Asn1AcnAst.Asn1Type) (o:Asn1AcnAst.OctetString) (typeDefinition:TypeDefinitionCommon) (isValidFunc: IsValidFunction option) (uperFunc: UPerFunction) (us:State)  =
@@ -679,9 +673,11 @@ and getUpdateFunctionUsedInEncoding (r:Asn1AcnAst.AstRoot) (deps:Asn1AcnAst.AcnI
         ret, ns
     | d1::dds         -> 
         let errCodeName         = ToC ("ERR_ACN" + (Encode.suffix.ToUpper()) + "_UPDATE_" + ((acnChildOrAcnParameterId.AcnAbsPath |> Seq.skip 1 |> Seq.StrJoin("-")).Replace("#","elm")))
-        let errCodeValue        = us.currErrCode
-        let errCode             = {ErroCode.errCodeName = errCodeName; errCodeValue = errCodeValue}
-        let us = {us with currErrCode = us.currErrCode + 1}
+        //let errCode             = {ErroCode.errCodeName = errCodeName; errCodeValue = errCodeValue}
+        //let errCodeValue        = us.currErrCode
+        //let us = {us with currErrCode = us.currErrCode + 1}
+        let errCode, us = getNextValidErrorCode us errCodeName
+
 
         let ds = d1::dds
         let c_name0 = sprintf "%s%02d" (getAcnDeterminantName acnChildOrAcnParameterId) 0

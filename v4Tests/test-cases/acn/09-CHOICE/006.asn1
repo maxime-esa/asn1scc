@@ -29,7 +29,7 @@ TEST-CASE DEFINITIONS AUTOMATIC TAGS::= BEGIN
 		}
 	}
 	
-	pdu1 MyPDU ::= {a gg, b gg : {int1 10, int2 200, enm pone, buf '00112233445566778899'H }}
+--	pdu1 MyPDU ::= {a gg, b gg : {int1 10, int2 200, enm pone, buf '00112233445566778899'H }}
 
 END
 

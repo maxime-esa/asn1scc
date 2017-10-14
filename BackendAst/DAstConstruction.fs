@@ -111,7 +111,8 @@ let private createReal (r:Asn1AcnAst.AstRoot) (l:ProgrammingLanguage) (m:Asn1Acn
 
 
 let private createStringType (r:Asn1AcnAst.AstRoot) (deps:Asn1AcnAst.AcnInsertedFieldDependencies) (l:ProgrammingLanguage) (m:Asn1AcnAst.Asn1Module) (t:Asn1AcnAst.Asn1Type) (o:Asn1AcnAst.StringType) (us:State) =
-    let typeDefinition = DAstTypeDefinition.createString  r l t o us
+    let newPrms, us0 = t.acnParameters |> foldMap(fun ns p -> mapAcnParameter r deps l m t p ns) us
+    let typeDefinition = DAstTypeDefinition.createString  r l t o us0
     let initialValue        =
         let ch = 
             match o.uperCharSet |> Seq.exists((=) ' ') with
@@ -138,11 +139,12 @@ let private createStringType (r:Asn1AcnAst.AstRoot) (deps:Asn1AcnAst.AcnInserted
             acnEncFunction      = acnEncFunction
             acnDecFunction      = acnDecFunction
         }
-    (ret,[]), s5
+    (ret,newPrms), s5
 
 
 let private createOctetString (r:Asn1AcnAst.AstRoot) (deps:Asn1AcnAst.AcnInsertedFieldDependencies) (l:ProgrammingLanguage) (m:Asn1AcnAst.Asn1Module) (t:Asn1AcnAst.Asn1Type) (o:Asn1AcnAst.OctetString) (us:State) =
-    let typeDefinition = DAstTypeDefinition.createOctet  r l t o us
+    let newPrms, us0 = t.acnParameters |> foldMap(fun ns p -> mapAcnParameter r deps l m t p ns) us
+    let typeDefinition = DAstTypeDefinition.createOctet  r l t o us0
     let initialValue        =
         [1 .. o.minSize] |> List.map(fun i -> 0uy)
     let initFunction        = DAstInitialize.createOctetStringInitFunc r l t o typeDefinition (OctetStringValue initialValue)
@@ -168,7 +170,7 @@ let private createOctetString (r:Asn1AcnAst.AstRoot) (deps:Asn1AcnAst.AcnInserte
             acnEncFunction      = acnEncFunction
             acnDecFunction      = acnDecFunction
         }
-    ((OctetString ret),[]), s5
+    ((OctetString ret),newPrms), s5
 
 
 
@@ -198,7 +200,8 @@ let private createNullType (r:Asn1AcnAst.AstRoot) (l:ProgrammingLanguage) (m:Asn
 
 
 let private createBitString (r:Asn1AcnAst.AstRoot) (deps:Asn1AcnAst.AcnInsertedFieldDependencies) (l:ProgrammingLanguage) (m:Asn1AcnAst.Asn1Module) (t:Asn1AcnAst.Asn1Type) (o:Asn1AcnAst.BitString) (us:State) =
-    let typeDefinition = DAstTypeDefinition.createBitString  r l t o us
+    let newPrms, us0 = t.acnParameters |> foldMap(fun ns p -> mapAcnParameter r deps l m t p ns) us
+    let typeDefinition = DAstTypeDefinition.createBitString  r l t o us0
     let initialValue        =
         System.String('0', o.minSize)
         
@@ -224,7 +227,7 @@ let private createBitString (r:Asn1AcnAst.AstRoot) (deps:Asn1AcnAst.AcnInsertedF
             acnEncFunction      = acnEncFunction
             acnDecFunction      = acnDecFunction
         }
-    ((BitString ret),[]), s5
+    ((BitString ret),newPrms), s5
 
 
 let private createBoolean (r:Asn1AcnAst.AstRoot) (l:ProgrammingLanguage) (m:Asn1AcnAst.Asn1Module) (t:Asn1AcnAst.Asn1Type) (o:Asn1AcnAst.Boolean) (us:State) =
@@ -287,7 +290,8 @@ let private createEnumerated (r:Asn1AcnAst.AstRoot) (l:ProgrammingLanguage) (m:A
 
 
 let private createSequenceOf (r:Asn1AcnAst.AstRoot) (deps:Asn1AcnAst.AcnInsertedFieldDependencies) (l:ProgrammingLanguage) (m:Asn1AcnAst.Asn1Module) (t:Asn1AcnAst.Asn1Type) (o:Asn1AcnAst.SequenceOf) (childType:Asn1Type, us:State) =
-    let typeDefinition = DAstTypeDefinition.createSequenceOf r l t o childType.typeDefinition us
+    let newPrms, us0 = t.acnParameters |> foldMap(fun ns p -> mapAcnParameter r deps l m t p ns) us
+    let typeDefinition = DAstTypeDefinition.createSequenceOf r l t o childType.typeDefinition us0
     let initialValue =
         [1 .. o.minSize] |> List.map(fun i -> childType.initialValue) |> List.map(fun x -> {Asn1Value.kind=x;id=ReferenceToValue([],[]);loc=emptyLocation}) 
     let initFunction        = DAstInitialize.createSequenceOfInitFunc r l t o typeDefinition childType (SeqOfValue initialValue)
@@ -311,7 +315,7 @@ let private createSequenceOf (r:Asn1AcnAst.AstRoot) (deps:Asn1AcnAst.AcnInserted
             acnEncFunction      = acnEncFunction
             acnDecFunction      = acnDecFunction
         }
-    ((SequenceOf ret),[]), s5
+    ((SequenceOf ret),newPrms), s5
 
 
 
@@ -412,7 +416,8 @@ let private createChoiceChild (r:Asn1AcnAst.AstRoot) (l:ProgrammingLanguage) (m:
         }
     ret, us
 
-let private createReferenceType (r:Asn1AcnAst.AstRoot) (l:ProgrammingLanguage) (m:Asn1AcnAst.Asn1Module) (t:Asn1AcnAst.Asn1Type) (o:Asn1AcnAst.ReferenceType) (newBaseType:Asn1Type, us:State) =
+let private createReferenceType (r:Asn1AcnAst.AstRoot) (deps:Asn1AcnAst.AcnInsertedFieldDependencies) (l:ProgrammingLanguage) (m:Asn1AcnAst.Asn1Module) (t:Asn1AcnAst.Asn1Type) (o:Asn1AcnAst.ReferenceType) (newBaseType:Asn1Type, us:State) =
+    let newPrms, us0 = t.acnParameters |> foldMap(fun ns p -> mapAcnParameter r deps l m t p ns) us
     let typeDefinition = DAstTypeDefinition.createReferenceType r l t o newBaseType us
     let initialValue        = {Asn1Value.kind=newBaseType.initialValue;id=ReferenceToValue([],[]);loc=emptyLocation}
     let initFunction        = DAstInitialize.createReferenceType r l t o newBaseType
@@ -438,7 +443,7 @@ let private createReferenceType (r:Asn1AcnAst.AstRoot) (l:ProgrammingLanguage) (
             acnDecFunction      = acnDecFunction.Value
 
         }
-    ((ReferenceType ret),[]), s4
+    ((ReferenceType ret),newPrms), s4
 
 
 let private mapType (r:Asn1AcnAst.AstRoot) (deps:Asn1AcnAst.AcnInsertedFieldDependencies) (l:ProgrammingLanguage) (m:Asn1AcnAst.Asn1Module) (t:Asn1AcnAst.Asn1Type, us:State) =
@@ -468,7 +473,7 @@ let private mapType (r:Asn1AcnAst.AstRoot) (deps:Asn1AcnAst.AcnInsertedFieldDepe
         (fun t ti newChildren -> createChoice r deps l m t ti newChildren)
         (fun ch newChild -> createChoiceChild r l m ch newChild)
 
-        (fun t ti newBaseType -> createReferenceType r l m t ti newBaseType)
+        (fun t ti newBaseType -> createReferenceType r deps l m t ti newBaseType)
 
         (fun t ((newKind, newPrms),us)        -> 
             {
@@ -534,7 +539,7 @@ let DoWork (r:Asn1AcnAst.AstRoot) (deps:Asn1AcnAst.AcnInsertedFieldDependencies)
         | _                             -> raise(System.Exception "Unsupported programming language")
 
     
-    let initialState = {State.currentTypes = []; curSeqOfLevel=0; currErrCode = 1}
+    let initialState = {curSeqOfLevel=0; currErrorCode = 1; curErrCodeNames = Set.empty}
 
     let files, ns = r.Files |> foldMap (fun cs f -> mapFile r deps l f cs) initialState
     {

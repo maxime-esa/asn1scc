@@ -34,7 +34,7 @@ TEST-CASE DEFINITIONS AUTOMATIC TAGS::= BEGIN
 		}
 	}
 	
-	pdu1 MyPDU ::= {header {a1 20}, payload gg : {int1 10, int2 200, enm pone, buf '00112233445566778899'H }}
+	--pdu1 MyPDU ::= {header {a1 20}, payload gg : {int1 10, int2 200, enm pone, buf '00112233445566778899'H }}
 
 END
 

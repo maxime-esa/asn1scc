@@ -32,8 +32,7 @@ let callBaseTypeFunc l = match l with C -> uper_c.call_base_type_func | Ada -> u
 let createPrimitiveFunction (r:Asn1AcnAst.AstRoot) (l:ProgrammingLanguage) (codec:CommonTypes.Codec) (t:Asn1AcnAst.Asn1Type) (typeDefinition:TypeDefinitionCommon) (baseTypeUperFunc : UPerFunction option) (isValidFunc: IsValidFunction option)  (funcBody_e:ErroCode->FuncParamType -> (UPERFuncBodyResult option)) soSparkAnnotations (us:State)  =
     let funcName            = getFuncName r l codec t.id
     let errCodeName         = ToC ("ERR_UPER" + (codec.suffix.ToUpper()) + "_" + ((t.id.AcnAbsPath |> Seq.skip 1 |> Seq.StrJoin("-")).Replace("#","elm")))
-    let errCodeValue        = us.currErrCode
-    let errCode             = {ErroCode.errCodeName = errCodeName; errCodeValue = errCodeValue}
+    let errCode, ns = getNextValidErrorCode us errCodeName
 
     let EmitTypeAssignment_primitive = match l with C -> uper_c.EmitTypeAssignment_primitive    | Ada -> uper_a.EmitTypeAssignment
     let EmitTypeAssignment_primitive_def = match l with C -> uper_c.EmitTypeAssignment_primitive_def    | Ada -> uper_a.EmitTypeAssignment_def
@@ -71,7 +70,7 @@ let createPrimitiveFunction (r:Asn1AcnAst.AstRoot) (l:ProgrammingLanguage) (code
             funcBody                   = funcBody
             funcBody_e                 = funcBody_e
         }
-    ret, {us with currErrCode = us.currErrCode + 1}
+    ret, ns
 
 
 

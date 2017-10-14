@@ -371,7 +371,11 @@ type Asn1AcnAst.Asn1Type with
                 | Asn1AcnAst.Choice       _ -> p.getPointer l
                 | Asn1AcnAst.ReferenceType r -> r.baseType.getParamValue p l c
             | Decode  ->
-                p.getPointer l
+                match this.Kind with
+                | Asn1AcnAst.IA5String    _  -> p.getValue l //FIXARRAY "val"
+                | Asn1AcnAst.NumericString _ -> p.getValue l// FIXARRAY "val"
+                | Asn1AcnAst.ReferenceType r -> r.baseType.getParamValue p l c
+                | _                          -> p.getPointer l
         
 
 

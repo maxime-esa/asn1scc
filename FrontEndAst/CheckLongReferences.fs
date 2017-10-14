@@ -38,7 +38,7 @@ let private checkRelativePath (curState:AcnInsertedFieldDependencies) (parents: 
                     match seq.children |> Seq.tryFind(fun (c:SeqChildInfo) -> c.Name = x1) with
                     | Some ch   -> 
                         match ch with
-                        | Asn1Child ch  -> raise(SemanticError(x1.Location, (sprintf "Invalid reference '%s' to ASN.1 type. ACN references must point to ACN inserted types or parameters" x1.Value)))
+                        | Asn1Child ch  -> raise(SemanticError(x1.Location, (sprintf "ASN.1 fields cannot act as encoding determinants. Remove field '%s' from the ASN.1 grammar and introduce it in the ACN grammar" x1.Value)))
                         | AcnChild ch  -> 
                             let d = checkAcnType ch
                             addAcnChild curState asn1TypeWithDependency ch d
@@ -65,7 +65,7 @@ let private checkRelativePath (curState:AcnInsertedFieldDependencies) (parents: 
                     | None -> raise(SemanticError(x1.Location, (sprintf "Invalid reference '%s'" (path |> Seq.StrJoin "."))))
                     | Some ch -> 
                         match ch with
-                        | Asn1Child ch  -> raise(SemanticError(x1.Location, (sprintf "Invalid reference '%s' to ASN.1 type. ACN references must point to ACN inserted types or parameters" x1.Value)))
+                        | Asn1Child ch  -> raise(SemanticError(x1.Location, (sprintf "ASN.1 fields cannot act as encoding determinants. Remove field '%s' from the ASN.1 grammar and introduce it in the ACN grammar" x1.Value)))
                         | AcnChild ch  -> 
                             let d = checkAcnType ch
                             addAcnChild curState asn1TypeWithDependency ch d
@@ -84,20 +84,6 @@ let private checkRelativePath (curState:AcnInsertedFieldDependencies) (parents: 
         | Some p -> 
             checkSeqWithPath p path
 
-let sizeReference (curState:AcnInsertedFieldDependencies) (parents: Asn1Type list) (t:Asn1Type) (visibleParameters:(ReferenceToType*AcnParameter) list)  (rp :RelativePath  option) (d:AcnDependencyKind) =
-    match rp with
-    | None      -> curState
-    | Some (RelativePath path) -> 
-        let loc = path.Head.Location
-        let checkParameter (p:AcnParameter) = 
-            match p.asn1Type with
-            | AcnPrmInteger _ -> d
-            | _              -> raise(SemanticError(loc, (sprintf "Invalid argument type. Expecting INTEGER got %s "  (p.asn1Type.ToString()))))
-        let checkAcnType (c:AcnChild) =
-            match c.Type with
-            | AcnInteger    _ -> d
-            | _              -> raise(SemanticError(loc, (sprintf "Invalid argument type. Expecting INTEGER got %s "  (c.Type.AsString))))
-        checkRelativePath curState parents t visibleParameters   (RelativePath path) checkParameter checkAcnType
 
 let checkParamIsActuallyInteger (r:AstRoot) (prmMod:StringLoc) (tasName:StringLoc) =
     match r.Modules |> Seq.tryFind(fun z -> z.Name.Value = prmMod.Value) with
@@ -106,6 +92,26 @@ let checkParamIsActuallyInteger (r:AstRoot) (prmMod:StringLoc) (tasName:StringLo
         match md.TypeAssignments |> Seq.tryFind(fun z -> z.Name.Value = tasName.Value) with
         | None      -> raise(SemanticError (tasName.Location, (sprintf "No type assignment defined with name '%s' in module '%s'"  tasName.Value prmMod.Value)))
         | Some ts   -> ()
+
+let sizeReference (r:AstRoot) (curState:AcnInsertedFieldDependencies) (parents: Asn1Type list) (t:Asn1Type) (visibleParameters:(ReferenceToType*AcnParameter) list)  (rp :RelativePath  option) (d:AcnDependencyKind) =
+    match rp with
+    | None      -> curState
+    | Some (RelativePath path) -> 
+        let loc = path.Head.Location
+        let checkParameter (p:AcnParameter) = 
+            match p.asn1Type with
+            | AcnPrmInteger _ -> d
+            | AcnPrmRefType  (mdName,tsName)    -> 
+                checkParamIsActuallyInteger r mdName tsName
+                d
+
+            | _              -> raise(SemanticError(loc, (sprintf "Invalid argument type. Expecting INTEGER got %s "  (p.asn1Type.ToString()))))
+        let checkAcnType (c:AcnChild) =
+            match c.Type with
+            | AcnInteger    _ -> d
+            | _              -> raise(SemanticError(loc, (sprintf "Invalid argument type. Expecting INTEGER got %s "  (c.Type.AsString))))
+        checkRelativePath curState parents t visibleParameters   (RelativePath path) checkParameter checkAcnType
+
 
 let checkChoicePresentWhen (r:AstRoot) (curState:AcnInsertedFieldDependencies) (parents: Asn1Type list) (t:Asn1Type)  (ch:Choice) (visibleParameters:(ReferenceToType*AcnParameter) list)    =
     match ch.acnProperties.enumDeterminant with
@@ -230,14 +236,14 @@ let rec private checkType (r:AstRoot) (parents: Asn1Type list) (curentPath : Sco
     | NumericString  a      ->
         match a.acnProperties.sizeProp with
         | Some (StrExternalField   relPath)    ->
-            sizeReference curState parents t visibleParameters (Some relPath) AcnDepIA5StringSizeDeterminant
+            sizeReference r curState parents t visibleParameters (Some relPath) AcnDepIA5StringSizeDeterminant
         | _          -> curState
     | OctetString    a      -> 
-        sizeReference curState parents t visibleParameters a.acnProperties.sizeProp AcnDepSizeDeterminant
+        sizeReference r curState parents t visibleParameters a.acnProperties.sizeProp AcnDepSizeDeterminant
     | BitString      a      -> 
-        sizeReference curState parents t visibleParameters a.acnProperties.sizeProp AcnDepSizeDeterminant
+        sizeReference r curState parents t visibleParameters a.acnProperties.sizeProp AcnDepSizeDeterminant
     | SequenceOf   seqOf    ->
-        let ns = sizeReference curState (parents) t visibleParameters seqOf.acnProperties.sizeProp AcnDepSizeDeterminant
+        let ns = sizeReference r curState (parents) t visibleParameters seqOf.acnProperties.sizeProp AcnDepSizeDeterminant
         checkType r (parents@[t]) (curentPath@[SQF]) seqOf.child ns
     | Sequence   seq        ->
         seq.children |>

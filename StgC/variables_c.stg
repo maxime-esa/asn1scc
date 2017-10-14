@@ -18,7 +18,7 @@ PrintCharValue(cValue)    ::= "'<cValue>'"
 
 PrintBooleanValue(bValue)    ::= "<if(bValue)>TRUE<else>FALSE<endif>"
 
-PrintNullValue()    ::= "NULL"
+PrintNullValue()    ::= "0"
 
 PrintBitOrOctetStringValue(bIsFixedSize, arruBytes, nCount) ::= <<
 {<if(!bIsFixedSize)><nCount>,<endif>
