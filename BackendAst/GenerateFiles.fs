@@ -142,6 +142,21 @@ let private printUnit (r:DAst.AstRoot) (l:ProgrammingLanguage) (encodings: Commo
 
     let fileName = Path.Combine(outDir, pu.specFileName)
     File.WriteAllText(fileName, defintionsContntent.Replace("\r",""))
+
+
+    // test cases header file
+    let typeDefs = 
+        seq {
+            for tas in tases do
+                yield (tas.Type.uperEncDecTestFunc |> Option.map (fun z -> z.funcDef))
+                yield (tas.Type.acnEncDecTestFunc |> Option.map (fun z -> z.funcDef))
+            } |> Seq.choose id |> Seq.toList
+    let tetscase_specFileName = Path.Combine(outDir, pu.tetscase_specFileName)
+    let tstCasesHdrContent =
+        match l with
+        | C     -> test_cases_c.PrintAutomaticTestCasesHeaderFile (pu.tetscase_specFileName.Replace(".","_")) pu.name typeDefs
+        | Ada   -> test_cases_c.PrintAutomaticTestCasesHeaderFile (pu.tetscase_specFileName.Replace(".","_")) pu.name typeDefs
+    File.WriteAllText(tetscase_specFileName, tstCasesHdrContent.Replace("\r",""))
         
     //sourse file
     let arrsTypeAssignments = 
@@ -185,6 +200,22 @@ let private printUnit (r:DAst.AstRoot) (l:ProgrammingLanguage) (encodings: Commo
             body_a.PrintPackageBody pu.name  (rtl@pu.importedProgramUnits) arrsNegativeReals arrsBoolPatterns arrsTypeAssignments arrsChoiceValueAssignments
     let fileName = Path.Combine(outDir, pu.bodyFileName)
     File.WriteAllText(fileName, eqContntent.Replace("\r",""))
+
+    //test cases sourse file
+    let encDecFuncs = 
+        seq {
+            for tas in tases do
+                yield (tas.Type.uperEncDecTestFunc |> Option.map (fun z -> z.func))
+                yield (tas.Type.acnEncDecTestFunc |> Option.map (fun z -> z.func))
+            } |> Seq.choose id |> Seq.toList
+
+    let tetscase_SrcFileName = Path.Combine(outDir, pu.tetscase_bodyFileName)
+    let tstCasesHdrContent =
+        match l with
+        | C     -> test_cases_c.PrintAutomaticTestCasesSourceFile pu.tetscase_specFileName pu.importedProgramUnits encDecFuncs
+        | Ada   -> test_cases_c.PrintAutomaticTestCasesSourceFile pu.tetscase_specFileName pu.importedProgramUnits encDecFuncs
+    File.WriteAllText(tetscase_SrcFileName, tstCasesHdrContent.Replace("\r",""))
+
 
 
 let private CreateAdaIndexFile (r:AstRoot) bGenTestCases outDir =

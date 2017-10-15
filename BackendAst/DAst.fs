@@ -226,6 +226,12 @@ type AcnFunction = {
     funcBody            : ((Asn1AcnAst.RelativePath*Asn1AcnAst.AcnParameter) list) -> FuncParamType -> (AcnFuncBodyResult option)            
 }
 
+type EncodeDecodeTestFunc = {
+    funcName            : string               // the name of the function
+    func                : string               // the body of the function
+    funcDef             : string               // function definition in header file
+}
+
 type Integer = {
     //bast inherrited properties
     baseInfo             : Asn1AcnAst.Integer
@@ -243,7 +249,8 @@ type Integer = {
     uperDecFunction     : UPerFunction
     acnEncFunction      : AcnFunction
     acnDecFunction      : AcnFunction
-    
+    uperEncDecTestFunc  : EncodeDecodeTestFunc option
+    acnEncDecTestFunc   : EncodeDecodeTestFunc option
 
 }
 
@@ -262,6 +269,8 @@ type Enumerated = {
     uperDecFunction     : UPerFunction
     acnEncFunction      : AcnFunction
     acnDecFunction      : AcnFunction
+    uperEncDecTestFunc  : EncodeDecodeTestFunc option
+    acnEncDecTestFunc   : EncodeDecodeTestFunc option
 }
 
 type Real = {
@@ -279,6 +288,8 @@ type Real = {
     uperDecFunction     : UPerFunction
     acnEncFunction      : AcnFunction
     acnDecFunction      : AcnFunction
+    uperEncDecTestFunc  : EncodeDecodeTestFunc option
+    acnEncDecTestFunc   : EncodeDecodeTestFunc option
 }
 
 
@@ -297,6 +308,8 @@ type Boolean = {
     uperDecFunction     : UPerFunction
     acnEncFunction      : AcnFunction
     acnDecFunction      : AcnFunction
+    uperEncDecTestFunc  : EncodeDecodeTestFunc option
+    acnEncDecTestFunc   : EncodeDecodeTestFunc option
 }
 
 
@@ -314,6 +327,8 @@ type NullType = {
     uperDecFunction     : UPerFunction
     acnEncFunction      : AcnFunction
     acnDecFunction      : AcnFunction
+    uperEncDecTestFunc  : EncodeDecodeTestFunc option
+    acnEncDecTestFunc   : EncodeDecodeTestFunc option
 
 }
 
@@ -333,6 +348,8 @@ type StringType = {
     uperDecFunction     : UPerFunction
     acnEncFunction      : AcnFunction
     acnDecFunction      : AcnFunction
+    uperEncDecTestFunc  : EncodeDecodeTestFunc option
+    acnEncDecTestFunc   : EncodeDecodeTestFunc option
 
 }
 
@@ -353,6 +370,8 @@ type OctetString = {
     uperDecFunction     : UPerFunction
     acnEncFunction      : AcnFunction
     acnDecFunction      : AcnFunction
+    uperEncDecTestFunc  : EncodeDecodeTestFunc option
+    acnEncDecTestFunc   : EncodeDecodeTestFunc option
 
 }
 
@@ -373,6 +392,8 @@ type BitString = {
     uperDecFunction     : UPerFunction
     acnEncFunction      : AcnFunction
     acnDecFunction      : AcnFunction
+    uperEncDecTestFunc  : EncodeDecodeTestFunc option
+    acnEncDecTestFunc   : EncodeDecodeTestFunc option
 
 }
 
@@ -393,6 +414,8 @@ type SequenceOf = {
     uperDecFunction     : UPerFunction
     acnEncFunction      : AcnFunction
     acnDecFunction      : AcnFunction
+    uperEncDecTestFunc  : EncodeDecodeTestFunc option
+    acnEncDecTestFunc   : EncodeDecodeTestFunc option
 
 }
 
@@ -465,6 +488,8 @@ and Sequence = {
     //
     acnEncFunction      : AcnFunction
     acnDecFunction      : AcnFunction
+    uperEncDecTestFunc  : EncodeDecodeTestFunc option
+    acnEncDecTestFunc   : EncodeDecodeTestFunc option
 }
 
 
@@ -501,6 +526,8 @@ and Choice = {
     uperDecFunction     : UPerFunction
     acnEncFunction      : AcnFunction
     acnDecFunction      : AcnFunction
+    uperEncDecTestFunc  : EncodeDecodeTestFunc option
+    acnEncDecTestFunc   : EncodeDecodeTestFunc option
 
 }
 
@@ -519,6 +546,8 @@ and ReferenceType = {
     uperDecFunction     : UPerFunction
     acnEncFunction      : AcnFunction
     acnDecFunction      : AcnFunction
+    uperEncDecTestFunc  : EncodeDecodeTestFunc option
+    acnEncDecTestFunc   : EncodeDecodeTestFunc option
 
 }
 
@@ -617,6 +646,8 @@ type ProgramUnit = {
     name    : string
     specFileName            : string
     bodyFileName            : string
+    tetscase_specFileName   : string
+    tetscase_bodyFileName   : string
     sortedTypeAssignments   : TypeAssignment list
     valueAssignments        : ValueAssignment list
     importedProgramUnits    : string list

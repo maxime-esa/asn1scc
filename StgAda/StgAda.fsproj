@@ -81,6 +81,7 @@
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
     <None Include="aux_a.stg" />
+    <None Include="test_cases_a.stg" />
     <Compile Include="acn_a.stg.fs" />
     <Compile Include="body_a.stg.fs" />
     <Compile Include="equal_a.stg.fs" />
@@ -91,6 +92,7 @@
     <Compile Include="variables_a.stg.fs" />
     <Compile Include="xer_a.stg.fs" />
     <Compile Include="aux_a.stg.fs" />
+    <Compile Include="test_cases_a.stg.fs" />
   </ItemGroup>
   <ItemGroup>
     <Reference Include="mscorlib" />

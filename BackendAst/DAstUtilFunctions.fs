@@ -585,6 +585,39 @@ with
         | CommonTypes.Encode   -> this.acnEncFunction
         | CommonTypes.Decode   -> this.acnDecFunction
 
+//    uperEncDecTestFunc  : EncodeDecodeTestFunc
+//    acnEncDecTestFunc   : EncodeDecodeTestFunc
+    member this.uperEncDecTestFunc =
+        match this.Kind with
+        | Integer      t -> t.uperEncDecTestFunc
+        | Real         t -> t.uperEncDecTestFunc
+        | IA5String    t -> t.uperEncDecTestFunc
+        | OctetString  t -> t.uperEncDecTestFunc
+        | NullType     t -> t.uperEncDecTestFunc
+        | BitString    t -> t.uperEncDecTestFunc
+        | Boolean      t -> t.uperEncDecTestFunc
+        | Enumerated   t -> t.uperEncDecTestFunc
+        | SequenceOf   t -> t.uperEncDecTestFunc
+        | Sequence     t -> t.uperEncDecTestFunc
+        | Choice       t -> t.uperEncDecTestFunc
+        | ReferenceType t-> t.uperEncDecTestFunc
+
+    member this.acnEncDecTestFunc =
+        match this.Kind with
+        | Integer      t -> t.acnEncDecTestFunc
+        | Real         t -> t.acnEncDecTestFunc
+        | IA5String    t -> t.acnEncDecTestFunc
+        | OctetString  t -> t.acnEncDecTestFunc
+        | NullType     t -> t.acnEncDecTestFunc
+        | BitString    t -> t.acnEncDecTestFunc
+        | Boolean      t -> t.acnEncDecTestFunc
+        | Enumerated   t -> t.acnEncDecTestFunc
+        | SequenceOf   t -> t.acnEncDecTestFunc
+        | Sequence     t -> t.acnEncDecTestFunc
+        | Choice       t -> t.acnEncDecTestFunc
+        | ReferenceType t-> t.acnEncDecTestFunc
+
+
 
 
     member this.isIA5String =

@@ -94,7 +94,10 @@ let internal createProgramUnits (files: Asn1File list)  (l:ProgrammingLanguage) 
             let soretedTypes = sortTypes fileTypes importedTypes |> List.map(fun ref -> tasSet.[ref])
             let specFileName = f.FileNameWithoutExtension+"."+l.SpecExtention
             let bodyFileName = f.FileNameWithoutExtension+"."+l.BodyExtention
-            {ProgramUnit.name = f.FileNameWithoutExtension; specFileName = specFileName; bodyFileName=bodyFileName; sortedTypeAssignments = soretedTypes; valueAssignments = fileValueAssignments; importedProgramUnits = importedProgramUnits})
+            let tetscase_specFileName = f.FileNameWithoutExtension+"_auto_tcs."+l.SpecExtention
+            let tetscase_bodyFileName = f.FileNameWithoutExtension+"_auto_tcs."+l.BodyExtention
+            
+            {ProgramUnit.name = f.FileNameWithoutExtension; specFileName = specFileName; bodyFileName=bodyFileName; sortedTypeAssignments = soretedTypes; valueAssignments = fileValueAssignments; importedProgramUnits = importedProgramUnits; tetscase_specFileName=tetscase_specFileName; tetscase_bodyFileName=tetscase_bodyFileName})
     | Ada   -> 
 
         files |>
@@ -110,7 +113,9 @@ let internal createProgramUnits (files: Asn1File list)  (l:ProgrammingLanguage) 
             let soretedTypes = sortTypes moduTypes importedTypes |> List.map(fun ref -> typesMap.[ref])
             let specFileName = m.Name.Value+"."+l.SpecExtention
             let bodyFileName = m.Name.Value+"."+l.BodyExtention
+            let tetscase_specFileName = m.Name.Value+"_auto_tcs."+l.SpecExtention
+            let tetscase_bodyFileName = m.Name.Value+"_auto_tcs."+l.BodyExtention
             let importedProgramUnits = m.Imports |> List.map (fun im -> ToC im.Name.Value)
-            {ProgramUnit.name = m.Name.Value; specFileName = specFileName; bodyFileName=bodyFileName; sortedTypeAssignments = soretedTypes; valueAssignments = valueAssignments; importedProgramUnits = importedProgramUnits})
+            {ProgramUnit.name = m.Name.Value; specFileName = specFileName; bodyFileName=bodyFileName; sortedTypeAssignments = soretedTypes; valueAssignments = valueAssignments; importedProgramUnits = importedProgramUnits; tetscase_specFileName=tetscase_specFileName; tetscase_bodyFileName=tetscase_bodyFileName})
 
 

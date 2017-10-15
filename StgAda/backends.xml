@@ -61,5 +61,11 @@
     <modName>aux_a</modName>
 	<lang>Ada</lang>
   </run>
+    <run mode="single">
+        <input>test_cases_a.stg</input>
+        <output>test_cases_a.stg.fs</output>
+        <modName>test_cases_a</modName>
+        <lang>c</lang>
+    </run>
 
 </Settings>

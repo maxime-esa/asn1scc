@@ -50,10 +50,16 @@
 	<lang>c</lang>
   </run>
   <run mode="single">
-    <input>xer_c.stg</input>
-    <output>xer_c.stg.fs</output>
-    <modName>xer_c</modName>
-	<lang>c</lang>
+        <input>xer_c.stg</input>
+        <output>xer_c.stg.fs</output>
+        <modName>xer_c</modName>
+        <lang>c</lang>
+  </run>
+  <run mode="single">
+      <input>test_cases_c.stg</input>
+      <output>test_cases_c.stg.fs</output>
+      <modName>test_cases_c</modName>
+      <lang>c</lang>
   </run>
 
 </Settings>

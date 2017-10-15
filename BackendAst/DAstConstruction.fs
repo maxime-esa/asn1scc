@@ -66,6 +66,9 @@ let private createInteger (r:Asn1AcnAst.AstRoot) (l:ProgrammingLanguage) (m:Asn1
     let acnEncFunction, s4      = DAstACN.createIntegerFunction r l Codec.Encode t o typeDefinition isValidFunction uperEncFunction s3
     let acnDecFunction, s5      = DAstACN.createIntegerFunction r l Codec.Decode t o typeDefinition isValidFunction uperDecFunction s4
 
+    let uperEncDecTestFunc,s6         = EncodeDecodeTestCase.createUperEncDecFunction r l t typeDefinition isValidFunction (Some uperEncFunction) (Some uperDecFunction) s5
+    let acnEncDecTestFunc ,s7         = EncodeDecodeTestCase.createAcnEncDecFunction r l t typeDefinition isValidFunction (Some acnEncFunction) (Some acnDecFunction) s6
+
     let ret =
         {
             Integer.baseInfo    = o
@@ -79,8 +82,10 @@ let private createInteger (r:Asn1AcnAst.AstRoot) (l:ProgrammingLanguage) (m:Asn1
             uperDecFunction     = uperDecFunction 
             acnEncFunction      = acnEncFunction
             acnDecFunction      = acnDecFunction
+            uperEncDecTestFunc  = uperEncDecTestFunc
+            acnEncDecTestFunc   = acnEncDecTestFunc
         }
-    ((Integer ret),[]), s5
+    ((Integer ret),[]), s7
 
 let private createReal (r:Asn1AcnAst.AstRoot) (l:ProgrammingLanguage) (m:Asn1AcnAst.Asn1Module) (t:Asn1AcnAst.Asn1Type) (o:Asn1AcnAst.Real) (us:State) =
     let typeDefinition = DAstTypeDefinition.createReal  r l t o us
@@ -91,6 +96,9 @@ let private createReal (r:Asn1AcnAst.AstRoot) (l:ProgrammingLanguage) (m:Asn1Acn
     let uperDecFunction, s3     = DAstUPer.createRealFunction r l Codec.Decode t o typeDefinition None isValidFunction s2
     let acnEncFunction, s4      = DAstACN.createRealrFunction r l Codec.Encode t o typeDefinition isValidFunction uperEncFunction s3
     let acnDecFunction, s5      = DAstACN.createRealrFunction r l Codec.Decode t o typeDefinition isValidFunction uperDecFunction s4
+
+    let uperEncDecTestFunc,s6         = EncodeDecodeTestCase.createUperEncDecFunction r l t typeDefinition isValidFunction (Some uperEncFunction) (Some uperDecFunction) s5
+    let acnEncDecTestFunc ,s7         = EncodeDecodeTestCase.createAcnEncDecFunction r l t typeDefinition isValidFunction (Some acnEncFunction) (Some acnDecFunction) s6
 
     let ret =
         {
@@ -105,8 +113,10 @@ let private createReal (r:Asn1AcnAst.AstRoot) (l:ProgrammingLanguage) (m:Asn1Acn
             uperDecFunction     = uperDecFunction 
             acnEncFunction      = acnEncFunction
             acnDecFunction      = acnDecFunction
+            uperEncDecTestFunc  = uperEncDecTestFunc
+            acnEncDecTestFunc   = acnEncDecTestFunc
         }
-    ((Real ret),[]), s3
+    ((Real ret),[]), s7
 
 
 
@@ -125,6 +135,9 @@ let private createStringType (r:Asn1AcnAst.AstRoot) (deps:Asn1AcnAst.AcnInserted
     let uperDecFunction, s3     = DAstUPer.createIA5StringFunction r l Codec.Decode t o typeDefinition None isValidFunction s2
     let acnEncFunction, s4      = DAstACN.createStringFunction r deps l Codec.Encode t o typeDefinition isValidFunction uperEncFunction s3
     let acnDecFunction, s5      = DAstACN.createStringFunction r deps l Codec.Decode t o typeDefinition isValidFunction uperDecFunction s4
+    let uperEncDecTestFunc,s6         = EncodeDecodeTestCase.createUperEncDecFunction r l t typeDefinition isValidFunction (Some uperEncFunction) (Some uperDecFunction) s5
+    let acnEncDecTestFunc ,s7         = EncodeDecodeTestCase.createAcnEncDecFunction r l t typeDefinition isValidFunction (Some acnEncFunction) (Some acnDecFunction) s6
+
     let ret =
         {
             StringType.baseInfo = o
@@ -138,8 +151,10 @@ let private createStringType (r:Asn1AcnAst.AstRoot) (deps:Asn1AcnAst.AcnInserted
             uperDecFunction     = uperDecFunction 
             acnEncFunction      = acnEncFunction
             acnDecFunction      = acnDecFunction
+            uperEncDecTestFunc  = uperEncDecTestFunc
+            acnEncDecTestFunc   = acnEncDecTestFunc
         }
-    (ret,newPrms), s5
+    (ret,newPrms), s7
 
 
 let private createOctetString (r:Asn1AcnAst.AstRoot) (deps:Asn1AcnAst.AcnInsertedFieldDependencies) (l:ProgrammingLanguage) (m:Asn1AcnAst.Asn1Module) (t:Asn1AcnAst.Asn1Type) (o:Asn1AcnAst.OctetString) (us:State) =
@@ -156,6 +171,9 @@ let private createOctetString (r:Asn1AcnAst.AstRoot) (deps:Asn1AcnAst.AcnInserte
     let uperDecFunction, s3     = DAstUPer.createOctetStringFunction r l Codec.Decode t o typeDefinition None isValidFunction s2
     let acnEncFunction, s4      = DAstACN.createOctetStringFunction r deps l Codec.Encode t o typeDefinition isValidFunction uperEncFunction s3
     let acnDecFunction, s5      = DAstACN.createOctetStringFunction r deps l Codec.Decode t o typeDefinition isValidFunction uperDecFunction s4
+    let uperEncDecTestFunc,s6         = EncodeDecodeTestCase.createUperEncDecFunction r l t typeDefinition isValidFunction (Some uperEncFunction) (Some uperDecFunction) s5
+    let acnEncDecTestFunc ,s7         = EncodeDecodeTestCase.createAcnEncDecFunction r l t typeDefinition isValidFunction (Some acnEncFunction) (Some acnDecFunction) s6
+    
     let ret =
         {
             OctetString.baseInfo = o
@@ -169,8 +187,10 @@ let private createOctetString (r:Asn1AcnAst.AstRoot) (deps:Asn1AcnAst.AcnInserte
             uperDecFunction     = uperDecFunction 
             acnEncFunction      = acnEncFunction
             acnDecFunction      = acnDecFunction
+            uperEncDecTestFunc  = uperEncDecTestFunc
+            acnEncDecTestFunc   = acnEncDecTestFunc
         }
-    ((OctetString ret),newPrms), s5
+    ((OctetString ret),newPrms), s7
 
 
 
@@ -182,6 +202,8 @@ let private createNullType (r:Asn1AcnAst.AstRoot) (l:ProgrammingLanguage) (m:Asn
     let uperDecFunction, s3     = DAstUPer.createNullTypeFunction r l Codec.Decode t o typeDefinition None None s2
     let acnEncFunction, s4      = DAstACN.createNullTypeFunction r l Codec.Encode t o typeDefinition None  s3
     let acnDecFunction, s5      = DAstACN.createNullTypeFunction r l Codec.Decode t o typeDefinition None  s4
+    let uperEncDecTestFunc,s6         = EncodeDecodeTestCase.createUperEncDecFunction r l t typeDefinition None (Some uperEncFunction) (Some uperDecFunction) s5
+    let acnEncDecTestFunc ,s7         = EncodeDecodeTestCase.createAcnEncDecFunction r l t typeDefinition None (Some acnEncFunction) (Some acnEncFunction) s6
     let ret =
         {
             NullType.baseInfo   = o
@@ -194,8 +216,10 @@ let private createNullType (r:Asn1AcnAst.AstRoot) (l:ProgrammingLanguage) (m:Asn
             uperDecFunction     = uperDecFunction 
             acnEncFunction      = acnEncFunction
             acnDecFunction      = acnDecFunction
+            uperEncDecTestFunc  = uperEncDecTestFunc
+            acnEncDecTestFunc   = acnEncDecTestFunc
         }
-    ((NullType ret),[]), s5
+    ((NullType ret),[]), s7
 
 
 
@@ -213,6 +237,8 @@ let private createBitString (r:Asn1AcnAst.AstRoot) (deps:Asn1AcnAst.AcnInsertedF
     let uperDecFunction, s3     = DAstUPer.createBitStringFunction r l Codec.Decode t o typeDefinition None isValidFunction s2
     let acnEncFunction, s4      = DAstACN.createBitStringFunction r deps l Codec.Encode t o typeDefinition isValidFunction uperEncFunction s3
     let acnDecFunction, s5      = DAstACN.createBitStringFunction r deps l Codec.Decode t o typeDefinition isValidFunction uperDecFunction s4
+    let uperEncDecTestFunc,s6         = EncodeDecodeTestCase.createUperEncDecFunction r l t typeDefinition isValidFunction (Some uperEncFunction) (Some uperDecFunction) s5
+    let acnEncDecTestFunc ,s7         = EncodeDecodeTestCase.createAcnEncDecFunction r l t typeDefinition isValidFunction (Some acnEncFunction) (Some acnDecFunction) s6
     let ret =
         {
             BitString.baseInfo  = o
@@ -226,8 +252,10 @@ let private createBitString (r:Asn1AcnAst.AstRoot) (deps:Asn1AcnAst.AcnInsertedF
             uperDecFunction     = uperDecFunction 
             acnEncFunction      = acnEncFunction
             acnDecFunction      = acnDecFunction
+            uperEncDecTestFunc  = uperEncDecTestFunc
+            acnEncDecTestFunc   = acnEncDecTestFunc
         }
-    ((BitString ret),newPrms), s5
+    ((BitString ret),newPrms), s7
 
 
 let private createBoolean (r:Asn1AcnAst.AstRoot) (l:ProgrammingLanguage) (m:Asn1AcnAst.Asn1Module) (t:Asn1AcnAst.Asn1Type) (o:Asn1AcnAst.Boolean) (us:State) =
@@ -239,6 +267,8 @@ let private createBoolean (r:Asn1AcnAst.AstRoot) (l:ProgrammingLanguage) (m:Asn1
     let uperDecFunction, s3     = DAstUPer.createBooleanFunction r l Codec.Decode t o typeDefinition None isValidFunction s2
     let acnEncFunction, s4      = DAstACN.createBooleanFunction r l Codec.Encode t o typeDefinition None isValidFunction  s3
     let acnDecFunction, s5      = DAstACN.createBooleanFunction r l Codec.Decode t o typeDefinition None isValidFunction  s4
+    let uperEncDecTestFunc,s6         = EncodeDecodeTestCase.createUperEncDecFunction r l t typeDefinition isValidFunction (Some uperEncFunction) (Some uperDecFunction) s5
+    let acnEncDecTestFunc ,s7         = EncodeDecodeTestCase.createAcnEncDecFunction r l t typeDefinition isValidFunction (Some acnEncFunction) (Some acnDecFunction) s6
     let ret =
         {
             Boolean.baseInfo    = o
@@ -252,8 +282,10 @@ let private createBoolean (r:Asn1AcnAst.AstRoot) (l:ProgrammingLanguage) (m:Asn1
             uperDecFunction     = uperDecFunction 
             acnEncFunction      = acnEncFunction
             acnDecFunction      = acnDecFunction
+            uperEncDecTestFunc  = uperEncDecTestFunc
+            acnEncDecTestFunc   = acnEncDecTestFunc
         }
-    ((Boolean ret),[]), s3
+    ((Boolean ret),[]), s7
 
 
 let private createEnumerated (r:Asn1AcnAst.AstRoot) (l:ProgrammingLanguage) (m:Asn1AcnAst.Asn1Module) (t:Asn1AcnAst.Asn1Type) (o:Asn1AcnAst.Enumerated) (us:State) =
@@ -272,6 +304,9 @@ let private createEnumerated (r:Asn1AcnAst.AstRoot) (l:ProgrammingLanguage) (m:A
     let acnEncFunction, s4      = DAstACN.createEnumeratedFunction r l Codec.Encode t o typeDefinition isValidFunction uperEncFunction s3
     let acnDecFunction, s5      = DAstACN.createEnumeratedFunction r l Codec.Decode t o typeDefinition isValidFunction uperDecFunction s4
 
+    let uperEncDecTestFunc,s6         = EncodeDecodeTestCase.createUperEncDecFunction r l t typeDefinition isValidFunction (Some uperEncFunction) (Some uperDecFunction) s5
+    let acnEncDecTestFunc ,s7         = EncodeDecodeTestCase.createAcnEncDecFunction r l t typeDefinition isValidFunction (Some acnEncFunction) (Some acnDecFunction) s6
+
     let ret =
         {
             Enumerated.baseInfo = o
@@ -285,8 +320,10 @@ let private createEnumerated (r:Asn1AcnAst.AstRoot) (l:ProgrammingLanguage) (m:A
             uperDecFunction     = uperDecFunction 
             acnEncFunction      = acnEncFunction
             acnDecFunction      = acnDecFunction
+            uperEncDecTestFunc  = uperEncDecTestFunc
+            acnEncDecTestFunc   = acnEncDecTestFunc
         }
-    ((Enumerated ret),[]), s5
+    ((Enumerated ret),[]), s7
 
 
 let private createSequenceOf (r:Asn1AcnAst.AstRoot) (deps:Asn1AcnAst.AcnInsertedFieldDependencies) (l:ProgrammingLanguage) (m:Asn1AcnAst.Asn1Module) (t:Asn1AcnAst.Asn1Type) (o:Asn1AcnAst.SequenceOf) (childType:Asn1Type, us:State) =
@@ -300,6 +337,8 @@ let private createSequenceOf (r:Asn1AcnAst.AstRoot) (deps:Asn1AcnAst.AcnInserted
     let uperDecFunction, s3     = DAstUPer.createSequenceOfFunction r l Codec.Decode t o typeDefinition None isValidFunction childType s2
     let acnEncFunction, s4      = DAstACN.createSequenceOfFunction r deps l Codec.Encode t o typeDefinition  isValidFunction childType s3
     let acnDecFunction, s5      = DAstACN.createSequenceOfFunction r deps l Codec.Decode t o typeDefinition  isValidFunction childType s4
+    let uperEncDecTestFunc,s6         = EncodeDecodeTestCase.createUperEncDecFunction r l t typeDefinition isValidFunction (Some uperEncFunction) (Some uperDecFunction) s5
+    let acnEncDecTestFunc ,s7         = EncodeDecodeTestCase.createAcnEncDecFunction r l t typeDefinition isValidFunction (Some acnEncFunction) (Some acnDecFunction) s6
     let ret =
         {
             SequenceOf.baseInfo = o
@@ -314,8 +353,10 @@ let private createSequenceOf (r:Asn1AcnAst.AstRoot) (deps:Asn1AcnAst.AcnInserted
             uperDecFunction     = uperDecFunction 
             acnEncFunction      = acnEncFunction
             acnDecFunction      = acnDecFunction
+            uperEncDecTestFunc  = uperEncDecTestFunc
+            acnEncDecTestFunc   = acnEncDecTestFunc
         }
-    ((SequenceOf ret),newPrms), s5
+    ((SequenceOf ret),newPrms), s7
 
 
 
@@ -352,6 +393,8 @@ let private createSequence (r:Asn1AcnAst.AstRoot) (deps:Asn1AcnAst.AcnInsertedFi
     let uperDecFunction, s3     = DAstUPer.createSequenceFunction r l Codec.Decode t o typeDefinition None isValidFunction children s2
     let acnEncFunction, s4      = DAstACN.createSequenceFunction r deps l Codec.Encode t o typeDefinition  isValidFunction children newPrms s3
     let acnDecFunction, s5      = DAstACN.createSequenceFunction r deps l Codec.Decode t o typeDefinition  isValidFunction children newPrms s4
+    let uperEncDecTestFunc,s6         = EncodeDecodeTestCase.createUperEncDecFunction r l t typeDefinition isValidFunction (Some uperEncFunction) (Some uperDecFunction) s5
+    let acnEncDecTestFunc ,s7         = EncodeDecodeTestCase.createAcnEncDecFunction r l t typeDefinition isValidFunction (Some acnEncFunction) (Some acnDecFunction) s6
     let ret =
         {
             Sequence.baseInfo   = o
@@ -366,8 +409,10 @@ let private createSequence (r:Asn1AcnAst.AstRoot) (deps:Asn1AcnAst.AcnInsertedFi
             uperDecFunction     = uperDecFunction 
             acnEncFunction      = acnEncFunction
             acnDecFunction      = acnDecFunction
+            uperEncDecTestFunc  = uperEncDecTestFunc
+            acnEncDecTestFunc   = acnEncDecTestFunc
         }
-    ((Sequence ret),newPrms), s5
+    ((Sequence ret),newPrms), s7
 
 let private createChoice (r:Asn1AcnAst.AstRoot) (deps:Asn1AcnAst.AcnInsertedFieldDependencies) (l:ProgrammingLanguage) (m:Asn1AcnAst.Asn1Module) (t:Asn1AcnAst.Asn1Type) (o:Asn1AcnAst.Choice) (children:ChChildInfo list, us:State) =
     let newPrms, us0 = t.acnParameters |> foldMap(fun ns p -> mapAcnParameter r deps l m t p ns) us
@@ -380,6 +425,8 @@ let private createChoice (r:Asn1AcnAst.AstRoot) (deps:Asn1AcnAst.AcnInsertedFiel
     let uperDecFunction, s3     = DAstUPer.createChoiceFunction r l Codec.Decode t o typeDefinition None isValidFunction children s2
     let acnEncFunction, s4      = DAstACN.createChoiceFunction r deps l Codec.Encode t o typeDefinition  isValidFunction children newPrms  s3
     let acnDecFunction, s5      = DAstACN.createChoiceFunction r deps l Codec.Decode t o typeDefinition  isValidFunction children newPrms  s4
+    let uperEncDecTestFunc,s6         = EncodeDecodeTestCase.createUperEncDecFunction r l t typeDefinition isValidFunction (Some uperEncFunction) (Some uperDecFunction) s5
+    let acnEncDecTestFunc ,s7         = EncodeDecodeTestCase.createAcnEncDecFunction r l t typeDefinition isValidFunction (Some acnEncFunction) (Some acnDecFunction) s6
     let ret =
         {
             Choice.baseInfo     = o
@@ -394,8 +441,10 @@ let private createChoice (r:Asn1AcnAst.AstRoot) (deps:Asn1AcnAst.AcnInsertedFiel
             uperDecFunction     = uperDecFunction 
             acnEncFunction      = acnEncFunction
             acnDecFunction      = acnDecFunction
+            uperEncDecTestFunc  = uperEncDecTestFunc
+            acnEncDecTestFunc   = acnEncDecTestFunc
         }
-    ((Choice ret),[]), s5
+    ((Choice ret),[]), s7
 
 let private createChoiceChild (r:Asn1AcnAst.AstRoot) (l:ProgrammingLanguage) (m:Asn1AcnAst.Asn1Module) (ch:Asn1AcnAst.ChChildInfo) (newChildType : Asn1Type, us:State) =
     let typeDefinitionName = 
@@ -426,6 +475,9 @@ let private createReferenceType (r:Asn1AcnAst.AstRoot) (deps:Asn1AcnAst.AcnInser
     let uperDecFunction, s3     = DAstUPer.createReferenceFunction r l Codec.Decode t o typeDefinition isValidFunction newBaseType s2
     let acnEncFunction, s4      = DAstACN.createReferenceFunction r l Codec.Encode t o typeDefinition  isValidFunction newBaseType s3
     let acnDecFunction, s5      = DAstACN.createReferenceFunction r l Codec.Decode t o typeDefinition  isValidFunction newBaseType s4
+    
+    let uperEncDecTestFunc,s6         = EncodeDecodeTestCase.createUperEncDecFunction r l t typeDefinition isValidFunction (Some uperEncFunction) (Some uperDecFunction) s5
+    let acnEncDecTestFunc ,s7         = EncodeDecodeTestCase.createAcnEncDecFunction r l t typeDefinition isValidFunction acnEncFunction acnDecFunction s6
 
     let ret = 
         {
@@ -441,9 +493,10 @@ let private createReferenceType (r:Asn1AcnAst.AstRoot) (deps:Asn1AcnAst.AcnInser
             uperDecFunction     = uperDecFunction 
             acnEncFunction      = acnEncFunction.Value
             acnDecFunction      = acnDecFunction.Value
-
+            uperEncDecTestFunc  = uperEncDecTestFunc
+            acnEncDecTestFunc   = acnEncDecTestFunc
         }
-    ((ReferenceType ret),newPrms), s4
+    ((ReferenceType ret),newPrms), s7
 
 
 let private mapType (r:Asn1AcnAst.AstRoot) (deps:Asn1AcnAst.AcnInsertedFieldDependencies) (l:ProgrammingLanguage) (m:Asn1AcnAst.Asn1Module) (t:Asn1AcnAst.Asn1Type, us:State) =
