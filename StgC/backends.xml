@@ -61,5 +61,11 @@
       <modName>test_cases_c</modName>
       <lang>c</lang>
   </run>
+  <run mode="single">
+      <input>aux_c.stg</input>
+      <output>aux_c.stg.fs</output>
+      <modName>aux_c</modName>
+      <lang>c</lang>
+  </run>
 
 </Settings>

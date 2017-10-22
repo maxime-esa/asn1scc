@@ -82,6 +82,7 @@
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
     <None Include="test_cases_c.stg" />
+    <None Include="aux_c.stg" />
     <Compile Include="acn_c.stg.fs" />
     <Compile Include="body_c.stg.fs" />
     <Compile Include="equal_c.stg.fs" />
@@ -92,6 +93,7 @@
     <Compile Include="variables_c.stg.fs" />
     <Compile Include="xer_c.stg.fs" />
     <Compile Include="test_cases_c.stg.fs" />
+    <Compile Include="aux_c.stg.fs" />
   </ItemGroup>
   <ItemGroup>
     <Reference Include="mscorlib" />

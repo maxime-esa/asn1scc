@@ -92,7 +92,7 @@ with
     match isUnsigned with
     | true          -> this.UIntMax
     | false         -> this.SIntMax
-  member this.IntMix (isUnsigned:bool) =
+  member this.IntMin (isUnsigned:bool) =
     match isUnsigned with
     | true          -> 0I
     | false         -> this.SIntMin

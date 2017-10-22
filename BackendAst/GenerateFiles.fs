@@ -9,23 +9,26 @@ open DAst
 open DAstUtilFunctions
 
 
-let printValueAssignment (r:DAst.AstRoot) (l:ProgrammingLanguage) (pu:ProgramUnit) (vas:ValueAssignment) =
+let getTypeDecl (r:DAst.AstRoot) (vas:ValueAssignment) =
+    let t = vas.Type
+    match t.Kind with
+    | Integer _
+    | Real _
+    | Boolean _     -> 
+        match t.tasInfo with| Some tasInfo    -> ToC2(r.args.TypePrefix + tasInfo.tasName) | None    -> t.typeDefinition.typeDefinitionBodyWithinSeq
+    | ReferenceType ref ->
+        ToC2(r.args.TypePrefix + ref.baseInfo.tasName.Value) 
+    | _             -> 
+        match t.tasInfo with| Some tasInfo    -> ToC2(r.args.TypePrefix + tasInfo.tasName) | None    -> t.typeDefinition.name
+
+let printValueAssignment (r:DAst.AstRoot) (l:ProgrammingLanguage)  (vas:ValueAssignment) =
     let sName = vas.c_name
     let t = vas.Type
-    let sTypeDecl= 
-        match t.Kind with
-        | Integer _
-        | Real _
-        | Boolean _     -> 
-            match t.tasInfo with| Some tasInfo    -> ToC2(r.args.TypePrefix + tasInfo.tasName) | None    -> t.typeDefinition.typeDefinitionBodyWithinSeq
-        | ReferenceType ref ->
-            ToC2(r.args.TypePrefix + ref.baseInfo.tasName.Value) 
-        | _             -> 
-            match t.tasInfo with| Some tasInfo    -> ToC2(r.args.TypePrefix + tasInfo.tasName) | None    -> t.typeDefinition.name
+    let sTypeDecl= getTypeDecl r vas
 
 
 
-    let sVal = DAstVariables.printValue r l pu vas.Type None vas.Value.kind
+    let sVal = DAstVariables.printValue r l  vas.Type None vas.Value.kind
     match l with
     | C     -> variables_c.PrintValueAssignment sTypeDecl sName sVal
     | Ada   -> header_a.PrintValueAssignment sName sTypeDecl sVal
@@ -120,7 +123,7 @@ let private printUnit (r:DAst.AstRoot) (l:ProgrammingLanguage) (encodings: Commo
                 | _             -> 
                     let typeDefinitionName = match t.tasInfo with| Some tasInfo    -> ToC2(r.args.TypePrefix + tasInfo.tasName) | None    -> t.typeDefinition.name
                     header_c.PrintValueAssignment (typeDefinitionName) gv.c_name
-            | Ada   -> printValueAssignment r l pu gv)
+            | Ada   -> printValueAssignment r l gv)
     let arrsHeaderAnonymousValues =
         arrsAnonymousValues |>
         List.map(fun av -> 
@@ -187,7 +190,7 @@ let private printUnit (r:DAst.AstRoot) (l:ProgrammingLanguage) (encodings: Commo
         match l with
         | C     ->
             let arrsUnnamedVariables = []
-            let arrsValueAssignments = vases |> List.map (printValueAssignment r l pu)
+            let arrsValueAssignments = vases |> List.map (printValueAssignment r l )
             let arrsSourceAnonymousValues = 
                 arrsAnonymousValues |>
                 List.map (fun av -> variables_c.PrintValueAssignment av.typeDefinitionName av.valueName av.valueExpresion)
@@ -216,7 +219,24 @@ let private printUnit (r:DAst.AstRoot) (l:ProgrammingLanguage) (encodings: Commo
         | Ada   -> test_cases_c.PrintAutomaticTestCasesSourceFile pu.tetscase_specFileName pu.importedProgramUnits encDecFuncs
     File.WriteAllText(tetscase_SrcFileName, tstCasesHdrContent.Replace("\r",""))
 
+let TestSuiteFileName = "testsuite"
 
+
+let CreateCMainFile (r:AstRoot)  (l:ProgrammingLanguage) outDir  =
+    //Main file for test cass    
+    let printMain = match l with C -> test_cases_c.PrintMain | Ada -> test_cases_c.PrintMain
+    let content = printMain TestSuiteFileName
+    let outFileName = Path.Combine(outDir, "mainprogram.c")
+    File.WriteAllText(outFileName, content.Replace("\r",""))
+
+
+
+
+let CreateCMakeFile (r:AstRoot)  outDir  =
+    let files = r.Files |> Seq.map(fun x -> x.FileNameWithoutExtension.ToLower() )
+    let content = aux_c.PrintMakeFile files
+    let outFileName = Path.Combine(outDir, "Makefile")
+    File.WriteAllText(outFileName, content.Replace("\r",""))
 
 let private CreateAdaIndexFile (r:AstRoot) bGenTestCases outDir =
     let mods = r.programUnits |> Seq.map(fun x -> (ToC x.name).ToLower()) |>Seq.toList
@@ -237,12 +257,94 @@ let private CreateAdaMain (r:AstRoot) bGenTestCases outDir =
     let outFileName = Path.Combine(outDir, "mainprogram.adb")
     File.WriteAllText(outFileName, content.Replace("\r",""))
 
+
+
+let CreateTestSuiteFile (r:AstRoot) (l:ProgrammingLanguage) outDir vasName =
+    let GetEncodingString = function    
+        | UPER  -> ""
+        | ACN   -> "ACN_"
+        | BER   -> "BER_"
+        | XER   -> "XER_"
+
+    let includedPackages =  r.Files |> Seq.map(fun x -> x.FileNameWithoutExtension.ToLower() + "_auto_tcs")
+    let PrintTestCase (v:ValueAssignment) (m:Asn1Module) =
+        let tasName = match v.Type.Kind with
+                      | ReferenceType refType   -> refType.baseInfo.tasName.Value
+                      | _                       -> ""
+        
+        let sTasName = v.Type.typeDefinition.typeDefinitionBodyWithinSeq // spark_variables.GetTasNameByKind v.Type.Kind m r
+        let dummy : FuncParamType = v.Type.getParamType l  Decode
+        let sStar = dummy.getStar l
+        let sAmber = if sStar = "*" then "&" else ""
+
+        let packageName = ToC m.Name.Value
+        //let sValue =  c_variables.PrintAsn1Value v.Value v.Type false (sTasName,0) m r    
+        let sValue = DAstVariables.printValue r l  v.Type None v.Value.kind
+        let sAsn1Val0 = ""
+
+            //(PrintAsn1.PrintValueAss v m).Replace("\"","'")
+        let sAsn1Val = match sAsn1Val0.Length>1000 with
+                       | true -> sAsn1Val0.Substring(0,1000)
+                       | false -> sAsn1Val0
+
+        
+
+        let GetDatFile (enc:Asn1Encoding) = 
+            let bGenerateDatFile = (r.args.CheckWithOss && v.Name.Value = "testPDU")
+            match bGenerateDatFile, enc with
+            | false,_     -> ""
+            | true, ACN   -> ""
+            | true, XER   -> test_cases_c.PrintSuite_call_codec_generate_dat_file sTasName sAmber (GetEncodingString enc) "Byte"
+            | true, BER   -> test_cases_c.PrintSuite_call_codec_generate_dat_file sTasName sAmber (GetEncodingString enc) "Byte"
+            | true, uPER  -> test_cases_c.PrintSuite_call_codec_generate_dat_file sTasName sAmber (GetEncodingString enc) "Bit"
+
+        let bStatic = match v.Type.ActualType.Kind with Integer _ | Enumerated(_) -> false | _ -> true
+        
+        r.args.encodings |> Seq.map(fun e -> 
+                                        match e with
+                                        | Asn1Encoding.UPER  -> test_cases_c.PrintSuite_call_codec sTasName sAmber (GetEncodingString e) sValue sAsn1Val (ToC v.Name.Value) bStatic (GetDatFile e)
+                                        | Asn1Encoding.ACN   -> test_cases_c.PrintSuite_call_codec sTasName sAmber (GetEncodingString e) sValue sAsn1Val (ToC v.Name.Value) bStatic (GetDatFile e)
+                                        | Asn1Encoding.XER   -> test_cases_c.PrintSuite_call_codec sTasName sAmber (GetEncodingString e) sValue sAsn1Val (ToC v.Name.Value) bStatic (GetDatFile e)
+                                        | Asn1Encoding.BER   -> test_cases_c.PrintSuite_call_codec sTasName sAmber (GetEncodingString e) sValue sAsn1Val (ToC v.Name.Value) bStatic (GetDatFile e)
+                                 ) |> Seq.StrJoin "\n\n"
+        
+    
+    let funcs = seq {
+            for m in r.Files |> List.collect(fun f -> f.Modules) do
+                //let autoVases = m.TypeAssignments |> Seq.collect(fun x -> acn_backend_logic.GenerateVases x m.Name r acn) |> Seq.toList
+                for v in m.ValueAssignments(*@autoVases*) do
+                    match v.Type.Kind with
+                    | ReferenceType ref -> 
+                        let actMod = r.getModuleByName ref.baseInfo.modName
+                        if vasName = "ALL" || v.Name.Value = vasName then
+                            yield PrintTestCase v actMod
+                    | _                 -> ()
+                if vasName = "ALL" then
+                    for t in m.TypeAssignments do
+                        for v in t.Type.automaticTestCasesValues do
+                            let vas = {ValueAssignment.Name = StringLoc.ByValue ""; c_name = ""; ada_name = ""; Type = t.Type; Value = v}
+                            yield PrintTestCase vas m
+                            
+        }
+
+    let contentC = test_cases_c.PrintTestSuiteSource TestSuiteFileName includedPackages funcs
+    let outCFileName = Path.Combine(outDir, TestSuiteFileName + ".c")
+    File.WriteAllText(outCFileName, contentC.Replace("\r",""))
+
+    let contentH = test_cases_c.PrintTestSuiteHeader()
+    let outHFileName = Path.Combine(outDir, TestSuiteFileName + ".h")
+    File.WriteAllText(outHFileName, contentH.Replace("\r",""))
+
+
 let generateAll outDir (r:DAst.AstRoot) (encodings: CommonTypes.Asn1Encoding list)  =
     r.programUnits |> Seq.iter (printUnit r r.lang encodings outDir)
     //print extra such make files etc
     //print_debug.DoWork r outDir "debug.txt"
     match r.lang with
-    | C    -> ()
+    | C    -> 
+        CreateCMakeFile r outDir
+        CreateCMainFile r  ProgrammingLanguage.C outDir
+        CreateTestSuiteFile r ProgrammingLanguage.C outDir "ALL"
     | Ada  -> 
         CreateAdaMain r false outDir
         CreateAdaIndexFile r false outDir

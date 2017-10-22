@@ -321,3 +321,48 @@ let foldType2
                refType t ti (loopType ti.baseType us)
         typeFunc t newKind
     loopType t us
+
+// EVALUATE CONSTRAINTS
+let evalGenericCon (c:GenericConstraint<'v>)  eqFunc value =
+    foldGenericConstraint
+        (fun e1 e2 b s      -> e1 || e2, s)
+        (fun e1 e2 s        -> e1 && e2, s)
+        (fun e s            -> not e, s)
+        (fun e1 e2 s        -> e1 && (not e2), s)
+        (fun e s            -> e, s)
+        (fun e1 e2 s        -> e1 || e2, s)
+        (fun v  s           -> eqFunc v value ,s)
+        c
+        0 |> fst
+
+
+let isValidValueGeneric allCons eqFunc value =
+    allCons |> List.fold(fun cs c -> cs && (evalGenericCon c eqFunc value) ) true
+
+
+let evalRangeCon  (c:RangeTypeConstraint<'v1,'v1>)  value =
+    let check_v1 v1 minIsIn = 
+        match minIsIn with
+        | true  -> v1 >= value
+        | false -> v1 > value
+    let check_v2 v2 maxIsIn = 
+        match maxIsIn with
+        | true  -> value <= v2
+        | false -> value < v2
+    foldRangeTypeConstraint        
+        (fun e1 e2 b s      -> e1 || e2, s)    //union
+        (fun e1 e2 s        -> e1 && e2, s)    //Intersection
+        (fun e s            -> not e, s)       //AllExcept
+        (fun e1 e2 s        -> e1 && (not e2), s)       //ExceptConstraint
+        (fun e s            -> e, s)        //RootConstraint
+        (fun e1 e2 s        -> e1 || e2, s)    //RootConstraint2
+        (fun v  s         -> v = value ,s)        // SingleValueConstraint
+        (fun v1 v2  minIsIn maxIsIn s   ->  //RangeContraint
+            (check_v1 v1 minIsIn) && (check_v2 v2 maxIsIn), s)
+        (fun v1 minIsIn s   -> (check_v1 v1 minIsIn), s) //Contraint_val_MAX
+        (fun v2 maxIsIn s   -> (check_v2 v2 maxIsIn), s) //Contraint_MIN_val
+        c
+        0 |> fst
+
+let isValidValueRanged allCons value =
+    allCons |> List.fold(fun cs c -> cs && (evalRangeCon c value) ) true

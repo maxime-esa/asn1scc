@@ -187,7 +187,13 @@ type System.String with
                 Replace("<","&lt;").
                 Replace(">","&gt;");
 
-
+type Option<'T> with
+    member this.orElse other =
+        match this with
+        | Some v    -> v
+        | None      -> other
+    //member this.map fnc = Option.map fnc this
+        
 
 type System.Int32 with
     member x.AsBigInt = BigInteger x

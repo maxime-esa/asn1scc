@@ -72,16 +72,16 @@ ret = <sTasName>_ACN_Encode_update_<sParamName>(pVal, &dec_<sParamName>);
 
 
 
-Codec_Encode(sTasName, sEnc, arrsEncInDecOutParamsNames) ::= <<
+Codec_Encode(sFuncName, sVal) ::= <<
 // Encode value
-ret = <sTasName>_<sEnc>Encode(pVal, &bitStrm, pErrCode, TRUE<if(arrsEncInDecOutParamsNames)>, <arrsEncInDecOutParamsNames:{p| enc_<p>}; separator=", "><endif>);
+ret = <sFuncName>(<sVal>, &bitStrm, pErrCode, TRUE);
 *pErrCode = ret ? 0 : 1;
 >>
 
-Codec_Decode(sTasName, sEnc, sAmber, arrsDecInParamsNames, arrsEncInDecOutParamsNames) ::= <<
+Codec_Decode(sFuncName, sTasName, sEnc, sAmber) ::= <<
 BitStream_AttachBuffer(&bitStrm, encBuff, <sTasName>_REQUIRED_BYTES_FOR_<sEnc>ENCODING);
 // Decode value
-ret = <sTasName>_<sEnc>Decode(<sAmber>decodedPDU, &bitStrm, pErrCode<if(arrsDecInParamsNames)>, <arrsDecInParamsNames:{p| dec_<p>}; separator=", "><endif><if(arrsEncInDecOutParamsNames)>, <arrsEncInDecOutParamsNames:{p| &dec_<p>}; separator=", "><endif>);
+ret = <sFuncName>(<sAmber>decodedPDU, &bitStrm, pErrCode);
 *pErrCode = ret ? 0 : 2;
 >>
 
@@ -92,23 +92,23 @@ ret = <sTasName>_<sEnc>Decode(<sAmber>decodedPDU, &bitStrm, pErrCode<if(arrsDecI
 *pErrCode = ret ? 0 : 2;
 >>
 
-Codec_validate_output(sTasName, sAmber) ::= <<
+Codec_validate_output(sFuncName, sAmber) ::= <<
 // validate decoded data
-ret = <sTasName>_IsConstraintValid(<sAmber>decodedPDU, pErrCode);
+ret = <sFuncName>(<sAmber>decodedPDU, pErrCode);
 *pErrCode = ret ? 0 : 3;
 >>
 
-Codec_compare_input_with_output(sTasName, sAmber, arrsEncInDecOutParamsNames) ::= <<
-ret = <sTasName>_Equal(pVal, <sAmber>decodedPDU)<if(arrsEncInDecOutParamsNames)> && <arrsEncInDecOutParamsNames:{p| (enc_<p>==dec_<p>)}; separator=" && "><endif>;
+Codec_compare_input_with_output(sFuncName, sVal, sAmber) ::= <<
+ret = <sFuncName>(<sVal>, <sAmber>decodedPDU);
 *pErrCode = ret ? 0 : 4;
 >>
 
 
-JoinItems(sPart, sNestedPart) ::= <<
+JoinItems(sPart, soNestedPart) ::= <<
 <sPart>
-<if(sNestedPart)>
+<if(soNestedPart)>
 if (ret) {
-    <sNestedPart>
+    <soNestedPart>
 }
 <endif>
 >>

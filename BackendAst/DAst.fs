@@ -252,6 +252,8 @@ type Integer = {
     uperEncDecTestFunc  : EncodeDecodeTestFunc option
     acnEncDecTestFunc   : EncodeDecodeTestFunc option
 
+    automaticTestCasesValues     : Asn1Value list
+
 }
 
 type Enumerated = {
@@ -271,6 +273,8 @@ type Enumerated = {
     acnDecFunction      : AcnFunction
     uperEncDecTestFunc  : EncodeDecodeTestFunc option
     acnEncDecTestFunc   : EncodeDecodeTestFunc option
+
+    automaticTestCasesValues     : Asn1Value list
 }
 
 type Real = {
@@ -290,6 +294,8 @@ type Real = {
     acnDecFunction      : AcnFunction
     uperEncDecTestFunc  : EncodeDecodeTestFunc option
     acnEncDecTestFunc   : EncodeDecodeTestFunc option
+
+    automaticTestCasesValues     : Asn1Value list
 }
 
 
@@ -310,6 +316,8 @@ type Boolean = {
     acnDecFunction      : AcnFunction
     uperEncDecTestFunc  : EncodeDecodeTestFunc option
     acnEncDecTestFunc   : EncodeDecodeTestFunc option
+
+    automaticTestCasesValues     : Asn1Value list
 }
 
 
@@ -329,7 +337,6 @@ type NullType = {
     acnDecFunction      : AcnFunction
     uperEncDecTestFunc  : EncodeDecodeTestFunc option
     acnEncDecTestFunc   : EncodeDecodeTestFunc option
-
 }
 
 
@@ -351,6 +358,7 @@ type StringType = {
     uperEncDecTestFunc  : EncodeDecodeTestFunc option
     acnEncDecTestFunc   : EncodeDecodeTestFunc option
 
+    automaticTestCasesValues     : Asn1Value list
 }
 
 
@@ -373,6 +381,7 @@ type OctetString = {
     uperEncDecTestFunc  : EncodeDecodeTestFunc option
     acnEncDecTestFunc   : EncodeDecodeTestFunc option
 
+    automaticTestCasesValues     : Asn1Value list
 }
 
 
@@ -395,6 +404,7 @@ type BitString = {
     uperEncDecTestFunc  : EncodeDecodeTestFunc option
     acnEncDecTestFunc   : EncodeDecodeTestFunc option
 
+    automaticTestCasesValues     : Asn1Value list
 }
 
 
@@ -417,6 +427,7 @@ type SequenceOf = {
     uperEncDecTestFunc  : EncodeDecodeTestFunc option
     acnEncDecTestFunc   : EncodeDecodeTestFunc option
 
+    automaticTestCasesValues     : Asn1Value list
 }
 
 
@@ -490,6 +501,8 @@ and Sequence = {
     acnDecFunction      : AcnFunction
     uperEncDecTestFunc  : EncodeDecodeTestFunc option
     acnEncDecTestFunc   : EncodeDecodeTestFunc option
+
+    automaticTestCasesValues     : Asn1Value list
 }
 
 
@@ -529,6 +542,7 @@ and Choice = {
     uperEncDecTestFunc  : EncodeDecodeTestFunc option
     acnEncDecTestFunc   : EncodeDecodeTestFunc option
 
+    automaticTestCasesValues     : Asn1Value list
 }
 
 
@@ -549,6 +563,7 @@ and ReferenceType = {
     uperEncDecTestFunc  : EncodeDecodeTestFunc option
     acnEncDecTestFunc   : EncodeDecodeTestFunc option
 
+    automaticTestCasesValues     : Asn1Value list
 }
 
 and AcnChildUpdateResult = {

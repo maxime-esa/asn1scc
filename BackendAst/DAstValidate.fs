@@ -306,13 +306,14 @@ let createBitOrOctetStringFunction (r:Asn1AcnAst.AstRoot) (l:ProgrammingLanguage
             }    
         Some ret, ns
 
-
+let getIntSimplifiedConstraints (r:Asn1AcnAst.AstRoot) (o:Asn1AcnAst.Integer) =
+    match o.isUnsigned with
+    | true         -> o.AllCons |> List.map simplifytUnsignedIntegerTypeConstraint |> List.choose (fun sc -> match sc with SicAlwaysTrue -> None | SciConstraint c -> Some c)
+    | false         -> o.AllCons
+    
 
 let createIntegerFunction (r:Asn1AcnAst.AstRoot) (l:ProgrammingLanguage) (t:Asn1AcnAst.Asn1Type) (o:Asn1AcnAst.Integer) (typeDefinition:TypeDefinitionCommon) (baseTypeValFunc : IsValidFunction option) (us:State)  =
-    let allCons = 
-        match o.isUnsigned with
-        | true         -> o.AllCons |> List.map simplifytUnsignedIntegerTypeConstraint |> List.choose (fun sc -> match sc with SicAlwaysTrue -> None | SciConstraint c -> Some c)
-        | false         -> o.AllCons
+    let allCons = getIntSimplifiedConstraints r o
 
     let integerToString (i:BigInteger) = 
         match l with

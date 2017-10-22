@@ -127,6 +127,8 @@ type FuncParamType  with
         | C, VALUE x        -> ""
         | C, POINTER x      -> "*"
         | C, FIXARRAY x     -> ""
+    member this.getAmber (l:ProgrammingLanguage) =
+        if this.getStar l = "*" then "&" else ""        
     member this.getArrayItem (l:ProgrammingLanguage) (idx:string) (childTypeIsString: bool) =
         match l with
         | Ada   -> 
@@ -617,6 +619,20 @@ with
         | Choice       t -> t.acnEncDecTestFunc
         | ReferenceType t-> t.acnEncDecTestFunc
 
+    member this.automaticTestCasesValues =
+        match this.Kind with
+        | Integer      t -> t.automaticTestCasesValues
+        | Real         t -> t.automaticTestCasesValues
+        | IA5String    t -> t.automaticTestCasesValues
+        | OctetString  t -> t.automaticTestCasesValues
+        | NullType     t -> []
+        | BitString    t -> t.automaticTestCasesValues
+        | Boolean      t -> t.automaticTestCasesValues
+        | Enumerated   t -> t.automaticTestCasesValues
+        | SequenceOf   t -> t.automaticTestCasesValues
+        | Sequence     t -> t.automaticTestCasesValues
+        | Choice       t -> t.automaticTestCasesValues
+        | ReferenceType t-> t.automaticTestCasesValues
 
 
 
@@ -677,6 +693,13 @@ type AstRoot with
             match m.ValueAssignments |> Seq.tryFind(fun vas -> vas.Name.Value = vasName) with
             |None   -> raise(SemanticError(emptyLocation, (sprintf "No value assignment exists with name '%s'" vasName)))
             | Some vas -> vas
+
+    member r.Modules = r.Files |> List.collect(fun f -> f.Modules)
+    member r.getModuleByName (name:StringLoc)  = 
+        let (n,loc) = name.AsTupple
+        match r.Modules |> Seq.tryFind( fun m -> m.Name = name)  with
+        | Some(m) -> m
+        | None    -> raise(SemanticError(loc, sprintf "No Module Defined with name: %s" n ))
 
 
 type Asn1File with

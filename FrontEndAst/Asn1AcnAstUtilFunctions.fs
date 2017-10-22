@@ -186,8 +186,8 @@ type NullType         with
 type BitString        with
     member this.AllCons  = this.cons@this.withcons
 
-//type Boolean          with
-//    member this.AllCons  = this.cons@this.withcons
+type Boolean          with
+    member this.AllCons  = this.cons@this.withcons
 
 type Enumerated       with
     member this.AllCons  = this.cons@this.withcons
