@@ -630,9 +630,10 @@ and AllowedPropertiesPerType (r:Ast.AstRoot) = function
     | Ast.SequenceOf(_)     -> [acnParser.SIZE]
     | Ast.Sequence(_)       -> []
     | Ast.Choice(_)         -> [acnParser.DETERMINANT]
-    | Ast.ReferenceType(md,ts,_)  -> 
-        let baseType = Ast.GetBaseTypeByName md ts r
-        AllowedPropertiesPerType r baseType.Kind
+    | Ast.ReferenceType(md,ts,_)  -> []
+        // the followin code was removed because this version (i.e. version 3) of  ASN1SCC does not allow reference types to have acn properties
+        //let baseType = Ast.GetBaseTypeByName md ts r
+        //AllowedPropertiesPerType r baseType.Kind
 
 
 and MandatoryAcnPropertiesPerType asn1Kind : List<int> =
