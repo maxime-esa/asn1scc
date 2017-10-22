@@ -223,8 +223,8 @@ PrintSuite_call_codec(sTasName, sAmber, sEnc, sValue, sValueAsAsn1, sVasName, bS
 
     {
         // dummy statement used for calling init functions
-        <if(bStatic)>static <endif><sTasName> tmp0;
-        <sTasName>_Initialize(<sAmber>tmp0);
+        //<if(bStatic)>static <endif><sTasName> tmp0;
+        //<sTasName>_Initialize(<sAmber>tmp0);
     }
     <if(bStatic)>static <endif><sTasName> tmp =
         <sValue>;

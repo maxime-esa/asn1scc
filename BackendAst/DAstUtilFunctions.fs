@@ -736,3 +736,17 @@ type Asn1Value with
         | ReferenceToValue (typePath, vasPath)      -> 
             let longName = (typePath.Tail |> List.map (fun i -> i.StrValue))@ (vasPath |> List.map (fun i -> i.StrValue))  |> Seq.StrJoin "_"
             ToC2(longName.Replace("#","elem").L1)
+
+
+let hasAcnEncodeFunction (encFunc : AcnFunction option) acnParameters  =
+    match encFunc with
+    | None  -> false
+    | Some fnc ->
+        match acnParameters with
+        | [] ->
+            let p : FuncParamType = VALUE "dummy"
+            match fnc.funcBody [] p with
+            | None   -> false
+            | Some _ -> true
+        | _     -> false
+                

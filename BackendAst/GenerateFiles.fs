@@ -151,8 +151,10 @@ let private printUnit (r:DAst.AstRoot) (l:ProgrammingLanguage) (encodings: Commo
     let typeDefs = 
         seq {
             for tas in tases do
-                yield (tas.Type.uperEncDecTestFunc |> Option.map (fun z -> z.funcDef))
-                yield (tas.Type.acnEncDecTestFunc |> Option.map (fun z -> z.funcDef))
+                if r.args.encodings |> Seq.exists ((=) CommonTypes.UPER) then
+                    yield (tas.Type.uperEncDecTestFunc |> Option.map (fun z -> z.funcDef))
+                if r.args.encodings |> Seq.exists ((=) CommonTypes.ACN) then
+                    yield (tas.Type.acnEncDecTestFunc |> Option.map (fun z -> z.funcDef))
             } |> Seq.choose id |> Seq.toList
     let tetscase_specFileName = Path.Combine(outDir, pu.tetscase_specFileName)
     let tstCasesHdrContent =
@@ -208,8 +210,11 @@ let private printUnit (r:DAst.AstRoot) (l:ProgrammingLanguage) (encodings: Commo
     let encDecFuncs = 
         seq {
             for tas in tases do
-                yield (tas.Type.uperEncDecTestFunc |> Option.map (fun z -> z.func))
-                yield (tas.Type.acnEncDecTestFunc |> Option.map (fun z -> z.func))
+                
+                if r.args.encodings |> Seq.exists ((=) CommonTypes.UPER) then
+                    yield (tas.Type.uperEncDecTestFunc |> Option.map (fun z -> z.func))
+                if r.args.encodings |> Seq.exists ((=) CommonTypes.ACN) then
+                    yield (tas.Type.acnEncDecTestFunc |> Option.map (fun z -> z.func))
             } |> Seq.choose id |> Seq.toList
 
     let tetscase_SrcFileName = Path.Combine(outDir, pu.tetscase_bodyFileName)
@@ -267,12 +272,15 @@ let CreateTestSuiteFile (r:AstRoot) (l:ProgrammingLanguage) outDir vasName =
         | XER   -> "XER_"
 
     let includedPackages =  r.Files |> Seq.map(fun x -> x.FileNameWithoutExtension.ToLower() + "_auto_tcs")
-    let PrintTestCase (v:ValueAssignment) (m:Asn1Module) =
+    let PrintTestCase (v:ValueAssignment) (m:Asn1Module) (tsName : string option) =
         let tasName = match v.Type.Kind with
                       | ReferenceType refType   -> refType.baseInfo.tasName.Value
                       | _                       -> ""
         
-        let sTasName = v.Type.typeDefinition.typeDefinitionBodyWithinSeq // spark_variables.GetTasNameByKind v.Type.Kind m r
+        let sTasName = 
+            match tsName with
+            | None  -> v.Type.typeDefinition.typeDefinitionBodyWithinSeq // spark_variables.GetTasNameByKind v.Type.Kind m r
+            | Some z -> z
         let dummy : FuncParamType = v.Type.getParamType l  Decode
         let sStar = dummy.getStar l
         let sAmber = if sStar = "*" then "&" else ""
@@ -317,13 +325,16 @@ let CreateTestSuiteFile (r:AstRoot) (l:ProgrammingLanguage) outDir vasName =
                     | ReferenceType ref -> 
                         let actMod = r.getModuleByName ref.baseInfo.modName
                         if vasName = "ALL" || v.Name.Value = vasName then
-                            yield PrintTestCase v actMod
+                            yield PrintTestCase v actMod None
                     | _                 -> ()
                 if vasName = "ALL" then
                     for t in m.TypeAssignments do
-                        for v in t.Type.automaticTestCasesValues do
-                            let vas = {ValueAssignment.Name = StringLoc.ByValue ""; c_name = ""; ada_name = ""; Type = t.Type; Value = v}
-                            yield PrintTestCase vas m
+                        let hasEncodeFunc = hasAcnEncodeFunction t.Type.acnEncFunction t.Type.acnParameters 
+                        if hasEncodeFunc then
+                            for v in t.Type.automaticTestCasesValues do
+                                
+                                let vas = {ValueAssignment.Name = StringLoc.ByValue ""; c_name = ""; ada_name = ""; Type = t.Type; Value = v}
+                                yield PrintTestCase vas m (Some (ToC2(r.args.TypePrefix + t.Name.Value) ))
                             
         }
 

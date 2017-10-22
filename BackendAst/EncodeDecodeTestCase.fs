@@ -141,62 +141,65 @@ let createAcnEncDecFunction (r:Asn1AcnAst.AstRoot) (l:ProgrammingLanguage) (t:As
     let sStar = p.getStar l
     let sAmberDecode = getAmberDecode t
     let sAmberIsValid = getAmberIsValid t
-    match funcName  with
-    | None              -> None, us
-    | Some funcName     -> 
-        
-        let printStatement stm sNestedContent = 
-            let encode = match l with C -> test_cases_c.Codec_Encode   | Ada -> test_cases_c.Codec_Encode
-            let decode = match l with C -> test_cases_c.Codec_Decode   | Ada -> test_cases_c.Codec_Decode
-            let validateOutput = match l with C -> test_cases_c.Codec_validate_output   | Ada -> test_cases_c.Codec_validate_output
-            let compareInputWithOutput = match l with C -> test_cases_c.Codec_compare_input_with_output   | Ada -> test_cases_c.Codec_compare_input_with_output
-            let content= 
-                match stm with
-                |Encode_input           -> option {
-                                                let! encF = encFunc
-                                                let! encFunName = encF.funcName
-                                                return encode encFunName varName
-                                           }
-                |Decode_output          -> option {
-                                                let! decF = decFunc
-                                                let! decFunName = decF.funcName
-                                                return decode decFunName typeDefinition.name sEnc sAmberDecode 
-                                           }
+
+    match hasAcnEncodeFunction encFunc t.acnParameters  with
+    | false -> None, us
+    | true  ->
+        match funcName  with
+        | None              -> None, us
+        | Some funcName     -> 
+            let printStatement stm sNestedContent = 
+                let encode = match l with C -> test_cases_c.Codec_Encode   | Ada -> test_cases_c.Codec_Encode
+                let decode = match l with C -> test_cases_c.Codec_Decode   | Ada -> test_cases_c.Codec_Decode
+                let validateOutput = match l with C -> test_cases_c.Codec_validate_output   | Ada -> test_cases_c.Codec_validate_output
+                let compareInputWithOutput = match l with C -> test_cases_c.Codec_compare_input_with_output   | Ada -> test_cases_c.Codec_compare_input_with_output
+                let content= 
+                    match stm with
+                    |Encode_input           -> option {
+                                                    let! encF = encFunc
+                                                    let! encFunName = encF.funcName
+                                                    return encode encFunName varName
+                                               }
+                    |Decode_output          -> option {
+                                                    let! decF = decFunc
+                                                    let! decFunName = decF.funcName
+                                                    return decode decFunName typeDefinition.name sEnc sAmberDecode 
+                                               }
                     
-                |Validate_output        -> 
-                                           option {
-                                                let! f = isValidFunc
-                                                let! fname = f.funcName
-                                                return validateOutput fname sAmberIsValid
-                                           }
-                |Compare_input_output   -> 
-                                           option {
-                                                let! fname = eqFunc.isEqualFuncName
-                                                return compareInputWithOutput fname varName sAmberIsValid
-                                           }                
-            joinItems (content.orElse "") sNestedContent
+                    |Validate_output        -> 
+                                               option {
+                                                    let! f = isValidFunc
+                                                    let! fname = f.funcName
+                                                    return validateOutput fname sAmberIsValid
+                                               }
+                    |Compare_input_output   -> 
+                                               option {
+                                                    let! fname = eqFunc.isEqualFuncName
+                                                    return compareInputWithOutput fname varName sAmberIsValid
+                                               }                
+                joinItems (content.orElse "") sNestedContent
 
+            let sNestedStatements = 
+                let rec printStatements statements : string option = 
+                    match statements with
+                    |[]     -> None
+                    |x::xs  -> 
+                        match printStatements xs with
+                        | None                 -> Some (printStatement x  None)
+                        | Some childrenCont    -> Some (printStatement x  (Some childrenCont))
 
-        let sNestedStatements = 
-            let rec printStatements statements : string option = 
-                match statements with
-                |[]     -> None
-                |x::xs  -> 
-                    match printStatements xs with
-                    | None                 -> Some (printStatement x  None)
-                    | Some childrenCont    -> Some (printStatement x  (Some childrenCont))
+                printStatements [Encode_input; Decode_output; Validate_output; Compare_input_output]
 
-            printStatements [Encode_input; Decode_output; Validate_output; Compare_input_output]
-
-        let func = printCodec_body funcName typeDefinition.name sStar varName sEnc (sNestedStatements.orElse "")
-        let funcDef = printCodec_body_header funcName typeDefinition.name sStar varName
-        let ret = 
-            {
-                EncodeDecodeTestFunc.funcName   = funcName
-                func                            = func 
-                funcDef                         = funcDef
-            }
-        Some ret, us
+            let func = printCodec_body funcName typeDefinition.name sStar varName sEnc (sNestedStatements.orElse "")
+            let funcDef = printCodec_body_header funcName typeDefinition.name sStar varName
+        
+            let ret = 
+                {
+                    EncodeDecodeTestFunc.funcName   = funcName
+                    func                            = func 
+                    funcDef                         = funcDef
+                }
+            Some ret, us
 
 
 
