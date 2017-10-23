@@ -77,6 +77,7 @@ let UpdateDeterminant determinantPath determinantPathPtr (kind:AcnTypes.LongRefe
         let printItem (rf:AcnTypes.LongReferenceResolved) (ch:ChildInfo) =
              match rf.Kind with
              | AcnTypes.PresenceStr(sVal)  ->
+                  let determinantPath = match determinantPath.StartsWith "*" with true -> determinantPath.Replace("*","") | false -> determinantPath
                   c_acn.ChoiceDependencyStrPres_child determinantPath (ch.CName_Present C) sVal
              | _                             -> raise(BugErrorException "")
         match parentAsnType.Kind with
@@ -141,7 +142,8 @@ let HandleChildUpdate (ch:ChildInfo) (parentPath:list<string>) (sTasName:string)
                                    c_acn.MultiUpdateCheckWithFirstValueInteger chAccessFld tmpVar0
                                 else
                                    c_acn.MultiUpdateCheckWithFirstValue chAccessFld tmpVar0)]
-        | true      -> if actChildType.Kind = Integer then  
+        | true      -> match actChildType.Kind with
+                       | Integer ->
                             let chPath = parentPath@[ch.Name.Value]
                             let fldType = c_h.PrintTypeDeclaration ch.Type chPath r
                             let CheckRangeStatement =   
@@ -154,7 +156,10 @@ let HandleChildUpdate (ch:ChildInfo) (parentPath:list<string>) (sTasName:string)
                                 |Empty                     -> []
 
                             CheckRangeStatement@[(false, c_acn.UpdateAsn1IntegerField chAccessFld tmpVar0 fldType)]
-                       else 
+                       | IA5String  
+                       | NumericString  ->
+                            [(false, c_acn.UpdateAsn1StrField chAccessFld tmpVar0)]
+                       | _      ->
                             [(false, c_acn.UpdateAsn1Field chAccessFld tmpVar0)]
     match ChildUpdates with
     | []    -> []
@@ -748,8 +753,9 @@ let rec EmitTypeBodyAux (t:Asn1Type) (sTasName:string) (path:list<string>, altPa
         | None                              -> Choice_like_uPER()
     | ReferenceType(modName,tasName, _)    ->
         let dummy = 1
-        let dum0 = acn.References |> List.filter(fun x -> x.decType.AbsPath = path )
-        let args = acn.References |> 
+        //let dum0 = acn.References |> List.filter(fun x -> x.decType.AbsPath = path )
+        let args = 
+                    acn.References |> 
                     List.filter(fun x -> x.decType.AbsPath = path ) |>
                     List.choose(fun x ->match x.Kind with 
                                         | AcnTypes.RefTypeArgument(prmName)  -> 
@@ -758,19 +764,40 @@ let rec EmitTypeBodyAux (t:Asn1Type) (sTasName:string) (path:list<string>, altPa
                                             | AcnTypes.DecodeMode, Encode   -> None
                                             | AcnTypes.EncodeDecodeMode, Decode   -> 
                                                 let determinantPath = GetPointAccessPathPtr x.determinant  r acn |> ToC
-                                                Some (determinantPath, null)
+                                                Some (determinantPath, None)
                                             | _                             -> 
                                                 let determinantPath = GetPointAccessPath x.determinant  r acn
                                                 let prmType = c_h.PrintParamType prm m r
                                                 let localPrmName = ToC (prm.TasName + "_" + prm.Name) 
                                                 //let actArg = prmType+"("+determinantPath+")"
                                                 let actArg = determinantPath //|> ToC
-                                                Some (localPrmName, actArg)
+                                                let updateStem = 
+                                                    match prm.Asn1Type with
+                                                    | AcnTypes.Integer
+                                                    | AcnTypes.Boolean
+                                                    | AcnTypes.NullType          -> Some (c_acn.ReferenceType1_update_local_prm actArg localPrmName codec)
+                                                    | AcnTypes.RefTypeCon (md,ts)   ->
+                                                        match (Ast.GetActualTypeByName md ts r).Kind with
+                                                        | IA5String
+                                                        | NumericString -> Some (c_acn.ReferenceType1_update_local_prm_str actArg localPrmName codec)
+                                                        | _             -> Some (c_acn.ReferenceType1_update_local_prm actArg localPrmName codec)
+
+                                                Some (localPrmName, updateStem)
                                         | _                                  -> None)
-        let localPrms = args |> List.map fst                                         
-        let actArgs = args |> List.map snd 
         let tsName = Ast.GetTasCName tasName.Value r.TypePrefix
-        c_acn.ReferenceType1 ptr tsName true actArgs localPrms codec
+        let localPrms = args |> List.map fst                                         
+        let arrsUpdates = args |> List.map snd |> List.choose id
+        (*
+        let arrsUpdates =
+            List.zip actArgs localPrms |> 
+            List.filter(fun (arg, lp) -> arg <> null) |>
+            List.map (fun (arg, lp) ->
+                match (Ast.GetActualType t r).Kind with
+                | IA5String
+                | NumericString -> c_acn.ReferenceType1_update_local_prm_str arg lp codec
+                | _             -> c_acn.ReferenceType1_update_local_prm arg lp codec
+            )*)
+        c_acn.ReferenceType1 ptr tsName true arrsUpdates localPrms codec
 
 
 and EmitTypeBody (t:Asn1Type) (sTasName:string) (path:list<string>, altPath:(string*string) option )  (tas:TypeAssignment) (m:Asn1Module) (r:AstRoot) (acn:AcnTypes.AcnAstResolved) codec =

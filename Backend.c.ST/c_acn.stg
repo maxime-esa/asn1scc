@@ -592,17 +592,29 @@ if (ret) {
 RefTypeParam_tmpVar(sName, sTypeDecl) ::= "<sTypeDecl> <sName>;"
 
 
-ReferenceType1_encode(p, sName, bAcnEncodeFuncRequiresResult, arrsArgs, arrsLocalPrms) ::= <<
-<arrsLocalPrms, arrsArgs: {lp,arg|<if(arg)><lp> = <arg>;// 3031<endif>}; separator="\n">
-ret = <sName>_ACN_Encode(<p>, pBitStrm, pErrCode, FALSE<if(arrsArgs)>, <arrsLocalPrms; separator=", "><endif>);
+ReferenceType1_encode(p, sName, bAcnEncodeFuncRequiresResult, arrsUpdates,arrsLocalPrms) ::= <<
+<arrsUpdates; separator="\n">
+ret = <sName>_ACN_Encode(<p>, pBitStrm, pErrCode, FALSE<if(arrsLocalPrms)>, <arrsLocalPrms; separator=", "><endif>);
 >>
 
-ReferenceType1_decode(p, sName, bAcnEncodeFuncRequiresResult, arrsArgs, arrsLocalPrms) ::= <<
-<arrsLocalPrms, arrsArgs: {lp,arg|<if(arg)><lp> = <arg>; // 3030<endif>}; separator="\n">
-ret = <sName>_ACN_Decode(<p>, pBitStrm, pErrCode<if(arrsArgs)>, <arrsLocalPrms; separator=", "><endif>);
+ReferenceType1_decode(p, sName, bAcnEncodeFuncRequiresResult, arrsUpdates,arrsLocalPrms) ::= <<
+<arrsUpdates; separator="\n">
+ret = <sName>_ACN_Decode(<p>, pBitStrm, pErrCode<if(arrsLocalPrms)>, <arrsLocalPrms; separator=", "><endif>);
 >>
 
+ReferenceType1_update_local_prm_encode(sArg, sLp) ::= <<
+<sLp> = <sArg>; // 3030
+>>
+ReferenceType1_update_local_prm_decode(sArg, sLp) ::= <<
+<sLp> = <sArg>; // 3031
+>>
 
+ReferenceType1_update_local_prm_str_encode(sArg, sLp) ::= <<
+strcpy(<sLp>, <sArg>); // 3030str
+>>
+ReferenceType1_update_local_prm_str_decode(sArg, sLp) ::= <<
+strcpy(<sLp>, <sArg>); // 3031str
+>>
 
 /* SEQUENCE*/
 
@@ -922,7 +934,7 @@ case <sChildName>:
 
 ChoiceDependencyStrPres_child(v, sChildName, sChildRetVal) ::= <<
 case <sChildName>:
-	strcpy(<v>, <sChildRetVal>);
+	strcpy(<v>, "<sChildRetVal>"); // 431234
     break;
 >>
 
@@ -968,6 +980,10 @@ ret = (<sTmpVar0> >= <nMin>)
 
 UpdateAsn1Field(sAcnField, sTmpVar) ::= <<
 <sAcnField> = <sTmpVar>; // 23945
+>>
+
+UpdateAsn1StrField(sAcnField, sTmpVar) ::= <<
+strcpy(<sAcnField>, <sTmpVar>); // 23945str
 >>
 
 
