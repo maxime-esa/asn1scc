@@ -343,8 +343,8 @@ let isValidValueGeneric allCons eqFunc value =
 let evalRangeCon  (c:RangeTypeConstraint<'v1,'v1>)  value =
     let check_v1 v1 minIsIn = 
         match minIsIn with
-        | true  -> v1 >= value
-        | false -> v1 > value
+        | true  -> v1 <= value
+        | false -> v1 < value
     let check_v2 v2 maxIsIn = 
         match maxIsIn with
         | true  -> value <= v2

@@ -462,11 +462,15 @@ type AcnReferenceToIA5String = {
 
 type AcnInteger = {
     acnProperties       : IntegerAcnProperties
+    cons                : IntegerTypeConstraint list
+    withcons            : IntegerTypeConstraint list
     acnAligment         : AcnAligment option
     acnMaxSizeInBits    : int
     acnMinSizeInBits    : int
     acnEncodingClass    : IntEncodingClass
     Location            : SrcLoc //Line no, Char pos
+    uperRange           : uperRange<BigInteger>
+    isUnsigned          : bool
 }
 
 type AcnBoolean = {

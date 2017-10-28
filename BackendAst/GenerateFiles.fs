@@ -272,83 +272,71 @@ let CreateTestSuiteFile (r:AstRoot) (l:ProgrammingLanguage) outDir vasName =
         | XER   -> "XER_"
 
     let includedPackages =  r.Files |> Seq.map(fun x -> x.FileNameWithoutExtension.ToLower() + "_auto_tcs")
-    let PrintTestCase (v:ValueAssignment) (m:Asn1Module) (tsName : string option) =
-        let tasName = match v.Type.Kind with
-                      | ReferenceType refType   -> refType.baseInfo.tasName.Value
-                      | _                       -> ""
-        
-        let sTasName = 
-            match tsName with
-            | None  -> v.Type.typeDefinition.typeDefinitionBodyWithinSeq // spark_variables.GetTasNameByKind v.Type.Kind m r
-            | Some z -> z
-
-        let rec sAmber (t:Asn1Type) = 
+    let PrintTestCase (v:ValueAssignment) (m:Asn1Module) (sTasName : string)  (idx :int) initFuncName =
+        let rec gAmber (t:Asn1Type) = 
             match t.Kind with
-            | Integer      _ -> ""
-            | Real         _ -> ""
-            | IA5String    _ -> ""
-            | OctetString  _ -> "&"
-            | NullType     _ -> ""
-            | BitString    _ -> "&"
-            | Boolean      _ -> ""
-            | Enumerated   _ -> ""
-            | SequenceOf   _ -> "&"
-            | Sequence     _ -> "&"
-            | Choice       _ -> "&"
-            | ReferenceType r -> sAmber r.baseType
+            | Integer      _ -> ""  , "&"
+            | Real         _ -> ""  , "&"
+            | IA5String    _ -> ""  , ""
+            | OctetString  _ -> "&" , "&"
+            | NullType     _ -> ""  , "&"
+            | BitString    _ -> "&" , "&"
+            | Boolean      _ -> ""  , "&"
+            | Enumerated   _ -> ""  , "&"
+            | SequenceOf   _ -> "&" , "&"
+            | Sequence     _ -> "&" , "&"
+            | Choice       _ -> "&" , "&"
+            | ReferenceType r -> gAmber r.baseType
 
-
+        let encAmper, initAmper = gAmber v.Type
         let packageName = ToC m.Name.Value
-        //let sValue =  c_variables.PrintAsn1Value v.Value v.Type false (sTasName,0) m r    
         let sValue = DAstVariables.printValue r l  v.Type None v.Value.kind
-        let sAsn1Val0 = ""
-
-            //(PrintAsn1.PrintValueAss v m).Replace("\"","'")
-        let sAsn1Val = match sAsn1Val0.Length>1000 with
-                       | true -> sAsn1Val0.Substring(0,1000)
-                       | false -> sAsn1Val0
-
-        
+        let sTestCaseIndex = idx.ToString()
 
         let GetDatFile (enc:Asn1Encoding) = 
             let bGenerateDatFile = (r.args.CheckWithOss && v.Name.Value = "testPDU")
             match bGenerateDatFile, enc with
             | false,_     -> ""
             | true, ACN   -> ""
-            | true, XER   -> test_cases_c.PrintSuite_call_codec_generate_dat_file sTasName (sAmber v.Type) (GetEncodingString enc) "Byte"
-            | true, BER   -> test_cases_c.PrintSuite_call_codec_generate_dat_file sTasName (sAmber v.Type) (GetEncodingString enc) "Byte"
-            | true, uPER  -> test_cases_c.PrintSuite_call_codec_generate_dat_file sTasName (sAmber v.Type) (GetEncodingString enc) "Bit"
+            | true, XER   -> test_cases_c.PrintSuite_call_codec_generate_dat_file sTasName encAmper (GetEncodingString enc) "Byte"
+            | true, BER   -> test_cases_c.PrintSuite_call_codec_generate_dat_file sTasName encAmper (GetEncodingString enc) "Byte"
+            | true, uPER  -> test_cases_c.PrintSuite_call_codec_generate_dat_file sTasName encAmper (GetEncodingString enc) "Bit"
 
         let bStatic = match v.Type.ActualType.Kind with Integer _ | Enumerated(_) -> false | _ -> true
-        
+         
         r.args.encodings |> Seq.map(fun e -> 
                                         match e with
-                                        | Asn1Encoding.UPER  -> test_cases_c.PrintSuite_call_codec sTasName (sAmber v.Type) (GetEncodingString e) sValue sAsn1Val (ToC v.Name.Value) bStatic (GetDatFile e)
-                                        | Asn1Encoding.ACN   -> test_cases_c.PrintSuite_call_codec sTasName (sAmber v.Type) (GetEncodingString e) sValue sAsn1Val (ToC v.Name.Value) bStatic (GetDatFile e)
-                                        | Asn1Encoding.XER   -> test_cases_c.PrintSuite_call_codec sTasName (sAmber v.Type) (GetEncodingString e) sValue sAsn1Val (ToC v.Name.Value) bStatic (GetDatFile e)
-                                        | Asn1Encoding.BER   -> test_cases_c.PrintSuite_call_codec sTasName (sAmber v.Type) (GetEncodingString e) sValue sAsn1Val (ToC v.Name.Value) bStatic (GetDatFile e)
+                                        | Asn1Encoding.UPER  -> test_cases_c.PrintSuite_call_codec sTasName encAmper (GetEncodingString e) sValue sTestCaseIndex (ToC v.Name.Value) bStatic (GetDatFile e) initFuncName initAmper
+                                        | Asn1Encoding.ACN   -> test_cases_c.PrintSuite_call_codec sTasName encAmper (GetEncodingString e) sValue sTestCaseIndex (ToC v.Name.Value) bStatic (GetDatFile e) initFuncName initAmper
+                                        | Asn1Encoding.XER   -> test_cases_c.PrintSuite_call_codec sTasName encAmper (GetEncodingString e) sValue sTestCaseIndex (ToC v.Name.Value) bStatic (GetDatFile e) initFuncName initAmper
+                                        | Asn1Encoding.BER   -> test_cases_c.PrintSuite_call_codec sTasName encAmper (GetEncodingString e) sValue sTestCaseIndex (ToC v.Name.Value) bStatic (GetDatFile e) initFuncName initAmper
                                  ) |> Seq.StrJoin "\n\n"
         
-    
-    let funcs = seq {
+    let mutable idx = 0;
+    let funcs = 
+        seq {
             for m in r.Files |> List.collect(fun f -> f.Modules) do
                 for v in m.ValueAssignments do
                     match v.Type.Kind with
                     | ReferenceType ref -> 
                         let actMod = r.getModuleByName ref.baseInfo.modName
                         if vasName = "ALL" || v.Name.Value = vasName then
-                            yield PrintTestCase v actMod None
+                            idx <- idx + 1
+                            let initFuncName = v.Type.initFunction.initFuncName
+                            //yield PrintTestCase v actMod v.Type.typeDefinition.typeDefinitionBodyWithinSeq  idx initFuncName
+                            yield PrintTestCase v actMod (ToC2(r.args.TypePrefix + ref.baseInfo.tasName.Value) )  idx initFuncName
                     | _                 -> ()
                 if vasName = "ALL" then
                     for t in m.TypeAssignments do
                         let hasEncodeFunc = hasAcnEncodeFunction t.Type.acnEncFunction t.Type.acnParameters 
                         if hasEncodeFunc then
                             for v in t.Type.automaticTestCasesValues do
-                                
                                 let vas = {ValueAssignment.Name = StringLoc.ByValue ""; c_name = ""; ada_name = ""; Type = t.Type; Value = v}
-                                yield PrintTestCase vas m (Some (ToC2(r.args.TypePrefix + t.Name.Value) ))
+                                idx <- idx + 1
+                                let initFuncName = t.Type.initFunction.initFuncName
+                                yield PrintTestCase vas m (ToC2(r.args.TypePrefix + t.Name.Value) ) idx initFuncName
                             
-        }
+        }  |> Seq.toList
 
     let contentC = test_cases_c.PrintTestSuiteSource TestSuiteFileName includedPackages funcs
     let outCFileName = Path.Combine(outDir, TestSuiteFileName + ".c")

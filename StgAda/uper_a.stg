@@ -127,8 +127,8 @@ result.ErrorCode := <sErrCode>;
 >>
 
 /*case: A :: = INTEGER */
-IntUnconstraint_encode(p, sErrCode) ::= "<rtlModuleName()>.UPER_Enc_UnConstraintWholeNumber(S, K, <p>);"
-IntUnconstraint_decode(p, sErrCode) ::= <<
+IntUnconstraint_encode(p, sErrCode, bCoverageIgnore) ::= "<rtlModuleName()>.UPER_Enc_UnConstraintWholeNumber(S, K, <p>);"
+IntUnconstraint_decode(p, sErrCode, bCoverageIgnore) ::= <<
 result.ErrorCode := <sErrCode>;
 <rtlModuleName()>.UPER_Dec_UnConstraintWholeNumber(S, K, <p>, result.Success);
 >>
@@ -171,7 +171,7 @@ begin
         if extBit=0 THEN --extBit is zero ==> value is expecteted within root range
             <sIntBody>
         ELSE
-            <IntUnconstraint_decode(p=p, sErrCode=sErrCode)>
+            <IntUnconstraint_decode(p=p, sErrCode=sErrCode, bCoverageIgnore="true")>
         end if;
     end if;
 end;

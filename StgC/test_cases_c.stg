@@ -217,15 +217,17 @@ int main(int argc, char* argv[])
 /*
 Code calling a test case
 */
-PrintSuite_call_codec(sTasName, sAmber, sEnc, sValue, sValueAsAsn1, sVasName, bStatic, sGenerateDatFile) ::= <<
+PrintSuite_call_codec(sTasName, sAmber, sEnc, sValue, sValueAsAsn1, sVasName, bStatic, sGenerateDatFile, soInitFunction, sInitAmber) ::= <<
 {
     output->report_case_begin("<sTasName>_<sEnc>enc_dec");
-
+    <if(soInitFunction)>
     {
         // dummy statement used for calling init functions
-        //<if(bStatic)>static <endif><sTasName> tmp0;
-        //<sTasName>_Initialize(<sAmber>tmp0);
+        <if(bStatic)>static <endif><sTasName> tmp0;
+        <soInitFunction>(<sInitAmber>tmp0);
     }
+
+    <endif>
     <if(bStatic)>static <endif><sTasName> tmp =
         <sValue>;
         result = <sTasName>_<sEnc>enc_dec(<sAmber>tmp, &errCode);
@@ -249,7 +251,7 @@ PrintSuite_call_codec(sTasName, sAmber, sEnc, sValue, sValueAsAsn1, sVasName, bS
            default:
                 output->report_failure_message("Unexpected error code in test case '<sVasName>'.");
            }
-           output->report_failure_message("Test Value was <sValueAsAsn1>");
+           output->report_failure_message("Test case index was <sValueAsAsn1>");
            output->report_failure_message("========================================");
            totalErrors = totalErrors + 1;
 

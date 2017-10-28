@@ -98,20 +98,16 @@ def RunTestCase(asn1, acn, behavior, expErrMsg):
             return
 
     if language == "c":
-        res = mysystem("cp " + rootDir + os.sep + "make_utils/Makefile "  + targetDir + os.sep, False)
-        res = mysystem("cp " + rootDir + os.sep + "make_utils/mainprogram.c "  + targetDir + os.sep, False)
-
-
         res = mysystem(
             "cd " + targetDir + os.sep + "; CC=gcc make coverage", False)
-        #f = open(targetDir + os.sep + "sample1.c.gcov", 'r')
-        #lines = [
-        #    l
-        #    for l in f.readlines()
-        #    if ("####" in l) and ("COVERAGE_IGNORE" not in l)]
-        #if len(lines) > 0:
-        #    PrintFailed("coverage failed. (less than 100%)")
-        #    sys.exit(1)
+        f = open(targetDir + os.sep + "sample1.c.gcov", 'r')
+        lines = [
+            l
+            for l in f.readlines()
+            if ("####" in l) and ("COVERAGE_IGNORE" not in l)]
+        if len(lines) > 0:
+            PrintFailed("coverage failed. (less than 100%)")
+            sys.exit(1)
     else:
         prevDir = os.getcwd()
         os.chdir(targetDir)

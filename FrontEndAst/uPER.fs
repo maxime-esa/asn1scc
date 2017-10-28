@@ -50,8 +50,8 @@ let getRangeTypeConstraintUperRange (c:RangeTypeConstraint<'v1,'v1>) funcNext fu
         (fun r1 r2 s        -> uperIntersection r1 r2 l, s)
         (fun r s            -> Full, s)       
         (fun r1 r2 s        -> r1, s)
-        (fun r s            -> r, s)       
-        (fun r1 r2 s        -> uperUnion r1 r2, s)
+        (fun r s            -> Full, s)       
+        (fun r1 r2 s        -> Full, s)
         (fun v  s           -> Concrete (v,v),s)
         (fun v1 v2  minIsIn maxIsIn s  ->
             let val1 = if minIsIn then v1 else (funcNext v1)

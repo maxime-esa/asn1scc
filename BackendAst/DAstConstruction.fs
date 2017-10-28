@@ -64,7 +64,7 @@ let private createInteger (r:Asn1AcnAst.AstRoot) (l:ProgrammingLanguage) (m:Asn1
     let initialValue        = getValueByUperRange o.uperRange 0I
     let initFunction        = DAstInitialize.createIntegerInitFunc r l t o typeDefinition (IntegerValue initialValue)
     let equalFunction       = DAstEqual.createIntegerEqualFunction r l t o typeDefinition 
-    let isValidFunction, s1     = DAstValidate.createIntegerFunction r l t o typeDefinition None us
+    let isValidFunction, s1     = DAstValidate.createIntegerFunction r l t o typeDefinition  us
     let uperEncFunction, s2     = DAstUPer.createIntegerFunction r l Codec.Encode t o typeDefinition None isValidFunction s1
     let uperDecFunction, s3     = DAstUPer.createIntegerFunction r l Codec.Decode t o typeDefinition None isValidFunction s2
     let acnEncFunction, s4      = DAstACN.createIntegerFunction r l Codec.Encode t o typeDefinition isValidFunction uperEncFunction s3
@@ -97,7 +97,7 @@ let private createReal (r:Asn1AcnAst.AstRoot) (l:ProgrammingLanguage) (m:Asn1Acn
     let equalFunction       = DAstEqual.createRealEqualFunction r l t o typeDefinition 
     let initialValue        = getValueByUperRange o.uperRange 0.0
     let initFunction        = DAstInitialize.createRealInitFunc r l t o typeDefinition (RealValue initialValue)
-    let isValidFunction, s1     = DAstValidate.createRealFunction r l t o typeDefinition None us
+    let isValidFunction, s1     = DAstValidate.createRealFunction r l t o typeDefinition  us
     let uperEncFunction, s2     = DAstUPer.createRealFunction r l Codec.Encode t o typeDefinition None isValidFunction s1
     let uperDecFunction, s3     = DAstUPer.createRealFunction r l Codec.Decode t o typeDefinition None isValidFunction s2
     let acnEncFunction, s4      = DAstACN.createRealrFunction r l Codec.Encode t o typeDefinition isValidFunction uperEncFunction s3
@@ -139,7 +139,7 @@ let private createStringType (r:Asn1AcnAst.AstRoot) (deps:Asn1AcnAst.AcnInserted
             | false -> o.uperCharSet |> Seq.find(fun c -> not (Char.IsControl c))
         System.String(ch, o.minSize)
     let initFunction        = DAstInitialize.createIA5StringInitFunc r l t o typeDefinition (StringValue initialValue)
-    let isValidFunction, s1     = DAstValidate.createStringFunction r l t o typeDefinition None us
+    let isValidFunction, s1     = DAstValidate.createStringFunction r l t o typeDefinition  us
     let uperEncFunction, s2     = DAstUPer.createIA5StringFunction r l Codec.Encode t o typeDefinition None isValidFunction s1
     let uperDecFunction, s3     = DAstUPer.createIA5StringFunction r l Codec.Decode t o typeDefinition None isValidFunction s2
     let acnEncFunction, s4      = DAstACN.createStringFunction r deps l Codec.Encode t o typeDefinition isValidFunction uperEncFunction s3
@@ -177,7 +177,7 @@ let private createOctetString (r:Asn1AcnAst.AstRoot) (deps:Asn1AcnAst.AcnInserte
     let equalFunction       = DAstEqual.createOctetStringEqualFunction r l t o typeDefinition 
     let printValue          = DAstVariables.createOctetStringFunction r l t o typeDefinition 
 
-    let isValidFunction, s1     = DAstValidate.createOctetStringFunction r l t o typeDefinition None equalFunction printValue us
+    let isValidFunction, s1     = DAstValidate.createOctetStringFunction r l t o typeDefinition  equalFunction printValue us
     let uperEncFunction, s2     = DAstUPer.createOctetStringFunction r l Codec.Encode t o typeDefinition None isValidFunction s1
     let uperDecFunction, s3     = DAstUPer.createOctetStringFunction r l Codec.Decode t o typeDefinition None isValidFunction s2
     let acnEncFunction, s4      = DAstACN.createOctetStringFunction r deps l Codec.Encode t o typeDefinition isValidFunction uperEncFunction s3
@@ -246,7 +246,7 @@ let private createBitString (r:Asn1AcnAst.AstRoot) (deps:Asn1AcnAst.AcnInsertedF
     let initFunction        = DAstInitialize.createBitStringInitFunc r l t o typeDefinition (BitStringValue initialValue)
     let equalFunction       = DAstEqual.createBitStringEqualFunction r l t o typeDefinition 
     let printValue          = DAstVariables.createBitStringFunction r l t o typeDefinition 
-    let isValidFunction, s1     = DAstValidate.createBitStringFunction r l t o typeDefinition None equalFunction printValue us
+    let isValidFunction, s1     = DAstValidate.createBitStringFunction r l t o typeDefinition equalFunction printValue us
     let uperEncFunction, s2     = DAstUPer.createBitStringFunction r l Codec.Encode t o typeDefinition None isValidFunction s1
     let uperDecFunction, s3     = DAstUPer.createBitStringFunction r l Codec.Decode t o typeDefinition None isValidFunction s2
     let acnEncFunction, s4      = DAstACN.createBitStringFunction r deps l Codec.Encode t o typeDefinition isValidFunction uperEncFunction s3
@@ -279,7 +279,7 @@ let private createBoolean (r:Asn1AcnAst.AstRoot) (l:ProgrammingLanguage) (m:Asn1
     let equalFunction       = DAstEqual.createBooleanEqualFunction r l t o typeDefinition 
     let initialValue        = false
     let initFunction        = DAstInitialize.createBooleanInitFunc r l t o typeDefinition (BooleanValue initialValue)
-    let isValidFunction, s1     = DAstValidate.createBoolFunction r l t o typeDefinition None us
+    let isValidFunction, s1     = DAstValidate.createBoolFunction r l t o typeDefinition us
     let uperEncFunction, s2     = DAstUPer.createBooleanFunction r l Codec.Encode t o typeDefinition None isValidFunction s1
     let uperDecFunction, s3     = DAstUPer.createBooleanFunction r l Codec.Decode t o typeDefinition None isValidFunction s2
     let acnEncFunction, s4      = DAstACN.createBooleanFunction r l Codec.Encode t o typeDefinition None isValidFunction  s3
@@ -316,7 +316,7 @@ let private createEnumerated (r:Asn1AcnAst.AstRoot) (l:ProgrammingLanguage) (m:A
         | false ->o.items |> List.map( fun i -> i.getBackendName l)
     let initialValue  =o.items.Head.Name.Value
     let initFunction        = DAstInitialize.createEnumeratedInitFunc r l t o typeDefinition (EnumValue initialValue)
-    let isValidFunction, s1     = DAstValidate.createEnumeratedFunction r l t o typeDefinition None us
+    let isValidFunction, s1     = DAstValidate.createEnumeratedFunction r l t o typeDefinition us
     let uperEncFunction, s2     = DAstUPer.createEnumeratedFunction r l Codec.Encode t o typeDefinition None isValidFunction s1
     let uperDecFunction, s3     = DAstUPer.createEnumeratedFunction r l Codec.Decode t o typeDefinition None isValidFunction s2
 
@@ -413,7 +413,7 @@ let private createSequence (r:Asn1AcnAst.AstRoot) (deps:Asn1AcnAst.AcnInsertedFi
             | Asn1Child o -> Some ({NamedValue.name = o.Name.Value; Value={Asn1Value.kind=o.Type.initialValue;id=ReferenceToValue([],[]);loc=emptyLocation}})
             | AcnChild  _ -> None)
     let initFunction        = DAstInitialize.createSequenceInitFunc r l t o typeDefinition children (SeqValue initialValue)
-    let isValidFunction, s1     = DAstValidate.createSequenceFunction r l t o typeDefinition children None us
+    let isValidFunction, s1     = DAstValidate.createSequenceFunction r l t o typeDefinition children  us
     let uperEncFunction, s2     = DAstUPer.createSequenceFunction r l Codec.Encode t o typeDefinition None isValidFunction children s1
     let uperDecFunction, s3     = DAstUPer.createSequenceFunction r l Codec.Decode t o typeDefinition None isValidFunction children s2
     let acnEncFunction, s4      = DAstACN.createSequenceFunction r deps l Codec.Encode t o typeDefinition  isValidFunction children newPrms s3
@@ -584,8 +584,16 @@ let private mapTas (r:Asn1AcnAst.AstRoot) (deps:Asn1AcnAst.AcnInsertedFieldDepen
     },ns
 
 
-let private mapVas (r:Asn1AcnAst.AstRoot) (deps:Asn1AcnAst.AcnInsertedFieldDependencies)  (l:ProgrammingLanguage) (m:Asn1AcnAst.Asn1Module) (vas:Asn1AcnAst.ValueAssignment) (us:State)=
-    let newType, ns = mapType r deps l m (vas.Type, us)
+let private mapVas (r:Asn1AcnAst.AstRoot) (allNewTypeAssignments : TypeAssignment list) (deps:Asn1AcnAst.AcnInsertedFieldDependencies)  (l:ProgrammingLanguage) (m:Asn1AcnAst.Asn1Module) (vas:Asn1AcnAst.ValueAssignment) (us:State)=
+    let newType, ns = 
+        match vas.Type.Kind with
+        | Asn1AcnAst.ReferenceType ref ->
+            match allNewTypeAssignments |> Seq.tryFind(fun ts -> ts.Name.Value = ref.tasName.Value && ref.modName.Value = m.Name.Value) with
+            | None          -> 
+                let oldType = Asn1AcnAstUtilFunctions.GetActualTypeByName r ref.modName ref.tasName
+                mapType r deps l m (oldType, us)
+            | Some newTas   -> newTas.Type, us
+        | _     ->  mapType r deps l m (vas.Type, us)
     {
         ValueAssignment.Name = vas.Name
         c_name = vas.c_name
@@ -596,15 +604,20 @@ let private mapVas (r:Asn1AcnAst.AstRoot) (deps:Asn1AcnAst.AcnInsertedFieldDepen
 
 let private mapModule (r:Asn1AcnAst.AstRoot) (deps:Asn1AcnAst.AcnInsertedFieldDependencies) (l:ProgrammingLanguage) (m:Asn1AcnAst.Asn1Module) (us:State) =
     let newTases, ns1 = m.TypeAssignments |> foldMap (fun ns nt -> mapTas r deps l m nt ns) us
-    let newVases, ns2 = m.ValueAssignments |> foldMap (fun ns nt -> mapVas r deps l m nt ns) ns1
     {
         Asn1Module.Name = m.Name
         TypeAssignments = newTases
-        ValueAssignments = newVases
+        ValueAssignments = []
         Imports = m.Imports
         Exports = m.Exports
         Comments = m.Comments
-    }, ns2
+    }, ns1
+
+let private reMapModule (r:Asn1AcnAst.AstRoot) (files0:Asn1File list) (deps:Asn1AcnAst.AcnInsertedFieldDependencies) (l:ProgrammingLanguage) (m:Asn1Module) (us:State) =
+    let allNewTasses = files0 |> List.collect(fun f -> f.Modules) |> List.collect(fun m -> m.TypeAssignments)
+    let oldModule = r.Files |> List.collect(fun f -> f.Modules) |> List.find(fun oldM -> oldM.Name.Value = m.Name.Value)
+    let newVases, ns1 = oldModule.ValueAssignments |> foldMap (fun ns nt -> mapVas r allNewTasses deps l oldModule nt ns) us
+    { m with ValueAssignments = newVases}, ns1
 
 let private mapFile (r:Asn1AcnAst.AstRoot) (deps:Asn1AcnAst.AcnInsertedFieldDependencies) (l:ProgrammingLanguage) (f:Asn1AcnAst.Asn1File) (us:State) =
     let newModules, ns = f.Modules |> foldMap (fun cs m -> mapModule r deps l m cs) us
@@ -614,6 +627,9 @@ let private mapFile (r:Asn1AcnAst.AstRoot) (deps:Asn1AcnAst.AcnInsertedFieldDepe
         Modules = newModules
     }, ns
 
+let private reMapFile (r:Asn1AcnAst.AstRoot) (files0:Asn1File list) (deps:Asn1AcnAst.AcnInsertedFieldDependencies) (l:ProgrammingLanguage) (f:Asn1File) (us:State) =
+    let newModules, ns = f.Modules |> foldMap (fun cs m -> reMapModule r files0 deps l m cs) us
+    {f with Modules = newModules}, ns
 
 let DoWork (r:Asn1AcnAst.AstRoot) (deps:Asn1AcnAst.AcnInsertedFieldDependencies) (lang:CommonTypes.ProgrammingLanguage) (encodings: CommonTypes.Asn1Encoding list) : AstRoot=
     let l =
@@ -625,8 +641,9 @@ let DoWork (r:Asn1AcnAst.AstRoot) (deps:Asn1AcnAst.AcnInsertedFieldDependencies)
 
     
     let initialState = {curSeqOfLevel=0; currErrorCode = 1; curErrCodeNames = Set.empty}
-
-    let files, ns = r.Files |> foldMap (fun cs f -> mapFile r deps l f cs) initialState
+    //first map all type assignments and then value assignments
+    let files0, ns = r.Files |> foldMap (fun cs f -> mapFile r deps l f cs) initialState
+    let files, ns = files0 |> foldMap (fun cs f -> reMapFile r files0 deps l f cs) ns
     {
         AstRoot.Files = files
         acnConstants = r.acnConstants

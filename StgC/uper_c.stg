@@ -225,10 +225,10 @@ ret = BitStream_DecodeConstraintPosWholeNumber(pBitStrm, <p>, <nMin>, <nMax>);
 
 
 /*case: A :: = INTEGER */
-IntUnconstraint_encode(p, sErrCode) ::= "BitStream_EncodeUnConstraintWholeNumber(pBitStrm, <p>);"
-IntUnconstraint_decode(p, sErrCode) ::= <<
-ret = BitStream_DecodeUnConstraintWholeNumber(pBitStrm, <p>);
-*pErrCode = ret ? 0 : <sErrCode>;
+IntUnconstraint_encode(p, sErrCode, bCoverageIgnore) ::= "BitStream_EncodeUnConstraintWholeNumber(pBitStrm, <p>);"
+IntUnconstraint_decode(p, sErrCode, bCoverageIgnore) ::= <<
+ret = BitStream_DecodeUnConstraintWholeNumber(pBitStrm, <p>);   <if(bCoverageIgnore)>/*COVERAGE_IGNORE*/<endif>
+*pErrCode = ret ? 0 : <sErrCode>;                               <if(bCoverageIgnore)>/*COVERAGE_IGNORE*/<endif>
 >>
 
 /*case: A :: = INTEGER(MIN..5) */
@@ -278,7 +278,7 @@ IntRootExt_decode(p, nMin, sRootBaseConstraint, sIntBody, sErrCode) ::=<<
 	    if (extBit==0) { /* ext bit is zero ==> value is expecteted with root range*/
 		    <sIntBody>
 	    } else {
-		    <IntUnconstraint_decode(p=p, sErrCode = sErrCode)>
+		    <IntUnconstraint_decode(p=p, sErrCode = sErrCode, bCoverageIgnore="true")>
 	    }
     }
 }

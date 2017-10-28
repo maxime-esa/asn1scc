@@ -928,3 +928,4 @@ xml
 /v4Tests/tmp - Copy
 /StgAda/test_cases_a.stg.fs
 /StgC/test_cases_c.stg.fs
+/StgVarious/xml_outputs.stg.fs

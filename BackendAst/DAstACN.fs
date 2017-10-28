@@ -190,10 +190,11 @@ let createAcnIntegerFunction (r:Asn1AcnAst.AstRoot) (l:ProgrammingLanguage) (cod
     let errCode, ns = getNextValidErrorCode us errCodeName
 
     let uperFuncBody (errCode) (p:FuncParamType) = 
-        let pp = match codec with CommonTypes.Encode -> p.getValue l | CommonTypes.Decode -> p.getPointer l
+        Some (DAstUPer.getIntfuncBodyByCons r l codec t.uperRange t.Location t.isUnsigned (t.cons) (t.cons@t.withcons) errCode p)
+        (*let pp = match codec with CommonTypes.Encode -> p.getValue l | CommonTypes.Decode -> p.getPointer l
         let IntUnconstraint = match l with C -> uper_c.IntUnconstraint          | Ada -> uper_a.IntUnconstraint
-        let funcBodyContent = IntUnconstraint pp errCode.errCodeName codec
-        Some {UPERFuncBodyResult.funcBody = funcBodyContent; errCodes = [errCode]; localVariables = []}    
+        let funcBodyContent = IntUnconstraint pp errCode.errCodeName false codec
+        Some {UPERFuncBodyResult.funcBody = funcBodyContent; errCodes = [errCode]; localVariables = []}    *)
 
     let funcBody = createAcnIntegerFunctionInternal r l codec t.acnEncodingClass uperFuncBody
     (funcBody errCode), ns

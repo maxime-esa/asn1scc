@@ -243,7 +243,7 @@ let foldRangeCon  getNext getPrev min max zero (c:RangeTypeConstraint<'v1,'v1>) 
 
 
 let IntegerAutomaticTestCaseValues (r:Asn1AcnAst.AstRoot)  (t:Asn1AcnAst.Asn1Type) (o:Asn1AcnAst.Integer) =
-    let allCons = DAstValidate.getIntSimplifiedConstraints r o
+    let allCons = DAstValidate.getIntSimplifiedConstraints r o.isUnsigned o.AllCons
     let min = r.args.IntMin o.isUnsigned
     let max = r.args.IntMax o.isUnsigned
     let getNext a = match a < max with true -> a + 1I | false -> max
@@ -252,7 +252,8 @@ let IntegerAutomaticTestCaseValues (r:Asn1AcnAst.AstRoot)  (t:Asn1AcnAst.Asn1Typ
     | []    -> [min; 0I; max] |> Seq.distinct |> Seq.toList
     | _     -> 
         let ret = allCons |> List.collect (foldRangeCon  getNext getPrev min max 0I ) |> Seq.distinct |> Seq.toList
-        ret |> List.filter (isValidValueRanged allCons)
+        let aaa = ret |> List.filter (isValidValueRanged allCons)
+        aaa
 
 let RealAutomaticTestCaseValues (r:Asn1AcnAst.AstRoot)  (t:Asn1AcnAst.Asn1Type) (o:Asn1AcnAst.Real) =
     let allCons = o.AllCons
@@ -351,9 +352,9 @@ let SequenceAutomaticTestCaseValues (r:Asn1AcnAst.AstRoot)  (t:Asn1AcnAst.Asn1Ty
 
             let rest = generateCases xs
             seq {
-                match x1.Optionality with
-                | Some (Asn1AcnAst.Optional _)    -> yield! rest
-                | _                               -> 
+//                match x1.Optionality with
+//                | Some (Asn1AcnAst.Optional _)    -> yield! rest
+//                | _                               -> 
                     for i1 in ths do    
                         for lst in rest do
                             yield i1::lst
