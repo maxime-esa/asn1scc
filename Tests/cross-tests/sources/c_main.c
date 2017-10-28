@@ -1,9 +1,11 @@
 #include <stdio.h>
 #include <string.h>
+#include <stdbool.h>
 
-#include "c_proxy.h"
 #include "file_utility.h"
 
+bool proxy_decode();
+void proxy_encode();
 void usage();
 
 int main(int argc, char **argv) {

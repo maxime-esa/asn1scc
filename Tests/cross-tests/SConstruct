@@ -4,11 +4,13 @@ import ReportBuilder
 import AsnBuilder
 import TestCaseBuilder
 import XmlBuilder
+import SummaryBuilder
 import subprocess
 
 from run_tests import test_main
 from glob import glob
-from commons import find_files_recursive, glob_files_recursive, grouper
+from commons import *
+from templates import templates
 
 def _get_output_name(test_case):
     return os.path.join('build',
@@ -23,8 +25,12 @@ def _get_asn_bin(search_root, build_script):
         return _get_asn_bin(search_root, '')
     return binary[0]
 
-def _get_language_files(test_case, language):
-    return [str(file_) for file_ in test_case if language + '_out' in str(file_)]
+def _basenames(test_file):
+    return (os.path.splitext(os.path.basename(test_file[0].path))[0],
+            env['VARIABLES'][_test_name(test_file)]['MODULES'][0].lower())
+
+def _test_name(test_file):
+    return os.path.basename(os.path.dirname(test_file[0].path))
 
 env = Environment()
 env['BUILDERS']['Ada'] = AdaBuilder.builder()
@@ -32,20 +38,17 @@ env['BUILDERS']['Report'] = ReportBuilder.builder()
 env['BUILDERS']['Asn'] = AsnBuilder.builder()
 env['BUILDERS']['TestCase'] = TestCaseBuilder.builder()
 env['BUILDERS']['Xml'] = XmlBuilder.builder()
+env['BUILDERS']['Summary'] = SummaryBuilder.builder()
 env['SCRIPT_DIR'] = Dir('#').abspath
 env['ASN_ROOT'] = os.path.dirname(os.path.dirname(env['SCRIPT_DIR']))
 env['BIN_DIR'] = os.path.join(env['ASN_ROOT'], 'Asn1f2', 'bin')
 env['ASN_BIN'] = _get_asn_bin(env['BIN_DIR'], os.path.join(env['ASN_ROOT'], 'circleci-build.sh'))
 env['LANGUAGES'] = ['c', 'Ada']
-env['COMMONS_SRC'] = ['file_utility.c']
-env['COMMONS_OBJ'] = ['file_utility.o']
-env['ADA_HELPERS_SRC'] = ['ada_helpers.c']
-env['ADA_HELPERS_OBJ'] = [os.path.splitext(source)[0] + ".o" for source in env['ADA_HELPERS_SRC']]
-env['ADA_DEPENDENCIES'] = ['utility.adb', 'utility.ads'] + env['ADA_HELPERS_OBJ'] + env['COMMONS_OBJ']
 env['VARIABLES'] = {}
-env.Append(CPPPATH=['c_out','Ada_out'])
+env.Append(CPPPATH=[])
 
 test_cases = glob('test-cases/*/')
+reports = []
 for test_case in test_cases:
     env['BUILD_DIR'] = _get_output_name(test_case)
     env['TEST_CASE'] = test_case
@@ -54,10 +57,18 @@ for test_case in test_cases:
     VariantDir(env['BUILD_DIR'], 'sources')
     test_file = Glob(os.path.join(test_case, '*'))
     #TODO: More than expected files
-    #xml = os.path.join(env['BUILD_DIR'], os.path.basename(os.path.normpath(test_case)) + '.xml')
     xml = os.path.join(test_case, '.tmp.xml')
-    
+
     output = env.TestCase(target=[xml], source=[test_file, env['ASN_BIN']])
-    for proxy in grouper(5, output[1:]):
-        SConscript(os.path.join(env['BUILD_DIR'], 'SConscript'),
-                   exports={'PROXY' : proxy, 'TEST_FILE' : test_file})
+    env.Asn([],
+            [env['ASN_BIN']] + list_files(
+                os.path.join(env['SCRIPT_DIR'], env['TEST_CASE'])),
+            BASENAMES = _basenames(test_file),
+            DIRNAME = env['BUILD_DIR'])
+    reports += [SConscript(os.path.join(env['BUILD_DIR'], 'SConscript'),
+                   exports={'PROXY' : proxy, 'TEST_FILE' : test_file})[0]
+               for proxy in grouper(len(templates), output)]
+    Clean(reports, env['BUILD_DIR'])
+
+env.Summary(["Non existing file"], reports)
+

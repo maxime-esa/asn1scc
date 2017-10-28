@@ -1,229 +1,278 @@
 templates = [
-(''
-R'#include <stdbool.h>\n'
+R'''
+#ifndef {test_case}_C_PROXY
+#define {test_case}_C_PROXY
+#include <stdbool.h>
 
-R'static const char *filename = "{buffer_}";\n'
-R'bool proxy_decode();\n'
-R'void proxy_encode();\n'
-''),
-(''
-R'#include "c_proxy.h"\n'
+static const char *filename = "{buffer_}";
+bool proxy_decode();
+void proxy_encode();
+#endif
+''',
+R'''
+#include "c_proxy.h"
 
-R'#include <stdbool.h>\n'
-R'#include <stdio.h>\n'
-R'#include "file_utility.h"\n'
-R'#include "{asn_header}"\n'
+#include <stdbool.h>
+#include <stdio.h>
+#include "../file_utility.h"
+#include "../{asn_header}"
 
-R'bool proxy_decode() {{\n'
-  R'unsigned char buffer[{type_}_REQUIRED_BYTES_FOR_ACN_ENCODING];\n'
-  R'BitStream stream;\n'
-  R'BitStream_Init(&stream, buffer, {type_}_REQUIRED_BYTES_FOR_ACN_ENCODING);\n'
-  R'read_from_file(filename, (char *) buffer, {type_}_REQUIRED_BYTES_FOR_ACN_ENCODING);\n'
-  R'int error_code=0;\n'
-  R'{type_} to_decode;\n'
+bool proxy_decode() {{
+  unsigned char buffer[{type_}_REQUIRED_BYTES_FOR_ACN_ENCODING];
+  BitStream stream;
+  BitStream_Init(&stream, buffer, {type_}_REQUIRED_BYTES_FOR_ACN_ENCODING);
+  read_from_file(filename, (char *) buffer, {type_}_REQUIRED_BYTES_FOR_ACN_ENCODING);
+  int error_code=0;
+  {type_} to_decode;
 
-  R'flag result={type_}_ACN_Decode(&to_decode, &stream, &error_code);\n'
-  R'if(result==false){{\n'
-    R'fprintf(stderr,"Result of {type_}_ACN_Encode evaluated to false\\\\n");\n'
-    R'return false;\n'
-  R'}}\n'
-  R'if(error_code!=0){{\n'
-    R'fprintf(stderr,"Error code was set: %%d\\\\n",error_code);\n'
-    R'return false;\n'
-  R'}}\n'
-  R'printf("%%llu\\\\n",to_decode);\n'
-  R'fflush(stdout);\n'
-  R'return true;\n'
-R'}}\n'
+  flag result={type_}_ACN_Decode(&to_decode, &stream, &error_code);
+  if (result==false) {{
+    fprintf(stderr,"Result of {type_}_ACN_Encode evaluated to false\n");
+    return false;
+  }}
+  if (error_code!=0) {{
+    fprintf(stderr,"Error code was set: %d\n",error_code);
+    return false;
+  }}
+  if (remove(filename)!=0) {{
+    fprintf(stderr,"Failed to remove file: %s\n",filename);
+    perror(NULL);
+    return false;
+  }}
+  printf("%llu\n",to_decode);
+  fflush(stdout);
+  return true;
+}}
 
-R'void proxy_encode(){{\n'
-  R'unsigned char buffer[{type_}_REQUIRED_BYTES_FOR_ACN_ENCODING];\n'
-  R'BitStream stream;\n'
-  R'BitStream_Init(&stream,buffer,{type_}_REQUIRED_BYTES_FOR_ACN_ENCODING);\n'
+void proxy_encode(){{
+  unsigned char buffer[{type_}_REQUIRED_BYTES_FOR_ACN_ENCODING];
+  BitStream stream;
+  BitStream_Init(&stream,buffer,{type_}_REQUIRED_BYTES_FOR_ACN_ENCODING);
 
-  R'int error_code=0;\n'
-  R'flag result={type_}_ACN_Encode(&{variable},&stream,&error_code,false);\n'
+  int error_code=0;
+  flag result={type_}_ACN_Encode(&{test_case},&stream,&error_code,false);
 
-  R'if(result==false){{\n'
-    R'fprintf(stderr,"Result of {type_}_ACN_Encode evaluated to false\\\\n");\n'
-    R'return;\n'
-  R'}}\n'
+  if (result==false) {{
+    fprintf(stderr,"Result of {type_}_ACN_Encode evaluated to false\n");
+    return;
+  }}
+  if (error_code!=0) {{
+    fprintf(stderr,"Error code was set: %d\n",error_code);
+    return;
+  }}
 
-  R'if(error_code!=0){{\n'
-    R'fprintf(stderr,"Error code was set: %%d\\\\n",error_code);\n'
-    R'return;\n'
-  R'}}\n'
+  write_to_file(filename,(char *)buffer,{type_}_REQUIRED_BYTES_FOR_ACN_ENCODING);
 
-  R'write_to_file(filename,(char *)buffer,{type_}_REQUIRED_BYTES_FOR_ACN_ENCODING);\n'
+  printf("%llu\n",{test_case});
+  fflush(stdout);
+}}
+''',
+R'''
+with Ada.Text_IO;
+with Ada.Integer_Text_IO;
+with Ada.Command_Line;
+with {test_case}_ada_proxy;
+with Ada.Long_Long_Integer_Text_IO;
+with Interfaces;
 
-  R'printf("%%llu\\\\n",{variable});\n'
-  R'fflush(stdout);\n'
-R'}}'),
-(''
-R'with Ada.Text_IO;\n'
-R'with Ada.Integer_Text_IO;\n'
-R'with Ada.Command_Line;\n'
-R'with {variable}_ada_proxy;\n'
-R'with Ada.Long_Long_Integer_Text_IO;\n'
-R'with Interfaces;\n'
+procedure ada_main_{test_case} is
 
-R'procedure ada_main_{variable} is\n'
+begin
+if (Ada.Command_Line.Argument_Count/=1) then
+  return;
+end if;
 
-R'begin\n'
-R'if(Ada.Command_Line.Argument_Count/=1)then\n'
-  R'return;\n'
-R'end if;\n'
+if (Ada.Command_Line.Argument(1)="encode") then
+  {test_case}_ada_proxy.proxy_encode;
+elsif (Ada.Command_Line.Argument(1)="decode") then
+  {test_case}_ada_proxy.proxy_decode;
+else
+  Ada.Text_IO.Put_Line(Ada.Text_IO.Standard_Error,"Unrecognized option: "
+    & Ada.Command_Line.Argument(1));
+end if;
 
-R'if(Ada.Command_Line.Argument(1)="encode")then\n'
-  R'{variable}_ada_proxy.proxy_encode;\n'
-R'elsif(Ada.Command_Line.Argument(1)="decode")then\n'
-  R'{variable}_ada_proxy.proxy_decode;\n'
-R'else\n'
-  R'Ada.Text_IO.Put_Line(Ada.Text_IO.Standard_Error,"Unrecognized option: "\n'
-    R'& Ada.Command_Line.Argument(1));\n'
-R'end if;\n'
+end ada_main_{test_case};
+''',
+R'''
+with {module};
+with Interfaces;
+with Interfaces.C;
 
-R'end ada_main_{variable};\n'
-''),
-(''
-R'with {module};\n'
-R'with Interfaces;\n'
-R'with Interfaces.C;\n'
+package {test_case}_ada_accessors is
 
-R'package {variable}_ada_proxy is\n'
+function get(buffer : in {module}.{type_}_ACN_bit_array; index : in Interfaces.C.Int) return Interfaces.C.int;
+procedure set(buffer : in out {module}.{type_}_ACN_bit_array; index : in Interfaces.C.Int; value : in Interfaces.C.int);
 
-R'procedure proxy_encode;\n'
-R'procedure proxy_decode;\n'
-R'procedure save_to_file(buffer : in {module}.{type_}_ACN_bit_array);\n'
-R'procedure read_from_file(buffer : in out {module}.{type_}_ACN_bit_array);\n'
+pragma Export(C, get, "get");
+pragma Export(C, set, "set");
 
-R'function get(buffer : in {module}.{type_}_ACN_bit_array; index : in Interfaces.C.Int) return Interfaces.C.int;\n'
-R'procedure set(buffer : in out {module}.{type_}_ACN_bit_array; index : in Interfaces.C.Int; value : in Interfaces.C.int);\n'
-R'function write_memory(filename : in String; buffer : in {module}.{type_}_ACN_bit_array) return Interfaces.C.int;\n'
-R'function read_memory(filename : in String; buffer : in out {module}.{type_}_ACN_bit_array) return Interfaces.C.int;\n'
+end {test_case}_ada_accessors;
+''',
+R'''
+with {module};
+with Interfaces;
+with Interfaces.C;
+with adaasn1rtl; use adaasn1rtl;
+with Interfaces.C; use Interfaces.C;
 
-R'pragma Export(C, get, "get");\n'
-R'pragma Export(C, set, "set");\n'
-R'pragma Import(C, write_memory, "write_memory");\n'
-R'pragma Import(C, read_memory, "read_memory");\n'
+package body {test_case}_ada_accessors is
 
-R'private\n'
-  R'filename : constant String := "{buffer_}";\n'
+function get(buffer : in {module}.{type_}_ACN_bit_array; index : in Interfaces.C.Int) return Interfaces.C.int is
+    pragma Suppress(Index_Check);
+    pragma Suppress(Overflow_Check);
+begin
+  if (buffer(Integer(index+1)) = 1) then
+    return Interfaces.C.int(1);
+  else
+    return Interfaces.C.int(0);
+  end if;
+end get;
 
-R'end {variable}_ada_proxy;\n'
-''),
-(''
-R'with Ada.Text_IO;\n'
-R'with Ada.Text_IO.Text_Streams;\n'
-R'with Ada.Integer_Text_IO;\n'
-R'with Ada.Long_Long_Integer_Text_IO;\n'
-R'with Interfaces;\n'
-R'with adaasn1rtl; use adaasn1rtl;\n'
-R'with Interfaces.C; use Interfaces.C;\n'
+procedure set(buffer : in out {module}.{type_}_ACN_bit_array; index : in Interfaces.C.Int; value : in Interfaces.C.int) is
+    pragma Suppress(Index_Check);
+    pragma Suppress(Range_Check);
+    pragma Suppress(Overflow_Check);
+begin
+  buffer(Integer(index+1)) := adaasn1rtl.BIT(value);
+end set;
 
-R'package body {variable}_ada_proxy is\n'
+end {test_case}_ada_accessors;
+''',
+R'''
+with {module};
+with Interfaces;
+with Interfaces.C;
 
-R'procedure proxy_encode is\n'
-  R'stream : {module}.{type_}_ACN_Stream;\n'
-R'begin\n'
-  R'{module}.{type_}_ACN_Encode({module}.{variable}, stream);\n'
-  R'save_to_file(stream.Data);\n'
-  R'Ada.Long_Long_Integer_Text_IO.Put(Long_Long_Integer({module}.{variable}));\n'
-R'end proxy_encode;\n'
+package {test_case}_ada_proxy is
 
-R'procedure proxy_decode is\n'
-  R'stream : {module}.{type_}_ACN_Stream;\n'
-  R'value : {module}.{type_}:= 5;\n'
-  R'result : adaasn1rtl.ASN1_RESULT;\n'
-R'begin\n'
-R'read_from_file(stream.Data);\n'
-  R'stream.DataLen := {module}.{type_}_REQUIRED_BITS_FOR_ACN_ENCODING;\n'
-  R'{module}.{type_}_ACN_Decode(value, stream, result);\n'
-  R'if (result.Success /= True) then\n'
-    R'Ada.Text_IO.Put(Ada.Text_IO.Standard_Error, "Error was set. Error code: ");\n'
-    R'Ada.Integer_Text_IO.Put(Ada.Text_IO.Standard_Error, result.ErrorCode);\n'
-    R'Ada.Text_IO.New_Line(Ada.Text_IO.Standard_Error);\n'
-  R'else\n'
-    R'Ada.Long_Long_Integer_Text_IO.Put(Long_Long_Integer(value));\n'
-  R'end if;\n'
-R'end proxy_decode;\n'
+procedure proxy_encode;
+procedure proxy_decode;
+procedure save_to_file(buffer : in {module}.{type_}_ACN_bit_array);
+procedure read_from_file(buffer : in out {module}.{type_}_ACN_bit_array);
 
-R'procedure save_to_file(buffer : in {module}.{type_}_ACN_bit_array) is\n'
-  R'result : Interfaces.C.int;\n'
-  R'c_name : String(1..filename\'length + 1);\n'
-R'begin\n'
-  R'c_name(1..filename\'length) := filename;\n'
-  R'c_name(filename\'length + 1) := Character\'Val(0);\n'
-  R'result := write_memory(c_name, buffer);\n'
-  R'if (result /= 0) then\n'
-    R'Ada.Text_IO.Put_Line(Ada.Text_IO.Standard_Error, "Writing to file failed");\n'
-  R'end if;\n'
-R'end save_to_file;\n'
+function write_memory(filename : in String; buffer : in {module}.{type_}_ACN_bit_array) return Interfaces.C.int;
+function read_memory(filename : in String; buffer : in out {module}.{type_}_ACN_bit_array) return Interfaces.C.int;
 
-R'procedure read_from_file(buffer : in out {module}.{type_}_ACN_bit_array) is\n'
-  R'result : Interfaces.C.int;\n'
-  R'c_name : String(1..filename\'length + 1);\n'
-R'begin\n'
-  R'c_name(1..filename\'length) := filename;\n'
-  R'c_name(filename\'length + 1) := Character\'Val(0);\n'
-  R'result := read_memory(c_name, buffer);\n'
-  R'if (result /= 0) then\n'
-    R'Ada.Text_IO.Put_Line(Ada.Text_IO.Standard_Error, "Reading from file failed");\n'
-  R'end if;\n'
-R'end read_from_file;\n'
+pragma Import(C, write_memory, "write_memory");
+pragma Import(C, read_memory, "read_memory");
 
-R'function get(buffer : in {module}.{type_}_ACN_bit_array; index : in Interfaces.C.Int) return Interfaces.C.int is\n'
-R'begin\n'
-  R'if (buffer(Integer(index+1)) = 1) then\n'
-    R'return Interfaces.C.int(1);\n'
-  R'else\n'
-    R'return Interfaces.C.int(0);\n'
-  R'end if;\n'
-R'end get;\n'
+private
+  filename : constant String := "{buffer_}";
 
-R'procedure set(buffer : in out {module}.{type_}_ACN_bit_array; index : in Interfaces.C.Int; value : in Interfaces.C.int) is\n'
-R'begin\n'
-  R'buffer(Integer(index+1)) := adaasn1rtl.BIT(value);\n'
-R'end set;\n'
+end {test_case}_ada_proxy;
+''',
+R'''
+with Ada.Text_IO;
+with Ada.Text_IO.Text_Streams;
+with Ada.Integer_Text_IO;
+with Ada.Long_Long_Integer_Text_IO;
+with Interfaces;
+with adaasn1rtl; use adaasn1rtl;
+with Interfaces.C; use Interfaces.C;
+with Ada.Directories; use Ada.Directories;
 
-R'end {variable}_ada_proxy;\n'
-''),
-(''
-R'#include <stdio.h>\n'
-R'#include <string.h>\n'
+package body {test_case}_ada_proxy is
 
-R'#include "{test_case}.h"\n'
+procedure proxy_encode is
+  stream : {module}.{type_}_ACN_Stream;
+begin
+  {module}.{type_}_ACN_Encode({module}.{test_case}, stream);
+  save_to_file(stream.Data);
+  Ada.Long_Long_Integer_Text_IO.Put(Long_Long_Integer({module}.{test_case}));
+end proxy_encode;
 
-R'extern int get(char buffer[], int index);\n'
-R'extern void set(char buffer[], int index, int value);\n'
+procedure proxy_decode is
+  stream : {module}.{type_}_ACN_Stream;
+  value : {module}.{type_}:= 5;
+  result : adaasn1rtl.ASN1_RESULT;
+begin
+  read_from_file(stream.Data);
+  stream.DataLen := {module}.{type_}_REQUIRED_BITS_FOR_ACN_ENCODING;
+  {module}.{type_}_ACN_Decode(value, stream, result);
+  if (result.Success /= True) then
+    Ada.Text_IO.Put(Ada.Text_IO.Standard_Error, "Error was set. Error code: ");
+    Ada.Integer_Text_IO.Put(Ada.Text_IO.Standard_Error, result.ErrorCode);
+    Ada.Text_IO.New_Line(Ada.Text_IO.Standard_Error);
+  else
+    Delete_File(filename);
+    Ada.Long_Long_Integer_Text_IO.Put(Long_Long_Integer(value));
+  end if;
+  exception
+    when Name_Error =>
+        Ada.Text_IO.Put(Ada.Text_IO.Standard_Error,
+            "Error when trying to delete a file, no such file or directory: ");
+        Ada.Text_IO.Put(Ada.Text_IO.Standard_Error, filename);
+        Ada.Text_IO.New_Line(Ada.Text_IO.Standard_Error);
+    when Use_Error =>
+        Ada.Text_IO.Put(Ada.Text_IO.Standard_Error,
+            "Error when trying to delete a file, operation not permitted: ");
+        Ada.Text_IO.Put(Ada.Text_IO.Standard_Error, filename);
+        Ada.Text_IO.New_Line(Ada.Text_IO.Standard_Error);
+end proxy_decode;
 
-R'int read_memory(const char *filename, char buffer[]) {{\n'
-  R'unsigned char real_buffer[{type_}_REQUIRED_BYTES_FOR_ACN_ENCODING];\n'
-  R'memset(real_buffer, 0, {type_}_REQUIRED_BYTES_FOR_ACN_ENCODING);\n'
+procedure save_to_file(buffer : in {module}.{type_}_ACN_bit_array) is
+  result : Interfaces.C.int;
+  c_name : String(1..filename'length + 1);
+begin
+  c_name(1..filename'length) := filename;
+  c_name(filename'length + 1) := Character'Val(0);
+  result := write_memory(c_name, buffer);
+  if (result /= 0) then
+    Ada.Text_IO.Put_Line(Ada.Text_IO.Standard_Error, "Writing to file failed");
+  end if;
+end save_to_file;
 
-  R'read_from_file(filename, (char *) real_buffer, {type_}_REQUIRED_BYTES_FOR_ACN_ENCODING);\n'
+procedure read_from_file(buffer : in out {module}.{type_}_ACN_bit_array) is
+  result : Interfaces.C.int;
+  c_name : String(1..filename'length + 1);
+begin
+  c_name(1..filename'length) := filename;
+  c_name(filename'length + 1) := Character'Val(0);
+  result := read_memory(c_name, buffer);
+  if (result /= 0) then
+    Ada.Text_IO.Put_Line(Ada.Text_IO.Standard_Error, "Reading from file failed");
+  end if;
+end read_from_file;
 
-  R'for (int i = 0; i < {type_}_REQUIRED_BYTES_FOR_ACN_ENCODING; ++i) {{\n'
-    R'for (int j = 0; j < 8; ++j) {{\n'
-      R'int to_write = (real_buffer[i] & (1 << (7-j))) != 0;\n'
-      R'set(buffer, j+i*8, to_write);\n'
-    R'}}\n'
-  R'}}\n'
-  R'return 0;\n'
-R'}}\n'
+end {test_case}_ada_proxy;
+''',
+R'''
+#include <stdio.h>
+#include <string.h>
 
-R'int write_memory(const char *filename, char buffer[]) {{\n'
-  R'unsigned char real_buffer[MyInt_REQUIRED_BYTES_FOR_ACN_ENCODING];\n'
-  R'memset(real_buffer, 0, MyInt_REQUIRED_BYTES_FOR_ACN_ENCODING);\n'
-  R'for (int i = 0; i < MyInt_REQUIRED_BYTES_FOR_ACN_ENCODING; ++i) {{\n'
-    R'for (int j = 0; j < 8; ++j) {{\n'
-      R'unsigned char bit = get(buffer, j+i*8);\n'
-      R'real_buffer[i] |= (bit << (7-j));\n'
-    R'}}\n'
-  R'}}\n'
+#include "../{asn_header}"
+#include "../file_utility.h"
 
-  R'write_to_file(filename, (char *) real_buffer, MyInt_REQUIRED_BYTES_FOR_ACN_ENCODING);\n'
-  R'return 0;\n'
-R'}}\n'
-'')
+extern int get(char buffer[], int index);
+extern void set(char buffer[], int index, int value);
+
+int read_memory(const char *filename, char buffer[]) {{
+    unsigned char real_buffer[{type_}_REQUIRED_BYTES_FOR_ACN_ENCODING];
+    memset(real_buffer, 0, {type_}_REQUIRED_BYTES_FOR_ACN_ENCODING);
+
+    read_from_file(filename, (char *) real_buffer, {type_}_REQUIRED_BYTES_FOR_ACN_ENCODING);
+
+    for (int i = 0; i < {type_}_REQUIRED_BYTES_FOR_ACN_ENCODING; ++i) {{
+        for (int j = 0; j < 8; ++j) {{
+            int to_write = (real_buffer[i] & (1 << (7-j))) != 0;
+            set(buffer, j+i*8, to_write);
+        }}
+    }}
+    return 0;
+}}
+
+int write_memory(const char *filename, char buffer[]) {{
+    unsigned char real_buffer[{type_}_REQUIRED_BYTES_FOR_ACN_ENCODING];
+    memset(real_buffer, 0, {type_}_REQUIRED_BYTES_FOR_ACN_ENCODING);
+    for (int i = 0; i < {type_}_REQUIRED_BYTES_FOR_ACN_ENCODING; ++i) {{
+        for (int j = 0; j < 8; ++j) {{
+            unsigned char bit = get(buffer, j+i*8);
+            real_buffer[i] |= (bit << (7-j));
+        }}
+    }}
+
+    write_to_file(filename, (char *) real_buffer, {type_}_REQUIRED_BYTES_FOR_ACN_ENCODING);
+    return 0;
+}}
+'''
 ]

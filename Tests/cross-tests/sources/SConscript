@@ -1,35 +1,62 @@
-from commons import glob_files_recursive, get_files_with_suffix, list_files
+from commons import *
 from glob import glob
 
 import os
 
-import AsnBuilder
+import TestCaseBuilder
+import AdaBuilder
 
 Import('env')
 Import('PROXY')
 Import('TEST_FILE')
 
-def _get_bin_name(language):
-    return os.path.basename(os.path.dirname(PROXY[0].path)) + "_{}_bin".format(language)
+def _proxy_name(proxy):
+    return os.path.basename(os.path.dirname(proxy[0].path))
 
-def _get_report_name():
-    return os.path.basename(os.path.dirname(PROXY[0].path)) + "_report"
+def _bin_name(language, proxy):
+    return _proxy_name(proxy) + "_{}_bin".format(language)
 
-asn_files = env.Asn(AsnBuilder.get_output('.', TEST_FILE),
-            [env['ASN_BIN']] + list_files(
-                os.path.join(env['SCRIPT_DIR'], env['TEST_CASE'])))
-asn_objects = env.Object(get_files_with_suffix(asn_files, '.c'))
+def _report_name(proxy):
+    return _proxy_name(proxy) + "_report"
 
-variable_env = env.Clone()
-variable_env.Append(CPPPATH='.')
-variable_env.Append(CPPPATH=[os.path.basename(os.path.dirname(PROXY[0].path))])
+def _module_name(env):
+    return env['VARIABLES'][os.path.basename(Dir('.').path)]['MODULES'][0].lower()
 
-obj = variable_env.Object([source for source in Glob(os.path.join('.', '*.c')) 
-                  if os.path.basename(source.path) != 'ada_helpers.c'])
+def _build_ada_o(target, source, include_dir, output_dir):
+    o_file = env.Command(target, source, 'gnatmake -c $SOURCE {} -D "{}"'
+        .format(' '.join(['-I"' + dir_ + '"' for dir_ in include_dir]),
+                output_dir))[0]
+    o_file = without_top_directory(o_file.path, n=2)
+    side_effect_files = AdaBuilder.get_side_effect_files(source, '.')
+    side_effect_files.remove(o_file)
+    SideEffect(side_effect_files, o_file)
+    return [o_file]
 
-c_bin = variable_env.Program([_get_bin_name('c')], 
-     obj + asn_objects + get_files_with_suffix(PROXY, '.c'))
+def _ada_files(basename, directory):
+    return [os.path.join(directory, basename + '.adb'),
+            os.path.join(directory, basename + '.ads')]
 
-ada_bin = env.Ada([_get_bin_name('ada')], get_files_with_suffix(PROXY, '.adb')[0:1] + env.Object('ada_helpers.c'))
+proxy_name = _proxy_name(PROXY)
+obj = env.Object([source for source in Glob('*.c') + Glob(os.path.join(proxy_name, '*.c'))])
 
-env.Report([_get_report_name()], [c_bin, ada_bin])
+ada_accessors = _build_ada_o(os.path.join(proxy_name, '{}_ada_accessors.o'.format(proxy_name)),
+                             _ada_files('{}_ada_accessors'.format(proxy_name), proxy_name)
+                             + _ada_files('adaasn1rtl', '.')
+                             + _ada_files(_module_name(env), '.'),
+                            include_dir=[Dir('.').path], output_dir=Dir(proxy_name).path)
+
+c_bin = env.Program([_bin_name('c', PROXY)], obj + ada_accessors)
+
+ada_main = File(os.path.join(proxy_name, TestCaseBuilder.ada_main_filename(proxy_name))).path
+ada_bin = env.Ada([_bin_name('ada', PROXY)],
+                  [source for source in glob_files_recursive('.', '.*\.(adb|ads)')
+                   if not source.endswith(('accessors.adb', 'accessors.ads'))]
+                    + env.Object(Glob(os.path.join(proxy_name, '{}_ada_helpers.c'.format(proxy_name))))
+                    + env.Object('file_utility.c')
+                    + ada_accessors,
+                  ADA_MAIN = ada_main,
+                  INCLUDE=[Dir('.').path])[0]
+
+report = env.Report([_report_name(PROXY)], [c_bin, ada_bin])
+
+Return('report')

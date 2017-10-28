@@ -1,24 +1,35 @@
 from SCons.Script import *
 
 import os
-import commons
 
-def _ada_commands_generator(source, target, env, for_signature):
-    main_source = os.path.splitext(source[0].path)[0]
-    out_dir = os.path.dirname(os.path.dirname(main_source))
-    ada_flags = ' '.join(['-I"' + os.path.join(out_dir, dir_) + '"' for dir_ in env['CPPPATH']])
+from commons import *
+
+def _ada_commands_generator(target, source, env, for_signature):
+    main_source = os.path.splitext(env['ADA_MAIN'])[0]
+    out_dir = without_top_directory(os.path.dirname(main_source), n=2)
+
+    ada_flags = ' '.join(['-I"' + dir_ + '"' for dir_ in env['INCLUDE']])
     compile_cmd = (["gnatmake -c '{}' {} -i".format(
-                      main_source,
-                      ada_flags)]
+                     main_source,
+                     ada_flags)]
                   + ["gnatbind '{}' {}".format(
-                        main_source,
-                        ada_flags)])
+                      main_source,
+                      ada_flags)])
 
-    link_cmd = "gnatlink '{}' '{}' -o '{}'".format(
-        "' '".join([main_source + '.ali'] + commons.get_files_with_suffix(source, '.o')),
-        os.path.join(out_dir, 'file_utility.o'),
+    link_cmd = "gnatlink '{}' -o '{}'".format(
+        "' '".join([main_source + '.ali'] + get_files_with_suffix(source, '.o')),
         target[0].path)
+    SideEffect(get_side_effect_files((without_top_directory(s, n=2) for s in source), out_dir), target)
     return compile_cmd + [link_cmd]
 
+def get_side_effect_files(source, out_dir):
+    side_effect_files = []
+    for adb_file in get_files_with_suffix(source, '.adb'):
+        basename = os.path.splitext(adb_file)[0]
+        side_effect_files.append(basename + '.o')
+        side_effect_files.append(basename + '.ali')
+    #print(side_effect_files)
+    return side_effect_files
+
 def builder():
-    return Builder(generator = _ada_commands_generator, src_suffix = ['.adb', '.o'])
+    return Builder(generator=_ada_commands_generator)

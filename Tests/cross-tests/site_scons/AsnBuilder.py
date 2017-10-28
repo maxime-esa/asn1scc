@@ -8,26 +8,30 @@ def _asn_generator(target, source, env, for_signature):
                 language,
                 commons.get_files_with_suffix(source, '.acn')[0],
                 commons.get_files_with_suffix(source, '.asn1')[0],
-                os.path.join(os.path.dirname(os.path.dirname(str(target[0]))), language + '_out'))
+                os.path.dirname(str(target[0])))
             for language in env['LANGUAGES']]
 
+def _append_output(target, source, env):
+    c_basename, ada_basename = env['BASENAMES']
+    dirname = env['DIRNAME']
+    OUTPUT = ['real.c',
+              'asn1crt.h',
+              'acn.c',
+              '{}.h'.format(c_basename),
+              '{}.c'.format(c_basename),
+              'asn1crt.c',
+              'adaasn1rtl.ads',
+              'adaasn1rtl.adb',
+              '{}.adb'.format(ada_basename),
+              '{}.ads'.format(ada_basename),
+              'gnat.cfg',
+              'IgnoredExaminerWarnings.wrn',
+              'GPS_project.gpr',
+              'runSpark.sh',
+              'spark.idx']
+    for file_ in OUTPUT:
+        target.append(os.path.join(dirname, file_))
+    return target, source
+
 def builder():
-    return Builder(generator=_asn_generator)
-
-def get_c_basename(test_files):
-    return os.path.splitext(os.path.basename(test_files[0].path))[0]
-
-def get_output(build_dir, test_files):
-    c_basename = get_c_basename(test_files)
-    OUTPUT = ['c_out/real.c',
-              'c_out/asn1crt.h',
-              'c_out/acn.c',
-              'c_out/{}.h'.format(c_basename),
-              'c_out/{}.c'.format(c_basename),
-              'c_out/asn1crt.c',
-              'Ada_out/adaasn1rtl.ads',
-              'Ada_out/adaasn1rtl.adb',
-              'Ada_out/kappa.adb',
-              'Ada_out/kappa.ads']
-
-    return [os.path.join(build_dir, out_file) for out_file in OUTPUT]
+    return Builder(generator=_asn_generator, emitter=_append_output)
