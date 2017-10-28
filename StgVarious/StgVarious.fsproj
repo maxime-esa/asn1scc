@@ -51,6 +51,10 @@
     <Compile Include="stg_ACN.stg.fs" />
     <None Include="stg_ASN.stg" />
     <Compile Include="stg_ASN.stg.fs" />
+    <None Include="xml_outputs.stg">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <Compile Include="xml_outputs.stg.fs" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\CommonTypes\CommonTypes.fsproj">

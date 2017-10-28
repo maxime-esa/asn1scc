@@ -12,5 +12,12 @@
     <modName>stg_acn</modName>
 	<lang>ACN</lang>
   </run>
+  <run mode="single">
+    <input>xml_outputs.stg</input>
+    <output>xml_outputs.stg.fs</output>
+    <modName>xml_outputs</modName>
+	<lang>XML</lang>
+  </run>  
+  
 
 </Settings>

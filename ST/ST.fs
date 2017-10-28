@@ -132,7 +132,7 @@ let runsUnderMono() =
     | null  -> false
     | _     -> true
 
-let DollarDelimeterFiles = ["xml"; "icd_uper"]
+let DollarDelimeterFiles = ["xml"; "icd_uper"; "xml_outputs"]
 
 let get_group  fileName =
     if cache.ContainsKey fileName then

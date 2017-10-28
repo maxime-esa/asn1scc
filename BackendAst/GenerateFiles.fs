@@ -281,9 +281,22 @@ let CreateTestSuiteFile (r:AstRoot) (l:ProgrammingLanguage) outDir vasName =
             match tsName with
             | None  -> v.Type.typeDefinition.typeDefinitionBodyWithinSeq // spark_variables.GetTasNameByKind v.Type.Kind m r
             | Some z -> z
-        let dummy : FuncParamType = v.Type.getParamType l  Decode
-        let sStar = dummy.getStar l
-        let sAmber = if sStar = "*" then "&" else ""
+
+        let rec sAmber (t:Asn1Type) = 
+            match t.Kind with
+            | Integer      _ -> ""
+            | Real         _ -> ""
+            | IA5String    _ -> ""
+            | OctetString  _ -> "&"
+            | NullType     _ -> ""
+            | BitString    _ -> "&"
+            | Boolean      _ -> ""
+            | Enumerated   _ -> ""
+            | SequenceOf   _ -> "&"
+            | Sequence     _ -> "&"
+            | Choice       _ -> "&"
+            | ReferenceType r -> sAmber r.baseType
+
 
         let packageName = ToC m.Name.Value
         //let sValue =  c_variables.PrintAsn1Value v.Value v.Type false (sTasName,0) m r    
@@ -302,25 +315,24 @@ let CreateTestSuiteFile (r:AstRoot) (l:ProgrammingLanguage) outDir vasName =
             match bGenerateDatFile, enc with
             | false,_     -> ""
             | true, ACN   -> ""
-            | true, XER   -> test_cases_c.PrintSuite_call_codec_generate_dat_file sTasName sAmber (GetEncodingString enc) "Byte"
-            | true, BER   -> test_cases_c.PrintSuite_call_codec_generate_dat_file sTasName sAmber (GetEncodingString enc) "Byte"
-            | true, uPER  -> test_cases_c.PrintSuite_call_codec_generate_dat_file sTasName sAmber (GetEncodingString enc) "Bit"
+            | true, XER   -> test_cases_c.PrintSuite_call_codec_generate_dat_file sTasName (sAmber v.Type) (GetEncodingString enc) "Byte"
+            | true, BER   -> test_cases_c.PrintSuite_call_codec_generate_dat_file sTasName (sAmber v.Type) (GetEncodingString enc) "Byte"
+            | true, uPER  -> test_cases_c.PrintSuite_call_codec_generate_dat_file sTasName (sAmber v.Type) (GetEncodingString enc) "Bit"
 
         let bStatic = match v.Type.ActualType.Kind with Integer _ | Enumerated(_) -> false | _ -> true
         
         r.args.encodings |> Seq.map(fun e -> 
                                         match e with
-                                        | Asn1Encoding.UPER  -> test_cases_c.PrintSuite_call_codec sTasName sAmber (GetEncodingString e) sValue sAsn1Val (ToC v.Name.Value) bStatic (GetDatFile e)
-                                        | Asn1Encoding.ACN   -> test_cases_c.PrintSuite_call_codec sTasName sAmber (GetEncodingString e) sValue sAsn1Val (ToC v.Name.Value) bStatic (GetDatFile e)
-                                        | Asn1Encoding.XER   -> test_cases_c.PrintSuite_call_codec sTasName sAmber (GetEncodingString e) sValue sAsn1Val (ToC v.Name.Value) bStatic (GetDatFile e)
-                                        | Asn1Encoding.BER   -> test_cases_c.PrintSuite_call_codec sTasName sAmber (GetEncodingString e) sValue sAsn1Val (ToC v.Name.Value) bStatic (GetDatFile e)
+                                        | Asn1Encoding.UPER  -> test_cases_c.PrintSuite_call_codec sTasName (sAmber v.Type) (GetEncodingString e) sValue sAsn1Val (ToC v.Name.Value) bStatic (GetDatFile e)
+                                        | Asn1Encoding.ACN   -> test_cases_c.PrintSuite_call_codec sTasName (sAmber v.Type) (GetEncodingString e) sValue sAsn1Val (ToC v.Name.Value) bStatic (GetDatFile e)
+                                        | Asn1Encoding.XER   -> test_cases_c.PrintSuite_call_codec sTasName (sAmber v.Type) (GetEncodingString e) sValue sAsn1Val (ToC v.Name.Value) bStatic (GetDatFile e)
+                                        | Asn1Encoding.BER   -> test_cases_c.PrintSuite_call_codec sTasName (sAmber v.Type) (GetEncodingString e) sValue sAsn1Val (ToC v.Name.Value) bStatic (GetDatFile e)
                                  ) |> Seq.StrJoin "\n\n"
         
     
     let funcs = seq {
             for m in r.Files |> List.collect(fun f -> f.Modules) do
-                //let autoVases = m.TypeAssignments |> Seq.collect(fun x -> acn_backend_logic.GenerateVases x m.Name r acn) |> Seq.toList
-                for v in m.ValueAssignments(*@autoVases*) do
+                for v in m.ValueAssignments do
                     match v.Type.Kind with
                     | ReferenceType ref -> 
                         let actMod = r.getModuleByName ref.baseInfo.modName
@@ -347,6 +359,21 @@ let CreateTestSuiteFile (r:AstRoot) (l:ProgrammingLanguage) outDir vasName =
     File.WriteAllText(outHFileName, contentH.Replace("\r",""))
 
 
+
+let generateVisualStudtioProject (r:DAst.AstRoot) outDir =
+    //generate Visual Studio project file
+    let vcprjContent = xml_outputs.emitVisualStudioProject 
+                        (r.programUnits |> List.map (fun z -> z.bodyFileName))
+                        (r.programUnits |> List.map (fun z -> z.specFileName))
+                        (r.programUnits |> List.map (fun z -> z.tetscase_bodyFileName))
+                        (r.programUnits |> List.map (fun z -> z.tetscase_specFileName))
+    let vcprjFileName = Path.Combine(outDir, "VsProject.vcxproj")
+    File.WriteAllText(vcprjFileName, vcprjContent)
+
+    //generate Visual Studio Solution file
+    File.WriteAllText((Path.Combine(outDir, "VsProject.sln")), (aux_c.emitVisualStudioSolution()))
+
+
 let generateAll outDir (r:DAst.AstRoot) (encodings: CommonTypes.Asn1Encoding list)  =
     r.programUnits |> Seq.iter (printUnit r r.lang encodings outDir)
     //print extra such make files etc
@@ -356,6 +383,7 @@ let generateAll outDir (r:DAst.AstRoot) (encodings: CommonTypes.Asn1Encoding lis
         CreateCMakeFile r outDir
         CreateCMainFile r  ProgrammingLanguage.C outDir
         CreateTestSuiteFile r ProgrammingLanguage.C outDir "ALL"
+        generateVisualStudtioProject r outDir
     | Ada  -> 
         CreateAdaMain r false outDir
         CreateAdaIndexFile r false outDir
