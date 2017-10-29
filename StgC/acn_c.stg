@@ -143,10 +143,11 @@ PrintTypeNoUpdate_decode(sMainBody, bAligmentApplied, sAligmentValue) ::= <<
 <PrintType_decode(sMainBody=sMainBody, bAligmentApplied=bAligmentApplied, sAligmentValue=sAligmentValue)>
 >>
 
-loopFixedItem (i, fixedSize, sInternalItem)::= /*nogen*/<<    
-while (ret && (<i>\< <fixedSize>))  {
-    <sInternalItem>
-    <i> = <i> + 1;
+
+loopFixedItem (i, fixedSize,  sInternalItem)::= /*nogen*/<<	
+for(<i>=0; (<i> \< (int)<fixedSize>) && ret; <i>++) 
+{
+	<sInternalItem>
 }
 >>
 
@@ -966,9 +967,11 @@ MultiAcnUpdate(v, v0, sErrCode, arrsLocalDeclarations, arrsLocalUpdateStatements
     
     <arrsLocalUpdateStatements; separator="\n">
     
-    *pErrCode = <sErrCode>;
-    ret = (<arrsLocalCheckEquality; separator=" && ">);
-    <v> = <v0>;
+    if (ret) {
+        *pErrCode = <sErrCode>;
+        ret = (<arrsLocalCheckEquality; separator=" && ">);
+        <v> = <v0>;
+    }
 }
 >>
 

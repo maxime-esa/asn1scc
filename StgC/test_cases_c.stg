@@ -332,6 +332,9 @@ int asn1scc_run_generated_testsuite(TestOutput* output)
     flag result;
     int errCode;
 
+	(void)result;
+    (void)errCode;
+
     output->report_suite_begin();
 
     <arrsTestFunctions;separator="\n\n">

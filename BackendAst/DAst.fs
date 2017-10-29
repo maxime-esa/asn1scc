@@ -97,18 +97,13 @@ type TypeDefinitionCommon = {
     // the name of the type C or Ada type. Defives from ASN.1 Type Assignment name.
     // Eg. for MyInt4 ::= INTEGER(0..15|20|25)
     // name will be MyInt4 
+    // In inner types (i.e. types within compound types such as sequence, sequence of, choice) the name
+    // is the name of the parent plus the component name.
+    // For example, MySeq { a INTEGER} the name in the 'a' component will be MySeq_a
     name                : string            
 
     // used only in Ada backend. 
     typeOrSubsType      : TypeOrSubsType    
-
-    //In above example, in C the typeDefinitionBody is : asn1SccSint
-    //              in Ada                          is : adaasn1rtl.Asn1Int range 0..25
-    // for a complext type e.g. sequence 
-    // in C   is the struct { ... fields ...}
-    // in Ada is the IS RECORD ... fields ... END RECORD
-    // Ada does not allow nested type defintions. Therefore when called with NESTED_DEFINITION_SCOPE (i.e. from a SEQUENCE) the name of the type is returned
-    //typeDefinitionBody  : string            
 
     // Used only for Strings and is the size of the string (plus one for the null terminated character)
     // It is usefull only in C due to the fact that the size of the array is not part of the type definition body but follows the the type name

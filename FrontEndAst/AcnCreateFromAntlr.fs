@@ -1155,14 +1155,14 @@ let rec private mergeType (asn1:Asn1Ast.AstRoot) (acn:AcnAst) (m:Asn1Ast.Asn1Mod
                                 | None ->
                                     raise(SemanticError(acnChild.name.Location, (sprintf "invalid name %s" acnChild.name.Value))))
             
-            let bitMaskSize      = children |> Seq.filter(fun c -> c.Optionality.IsSome) |> Seq.length 
+            let uperBitMaskSize      = children |> Seq.filter(fun c -> c.Optionality.IsSome) |> Seq.length 
             let asn1Children     = mergedChildren |> List.choose(fun c -> match c with Asn1Child c -> Some c | AcnChild _ -> None)
             let uperMaxChildrenSize  = asn1Children |> List.map(fun x -> x.Type.uperMaxSizeInBits) |> Seq.sum
             let uperMinChildrenSize  = asn1Children |> List.filter(fun x -> x.Optionality.IsNone) |> List.map(fun x -> x.Type.uperMinSizeInBits) |> Seq.sum
             
             let aligment = tryGetProp combinedProperties (fun x -> match x with ALIGNTONEXT e -> Some e | _ -> None)
             let alignmentSize = AcnEncodingClasses.getAlignmentSize aligment
-            let bitMaskSize =
+            let acnBitMaskSize =
                 mergedChildren |> 
                 List.filter(fun c ->
                     match c.Optionality with
@@ -1175,10 +1175,10 @@ let rec private mergeType (asn1:Asn1Ast.AstRoot) (acn:AcnAst) (m:Asn1Ast.Asn1Mod
                     | Some (Optional _) -> 0
                     | _                 -> c.acnMinSizeInBits) |> Seq.sum
             let maxChildrenSize = mergedChildren |> List.map(fun c -> c.acnMaxSizeInBits) |> Seq.sum
-            let acnMaxSizeInBits = alignmentSize + bitMaskSize + maxChildrenSize
-            let acnMinSizeInBits = alignmentSize + bitMaskSize + minChildrenSize
+            let acnMaxSizeInBits = alignmentSize + acnBitMaskSize + maxChildrenSize
+            let acnMinSizeInBits = alignmentSize + acnBitMaskSize + minChildrenSize
 
-            Sequence ({Sequence.children = mergedChildren;    cons=cons; withcons = wcons;uperMaxSizeInBits=bitMaskSize+uperMaxChildrenSize; uperMinSizeInBits=bitMaskSize+uperMinChildrenSize;acnMaxSizeInBits=acnMaxSizeInBits;acnMinSizeInBits=acnMinSizeInBits})
+            Sequence ({Sequence.children = mergedChildren;    cons=cons; withcons = wcons;uperMaxSizeInBits=uperBitMaskSize+uperMaxChildrenSize; uperMinSizeInBits=uperBitMaskSize+uperMinChildrenSize;acnMaxSizeInBits=acnMaxSizeInBits;acnMinSizeInBits=acnMinSizeInBits})
         | Asn1Ast.Choice      children     -> 
             let childrenNameConstraints = t.Constraints@refTypeCons |> List.choose(fun c -> match c with Asn1Ast.WithComponentsConstraint w -> Some w| _ -> None) |> List.collect id
             let myVisibleConstraints = t.Constraints@refTypeCons |> List.choose(fun c -> match c with Asn1Ast.WithComponentsConstraint _ -> None | _ -> Some c)

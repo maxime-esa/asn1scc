@@ -750,3 +750,11 @@ let hasAcnEncodeFunction (encFunc : AcnFunction option) acnParameters  =
             | Some _ -> true
         | _     -> false
                 
+let hasUperEncodeFunction (encFunc : UPerFunction option)  =
+    match encFunc with
+    | None  -> false
+    | Some fnc ->
+            let p : FuncParamType = VALUE "dummy"
+            match fnc.funcBody p with
+            | None   -> false
+            | Some _ -> true

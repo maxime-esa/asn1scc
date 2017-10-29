@@ -52,7 +52,7 @@ let rec getAmberDecode (t:Asn1AcnAst.Asn1Type) =
     match t.Kind with
     | Asn1AcnAst.IA5String    _ -> ""
     | Asn1AcnAst.NumericString _ -> ""
-    | Asn1AcnAst.ReferenceType z -> getAmberIsValid z.baseType
+    | Asn1AcnAst.ReferenceType z -> getAmberDecode z.baseType
     | _                          -> "&"
 
 let createUperEncDecFunction (r:Asn1AcnAst.AstRoot) (l:ProgrammingLanguage) (t:Asn1AcnAst.Asn1Type) (typeDefinition:TypeDefinitionCommon) (eqFunc:EqualFunction) (isValidFunc: IsValidFunction option) (encFunc : UPerFunction option) (decFunc : UPerFunction option)   (us:State)  =
@@ -104,28 +104,28 @@ let createUperEncDecFunction (r:Asn1AcnAst.AstRoot) (l:ProgrammingLanguage) (t:A
                                            }                
             joinItems (content.orElse "") sNestedContent
 
+        match hasUperEncodeFunction encFunc with
+        | true  ->
+            let sNestedStatements = 
+                let rec printStatements statements : string option = 
+                    match statements with
+                    |[]     -> None
+                    |x::xs  -> 
+                        match printStatements xs with
+                        | None                 -> Some (printStatement x  None)
+                        | Some childrenCont    -> Some (printStatement x  (Some childrenCont))
+                printStatements [Encode_input; Decode_output; Validate_output; Compare_input_output]
 
-        let sNestedStatements = 
-            let rec printStatements statements : string option = 
-                match statements with
-                |[]     -> None
-                |x::xs  -> 
-                    match printStatements xs with
-                    | None                 -> Some (printStatement x  None)
-                    | Some childrenCont    -> Some (printStatement x  (Some childrenCont))
-
-            printStatements [Encode_input; Decode_output; Validate_output; Compare_input_output]
-
-        let func = printCodec_body funcName typeDefinition.name sStar varName sEnc (sNestedStatements.orElse "")
-        let funcDef = printCodec_body_header funcName typeDefinition.name sStar varName
-        let ret = 
-            {
-                EncodeDecodeTestFunc.funcName   = funcName
-                func                            = func 
-                funcDef                         = funcDef
-            }
-        Some ret, us
-
+            let func = printCodec_body funcName typeDefinition.name sStar varName sEnc (sNestedStatements.orElse "")
+            let funcDef = printCodec_body_header funcName typeDefinition.name sStar varName
+            let ret = 
+                {
+                    EncodeDecodeTestFunc.funcName   = funcName
+                    func                            = func 
+                    funcDef                         = funcDef
+                }
+            Some ret, us
+        | false -> None, us
 
 let createAcnEncDecFunction (r:Asn1AcnAst.AstRoot) (l:ProgrammingLanguage) (t:Asn1AcnAst.Asn1Type) (typeDefinition:TypeDefinitionCommon) (eqFunc:EqualFunction) (isValidFunc: IsValidFunction option) (encFunc : AcnFunction option) (decFunc : AcnFunction option)   (us:State)  =
     let sEnc = "ACN_"
@@ -179,27 +179,30 @@ let createAcnEncDecFunction (r:Asn1AcnAst.AstRoot) (l:ProgrammingLanguage) (t:As
                                                }                
                 joinItems (content.orElse "") sNestedContent
 
-            let sNestedStatements = 
-                let rec printStatements statements : string option = 
-                    match statements with
-                    |[]     -> None
-                    |x::xs  -> 
-                        match printStatements xs with
-                        | None                 -> Some (printStatement x  None)
-                        | Some childrenCont    -> Some (printStatement x  (Some childrenCont))
+            match hasAcnEncodeFunction encFunc t.acnParameters with
+            | true  -> 
+                let sNestedStatements = 
+                    let rec printStatements statements : string option = 
+                        match statements with
+                        |[]     -> None
+                        |x::xs  -> 
+                            match printStatements xs with
+                            | None                 -> Some (printStatement x  None)
+                            | Some childrenCont    -> Some (printStatement x  (Some childrenCont))
 
-                printStatements [Encode_input; Decode_output; Validate_output; Compare_input_output]
+                    printStatements [Encode_input; Decode_output; Validate_output; Compare_input_output]
 
-            let func = printCodec_body funcName typeDefinition.name sStar varName sEnc (sNestedStatements.orElse "")
-            let funcDef = printCodec_body_header funcName typeDefinition.name sStar varName
+                let func = printCodec_body funcName typeDefinition.name sStar varName sEnc (sNestedStatements.orElse "")
+                let funcDef = printCodec_body_header funcName typeDefinition.name sStar varName
         
-            let ret = 
-                {
-                    EncodeDecodeTestFunc.funcName   = funcName
-                    func                            = func 
-                    funcDef                         = funcDef
-                }
-            Some ret, us
+                let ret = 
+                    {
+                        EncodeDecodeTestFunc.funcName   = funcName
+                        func                            = func 
+                        funcDef                         = funcDef
+                    }
+                Some ret, us
+            | false -> None, us
 
 
 
@@ -241,6 +244,20 @@ let foldRangeCon  getNext getPrev min max zero (c:RangeTypeConstraint<'v1,'v1>) 
         c
         0 |> fst 
 
+let foldSizableConstraint  (c:SizableTypeConstraint<'v>) =
+    foldSizableTypeConstraint2
+        (fun e1 e2 b s      -> e1@e2, s)
+        (fun e1 e2 s        -> e1@e2, s)
+        (fun e s            -> [], s)
+        (fun e1 e2 s        -> e1, s)
+        (fun e s            -> e, s)
+        (fun e1 e2 s        -> e1@e2, s)
+        (fun v  s           -> [v] ,s)
+        (fun intCon s       -> [], s)
+        c
+        0 |> fst
+
+
 
 let IntegerAutomaticTestCaseValues (r:Asn1AcnAst.AstRoot)  (t:Asn1AcnAst.Asn1Type) (o:Asn1AcnAst.Integer) =
     let allCons = DAstValidate.getIntSimplifiedConstraints r o.isUnsigned o.AllCons
@@ -277,7 +294,7 @@ let BooleanAutomaticTestCaseValues (r:Asn1AcnAst.AstRoot)  (t:Asn1AcnAst.Asn1Typ
     | _  -> allItems |> List.filter (isValidValueGeneric o.AllCons (=))
     
 
-let maxItems = 100000
+let maxItems = 1000
 let StringAutomaticTestCaseValues (r:Asn1AcnAst.AstRoot)  (t:Asn1AcnAst.Asn1Type) (o:Asn1AcnAst.StringType) =
     match o.minSize > maxItems with
     | true  -> []   // the generated string will be very large
@@ -293,27 +310,34 @@ let StringAutomaticTestCaseValues (r:Asn1AcnAst.AstRoot)  (t:Asn1AcnAst.Asn1Type
         | []        -> []
 
 let OctetStringAutomaticTestCaseValues (r:Asn1AcnAst.AstRoot)  (t:Asn1AcnAst.Asn1Type) (o:Asn1AcnAst.OctetString) =
-    match o.minSize > maxItems with
-    | true  -> []   // the generated string will be very large
-    | false ->  
-        let s1 = [1 .. o.minSize] |> List.map (fun i -> 0uy)
-        match o.minSize = o.maxSize  || o.maxSize > maxItems with
-        | true  -> [s1] 
-        | false ->
-            let s2 = [1 .. o.maxSize] |> List.map (fun i -> 0uy)
-            [s1;s2]
+    let valsFromSingleValueConstraints = o.AllCons |> List.collect (foldSizableConstraint ) |> Seq.toList |> List.map(fun (z,_) -> z |> List.map(fun a -> a.Value)) |> Seq.distinct |> Seq.toList
+    match valsFromSingleValueConstraints with
+    | []    ->
+        match o.minSize > maxItems with
+        | true  -> []   // the generated string will be very large
+        | false ->  
+            let s1 = [1 .. o.minSize] |> List.map (fun i -> 0uy)
+            match o.minSize = o.maxSize  || o.maxSize > maxItems with
+            | true  -> [s1] 
+            | false ->
+                let s2 = [1 .. o.maxSize] |> List.map (fun i -> 0uy)
+                [s1;s2]
+    | _     -> valsFromSingleValueConstraints
 
 let BitStringAutomaticTestCaseValues (r:Asn1AcnAst.AstRoot)  (t:Asn1AcnAst.Asn1Type) (o:Asn1AcnAst.BitString) =
-    match o.minSize > maxItems with
-    | true  -> []   // the generated string will be very large
-    | false ->  
-        let s1 = System.String('0', o.minSize)
-        match o.minSize = o.maxSize  || o.maxSize > maxItems with
-        | true  -> [s1] 
-        | false ->
-            let s2 = System.String('0', o.maxSize)
-            [s1;s2]
-
+    let valsFromSingleValueConstraints = o.AllCons |> List.collect (foldSizableConstraint ) |> Seq.toList |> List.map(fun (z,_) -> z.Value) |> Seq.distinct |> Seq.toList
+    match valsFromSingleValueConstraints with
+    | []    ->
+        match o.minSize > maxItems with
+        | true  -> []   // the generated string will be very large
+        | false ->  
+            let s1 = System.String('0', o.minSize)
+            match o.minSize = o.maxSize  || o.maxSize > maxItems with
+            | true  -> [s1] 
+            | false ->
+                let s2 = System.String('0', o.maxSize)
+                [s1;s2]
+    | _     -> valsFromSingleValueConstraints
 let SequenceOfAutomaticTestCaseValues (r:Asn1AcnAst.AstRoot)  (t:Asn1AcnAst.Asn1Type) (o:Asn1AcnAst.SequenceOf) (childType:Asn1Type) =
     match o.minSize > maxItems with
     | true  -> []   // the generated string will be very large
@@ -343,24 +367,55 @@ let SequenceAutomaticTestCaseValues (r:Asn1AcnAst.AstRoot)  (t:Asn1AcnAst.Asn1Ty
     let asn1Children = 
         children |> 
         List.choose(fun c -> match c with Asn1Child x -> Some x | _ -> None) |> 
+        List.filter(fun z -> match z.Type.Kind with NullType _ -> false | _ -> true) |>
         List.filter(fun z -> match z.Optionality with Some Asn1AcnAst.AlwaysAbsent -> false | _ -> true)
+
+    let HandleChild (ch:Asn1Child) =
+        let childValues = ch.Type.automaticTestCasesValues
+        match childValues with
+        | []  -> None
+        | x1::_ -> Some ({NamedValue.name = ch.Name.Value; Value = x1})
+    let caseAllChildren = asn1Children |> List.choose HandleChild
+    let caseAllMandatoyrChildren = 
+        asn1Children |> 
+        List.filter(fun z -> 
+            match z.Optionality with 
+            | None  -> true
+            | Some Asn1AcnAst.AlwaysPresent -> true
+            | _             -> false) |>
+        List.choose HandleChild
+    [caseAllChildren; caseAllMandatoyrChildren]
+    (*
+
+    //let allChildren = 
     let rec generateCases (children : Asn1Child list) =
         match children with
         | []        -> [[]]
         | x1::xs    -> 
-            let ths = x1.Type.automaticTestCasesValues |> List.map(fun v -> {NamedValue.name = x1.Name.Value; Value = v}) 
-
+            // generate this component test cases (x1) and the rest and the join them.
+            // However, if this component (x1) is optional with present-when conditions then no test case
+            // is generated for this component because we might generated wrong test cases 
+            let optChildCount = 
+                children |> 
+                List.filter(fun c -> 
+                    match c.Optionality with
+                    | Some (Asn1AcnAst.Optional opt) when opt.acnPresentWhen.IsSome -> true
+                    | _                                                             -> false
+                ) |> Seq.length 
             let rest = generateCases xs
             seq {
-//                match x1.Optionality with
-//                | Some (Asn1AcnAst.Optional _)    -> yield! rest
-//                | _                               -> 
+                match x1.Optionality with
+                | Some (Asn1AcnAst.Optional opt) when optChildCount > 1 && opt.acnPresentWhen.IsSome  ->  yield! rest       // do not generate test case for this item
+                | _                               -> 
+                    
+                    let ths = x1.Type.automaticTestCasesValues |> List.map(fun v -> {NamedValue.name = x1.Name.Value; Value = v}) 
                     for i1 in ths do    
                         for lst in rest do
                             yield i1::lst
-            } |> Seq.toList 
-    generateCases asn1Children
-
+            } |> Seq.mapi(fun i x -> (i,x)) |> Seq.takeWhile(fun (i,x) -> i<10) |> Seq.map snd |> Seq.toList
+    let ret = generateCases asn1Children
+    ret
+    *)
 let ChoiceAutomaticTestCaseValues (r:Asn1AcnAst.AstRoot)  (t:Asn1AcnAst.Asn1Type) (o:Asn1AcnAst.Choice) (children:ChChildInfo list) =
     seq {
         for ch in children do

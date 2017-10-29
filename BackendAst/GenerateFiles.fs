@@ -272,7 +272,7 @@ let CreateTestSuiteFile (r:AstRoot) (l:ProgrammingLanguage) outDir vasName =
         | XER   -> "XER_"
 
     let includedPackages =  r.Files |> Seq.map(fun x -> x.FileNameWithoutExtension.ToLower() + "_auto_tcs")
-    let PrintTestCase (v:ValueAssignment) (m:Asn1Module) (sTasName : string)  (idx :int) initFuncName =
+    let PrintTestCase (v:ValueAssignment) (m:Asn1Module) (sTasName : string)  (idx :int) initFuncName (uperEncDecTestFunc  : EncodeDecodeTestFunc option) (acnEncDecTestFunc   : EncodeDecodeTestFunc option) =
         let rec gAmber (t:Asn1Type) = 
             match t.Kind with
             | Integer      _ -> ""  , "&"
@@ -289,7 +289,7 @@ let CreateTestSuiteFile (r:AstRoot) (l:ProgrammingLanguage) outDir vasName =
             | ReferenceType r -> gAmber r.baseType
 
         let encAmper, initAmper = gAmber v.Type
-        let packageName = ToC m.Name.Value
+        //let packageName = ToC m.Name.Value
         let sValue = DAstVariables.printValue r l  v.Type None v.Value.kind
         let sTestCaseIndex = idx.ToString()
 
@@ -306,8 +306,14 @@ let CreateTestSuiteFile (r:AstRoot) (l:ProgrammingLanguage) outDir vasName =
          
         r.args.encodings |> Seq.map(fun e -> 
                                         match e with
-                                        | Asn1Encoding.UPER  -> test_cases_c.PrintSuite_call_codec sTasName encAmper (GetEncodingString e) sValue sTestCaseIndex (ToC v.Name.Value) bStatic (GetDatFile e) initFuncName initAmper
-                                        | Asn1Encoding.ACN   -> test_cases_c.PrintSuite_call_codec sTasName encAmper (GetEncodingString e) sValue sTestCaseIndex (ToC v.Name.Value) bStatic (GetDatFile e) initFuncName initAmper
+                                        | Asn1Encoding.UPER  -> 
+                                            match uperEncDecTestFunc with
+                                            | Some _    -> test_cases_c.PrintSuite_call_codec sTasName encAmper (GetEncodingString e) sValue sTestCaseIndex (ToC v.Name.Value) bStatic (GetDatFile e) initFuncName initAmper
+                                            | None      -> ""
+                                        | Asn1Encoding.ACN   -> 
+                                            match acnEncDecTestFunc with
+                                            | Some _    -> test_cases_c.PrintSuite_call_codec sTasName encAmper (GetEncodingString e) sValue sTestCaseIndex (ToC v.Name.Value) bStatic (GetDatFile e) initFuncName initAmper
+                                            | _         -> ""
                                         | Asn1Encoding.XER   -> test_cases_c.PrintSuite_call_codec sTasName encAmper (GetEncodingString e) sValue sTestCaseIndex (ToC v.Name.Value) bStatic (GetDatFile e) initFuncName initAmper
                                         | Asn1Encoding.BER   -> test_cases_c.PrintSuite_call_codec sTasName encAmper (GetEncodingString e) sValue sTestCaseIndex (ToC v.Name.Value) bStatic (GetDatFile e) initFuncName initAmper
                                  ) |> Seq.StrJoin "\n\n"
@@ -317,15 +323,17 @@ let CreateTestSuiteFile (r:AstRoot) (l:ProgrammingLanguage) outDir vasName =
         seq {
             for m in r.Files |> List.collect(fun f -> f.Modules) do
                 for v in m.ValueAssignments do
-                    match v.Type.Kind with
-                    | ReferenceType ref -> 
-                        let actMod = r.getModuleByName ref.baseInfo.modName
+//                    match v.Type.Kind with
+//                    | ReferenceType ref -> 
+                        
+                        //let actMod = r.getModuleByName ref.baseInfo.modName
                         if vasName = "ALL" || v.Name.Value = vasName then
                             idx <- idx + 1
                             let initFuncName = v.Type.initFunction.initFuncName
                             //yield PrintTestCase v actMod v.Type.typeDefinition.typeDefinitionBodyWithinSeq  idx initFuncName
-                            yield PrintTestCase v actMod (ToC2(r.args.TypePrefix + ref.baseInfo.tasName.Value) )  idx initFuncName
-                    | _                 -> ()
+                            //yield PrintTestCase v actMod (ToC2(r.args.TypePrefix + ref.baseInfo.tasName.Value) )  idx initFuncName v.Type.uperEncDecTestFunc v.Type.acnEncDecTestFunc
+                            yield PrintTestCase v m (getTypeDecl r v )  idx initFuncName v.Type.uperEncDecTestFunc v.Type.acnEncDecTestFunc
+//                    | _                 -> ()
                 if vasName = "ALL" then
                     for t in m.TypeAssignments do
                         let hasEncodeFunc = hasAcnEncodeFunction t.Type.acnEncFunction t.Type.acnParameters 
@@ -334,7 +342,7 @@ let CreateTestSuiteFile (r:AstRoot) (l:ProgrammingLanguage) outDir vasName =
                                 let vas = {ValueAssignment.Name = StringLoc.ByValue ""; c_name = ""; ada_name = ""; Type = t.Type; Value = v}
                                 idx <- idx + 1
                                 let initFuncName = t.Type.initFunction.initFuncName
-                                yield PrintTestCase vas m (ToC2(r.args.TypePrefix + t.Name.Value) ) idx initFuncName
+                                yield PrintTestCase vas m (ToC2(r.args.TypePrefix + t.Name.Value) ) idx initFuncName t.Type.uperEncDecTestFunc t.Type.acnEncDecTestFunc
                             
         }  |> Seq.toList
 
