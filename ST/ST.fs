@@ -190,13 +190,16 @@ let call fileName macroName (attrs:seq<string*#Object>)=
 
     let template = group.GetInstanceOf(macroName);
     attrs |> Seq.iter(fun (attrName, obj) -> template.SetAttribute(attrName,obj))
-    template.ToString 80
+    let ret = template.ToString 80
+    //printfn "%s\n" ret
+    ret
 
 let call2 (fileName, macroName, [<ParamArray>] attrs:array<string*#Object>)=
     let group = get_group fileName
 
     let template = group.GetInstanceOf(macroName);
     attrs |> Seq.iter(fun (attrName, obj) -> template.SetAttribute(attrName,obj))
-    template.ToString 80
-
+    let ret = template.ToString 80
+    //printfn "%s\n" ret
+    ret
 

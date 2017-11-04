@@ -61,7 +61,15 @@ let private createAcnChild (r:Asn1AcnAst.AstRoot) (deps:Asn1AcnAst.AcnInsertedFi
 
 let private createInteger (r:Asn1AcnAst.AstRoot) (l:ProgrammingLanguage) (m:Asn1AcnAst.Asn1Module) (t:Asn1AcnAst.Asn1Type) (o:Asn1AcnAst.Integer) (us:State) =
     let typeDefinition = DAstTypeDefinition.createInteger  r l t o us
-    let initialValue        = getValueByUperRange o.uperRange 0I
+    let automaticTestCasesIntValues      = EncodeDecodeTestCase.IntegerAutomaticTestCaseValues r t o 
+    let initialValue        = 
+        match automaticTestCasesIntValues with
+        | []    -> getValueByUperRange o.uperRange 0I
+        | x::_  -> 
+            match automaticTestCasesIntValues |> Seq.exists ((=) 0I) with
+            |true    -> 0I
+            |false   -> x
+    let automaticTestCasesValues      = automaticTestCasesIntValues |> List.mapi (fun i x -> createAsn1ValueFromValueKind t i (IntegerValue x)) 
     let initFunction        = DAstInitialize.createIntegerInitFunc r l t o typeDefinition (IntegerValue initialValue)
     let equalFunction       = DAstEqual.createIntegerEqualFunction r l t o typeDefinition 
     let isValidFunction, s1     = DAstValidate.createIntegerFunction r l t o typeDefinition  us
@@ -72,7 +80,6 @@ let private createInteger (r:Asn1AcnAst.AstRoot) (l:ProgrammingLanguage) (m:Asn1
 
     let uperEncDecTestFunc,s6         = EncodeDecodeTestCase.createUperEncDecFunction r l t typeDefinition equalFunction isValidFunction (Some uperEncFunction) (Some uperDecFunction) s5
     let acnEncDecTestFunc ,s7         = EncodeDecodeTestCase.createAcnEncDecFunction r l t typeDefinition equalFunction isValidFunction (Some acnEncFunction) (Some acnDecFunction) s6
-    let automaticTestCasesValues      = EncodeDecodeTestCase.IntegerAutomaticTestCaseValues r t o |> List.mapi (fun i x -> createAsn1ValueFromValueKind t i (IntegerValue x)) 
     let ret =
         {
             Integer.baseInfo    = o

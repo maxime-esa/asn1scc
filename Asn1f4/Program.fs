@@ -97,7 +97,7 @@ let exportRTL outDir  (l:DAst.ProgrammingLanguage) =
                 writeTextFile (Path.Combine(outDir, "IgnoredExaminerWarnings.wrn"))     (rm.GetString("IgnoredExaminerWarnings",null)) 
                 writeTextFile (Path.Combine(outDir, "gnat.cfg"))    (rm.GetString("gnat",null)) 
                 writeTextFile (Path.Combine(outDir, "runSpark.sh"))    (rm.GetString("run",null)) 
-                writeTextFile (Path.Combine(outDir, "GPS_project.gprc"))    (rm.GetString("GPS_project",null)) 
+                writeTextFile (Path.Combine(outDir, "GPS_project.gpr"))    (rm.GetString("GPS_project",null)) 
 
 
 
