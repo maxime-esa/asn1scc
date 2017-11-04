@@ -60,11 +60,11 @@ END <sFuncName>_aux;
 
 EmitTypeAssignment_primitive_def_decode(sVarName, sStar, sFuncName, sTypeDefName, arrsErrcodes, bEmptyEncodingSpace, nMaxBytesInACN, nMaxBitsInACN, arrsAcnPrms) ::= <<
 <arrsErrcodes; separator="\n">
-procedure <sFuncName>(<sVarName>: OUT <sTypeDefName>; Stream : IN <sTypeDefName>_ACN_Stream; result : OUT <rtlModuleName()>.ASN1_RESULT<if(arrsAcnPrms)>; <arrsAcnPrms; separator="; "><endif>);
+procedure <sFuncName>(<sVarName>: in out <sTypeDefName>; Stream : IN <sTypeDefName>_ACN_Stream; result : OUT <rtlModuleName()>.ASN1_RESULT<if(arrsAcnPrms)>; <arrsAcnPrms; separator="; "><endif>);
 >>
 
 EmitTypeAssignment_primitive_decodeMain(sVarName, sStar, sFuncName, soIValidFuncName, sTypeDefName, arrsLocalVariables, sContent, soSparkAnnotations, sInitilialExp, arrsAcnPrms, arrsAcnParamNames) ::= /*nogen*/<<
-PROCEDURE <sFuncName>(<sVarName>: OUT <sTypeDefName>; Stream : IN <sTypeDefName>_ACN_Stream; result : OUT <rtlModuleName()>.ASN1_RESULT<if(arrsAcnPrms)>; <arrsAcnPrms; separator="; "><endif>)
+PROCEDURE <sFuncName>(<sVarName>: in out <sTypeDefName>; Stream : IN <sTypeDefName>_ACN_Stream; result : OUT <rtlModuleName()>.ASN1_RESULT<if(arrsAcnPrms)>; <arrsAcnPrms; separator="; "><endif>)
 IS
     iter:<rtlModuleName()>.DECODE_PARAMS;
 BEGIN
@@ -75,48 +75,21 @@ END <sFuncName>;
 >>
 
 EmitTypeAssignment_primitive_decode(sVarName, sStar, sFuncName, soIValidFuncName, sTypeDefName, arrsLocalVariables, sContent, soSparkAnnotations, sInitilialExp, arrsAcnPrms, arrsAcnParamNames) ::= <<
-PROCEDURE <sFuncName>_aux(<sVarName>:OUT <sTypeDefName>; S : in <rtlModuleName()>.BitArray; K : in out <rtlModuleName()>.DECODE_PARAMS; result : OUT <rtlModuleName()>.ASN1_RESULT<if(arrsAcnPrms)>; <arrsAcnPrms; separator="; "><endif>)
+pragma Warnings (Off, "unused initial value of ""<sVarName>""");
+PROCEDURE <sFuncName>_aux(<sVarName>:in out <sTypeDefName>; S : in <rtlModuleName()>.BitArray; K : in out <rtlModuleName()>.DECODE_PARAMS; result : OUT <rtlModuleName()>.ASN1_RESULT<if(arrsAcnPrms)>; <arrsAcnPrms; separator="; "><endif>)
 <soSparkAnnotations>
 IS
     <arrsLocalVariables; separator="\n">
 BEGIN
     <sContent>
 END <sFuncName>_aux;
+pragma Warnings (On, "unused initial value of ""<sVarName>""");
 
 <EmitTypeAssignment_primitive_decodeMain(sVarName=sVarName, sStar=sStar, sFuncName=sFuncName, soIValidFuncName=soIValidFuncName, sTypeDefName=sTypeDefName, arrsLocalVariables=arrsLocalVariables, sContent=sContent, soSparkAnnotations=soSparkAnnotations, sInitilialExp=sInitilialExp, arrsAcnPrms=arrsAcnPrms, arrsAcnParamNames=arrsAcnParamNames)>
 >>
 
 
 
-/************************ OLD macros ***********************************************************************/
-
-
-
-
-PrintType_encode(sMainBody, bAligmentApplied, nAligmentValue, bHasDependencies, sDependencyUpdates) ::= <<
-<if(bAligmentApplied)>
-IF (K MOD <nAligmentValue>) /= 0 THEN
-    K := K + (<nAligmentValue> - (K MOD <nAligmentValue>));
-END IF;
-
-<endif>
-<if(bHasDependencies)>
-<sDependencyUpdates>
-
-<endif>
-<sMainBody>
->>
-
-
-PrintType_decode(sMainBody, bAligmentApplied, nAligmentValue, bHasDependencies, sDependencyUpdates) ::= <<
-<if(bAligmentApplied)>
-IF (K.K MOD <nAligmentValue>) /= 0 THEN
-    K.K := K.K + (<nAligmentValue> - (K.K MOD <nAligmentValue>));
-END IF;
-
-<endif>
-<sMainBody>
->>
 
 
 MF(p, soMF, soMFM, nUperMin, nUperMax) ::= <<
@@ -440,17 +413,48 @@ ASCII_VarSize_NullTerminated_decode(p, soMF, soMFM, nUperMin, nUperMax) ::= <<
 
 
 
-Real_IEEE754_32_big_endian_encode(p) ::= "<rtlModuleName()>.Acn_Enc_Real_IEEE754_32_big_endian(S, K, <p>);"
-Real_IEEE754_32_big_endian_decode(p) ::= "<rtlModuleName()>.Acn_Dec_Real_IEEE754_32_big_endian(S, K, <p>, result);"
+/************************ OLD macros ***********************************************************************/
 
-Real_IEEE754_64_big_endian_encode(p) ::= "<rtlModuleName()>.Acn_Enc_Real_IEEE754_64_big_endian(S, K, <p>);"
-Real_IEEE754_64_big_endian_decode(p) ::= "<rtlModuleName()>.Acn_Dec_Real_IEEE754_64_big_endian(S, K, <p>, result);"
 
-Real_IEEE754_32_little_endian_encode(p) ::= "<rtlModuleName()>.Acn_Enc_Real_IEEE754_32_little_endian(S, K, <p>);"
-Real_IEEE754_32_little_endian_decode(p) ::= "<rtlModuleName()>.Acn_Dec_Real_IEEE754_32_little_endian(S, K, <p>, result);"
 
-Real_IEEE754_64_little_endian_encode(p) ::= "<rtlModuleName()>.Acn_Enc_Real_IEEE754_64_little_endian(S, K, <p>);"
-Real_IEEE754_64_little_endian_decode(p) ::= "<rtlModuleName()>.Acn_Dec_Real_IEEE754_64_little_endian(S, K, <p>, result);"
+
+PrintType_encode(sMainBody, bAligmentApplied, nAligmentValue, bHasDependencies, sDependencyUpdates) ::= <<
+<if(bAligmentApplied)>
+IF (K MOD <nAligmentValue>) /= 0 THEN
+    K := K + (<nAligmentValue> - (K MOD <nAligmentValue>));
+END IF;
+
+<endif>
+<if(bHasDependencies)>
+<sDependencyUpdates>
+
+<endif>
+<sMainBody>
+>>
+
+
+PrintType_decode(sMainBody, bAligmentApplied, nAligmentValue, bHasDependencies, sDependencyUpdates) ::= <<
+<if(bAligmentApplied)>
+IF (K.K MOD <nAligmentValue>) /= 0 THEN
+    K.K := K.K + (<nAligmentValue> - (K.K MOD <nAligmentValue>));
+END IF;
+
+<endif>
+<sMainBody>
+>>
+
+
+Real_32_big_endian_encode(p) ::= "<rtlModuleName()>.Acn_Enc_Real_IEEE754_32_big_endian(S, K, <p>);"
+Real_32_big_endian_decode(p) ::= "<rtlModuleName()>.Acn_Dec_Real_IEEE754_32_big_endian(S, K, <p>, result);"
+
+Real_64_big_endian_encode(p) ::= "<rtlModuleName()>.Acn_Enc_Real_IEEE754_64_big_endian(S, K, <p>);"
+Real_64_big_endian_decode(p) ::= "<rtlModuleName()>.Acn_Dec_Real_IEEE754_64_big_endian(S, K, <p>, result);"
+
+Real_32_little_endian_encode(p) ::= "<rtlModuleName()>.Acn_Enc_Real_IEEE754_32_little_endian(S, K, <p>);"
+Real_32_little_endian_decode(p) ::= "<rtlModuleName()>.Acn_Dec_Real_IEEE754_32_little_endian(S, K, <p>, result);"
+
+Real_64_little_endian_encode(p) ::= "<rtlModuleName()>.Acn_Enc_Real_IEEE754_64_little_endian(S, K, <p>);"
+Real_64_little_endian_decode(p) ::= "<rtlModuleName()>.Acn_Dec_Real_IEEE754_64_little_endian(S, K, <p>, result);"
 
 
 

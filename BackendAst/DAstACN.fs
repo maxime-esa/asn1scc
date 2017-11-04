@@ -216,8 +216,8 @@ let createIntegerFunction (r:Asn1AcnAst.AstRoot) (l:ProgrammingLanguage) (codec:
 
 
 let createEnumComn (r:Asn1AcnAst.AstRoot) (l:ProgrammingLanguage) (codec:CommonTypes.Codec) (typeId : ReferenceToType) (o:Asn1AcnAst.Enumerated) (typeDefinitionName:string)  =
-    let EnumeratedEncValues                 = match l with C -> acn_c.EnumeratedEncValues             | Ada -> acn_c.EnumeratedEncValues
-    let Enumerated_item                     = match l with C -> acn_c.Enumerated_item                 | Ada -> acn_c.Enumerated_item
+    let EnumeratedEncValues                 = match l with C -> acn_c.EnumeratedEncValues             | Ada -> acn_a.EnumeratedEncValues
+    let Enumerated_item                     = match l with C -> acn_c.Enumerated_item                 | Ada -> acn_a.Enumerated_item
     //let IntFullyConstraint                  = match l with C -> uper_c.IntFullyConstraint       | Ada -> uper_a.IntFullyConstraint
     let IntFullyConstraintPos   = match l with C -> uper_c.IntFullyConstraintPos    | Ada -> uper_a.IntFullyConstraint
     let min = o.items |> List.map(fun x -> x.acnEncodeValue) |> Seq.min
@@ -263,23 +263,23 @@ let createAcnEnumeratedFunction (r:Asn1AcnAst.AstRoot) (l:ProgrammingLanguage) (
 
 
 let createRealrFunction (r:Asn1AcnAst.AstRoot) (l:ProgrammingLanguage) (codec:CommonTypes.Codec) (t:Asn1AcnAst.Asn1Type) (o:Asn1AcnAst.Real) (typeDefinition:TypeDefinitionCommon)  (isValidFunc: IsValidFunction option) (uperFunc: UPerFunction) (us:State)  =
-    let Real_32_big_endian                  = match l with C -> acn_c.Real_32_big_endian                | Ada -> acn_c.Real_32_big_endian
-    let Real_64_big_endian                  = match l with C -> acn_c.Real_64_big_endian                | Ada -> acn_c.Real_64_big_endian
-    let Real_32_little_endian               = match l with C -> acn_c.Real_32_little_endian             | Ada -> acn_c.Real_32_little_endian
-    let Real_64_little_endian               = match l with C -> acn_c.Real_64_little_endian             | Ada -> acn_c.Real_64_little_endian
+    let Real_32_big_endian                  = match l with C -> acn_c.Real_32_big_endian                | Ada -> acn_a.Real_32_big_endian
+    let Real_64_big_endian                  = match l with C -> acn_c.Real_64_big_endian                | Ada -> acn_a.Real_64_big_endian
+    let Real_32_little_endian               = match l with C -> acn_c.Real_32_little_endian             | Ada -> acn_a.Real_32_little_endian
+    let Real_64_little_endian               = match l with C -> acn_c.Real_64_little_endian             | Ada -> acn_a.Real_64_little_endian
     
     let funcBody (errCode:ErroCode) (acnArgs: (Asn1AcnAst.RelativePath*Asn1AcnAst.AcnParameter) list) (p:FuncParamType)        = 
         let pp = match codec with CommonTypes.Encode -> p.getValue l | CommonTypes.Decode -> p.getPointer l
         let funcBodyContent = 
             match o.acnEncodingClass with
-            | Real_IEEE754_32_big_endian            -> Some (Real_32_big_endian pp codec, [])
-            | Real_IEEE754_64_big_endian            -> Some (Real_64_big_endian pp codec, [])
-            | Real_IEEE754_32_little_endian         -> Some (Real_32_little_endian pp codec, [])
-            | Real_IEEE754_64_little_endian         -> Some (Real_64_little_endian pp codec, [])
-            | Real_uPER                             -> uperFunc.funcBody p |> Option.map(fun x -> x.funcBody, x.errCodes)
+            | Real_IEEE754_32_big_endian            -> Some (Real_32_big_endian pp codec, [errCode])
+            | Real_IEEE754_64_big_endian            -> Some (Real_64_big_endian pp codec, [errCode])
+            | Real_IEEE754_32_little_endian         -> Some (Real_32_little_endian pp codec, [errCode])
+            | Real_IEEE754_64_little_endian         -> Some (Real_64_little_endian pp codec, [errCode])
+            | Real_uPER                             -> uperFunc.funcBody_e errCode p |> Option.map(fun x -> x.funcBody, x.errCodes)
         match funcBodyContent with
         | None -> None
-        | Some (funcBodyContent,errCodes) -> Some ({AcnFuncBodyResult.funcBody = funcBodyContent; errCodes = errCode::errCodes; localVariables = []})
+        | Some (funcBodyContent,errCodes) -> Some ({AcnFuncBodyResult.funcBody = funcBodyContent; errCodes = errCodes; localVariables = []})
     let soSparkAnnotations = None
     createPrimitiveFunction r l codec t typeDefinition isValidFunc  (fun e acnArgs p -> funcBody e acnArgs p) soSparkAnnotations us
 
