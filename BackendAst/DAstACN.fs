@@ -223,27 +223,29 @@ let createEnumComn (r:Asn1AcnAst.AstRoot) (l:ProgrammingLanguage) (codec:CommonT
     let min = o.items |> List.map(fun x -> x.acnEncodeValue) |> Seq.min
     let max = o.items |> List.map(fun x -> x.acnEncodeValue) |> Seq.max
     let intVal = "intVal"
+    let sFirstItemName = o.items.Head.getBackendName l
     let localVar =
         match min >= 0I with
-        | true  -> Asn1UIntLocalVariable (intVal,None)
+        | true when l = C -> Asn1UIntLocalVariable (intVal,None)
+        | true  -> Asn1SIntLocalVariable (intVal,None)
         | false -> Asn1SIntLocalVariable (intVal,None)
     let pVal = VALUE intVal
     let funcBody (errCode:ErroCode) (acnArgs: (Asn1AcnAst.RelativePath*Asn1AcnAst.AcnParameter) list) (p:FuncParamType)        = 
-        let uperInt (errCode:ErroCode) (p:FuncParamType) = 
-            let pp = match codec with CommonTypes.Encode -> p.getValue l | CommonTypes.Decode -> p.getPointer l
-            let funcBody = IntFullyConstraintPos pp min max (GetNumberOfBitsForNonNegativeInteger (max-min))  errCode.errCodeName codec
-            Some({UPERFuncBodyResult.funcBody = funcBody; errCodes = [errCode]; localVariables= []})
         let intFuncBody = 
+            let uperInt (errCode:ErroCode) (p:FuncParamType) = 
+                let pp = match codec with CommonTypes.Encode -> p.getValue l | CommonTypes.Decode -> p.getPointer l
+                let funcBody = IntFullyConstraintPos pp min max (GetNumberOfBitsForNonNegativeInteger (max-min))  errCode.errCodeName codec
+                Some({UPERFuncBodyResult.funcBody = funcBody; errCodes = [errCode]; localVariables= []})
             createAcnIntegerFunctionInternal r l codec (Concrete (min,max)) o.acnEncodingClass uperInt
         let funcBodyContent = 
             match intFuncBody errCode acnArgs pVal with
             | None      -> None
             | Some(intAcnFuncBdResult) ->
                 let arrItems = o.items |> List.map(fun it -> Enumerated_item (p.getValue l) (it.getBackendName l) it.acnEncodeValue codec)
-                Some (EnumeratedEncValues p.p typeDefinitionName arrItems intAcnFuncBdResult.funcBody codec, intAcnFuncBdResult.errCodes, localVar::intAcnFuncBdResult.localVariables)
+                Some (EnumeratedEncValues p.p typeDefinitionName arrItems intAcnFuncBdResult.funcBody errCode.errCodeName sFirstItemName codec, intAcnFuncBdResult.errCodes, localVar::intAcnFuncBdResult.localVariables)
         match funcBodyContent with
         | None -> None
-        | Some (funcBodyContent,errCodes, localVariables) -> Some ({AcnFuncBodyResult.funcBody = funcBodyContent; errCodes = errCode::errCodes; localVariables = localVariables})
+        | Some (funcBodyContent,errCodes, localVariables) -> Some ({AcnFuncBodyResult.funcBody = funcBodyContent; errCodes = errCodes; localVariables = localVariables})
     funcBody
 
 let createEnumeratedFunction (r:Asn1AcnAst.AstRoot) (l:ProgrammingLanguage) (codec:CommonTypes.Codec) (t:Asn1AcnAst.Asn1Type) (o:Asn1AcnAst.Enumerated) (typeDefinition:TypeDefinitionCommon)  (isValidFunc: IsValidFunction option) (uperFunc: UPerFunction) (us:State)  =
@@ -321,20 +323,22 @@ let createBooleanFunction (r:Asn1AcnAst.AstRoot) (l:ProgrammingLanguage) (codec:
         let pvalue = p.getValue l
         let ptr = p.getPointer l
         let Boolean         = match l with C -> uper_c.Boolean          | Ada -> uper_a.Boolean
-        let acnBoolean      = match l with C -> acn_c.Boolean          | Ada -> acn_c.Boolean
+        let acnBoolean      = match l with C -> acn_c.Boolean          | Ada -> acn_a.Boolean
         let funcBodyContent = 
             match o.acnProperties.encodingPattern with
             | None  -> Boolean pp errCode.errCodeName codec
             | Some (TrueValue  bitVal)  ->
+                let arrsBits = bitVal.Value.ToCharArray() |> Seq.map(fun x -> if x='0' then "0" else "1") |> Seq.toList
                 let arrBytes = bitStringValueToByteArray bitVal
                 let bEncValIsTrue, arruTrueValueAsByteArray, arruFalseValueAsByteArray, nSize =
                     true, arrBytes, (arrBytes |> Array.map (~~~)), bitVal.Value.Length
-                acnBoolean pvalue ptr bEncValIsTrue (BigInteger nSize) arruTrueValueAsByteArray arruFalseValueAsByteArray codec
+                acnBoolean pvalue ptr bEncValIsTrue (BigInteger nSize) arruTrueValueAsByteArray arruFalseValueAsByteArray arrsBits errCode.errCodeName codec
             | Some (FalseValue   bitVal)    ->
+                let arrsBits = bitVal.Value.ToCharArray() |> Seq.map(fun x -> if x='0' then "0" else "1") |> Seq.toList
                 let arrBytes = bitStringValueToByteArray bitVal
                 let bEncValIsTrue, arruTrueValueAsByteArray, arruFalseValueAsByteArray, nSize =
                     false, arrBytes, (arrBytes |> Array.map (~~~)), bitVal.Value.Length
-                acnBoolean pvalue ptr bEncValIsTrue (BigInteger nSize) arruTrueValueAsByteArray arruFalseValueAsByteArray codec
+                acnBoolean pvalue ptr bEncValIsTrue (BigInteger nSize) arruTrueValueAsByteArray arruFalseValueAsByteArray arrsBits errCode.errCodeName codec
                 
         {AcnFuncBodyResult.funcBody = funcBodyContent; errCodes = [errCode]; localVariables = []}    
     let soSparkAnnotations = None
@@ -349,24 +353,26 @@ let createAcnNullTypeFunction (r:Asn1AcnAst.AstRoot) (l:ProgrammingLanguage) (co
 
     let funcBody (errCode:ErroCode) (acnArgs: (Asn1AcnAst.RelativePath*Asn1AcnAst.AcnParameter) list) (p:FuncParamType) = 
         let pp = match codec with CommonTypes.Encode -> p.getValue l | CommonTypes.Decode -> p.getPointer l
-        let nullType         = match l with C -> acn_c.Null          | Ada -> acn_c.Null
+        let nullType         = match l with C -> acn_c.Null          | Ada -> acn_a.Null_pattern
         match o.acnProperties.encodingPattern with
         | None      -> None
         | Some encPattern   ->
+            let arrsBits = encPattern.Value.ToCharArray() |> Seq.map(fun x -> if x='0' then "0" else "1") |> Seq.toList
             let arrBytes = bitStringValueToByteArray encPattern
-            let ret = nullType arrBytes (BigInteger encPattern.Value.Length) codec
+            let ret = nullType pp arrBytes (BigInteger encPattern.Value.Length) arrsBits errCode.errCodeName codec
             Some ({AcnFuncBodyResult.funcBody = ret; errCodes = [errCode]; localVariables = []})
     (funcBody errCode), ns
 
 let createNullTypeFunction (r:Asn1AcnAst.AstRoot) (l:ProgrammingLanguage) (codec:CommonTypes.Codec) (t:Asn1AcnAst.Asn1Type) (o:Asn1AcnAst.NullType) (typeDefinition:TypeDefinitionCommon) (isValidFunc: IsValidFunction option) (us:State)  =
     let funcBody (errCode:ErroCode) (acnArgs: (Asn1AcnAst.RelativePath*Asn1AcnAst.AcnParameter) list) (p:FuncParamType) = 
         let pp = match codec with CommonTypes.Encode -> p.getValue l | CommonTypes.Decode -> p.getPointer l
-        let nullType         = match l with C -> acn_c.Null          | Ada -> acn_c.Null
+        let nullType         = match l with C -> acn_c.Null          | Ada -> acn_a.Null_pattern
         match o.acnProperties.encodingPattern with
         | None      -> None
         | Some encPattern   ->
+            let arrsBits = encPattern.Value.ToCharArray() |> Seq.map(fun x -> if x='0' then "0" else "1") |> Seq.toList
             let arrBytes = bitStringValueToByteArray encPattern
-            let ret = nullType arrBytes (BigInteger encPattern.Value.Length) codec
+            let ret = nullType pp arrBytes (BigInteger encPattern.Value.Length) arrsBits errCode.errCodeName codec
             Some ({AcnFuncBodyResult.funcBody = ret; errCodes = [errCode]; localVariables = []})
     let soSparkAnnotations = None
     createPrimitiveFunction r l codec t typeDefinition  isValidFunc  funcBody soSparkAnnotations us

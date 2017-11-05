@@ -372,7 +372,7 @@ ret = Acn_Dec_Real_IEEE754_64_little_endian(pBitStrm, <p>);
 
 
 
-Boolean_encode(p, ptr, bEncValIsTrue, nSize, arruTrueValueAsByteArray, arruFalseValueAsByteArray) ::= <<
+Boolean_encode(p, ptr, bEncValIsTrue, nSize, arruTrueValueAsByteArray, arruFalseValueAsByteArray, arrsBits, sErrCode) ::= <<
 {
 	static byte true_data[] = {<arruTrueValueAsByteArray:{b|0x<b;format="X2">}; separator=",">};
 	static byte false_data[] = {<arruFalseValueAsByteArray:{b|0x<b;format="X2">}; separator=",">};
@@ -382,7 +382,7 @@ Boolean_encode(p, ptr, bEncValIsTrue, nSize, arruTrueValueAsByteArray, arruFalse
 >>
 
 
-Boolean_decode(p, ptr, bEncValIsTrue, nSize, arruTrueValueAsByteArray, arruFalseValueAsByteArray) ::= <<
+Boolean_decode(p, ptr, bEncValIsTrue, nSize, arruTrueValueAsByteArray, arruFalseValueAsByteArray, arrsBits, sErrCode) ::= <<
 {
 	<if(bEncValIsTrue)>
 	static byte tmp[] = {<arruTrueValueAsByteArray:{b|0x<b;format="X2">}; separator=",">};
@@ -399,7 +399,7 @@ Boolean_decode(p, ptr, bEncValIsTrue, nSize, arruTrueValueAsByteArray, arruFalse
 
 
 
-Null_encode(arruNullValueAsByteArray, nSize) ::= <<
+Null_encode(p, arruNullValueAsByteArray, nSize, arrsBits, sErrCode) ::= <<
 <if(arruNullValueAsByteArray)>
 {
 	static byte tmp[] = {<arruNullValueAsByteArray:{b|0x<b;format="X2">}; separator=",">};
@@ -408,7 +408,7 @@ Null_encode(arruNullValueAsByteArray, nSize) ::= <<
 <endif>
 >>
 
-Null_decode(arruNullValueAsByteArray, nSize) ::= <<
+Null_decode(p, arruNullValueAsByteArray, nSize, arrsBits, sErrCode) ::= <<
 <if(arruNullValueAsByteArray)>
 {
 	static byte tmp[] = {<arruNullValueAsByteArray:{b|0x<b;format="X2">}; separator=",">};
@@ -451,24 +451,24 @@ EnumeratedEncIdx_decode(p, sTasName, arrsItem, sActualCodecFunc) ::= <<
 >>
 
 
-EnumeratedEncValues_encode(p, sTasName, arrsItem, sActualCodecFunc) ::= <<
+EnumeratedEncValues_encode(p, sTasName, arrsItem, sActualCodecFunc, sErrCode, sFirstItemName) ::= <<
 switch(<p>) { 
     <arrsItem; separator="\n">
     default:
         ret = FALSE;                            /*COVERAGE_IGNORE*/
-        *pErrCode = ERR_INVALID_ENUM_VALUE;      /*COVERAGE_IGNORE*/
+        *pErrCode = <sErrCode>;                 /*COVERAGE_IGNORE*/
 }
 <sActualCodecFunc>
 >>
 
-EnumeratedEncValues_decode(p, sTasName, arrsItem, sActualCodecFunc) ::= <<
+EnumeratedEncValues_decode(p, sTasName, arrsItem, sActualCodecFunc, sErrCode, sFirstItemName) ::= <<
 <sActualCodecFunc>
 if (ret) {
     switch (intVal) {
         <arrsItem; separator="\n">
     default:
         ret = FALSE;                            /*COVERAGE_IGNORE*/
-        *pErrCode = ERR_INVALID_ENUM_VALUE;      /*COVERAGE_IGNORE*/
+        *pErrCode = <sErrCode>;                 /*COVERAGE_IGNORE*/
     }
 }
 >>
