@@ -600,23 +600,25 @@ PrintTypeNoUpdate_decode(sMainBody, bAligmentApplied, nAligmentValue) ::= <<
 >>
 
 loopFixedItem_enc (i, fixedSize, nfixedSizeUperLimit, sInternalItem, nCurOffset, nAlignSize, nIntItemMinSize, nIntItemMaxSize)::= /*nogen*/<<    
-WHILE result.Success AND THEN <i>\<= <fixedSize>  LOOP
---# assert  <i> >=1 and <i>\<=<fixedSize>  and <fixedSize>\<= <nfixedSizeUperLimit> and
---#        K>=K~ and K\<=K~ + <nCurOffset> + <nAlignSize> + <nIntItemMaxSize>*(<i>-1);
+while <i>\<= <fixedSize> loop
+    pragma Loop_Invariant (<i> >=1 and <i>\<=<fixedSize>);
+    pragma Loop_Invariant (K >= K'Loop_Entry);
+    pragma Loop_Invariant (K\<=K'Loop_Entry + <nIntItemMaxSize>*(<i>-1));
     <sInternalItem>
     <i> := <i> + 1;
-END LOOP;
+end loop;
 >>
-
 
 loopFixedItem_dec (i, fixedSize, nfixedSizeUperLimit, sInternalItem, nCurOffset, nAlignSize, nIntItemMinSize, nIntItemMaxSize)::= /*nogen*/<<    
-WHILE result.Success AND THEN <i>\<= <fixedSize>   LOOP
---# assert  <i> >=1 and <i>\<=<fixedSize>  and <fixedSize>\<= <nfixedSizeUperLimit> and
---#        K.K>=K~.K and K.K\<=K~.K + <nCurOffset> + <nAlignSize> + <nIntItemMaxSize>*(<i>-1);
+while <i>\<= <fixedSize> AND result.Success loop
+    pragma Loop_Invariant (<i> >=1 and <i>\<=<fixedSize>);
+    pragma Loop_Invariant (K.K >= K'Loop_Entry.K);
+    pragma Loop_Invariant (K.K \<= K'Loop_Entry.K + <nIntItemMaxSize>*(<i>-1));
     <sInternalItem>
     <i> := <i> + 1;
-END LOOP;
+end loop;
 >>
+
 
 
 /* Strings */
@@ -674,6 +676,23 @@ str_external_field_decode(p, sTasName, i, sInternalItem, nSizeMin, nSizeMax,  nI
 val := <sTasName>_Init;
 result := <rtlModuleName()>.ASN1_RESULT'(Success => <sExtFld> >= <nSizeMin> AND <sExtFld>\<=<nSizeMax>, ErrorCode => 0);
 <loopFixedItem_dec(i=i, sInternalItem=sInternalItem, fixedSize=["Integer(",sExtFld,")"], nfixedSizeUperLimit = nSizeMax, nCurOffset="0", nAlignSize=nAlignSize, nIntItemMinSize=nIntItemMinSize, nIntItemMaxSize=nIntItemMaxSize)>
+>>
+
+
+
+
+
+oct_sqf_external_field_encode(p, sAcc, i, sInternalItem, noSizeMin, nSizeMax, sExtFld, nAlignSize, sErrCode, nIntItemMinSize, nIntItemMaxSize) ::= <<
+<loopFixedItem_enc(i=i, sInternalItem=sInternalItem, fixedSize=[p,".Length"], nfixedSizeUperLimit = nSizeMax, nCurOffset="0", nAlignSize=nAlignSize, nIntItemMinSize=nIntItemMinSize, nIntItemMaxSize=nIntItemMaxSize)>
+>>
+
+
+oct_sqf_external_field_decode(p, sAcc, i, sInternalItem, noSizeMin, nSizeMax, sExtFld, nAlignSize, sErrCode, nIntItemMinSize, nIntItemMaxSize) ::= <<
+result := <rtlModuleName()>.ASN1_RESULT'(Success => <if(noSizeMin)><noSizeMin>\<=<sExtFld> AND <endif><sExtFld>\<=<nSizeMax>, ErrorCode => <sErrCode>);
+IF result.Success THEN
+    <p>.Length := Integer(<sExtFld>);
+    <loopFixedItem_dec(i=i, sInternalItem=sInternalItem, fixedSize=[p,".Length"], nfixedSizeUperLimit = nSizeMax, nCurOffset="0", nAlignSize=nAlignSize, nIntItemMinSize=nIntItemMinSize, nIntItemMaxSize=nIntItemMaxSize)>
+END IF;
 >>
 
 

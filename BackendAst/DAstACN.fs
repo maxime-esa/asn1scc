@@ -516,10 +516,11 @@ let createAcnStringFunction (r:Asn1AcnAst.AstRoot) (deps:Asn1AcnAst.AcnInsertedF
 
 
 let createOctetStringFunction (r:Asn1AcnAst.AstRoot) (deps:Asn1AcnAst.AcnInsertedFieldDependencies) (l:ProgrammingLanguage) (codec:CommonTypes.Codec) (t:Asn1AcnAst.Asn1Type) (o:Asn1AcnAst.OctetString) (typeDefinition:TypeDefinitionCommon) (isValidFunc: IsValidFunction option) (uperFunc: UPerFunction) (us:State)  =
-    let oct_sqf_external_field                          = match l with C -> acn_c.oct_sqf_external_field       | Ada -> acn_c.oct_sqf_external_field
+    let oct_sqf_external_field                          = match l with C -> acn_c.oct_sqf_external_field       | Ada -> acn_a.oct_sqf_external_field
     let InternalItem_oct_str                            = match l with C -> uper_c.InternalItem_oct_str        | Ada -> uper_a.InternalItem_oct_str
     let i = sprintf "i%d" (t.id.SeqeuenceOfLevel + 1)
     let lv = SequenceOfIndex (t.id.SeqeuenceOfLevel + 1, None)
+    let nAlignSize = 0I;
 
     let funcBody (errCode:ErroCode) (acnArgs: (Asn1AcnAst.RelativePath*Asn1AcnAst.AcnParameter) list) (p:FuncParamType)        = 
         let funcBodyContent = 
@@ -528,7 +529,7 @@ let createOctetStringFunction (r:Asn1AcnAst.AstRoot) (deps:Asn1AcnAst.AcnInserte
             | SZ_EC_ExternalField   _    -> 
                 let extField = getExternaField r deps t.id
                 let internalItem = InternalItem_oct_str p.p (p.getAcces l) i  errCode.errCodeName codec 
-                let fncBody = oct_sqf_external_field p.p (p.getAcces l) i internalItem (if o.minSize=0 then None else Some (BigInteger o.minSize)) (BigInteger o.maxSize) extField codec
+                let fncBody = oct_sqf_external_field p.p (p.getAcces l) i internalItem (if o.minSize=0 then None else Some (BigInteger o.minSize)) (BigInteger o.maxSize) extField nAlignSize errCode.errCodeName 8I 8I codec
                 Some(fncBody, [errCode],[])
         match funcBodyContent with
         | None -> None
@@ -557,12 +558,14 @@ let createBitStringFunction (r:Asn1AcnAst.AstRoot) (deps:Asn1AcnAst.AcnInsertedF
 
 
 let createSequenceOfFunction (r:Asn1AcnAst.AstRoot) (deps:Asn1AcnAst.AcnInsertedFieldDependencies) (l:ProgrammingLanguage) (codec:CommonTypes.Codec) (t:Asn1AcnAst.Asn1Type) (o:Asn1AcnAst.SequenceOf) (typeDefinition:TypeDefinitionCommon) (isValidFunc: IsValidFunction option)  (child:Asn1Type) (us:State)  =
-    let external_field          = match l with C -> acn_c.oct_sqf_external_field       | Ada -> acn_c.oct_sqf_external_field
+    let external_field          = match l with C -> acn_c.oct_sqf_external_field       | Ada -> acn_a.oct_sqf_external_field
     let fixedSize               = match l with C -> uper_c.octect_FixedSize            | Ada -> uper_a.octect_FixedSize
     let varSize                 = match l with C -> uper_c.octect_VarSize              | Ada -> uper_a.octect_VarSize
+    
 
     let i = sprintf "i%d" (t.id.SeqeuenceOfLevel + 1)
     let lv = SequenceOfIndex (t.id.SeqeuenceOfLevel + 1, None)
+    let nAlignSize = 0I;
 
     let funcBody (errCode:ErroCode) (acnArgs: (Asn1AcnAst.RelativePath*Asn1AcnAst.AcnParameter) list) (p:FuncParamType)        = 
         match child.getAcnFunction codec with
@@ -605,7 +608,7 @@ let createSequenceOfFunction (r:Asn1AcnAst.AstRoot) (deps:Asn1AcnAst.AcnInserted
                     let childErrCodes   = internalItem.errCodes
                     let internalItem    = internalItem.funcBody
                     let extField        = getExternaField r deps t.id
-                    let funcBodyContent = external_field p.p (p.getAcces l) i internalItem (if o.minSize=0 then None else Some (BigInteger o.minSize)) (BigInteger o.maxSize) extField codec
+                    let funcBodyContent = external_field p.p (p.getAcces l) i internalItem (if o.minSize=0 then None else Some (BigInteger o.minSize)) (BigInteger o.maxSize) extField nAlignSize errCode.errCodeName o.child.acnMinSizeInBits.AsBigInt o.child.acnMaxSizeInBits.AsBigInt  codec
                     Some ({AcnFuncBodyResult.funcBody = funcBodyContent; errCodes = errCode::childErrCodes; localVariables = lv::localVariables})
     let soSparkAnnotations = None
     createPrimitiveFunction r l codec t typeDefinition  isValidFunc  funcBody soSparkAnnotations us

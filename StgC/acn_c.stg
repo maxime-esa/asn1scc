@@ -619,13 +619,13 @@ str_external_field_decode(p, i, sInternalItem, nSizeMin, nSizeMax,  sExtFld) ::=
 }
 >>
 
-
-oct_sqf_external_field_encode(p, sAcc, i, sInternalItem, noSizeMin, nSizeMax, sExtFld) ::= <<
+                              
+oct_sqf_external_field_encode(p, sAcc, i, sInternalItem, noSizeMin, nSizeMax, sExtFld, nAlignSize, sErrCode, nIntItemMinSize, nIntItemMaxSize) ::= <<
 <loopFixedItem(i=i, sInternalItem=sInternalItem, fixedSize=[p, sAcc, "nCount"])>
 >>
 
 
-oct_sqf_external_field_decode(p, sAcc, i, sInternalItem, noSizeMin, nSizeMax, sExtFld) ::= <<
+oct_sqf_external_field_decode(p, sAcc, i, sInternalItem, noSizeMin, nSizeMax, sExtFld, nAlignSize, sErrCode, nIntItemMinSize, nIntItemMaxSize) ::= <<
 ret = (<if(noSizeMin)>(<noSizeMin>\<=<sExtFld>) && <endif>(<sExtFld>\<=<nSizeMax>));
 if (ret) {
     <p><sAcc>nCount = (int)<sExtFld>;

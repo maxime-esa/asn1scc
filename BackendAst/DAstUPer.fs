@@ -272,12 +272,24 @@ let createOctetStringFunction (r:Asn1AcnAst.AstRoot) (l:ProgrammingLanguage) (co
     let i = sprintf "i%d" (t.id.SeqeuenceOfLevel + 1)
     let lv = SequenceOfIndex (t.id.SeqeuenceOfLevel + 1, None)
     let nStringLength =
-        match o.minSize <> o.maxSize && codec = Codec.Decode with
+        (*
+        match o.minSize <> o.maxSize with
         | false  -> []
         | true ->
             match l with
             | Ada  -> [IntegerLocalVariable ("nStringLength", None)]
-            | C    -> [Asn1SIntLocalVariable ("nCount", None)]
+            | C    -> 
+                match codec = Codec.Decode with
+                | true  -> [Asn1SIntLocalVariable ("nCount", None)]
+                | false -> []
+        *)
+        match o.minSize = o.maxSize,  l, codec with
+        | true , _,_    -> []
+        | false, Ada, _ -> [IntegerLocalVariable ("nStringLength", None)]
+        | false, C, Encode -> []
+        | false, C, Decode -> [Asn1SIntLocalVariable ("nCount", None)]
+
+
     let funcBody (errCode:ErroCode) (p:FuncParamType) = 
         let typeDefinitionName = getTypeDefinitionName t.id.tasInfo typeDefinition
 
