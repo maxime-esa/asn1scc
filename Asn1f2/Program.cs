@@ -148,11 +148,11 @@ namespace Asn1f2
             });
             cmdArgs.CheckArguments();
             if (cmdArgs.HasArgument("h"))
-                Environment.Exit(Usage());
+                return Usage();
             if (!asn1InputFiles.Any())
             {
                 Console.Error.WriteLine("No input files");
-                Environment.Exit(Usage());
+                return Usage();
             }
             var generateEqualFunctions = cmdArgs.HasArgument("equal") || cmdArgs.HasArgument("atc");
             var outDir = cmdArgs.GetOptionalArgument("o") ?? ".";
