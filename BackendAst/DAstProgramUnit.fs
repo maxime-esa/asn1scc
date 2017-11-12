@@ -111,10 +111,10 @@ let internal createProgramUnits (files: Asn1File list)  (l:ProgrammingLanguage) 
                 Seq.collect(fun imp -> imp.Types |> List.map (fun impType ->{TypeAssignmentInfo.modName = imp.Name.Value; tasName = impType.Value})) |> 
                 Seq.distinct |> Seq.toList        
             let soretedTypes = sortTypes moduTypes importedTypes |> List.map(fun ref -> typesMap.[ref])
-            let specFileName = m.Name.Value+"."+l.SpecExtention
-            let bodyFileName = m.Name.Value+"."+l.BodyExtention
-            let tetscase_specFileName = m.Name.Value+"_auto_tcs."+l.SpecExtention
-            let tetscase_bodyFileName = m.Name.Value+"_auto_tcs."+l.BodyExtention
+            let specFileName = m.Name.Value.ToLower() + "." + l.SpecExtention
+            let bodyFileName = m.Name.Value.ToLower() + "." + l.BodyExtention
+            let tetscase_specFileName = m.Name.Value.ToLower() + "_auto_tcs." + l.SpecExtention
+            let tetscase_bodyFileName = m.Name.Value.ToLower() + "_auto_tcs." + l.BodyExtention
             let importedProgramUnits = m.Imports |> List.map (fun im -> ToC im.Name.Value)
             {ProgramUnit.name = m.Name.Value; specFileName = specFileName; bodyFileName=bodyFileName; sortedTypeAssignments = soretedTypes; valueAssignments = valueAssignments; importedProgramUnits = importedProgramUnits; tetscase_specFileName=tetscase_specFileName; tetscase_bodyFileName=tetscase_bodyFileName})
 
