@@ -44,7 +44,12 @@ let checkArguement arg =
     | ACN_enc          -> ()
     | Auto_test_cases  -> ()
     | Equal_Func       -> ()
-    | Xml_Ast _        -> ()
+    | Xml_Ast xmlFileName   -> 
+        match xmlFileName.ToLower().EndsWith ".xml" with
+        | true  -> ()
+        | false -> 
+            let msg = sprintf "Invalid output filename '%s'\nGenerated ast xml files must have an .xml extension." xmlFileName
+            raise (UserException msg)
     | Out outDir       -> 
         match System.IO.Directory.Exists outDir with
         | true  -> ()
