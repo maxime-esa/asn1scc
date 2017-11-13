@@ -1,0 +1,12 @@
+Test DEFINITIONS ::= BEGIN
+
+T-Thing ::= SEQUENCE {
+	field1 INTEGER,
+	field2 INTEGER (54321)
+}
+
+T-Thing-Subtype ::= T-Thing ( WITH COMPONENTS {
+	field1 (2345)
+})
+
+END
