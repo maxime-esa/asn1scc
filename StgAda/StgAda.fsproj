@@ -80,8 +80,12 @@
     <None Include="variables_a.stg">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
-    <None Include="aux_a.stg" />
-    <None Include="test_cases_a.stg" />
+    <None Include="aux_a.stg">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Include="test_cases_a.stg">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
     <Compile Include="acn_a.stg.fs" />
     <Compile Include="body_a.stg.fs" />
     <Compile Include="equal_a.stg.fs" />
