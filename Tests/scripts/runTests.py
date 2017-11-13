@@ -69,7 +69,7 @@ def RunTestCase(asn1, acn, behavior, expErrMsg):
     asn1File = targetDir + os.sep + "sample1.asn1"
     acnFile = targetDir + os.sep + "sample1.acn"
     launcher = '' if sys.platform == 'cygwin' else 'mono '
-    path_to_asn1scc = spawn.find_executable('Asn1f2.exe')
+    path_to_asn1scc = spawn.find_executable('Asn1f4.exe')
     res = mysystem(
         launcher + path_to_asn1scc +
         " -" + language + "  -ACN -typePrefix gmamais_ " +
