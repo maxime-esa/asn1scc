@@ -271,7 +271,7 @@ let CreateTestSuiteFile (r:AstRoot) (l:ProgrammingLanguage) outDir vasName =
         | BER   -> "BER_"
         | XER   -> "XER_"
 
-    let includedPackages =  r.Files |> Seq.map(fun x -> x.FileNameWithoutExtension.ToLower() + "_auto_tcs")
+    let includedPackages =  r.programUnits |> Seq.map(fun x -> x.tetscase_specFileName)
     let PrintTestCase (v:ValueAssignment) (m:Asn1Module) (sTasName : string)  (idx :int) initFuncName (uperEncDecTestFunc  : EncodeDecodeTestFunc option) (acnEncDecTestFunc   : EncodeDecodeTestFunc option) =
         let rec gAmber (t:Asn1Type) = 
             match t.Kind with

@@ -324,7 +324,7 @@ PrintTestSuiteSource(sTestSuiteFilename, arrsIncludedModules, arrsTestFunctions)
 
 #include "asn1crt.h"
 
-<arrsIncludedModules:{inc| #include "<inc>.h"}; separator="\n">
+<arrsIncludedModules:{inc| #include "<inc>"}; separator="\n">
 
 int asn1scc_run_generated_testsuite(TestOutput* output)
 {
