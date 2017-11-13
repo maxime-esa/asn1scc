@@ -135,10 +135,10 @@ type ITree with
     
     member t.BigInt = 
         let ret = BigInteger.Parse(t.Text)
-        match ret < (BigInteger System.Int64.MinValue) || ret > (BigInteger System.Int64.MaxValue) with
+        match ret < (BigInteger System.Int64.MinValue) || ret > (BigInteger System.UInt64.MaxValue) with
+        | true  when ret > (BigInteger System.Int64.MaxValue) -> raise(SemanticError(t.Location, (sprintf "Integer value of range. Supported values are within range %d to %d" 0 System.UInt64.MaxValue)))
         | true  -> raise(SemanticError(t.Location, (sprintf "Integer value of range. Supported values are within range %d to %d" System.Int64.MinValue System.Int64.MaxValue)))
         | false -> ret
-        
 
     member t.Double = System.Double.Parse(t.Text, System.Globalization.NumberFormatInfo.InvariantInfo)
     member t.DoubleL = { StringLoc.Value = t.Double; Location = t.Location} 

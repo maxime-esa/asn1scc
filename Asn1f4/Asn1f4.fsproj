@@ -25,8 +25,8 @@
     <PlatformTarget>AnyCPU</PlatformTarget>
     <DocumentationFile>bin\Debug\Asn1f4.XML</DocumentationFile>
     <Prefer32Bit>true</Prefer32Bit>
-    <StartWorkingDirectory>C:\prj\GitHub\asn1scc\tmp\acn\delme2</StartWorkingDirectory>
-    <StartArguments>-atc -c -ACN -o o/ DataView.asn1 DataView.acn</StartArguments>
+    <StartWorkingDirectory>C:\prj\GitHub\asn1scc\v4Tests\tmp</StartWorkingDirectory>
+    <StartArguments>-atc -c -ACN  sample1.asn1 sample1.acn</StartArguments>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
     <DebugType>pdbonly</DebugType>

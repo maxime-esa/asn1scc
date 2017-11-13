@@ -62,41 +62,62 @@ let foldRangeCon (l:ProgrammingLanguage) valToStrFunc1 valToStrFunc2 (p:String) 
         0 |> fst
 
 // constraint simplification started here
-type SimplifiedIntegerConstraint =
+type SimplifiedIntegerConstraint<'a> =
     | SicAlwaysTrue
-    | SciConstraint of IntegerTypeConstraint
-    
-let simplifytUnsignedIntegerTypeConstraint (c:IntegerTypeConstraint) =
-    let handleEqual v1 = 
-        match v1 < 0I with
-        | true  -> SicAlwaysTrue
-        | false -> SciConstraint (RangeSingleValueConstraint v1)
-    
-    (*  e.g. INTEGER (5..MAX)  ==> intVal >= 5 *)
-    let handleRangeContraint_val_MAX  eqIsInc  v1 =
-        match v1 < 0I with
-        | true  -> SicAlwaysTrue
-        | false ->
-            match eqIsInc with
-            | true  when v1 =0I -> SicAlwaysTrue
-            | true   -> SciConstraint (RangeContraint_val_MAX (v1,eqIsInc))
-            | false  -> SciConstraint (RangeContraint_val_MAX (v1,eqIsInc))
-        (* e.g INTEGER (MIN .. 40) --> intVal <= 40*)
-    let handleRangeContraint_MIN_val  eqIsInc  v1 =
-        match v1 <= 0I with
-        | true  -> SicAlwaysTrue
-        | false ->
-            match eqIsInc with
-            | true  when v1 = (BigInteger UInt64.MaxValue) -> SicAlwaysTrue
-            | true   -> SciConstraint (RangeContraint_MIN_val (v1,eqIsInc))
-            | false  -> SciConstraint (RangeContraint_MIN_val (v1,eqIsInc))
+    | SciConstraint of RangeTypeConstraint<'a, 'a>
 
+
+let UintHandleEqual (r:Asn1AcnAst.AstRoot) zero v1 = 
+    match v1 < zero with
+    | true  -> SicAlwaysTrue
+    | false -> SciConstraint (RangeSingleValueConstraint v1)
+
+    
+let SIntHandleEqual (r:Asn1AcnAst.AstRoot) v1 = 
+    SciConstraint (RangeSingleValueConstraint v1)
+    
+
+(*  e.g. INTEGER (5..MAX)  ==> intVal >= 5 *)
+let UintHandleRangeContraint_val_MAX (r:Asn1AcnAst.AstRoot) zero eqIsInc  v1 =
+    match v1 < zero with
+    | true  -> SicAlwaysTrue
+    | false ->
+        match eqIsInc with
+        | true  when v1 = zero -> SicAlwaysTrue
+        | true   -> SciConstraint (RangeContraint_val_MAX (v1,eqIsInc))
+        | false  -> SciConstraint (RangeContraint_val_MAX (v1,eqIsInc))
+
+
+let SIntHandleRangeContraint_val_MAX  (r:Asn1AcnAst.AstRoot) eqIsInc  v1 =
+    match eqIsInc with
+    | true  when v1 = r.args.SIntMin  -> SicAlwaysTrue
+    | true   -> SciConstraint (RangeContraint_val_MAX (v1,eqIsInc))
+    | false  -> SciConstraint (RangeContraint_val_MAX (v1,eqIsInc))
+
+
+(* e.g INTEGER (MIN .. 40) --> intVal <= 40*)
+let UintHandleRangeContraint_MIN_val (r:Asn1AcnAst.AstRoot) zero intMax eqIsInc  v1 =
+    match v1 <= zero with
+    | true  -> SicAlwaysTrue
+    | false ->
+        match eqIsInc with
+        | true  when v1 = intMax -> SicAlwaysTrue
+        | true   -> SciConstraint (RangeContraint_MIN_val (v1,eqIsInc))
+        | false  -> SciConstraint (RangeContraint_MIN_val (v1,eqIsInc))
+
+
+let SIntHandleRangeContraint_MIN_val (r:Asn1AcnAst.AstRoot)  eqIsInc  v1 =
+    match eqIsInc with
+    | true  when v1 = r.args.SIntMax -> SicAlwaysTrue
+    | true   -> SciConstraint (RangeContraint_MIN_val (v1,eqIsInc))
+    | false  -> SciConstraint (RangeContraint_MIN_val (v1,eqIsInc))
+    
+let simplifytIntegerTypeConstraint handleEqual handleRangeContraint_val_MAX handleRangeContraint_MIN_val  (c:RangeTypeConstraint<'a, 'a>) =
     let handleOr e1 e2 = 
         match e1, e2 with
         | SicAlwaysTrue, _                      -> SicAlwaysTrue
         | _          , SicAlwaysTrue            -> SicAlwaysTrue
         | SciConstraint e1, SciConstraint e2    -> SciConstraint(RangeUnionConstraint (e1,e2, false))
-    
     let handleAnd e1 e2 =
         match e1, e2 with
         | SicAlwaysTrue, _             -> e2
@@ -120,6 +141,10 @@ let simplifytUnsignedIntegerTypeConstraint (c:IntegerTypeConstraint) =
         (fun v2 maxIsIn s   -> handleRangeContraint_MIN_val maxIsIn v2, s)
         c
         0 |> fst
+
+
+
+
 // constraint simplification ended here
 
 let foldSizeRangeTypeConstraint (l:ProgrammingLanguage)  getSizeFunc (p:String) (c:PosIntTypeConstraint) = 
@@ -154,7 +179,7 @@ let foldSizableConstraint (l:ProgrammingLanguage) compareSingValueFunc  getSizeF
 
 
 
-let foldStringCon (l:ProgrammingLanguage) alphaFuncName (p:String)  (c:IA5StringConstraint)  =
+let foldStringCon (r:Asn1AcnAst.AstRoot) (l:ProgrammingLanguage) alphaFuncName (p:String)  (c:IA5StringConstraint)  =
     foldStringTypeConstraint2
         (fun e1 e2 b s      -> l.ExpOr e1 e2, s)
         (fun e1 e2 s        -> l.ExpAnd e1 e2, s)
@@ -163,7 +188,10 @@ let foldStringCon (l:ProgrammingLanguage) alphaFuncName (p:String)  (c:IA5String
         (fun e s            -> e, s)
         (fun e1 e2 s        -> l.ExpOr e1 e2, s)
         (fun v  s         -> l.ExpStringEqual p v.IDQ ,s)
-        (fun intCon s       -> foldSizeRangeTypeConstraint l (fun l p -> l.StrLen p) p intCon)
+        (fun intCon s       -> 
+            let aaa = [intCon] |> List.map (fun c -> simplifytIntegerTypeConstraint (UintHandleEqual r 0u) (UintHandleRangeContraint_val_MAX r 0u) (UintHandleRangeContraint_MIN_val r 0u UInt32.MaxValue) c) |> List.choose (fun sc -> match sc with SicAlwaysTrue -> None | SciConstraint c -> Some c)
+            let bbb = aaa |> List.map (fun intCon -> foldSizeRangeTypeConstraint l (fun l p -> l.StrLen p) p intCon |> fst)
+            l.ExpAndMulti bbb, s)
         (fun alphcon s      -> sprintf "%s(%s)" alphaFuncName p,s) 
         c
         0 |> fst
@@ -284,8 +312,8 @@ let createBitOrOctetStringFunction (r:Asn1AcnAst.AstRoot) (l:ProgrammingLanguage
 
 let getIntSimplifiedConstraints (r:Asn1AcnAst.AstRoot) isUnsigned (allCons  : IntegerTypeConstraint list) =
     match isUnsigned with
-    | true         -> allCons |> List.map simplifytUnsignedIntegerTypeConstraint |> List.choose (fun sc -> match sc with SicAlwaysTrue -> None | SciConstraint c -> Some c)
-    | false        -> allCons
+    | true         -> allCons |> List.map (fun c -> simplifytIntegerTypeConstraint (UintHandleEqual r 0I) (UintHandleRangeContraint_val_MAX r 0I) (UintHandleRangeContraint_MIN_val r 0I r.args.UIntMax) c) |> List.choose (fun sc -> match sc with SicAlwaysTrue -> None | SciConstraint c -> Some c)
+    | false        -> allCons |> List.map (fun c -> simplifytIntegerTypeConstraint (SIntHandleEqual r) (SIntHandleRangeContraint_val_MAX r) (SIntHandleRangeContraint_MIN_val r) c) |> List.choose (fun sc -> match sc with SicAlwaysTrue -> None | SciConstraint c -> Some c)
     
 
 let integerToString (l:ProgrammingLanguage) isUnsigned (i:BigInteger) = 
@@ -329,7 +357,7 @@ let createStringFunction (r:Asn1AcnAst.AstRoot) (l:ProgrammingLanguage) (t:Asn1A
                 | Ada  -> isvalid_a.Print_AlphabetCheckFunc alphafuncName alpaCons
             let alphFunc = {AlphaFunc.funcName = alphafuncName; funcBody = funcBody }
             [alphFunc]
-    createPrimitiveFunction r l t.id o.AllCons (foldStringCon l alphafuncName) typeDefinition alphaFuncs us
+    createPrimitiveFunction r l t.id o.AllCons (foldStringCon r l alphafuncName) typeDefinition alphaFuncs us
 
 let createBoolFunction (r:Asn1AcnAst.AstRoot) (l:ProgrammingLanguage) (t:Asn1AcnAst.Asn1Type) (o:Asn1AcnAst.Boolean) (typeDefinition:TypeDefinitionCommon) (us:State)  =
     createPrimitiveFunction r l t.id (o.cons@o.withcons) (foldGenericCon l  (fun v -> v.ToString().ToLower())) typeDefinition [] us
