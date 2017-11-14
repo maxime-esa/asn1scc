@@ -26,11 +26,11 @@ def _get_asn_bin(search_root, build_script):
     return binary[0]
 
 def _basenames(test_file):
-    return (os.path.splitext(os.path.basename(test_file[0].path))[0],
+    return (os.path.splitext(os.path.basename(str(test_file[0])))[0],
             env['VARIABLES'][_test_name(test_file)]['MODULES'][0].lower())
 
 def _test_name(test_file):
-    return os.path.basename(os.path.dirname(test_file[0].path))
+    return os.path.basename(os.path.dirname(str(test_file[0])))
 
 env = Environment()
 env['BUILDERS']['Ada'] = AdaBuilder.builder()
@@ -55,20 +55,24 @@ for test_case in test_cases:
     Export('env')
 
     VariantDir(env['BUILD_DIR'], 'sources')
-    test_file = Glob(os.path.join(test_case, '*'))
+    sources = without_top_directory(Glob('sources/*'))
+    test_file = glob_files_recursive(test_case, '.*(asn1|acn)$')
     #TODO: More than expected files
     xml = os.path.join(test_case, '.tmp.xml')
 
-    output = env.TestCase(target=[xml], source=[test_file, env['ASN_BIN']])
-    env.Asn([],
-            [env['ASN_BIN']] + list_files(
-                os.path.join(env['SCRIPT_DIR'], env['TEST_CASE'])),
-            BASENAMES = _basenames(test_file),
-            DIRNAME = env['BUILD_DIR'])
-    reports += [SConscript(os.path.join(env['BUILD_DIR'], 'SConscript'),
-                   exports={'PROXY' : proxy, 'TEST_FILE' : test_file})[0]
-               for proxy in grouper(len(templates), output)]
-    Clean(reports, env['BUILD_DIR'])
+    test_case_output = env.TestCase(target=[xml], source=[test_file, env['ASN_BIN']])
+    asn_output = env.Asn([],
+                         [env['ASN_BIN']] + test_file,
+                         BASENAMES = _basenames(test_file),
+                         DIRNAME = env['BUILD_DIR'])
+    test_case_report = [SConscript(os.path.join(env['BUILD_DIR'], 'SConscript'),
+                                  exports={
+                                    'PROXY' : without_top_directory(to_strings(proxy), n=2),
+                                    'ASN' : without_top_directory(to_strings(asn_output), n=2),
+                                    'SOURCES' : sources})[0]
+                        for proxy in grouper(len(templates), test_case_output)]
+    reports += [test_case_report]
+    Clean(test_case_report, env['BUILD_DIR'])
 
-env.Summary(["Non existing file"], reports)
+Default(env.Summary(["Non existing file"], reports))
 

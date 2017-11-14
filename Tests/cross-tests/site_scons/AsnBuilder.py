@@ -1,13 +1,14 @@
 from SCons.Script import *
 
-import commons
+from commons import *
 
 def _asn_generator(target, source, env, for_signature):
+    str_source = to_strings(source)
     return ["mono '{}' -{} -ACN '{}' '{}' -o '{}'".format(
                 env['ASN_BIN'],
                 language,
-                commons.get_files_with_suffix(source, '.acn')[0],
-                commons.get_files_with_suffix(source, '.asn1')[0],
+                get_files_with_suffix(str_source, 'acn')[0],
+                get_files_with_suffix(str_source, 'asn1')[0],
                 os.path.dirname(str(target[0])))
             for language in env['LANGUAGES']]
 

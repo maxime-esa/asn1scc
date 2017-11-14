@@ -17,18 +17,17 @@ def _ada_commands_generator(target, source, env, for_signature):
                       ada_flags)])
 
     link_cmd = "gnatlink '{}' -o '{}'".format(
-        "' '".join([main_source + '.ali'] + get_files_with_suffix(source, '.o')),
+        "' '".join([main_source + '.ali'] + get_files_with_suffix(to_strings(source), 'o')),
         target[0].path)
-    SideEffect(get_side_effect_files((without_top_directory(s, n=2) for s in source), out_dir), target)
+    SideEffect(get_side_effect_files((without_top_directory(source, n=2)), out_dir), target)
     return compile_cmd + [link_cmd]
 
 def get_side_effect_files(source, out_dir):
     side_effect_files = []
-    for adb_file in get_files_with_suffix(source, '.adb'):
+    for adb_file in get_files_with_suffix(source, 'adb'):
         basename = os.path.splitext(adb_file)[0]
         side_effect_files.append(basename + '.o')
         side_effect_files.append(basename + '.ali')
-    #print(side_effect_files)
     return side_effect_files
 
 def builder():

@@ -2,9 +2,12 @@ from SCons.Script import *
 
 from xml.etree import ElementTree
 from itertools import izip
-from commons import glob_files_recursive, call_bin, get_files_with_suffix
+from commons import *
 from templates import templates
 import AsnBuilder
+
+class MultipleReferenceTypeError(Exception):
+    pass
 
 def _prepare_test_case(target, source, env):
     test_case = _get_test_case_name(source)
@@ -31,7 +34,7 @@ def _ignore_first_target(target):
 
 def _parse_xml(target, source, env):
     try:
-        _make_xml(target[0].path, get_files_with_suffix(source, '.asn1')[0], env['ASN_BIN'])
+        _make_xml(target[0].path, get_files_with_suffix(to_strings(source), 'asn1')[0], env['ASN_BIN'])
         root = ElementTree.parse(target[0].path).getroot()
         _parse_metadata(root, target, env)
         _parse_assignments(root, target, env)
@@ -58,8 +61,6 @@ def _parse_assignments(root, target, env):
         if _has_exactly_one_reference(assignment):
             _append_targets(assignment, target, env)
         else:
-            class MultipleReferenceTypeError(Exception):
-                pass
             raise MultipleReferenceTypeError("{} has multiple references".format(assignment.attrib['Name']))
 
 def _has_exactly_one_reference(assignment):
@@ -88,7 +89,10 @@ def _get_type_name(assignment):
 def _cleanup(target):
     xml = target.pop(0)
     cmd = ['rm', xml.path]
-    call_bin(cmd)
+    try:
+        call_bin(cmd)
+    except ChildProcessError:
+        pass
 
 def builder():
     return Builder(action=_prepare_test_case, emitter=_parse_xml)

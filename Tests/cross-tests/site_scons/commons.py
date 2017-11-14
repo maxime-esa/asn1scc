@@ -36,10 +36,8 @@ def list_files(directory):
     return [os.path.join(directory, file_) for file_ in os.listdir(directory)]
 
 def get_files_with_suffix(sources, suffix):
-    try:
-        return [source.path for source in sources if os.path.splitext(source.path)[1] == suffix]
-    except AttributeError:
-        return [source for source in sources if os.path.splitext(source)[1] == suffix]
+    regex = re.compile(".*({})$".format(suffix))
+    return [source for source in sources if regex.match(source)]
 
 def call_bin(command):
     process = subprocess.Popen(command,
@@ -55,5 +53,11 @@ def grouper(n, iterable, fillvalue=None):
     args = [iter(iterable)] * n
     return itertools.izip_longest(fillvalue=fillvalue, *args)
 
-def without_top_directory(node, n=1):
+def without_top_directory(nodes, n=1):
+    return [_cut_top_dirs_from(str(node), n) for node in nodes]
+
+def _cut_top_dirs_from(node, n=1):
     return '/'.join(node.split('/')[n:])
+
+def to_strings(nodes):
+    return [str(node) for node in nodes]
