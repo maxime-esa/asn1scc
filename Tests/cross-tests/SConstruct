@@ -78,6 +78,7 @@ def generate_reports(env, test_case, sources):
             for variable in grouper(len(templates), to_strings(test_case_output))]
 
 def report_for_variable(env, variable_files, sources, asn_output):
+    print(variable_files, sources, asn_output)
     all_sources = variable_files + sources + asn_output
     variable = variable_name(variable_files)
 
@@ -106,9 +107,9 @@ def bin_name(env, language, variable):
 
 def build_ada_accessors(env, variable, asn_output):
     variable_dir = variable_dirname(env, variable)
-    ada_accessors_src = list(to_strings(ada_files('{}_ada_accessors'.format(variable), variable_dir))
+    ada_accessors_src = list(to_strings(ada_files('ada_accessors', variable_dir))
                              + get_files_with_suffix(asn_output, 'adb|ads'))
-    ada_accessors_obj = [os.path.join(variable_dir, '{}_ada_accessors.o'.format(variable))]
+    ada_accessors_obj = [os.path.join(variable_dir, 'ada_accessors.o')]
     include_dirs = [env['BUILD_DIR'], variable_dir]
     output_dir = variable_dir
     env.Command(
@@ -127,13 +128,13 @@ def ada_files(basename, directory):
 
 def ada_binary(env, variable, sources, ada_accessors_o, ada_accessors_src):
     variable_dir = variable_dirname(env, variable)
-    ada_main = os.path.join(variable_dir, TestCaseBuilder.ada_main_filename(variable))
+    ada_main = os.path.join(env['BUILD_DIR'], 'ada_main.adb')
     ada_sources = [source
                    for source in get_files_with_suffix(sources, 'adb|ads')
                    if source not in ada_accessors_src]
     return env.Ada([bin_name(env, 'ada', variable)],
                     ada_sources
-                        + env.Object(os.path.join(variable_dir, '{}_ada_helpers.c'.format(variable)))
+                        + env.Object(os.path.join(variable_dir, 'ada_helpers.c'))
                         + env.Object(os.path.join(env['BUILD_DIR'], 'file_utility.c'))
                         + ada_accessors_o,
                     ADA_MAIN = ada_main,

@@ -67,20 +67,16 @@ def _has_exactly_one_reference(assignment):
     return len([assignment.iter('ReferenceType')]) == 1
 
 def _append_targets(assignment, target, env):
-    target_directory = os.path.join(env['BUILD_DIR'], assignment.attrib['Name'])
     name = assignment.attrib['Name']
+    target_directory = os.path.join(env['BUILD_DIR'], name)
     target.append(File(os.path.join(target_directory, 'c_proxy.h')))
-    target.append(File(os.path.join(target_directory, name + '_c_proxy.c')))
-    target.append(File(os.path.join(target_directory, ada_main_filename(name))))
-    target.append(File(os.path.join(target_directory, name + '_ada_accessors.ads')))
-    target.append(File(os.path.join(target_directory, name + '_ada_accessors.adb')))
-    target.append(File(os.path.join(target_directory, name + '_ada_proxy.ads')))
-    target.append(File(os.path.join(target_directory, name + '_ada_proxy.adb')))
-    target.append(File(os.path.join(target_directory, name + '_ada_helpers.c')))
+    target.append(File(os.path.join(target_directory, 'c_proxy.c')))
+    target.append(File(os.path.join(target_directory, 'ada_accessors.ads')))
+    target.append(File(os.path.join(target_directory, 'ada_accessors.adb')))
+    target.append(File(os.path.join(target_directory, 'ada_proxy.ads')))
+    target.append(File(os.path.join(target_directory, 'ada_proxy.adb')))
+    target.append(File(os.path.join(target_directory, 'ada_helpers.c')))
     env['VARIABLES'][target_directory] = _get_type_name(assignment)
-
-def ada_main_filename(name):
-    return 'ada_main_{}.adb'.format(name)
 
 def _get_type_name(assignment):
     return assignment.iter('ReferenceType').next().attrib['ReferencedTypeName']

@@ -68,37 +68,11 @@ void proxy_encode(){{
 }}
 ''',
 R'''
-with Ada.Text_IO;
-with Ada.Integer_Text_IO;
-with Ada.Command_Line;
-with {test_case}_ada_proxy;
-with Ada.Long_Long_Integer_Text_IO;
-with Interfaces;
-
-procedure ada_main_{test_case} is
-
-begin
-if (Ada.Command_Line.Argument_Count/=1) then
-  return;
-end if;
-
-if (Ada.Command_Line.Argument(1)="encode") then
-  {test_case}_ada_proxy.proxy_encode;
-elsif (Ada.Command_Line.Argument(1)="decode") then
-  {test_case}_ada_proxy.proxy_decode;
-else
-  Ada.Text_IO.Put_Line(Ada.Text_IO.Standard_Error,"Unrecognized option: "
-    & Ada.Command_Line.Argument(1));
-end if;
-
-end ada_main_{test_case};
-''',
-R'''
 with {module};
 with Interfaces;
 with Interfaces.C;
 
-package {test_case}_ada_accessors is
+package ada_accessors is
 
 function get(buffer : in {module}.{type_}_ACN_bit_array; index : in Interfaces.C.Int) return Interfaces.C.int;
 procedure set(buffer : in out {module}.{type_}_ACN_bit_array; index : in Interfaces.C.Int; value : in Interfaces.C.int);
@@ -106,7 +80,7 @@ procedure set(buffer : in out {module}.{type_}_ACN_bit_array; index : in Interfa
 pragma Export(C, get, "get");
 pragma Export(C, set, "set");
 
-end {test_case}_ada_accessors;
+end ada_accessors;
 ''',
 R'''
 with {module};
@@ -115,7 +89,7 @@ with Interfaces.C;
 with adaasn1rtl; use adaasn1rtl;
 with Interfaces.C; use Interfaces.C;
 
-package body {test_case}_ada_accessors is
+package body ada_accessors is
 
 function get(buffer : in {module}.{type_}_ACN_bit_array; index : in Interfaces.C.Int) return Interfaces.C.int is
     pragma Suppress(Index_Check);
@@ -136,14 +110,14 @@ begin
   buffer(Integer(index+1)) := adaasn1rtl.BIT(value);
 end set;
 
-end {test_case}_ada_accessors;
+end ada_accessors;
 ''',
 R'''
 with {module};
 with Interfaces;
 with Interfaces.C;
 
-package {test_case}_ada_proxy is
+package ada_proxy is
 
 procedure proxy_encode;
 procedure proxy_decode;
@@ -159,7 +133,7 @@ pragma Import(C, read_memory, "read_memory");
 private
   filename : constant String := "{buffer_}";
 
-end {test_case}_ada_proxy;
+end ada_proxy;
 ''',
 R'''
 with Ada.Text_IO;
@@ -171,7 +145,7 @@ with adaasn1rtl; use adaasn1rtl;
 with Interfaces.C; use Interfaces.C;
 with Ada.Directories; use Ada.Directories;
 
-package body {test_case}_ada_proxy is
+package body ada_proxy is
 
 procedure proxy_encode is
   stream : {module}.{type_}_ACN_Stream;
@@ -234,7 +208,7 @@ begin
   end if;
 end read_from_file;
 
-end {test_case}_ada_proxy;
+end ada_proxy;
 ''',
 R'''
 #include <stdio.h>

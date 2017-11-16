@@ -1,9 +1,0 @@
-KAPPA DEFINITIONS AUTOMATIC TAGS::= BEGIN
-
-    MyInt ::= INTEGER
-    
-    kappa MyInt ::= 10 
-    keepo MyInt ::= 11
-
-END
-
