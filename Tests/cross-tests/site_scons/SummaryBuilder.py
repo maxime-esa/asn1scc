@@ -9,7 +9,7 @@ def do_summary(target, source, env):
     _print_summary(passed_test_cases, len(source) * 2)
 
 def _handle_report(report_file):
-    with open(report_file.path, 'r') as report:
+    with open(str(report_file), 'r') as report:
         return sum(_handle_pair(line) for line in report.readlines())
 
 def _handle_pair(line):

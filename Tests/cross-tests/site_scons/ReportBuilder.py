@@ -18,9 +18,9 @@ def do_pair_test(decoder, encoder, test_case, report_file):
     report_file.write(json.dumps(result._asdict()) + '\n')
 
 def do_test_case(target, source, env):
-    output = target[0].path
-    c_bin = source[0].path
-    ada_bin = source[1].path
+    output = str(target[0])
+    c_bin = str(source[0])
+    ada_bin = str(source[1])
     test_case = os.path.basename(os.path.dirname(output))
     print("Running case {} ...".format(test_case))
     with open(output, 'w') as report:

@@ -12,8 +12,8 @@ class MultipleReferenceTypeError(Exception):
 def _prepare_test_case(target, source, env):
     test_case = _get_test_case_name(source)
     for targets in izip(*[iter(target)] * len(templates)):
-        asn_header = os.path.splitext(os.path.basename(source[1].path))[0] + '.h'
-        dir_name = os.path.dirname(targets[0].path)
+        asn_header = os.path.splitext(os.path.basename(str(source[1])))[0] + '.h'
+        dir_name = os.path.dirname(str(targets[0]))
         for target_file, template in izip(targets, templates):
             file_content = template.format(
                 test_case=os.path.basename(dir_name),
@@ -21,11 +21,11 @@ def _prepare_test_case(target, source, env):
                 module=env['VARIABLES'][test_case]['MODULES'][0],
                 buffer_=os.path.join(dir_name, "buffer_" + test_case),
                 asn_header=asn_header)
-            with open(target_file.path, 'w') as output:
+            with open(str(target_file), 'w') as output:
                 output.write(file_content)
 
 def _get_test_case_name(source):
-    return os.path.basename(os.path.dirname(source[0].path))
+    return os.path.basename(os.path.dirname(str(source[0])))
 
 def _ignore_first_target(target):
     iterator = iter(target)
@@ -34,8 +34,8 @@ def _ignore_first_target(target):
 
 def _parse_xml(target, source, env):
     try:
-        _make_xml(target[0].path, get_files_with_suffix(to_strings(source), 'asn1')[0], env['ASN_BIN'])
-        root = ElementTree.parse(target[0].path).getroot()
+        _make_xml(str(target[0]), get_files_with_suffix(to_strings(source), 'asn1')[0], env['ASN_BIN'])
+        root = ElementTree.parse(str(target[0])).getroot()
         _parse_metadata(root, target, env)
         _parse_assignments(root, target, env)
         return target, source
@@ -87,7 +87,7 @@ def _get_type_name(assignment):
 
 def _cleanup(target):
     xml = target.pop(0)
-    cmd = ['rm', xml.path]
+    cmd = ['rm', str(xml)]
     try:
         call_bin(cmd)
     except ChildProcessError:
