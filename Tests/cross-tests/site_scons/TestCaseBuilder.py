@@ -68,7 +68,6 @@ def _has_exactly_one_reference(assignment):
 
 def _append_targets(assignment, target, env):
     target_directory = os.path.join(env['BUILD_DIR'], assignment.attrib['Name'])
-    Mkdir(target_directory)
     name = assignment.attrib['Name']
     target.append(File(os.path.join(target_directory, 'c_proxy.h')))
     target.append(File(os.path.join(target_directory, name + '_c_proxy.c')))

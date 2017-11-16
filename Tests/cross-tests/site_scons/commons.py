@@ -61,3 +61,6 @@ def _cut_top_dirs_from(node, n=1):
 
 def to_strings(nodes):
     return [str(node) for node in nodes]
+
+def to_paths(nodes):
+    return [SCons.Script.File(node).path for node in nodes]

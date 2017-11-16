@@ -7,72 +7,139 @@ import XmlBuilder
 import SummaryBuilder
 import subprocess
 
-from run_tests import test_main
 from glob import glob
 from commons import *
-from templates import templates
+from templates import *
 
-def _get_output_name(test_case):
-    return os.path.join('build',
-                        os.path.basename(os.path.normpath(test_case)))
+def scons_main():
+    env = setup_environment()
+    test_cases = glob('test-cases/*')
+    reports = [process_test_case(env, os.path.basename(test_case)) for test_case in test_cases]
+    Default(env.Summary(["Non existing file"], reports))
 
-def _get_asn_bin(search_root, build_script):
+def setup_environment():
+    env = Environment()
+    env['BUILDERS']['Ada'] = AdaBuilder.builder()
+    env['BUILDERS']['Report'] = ReportBuilder.builder()
+    env['BUILDERS']['Asn'] = AsnBuilder.builder()
+    env['BUILDERS']['TestCase'] = TestCaseBuilder.builder()
+    env['BUILDERS']['Xml'] = XmlBuilder.builder()
+    env['BUILDERS']['Summary'] = SummaryBuilder.builder()
+    env['SCRIPT_DIR'] = Dir('#').abspath
+    env['ASN_ROOT'] = os.path.dirname(os.path.dirname(env['SCRIPT_DIR']))
+    env['BIN_DIR'] = os.path.join(env['ASN_ROOT'], 'Asn1f2', 'bin')
+    env['ASN_BIN'] = get_asn_bin(env['BIN_DIR'], os.path.join(env['ASN_ROOT'], 'circleci-build.sh'))
+    env['LANGUAGES'] = ['c', 'Ada']
+    env['VARIABLES'] = {}
+    env.Append(CPPPATH=[])
+    return env
+
+def get_asn_bin(search_root, build_script):
     binary = find_files_recursive(search_root, 'Asn1f2\.exe$')
     if not binary and build_script:
         return_code = subprocess.call(build_script, cwd=os.path.dirname(build_script))
         if return_code != 0:
             raise ChildProcessError("Failed to build asn1f2")
-        return _get_asn_bin(search_root, '')
+        return get_asn_bin(search_root, '')
     return binary[0]
 
-def _basenames(test_file):
-    return (os.path.splitext(os.path.basename(str(test_file[0])))[0],
-            env['VARIABLES'][_test_name(test_file)]['MODULES'][0].lower())
-
-def _test_name(test_file):
-    return os.path.basename(os.path.dirname(str(test_file[0])))
-
-env = Environment()
-env['BUILDERS']['Ada'] = AdaBuilder.builder()
-env['BUILDERS']['Report'] = ReportBuilder.builder()
-env['BUILDERS']['Asn'] = AsnBuilder.builder()
-env['BUILDERS']['TestCase'] = TestCaseBuilder.builder()
-env['BUILDERS']['Xml'] = XmlBuilder.builder()
-env['BUILDERS']['Summary'] = SummaryBuilder.builder()
-env['SCRIPT_DIR'] = Dir('#').abspath
-env['ASN_ROOT'] = os.path.dirname(os.path.dirname(env['SCRIPT_DIR']))
-env['BIN_DIR'] = os.path.join(env['ASN_ROOT'], 'Asn1f2', 'bin')
-env['ASN_BIN'] = _get_asn_bin(env['BIN_DIR'], os.path.join(env['ASN_ROOT'], 'circleci-build.sh'))
-env['LANGUAGES'] = ['c', 'Ada']
-env['VARIABLES'] = {}
-env.Append(CPPPATH=[])
-
-test_cases = glob('test-cases/*/')
-reports = []
-for test_case in test_cases:
-    env['BUILD_DIR'] = _get_output_name(test_case)
-    env['TEST_CASE'] = test_case
-    Export('env')
-
-    VariantDir(env['BUILD_DIR'], 'sources')
-    sources = without_top_directory(Glob('sources/*'))
-    test_file = glob_files_recursive(test_case, '.*(asn1|acn)$')
-    #TODO: More than expected files
-    xml = os.path.join(test_case, '.tmp.xml')
-
-    test_case_output = env.TestCase(target=[xml], source=[test_file, env['ASN_BIN']])
-    asn_output = env.Asn([],
-                         [env['ASN_BIN']] + test_file,
-                         BASENAMES = _basenames(test_file),
-                         DIRNAME = env['BUILD_DIR'])
-    test_case_report = [SConscript(os.path.join(env['BUILD_DIR'], 'SConscript'),
-                                  exports={
-                                    'PROXY' : without_top_directory(to_strings(proxy), n=2),
-                                    'ASN' : without_top_directory(to_strings(asn_output), n=2),
-                                    'SOURCES' : sources})[0]
-                        for proxy in grouper(len(templates), test_case_output)]
-    reports += [test_case_report]
+def process_test_case(env, test_case):
+    env['BUILD_DIR'] = build_dir(test_case)
+    sources_for_test_case=get_sources_for_test_case(test_case)
+    test_case_report = generate_reports(
+        env=env,
+        test_case=test_case,
+        sources=sources_for_test_case)
     Clean(test_case_report, env['BUILD_DIR'])
+    return test_case_report
 
-Default(env.Summary(["Non existing file"], reports))
+def test_case_dir(test_case):
+    return os.path.join('test-cases', test_case)
 
+def build_dir(test_case):
+    return os.path.join('build', test_case)
+
+def get_sources_for_test_case(test_case):
+    variant_dir = build_dir(test_case)
+    VariantDir(variant_dir, 'sources')
+    return [os.path.join(variant_dir, source)
+            for source in without_top_directory(Glob('{}/*'.format('sources')))]
+
+def generate_reports(env, test_case, sources):
+    test_dir = test_case_dir(test_case)
+    test_files = glob_files_recursive(test_dir, '.*(asn1|acn)$')
+    temporary_xml = os.path.join(test_dir, '.tmp.xml')
+    test_case_output = env.TestCase(target=[temporary_xml], source=[test_files, env['ASN_BIN']])
+    asn_output = to_strings(env.Asn([],
+                            [env['ASN_BIN']] + test_files,
+                            BASENAMES=basenames(env, test_files),
+                            DIRNAME=env['BUILD_DIR']))
+    return [report_for_variable(env, list(variable), sources, asn_output)
+            for variable in grouper(len(templates), to_strings(test_case_output))]
+
+def report_for_variable(env, variable_files, sources, asn_output):
+    all_sources = variable_files + sources + asn_output
+    variable = variable_name(variable_files)
+
+    ada_accessors_o, ada_accessors_src = build_ada_accessors(env, variable, asn_output)
+    c_bin = c_binary(env, variable, all_sources, ada_accessors_o)
+    ada_bin = ada_binary(env, variable, all_sources, ada_accessors_o, ada_accessors_src)
+
+    return env.Report([report_name(env, variable)], [c_bin, ada_bin])
+
+def basenames(env, test_file):
+    return (os.path.splitext(os.path.basename(str(test_file[0])))[0],
+            env['VARIABLES'][test_name(test_file)]['MODULES'][0].lower())
+
+def test_name(test_file):
+    return os.path.basename(os.path.dirname(test_file[0]))
+
+def variable_name(variable_files):
+    return os.path.basename(os.path.dirname(str(variable_files[0])))
+
+def c_binary(env, variable, sources, ada_accessors_o):
+    obj = env.Object(get_files_with_suffix(sources, 'c'))
+    return env.Program([bin_name(env, 'c', variable)], obj + ada_accessors_o)
+
+def bin_name(env, language, variable):
+    return os.path.join(env['BUILD_DIR'], "{}_{}_bin".format(variable, language))
+
+def build_ada_accessors(env, variable, asn_output):
+    variable_dir = variable_dirname(env, variable)
+    ada_accessors_src = list(to_strings(ada_files('{}_ada_accessors'.format(variable), variable_dir))
+                             + get_files_with_suffix(asn_output, 'adb|ads'))
+    ada_accessors_obj = [os.path.join(variable_dir, '{}_ada_accessors.o'.format(variable))]
+    include_dirs = [env['BUILD_DIR'], variable_dir]
+    output_dir = variable_dir
+    env.Command(
+        ada_accessors_obj,
+        ada_accessors_src,
+        'gnatmake -c $SOURCES {} -D "{}"'
+            .format(' '.join(['-I"' + dir_ + '"' for dir_ in include_dirs]), output_dir))
+    return ada_accessors_obj, ada_accessors_src
+
+def variable_dirname(env, variable):
+    return os.path.join(env['BUILD_DIR'], variable)
+
+def ada_files(basename, directory):
+    return [os.path.join(directory, basename + '.adb'),
+            os.path.join(directory, basename + '.ads')]
+
+def ada_binary(env, variable, sources, ada_accessors_o, ada_accessors_src):
+    variable_dir = variable_dirname(env, variable)
+    ada_main = os.path.join(variable_dir, TestCaseBuilder.ada_main_filename(variable))
+    ada_sources = [source
+                   for source in get_files_with_suffix(sources, 'adb|ads')
+                   if source not in ada_accessors_src]
+    return env.Ada([bin_name(env, 'ada', variable)],
+                    ada_sources
+                        + env.Object(os.path.join(variable_dir, '{}_ada_helpers.c'.format(variable)))
+                        + env.Object(os.path.join(env['BUILD_DIR'], 'file_utility.c'))
+                        + ada_accessors_o,
+                    ADA_MAIN = ada_main,
+                    INCLUDE=[variable_dir, env['BUILD_DIR']])[0]
+
+def report_name(env, variable):
+    return os.path.join(env['BUILD_DIR'], variable + "_report")
+
+scons_main()
