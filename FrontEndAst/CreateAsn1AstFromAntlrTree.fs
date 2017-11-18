@@ -46,6 +46,11 @@ let ConstraintNodes = [ asn1Parser.EXT_MARK; asn1Parser.UnionMark; asn1Parser.AL
                         asn1Parser.VALUE_RANGE_EXPR; asn1Parser.SUBTYPE_EXPR; asn1Parser.SIZE_EXPR; asn1Parser.PERMITTED_ALPHABET_EXPR;
                         asn1Parser.WITH_COMPONENT_CONSTR; asn1Parser.WITH_COMPONENTS_CONSTR ]
 
+let getReftypeName (tree:ITree) = 
+    match getTreeChildren(tree) |> List.filter(fun x -> x.Type<> asn1Parser.ACTUAL_PARAM_LIST) with
+    | refTypeName::[]           ->  refTypeName.TextL
+    | _::refTypeName::[]        ->  refTypeName.TextL
+    | _                         ->  raise (BugErrorException("Bug in CrateType(refType)"))  
 
 let CreateRefTypeContent (tree:ITree) = 
     match getTreeChildren(tree) |> List.filter(fun x -> x.Type<> asn1Parser.ACTUAL_PARAM_LIST) with
@@ -531,9 +536,19 @@ let rootCheckCyclicDeps (astRoot:list<ITree>) =
     let allTasses = astRoot |> 
                     List.collect(fun f -> f.Children) |> 
                     List.collect(fun m -> m.GetChildrenByType(asn1Parser.TYPE_ASSIG) |> List.map(fun t -> m,t )) |> 
-                    List.map(fun (m,a) -> (m.GetChild(0).TextL, a.GetChild(0).TextL), a.AllChildren |> 
-                                                                                    List.filter(fun x -> x.Type = asn1Parser.REFERENCED_TYPE || x.Type = asn1Parser.PREFERENCED_TYPE) |>
-                                                                                    List.map(fun r -> CreateRefTypeContent r ))
+                    List.map(fun (m,a) -> 
+                        let (md,ts) = (m.GetChild(0).TextL, a.GetChild(0).TextL)
+                        let paramsSet = 
+                            a.AllChildren |> List.filter(fun x -> x.Type = asn1Parser.TYPE_PARAM) |> List.map(fun z -> (z.GetChild 0).Text) |> Set.ofList
+                        let children = 
+                            a.AllChildren |> 
+                            List.filter(fun x -> x.Type = asn1Parser.REFERENCED_TYPE || x.Type = asn1Parser.PREFERENCED_TYPE ) |> 
+                            List.filter(fun x ->        //Exclude reference to type parameters
+                                let refTypeName = getReftypeName x
+                                not (paramsSet.Contains( refTypeName.Value)  )) |>
+                            List.map(fun r -> CreateRefTypeContent r )
+                        ((md,ts), children)
+                    )
 
     let independentNodes = allTasses |> List.filter(fun (_,lst) -> lst.IsEmpty)  |> List.map fst
     let dependentNodes = allTasses |> List.filter(fun (_,lst) -> not lst.IsEmpty)    
