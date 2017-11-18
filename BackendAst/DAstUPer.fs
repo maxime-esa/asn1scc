@@ -352,12 +352,19 @@ let createBitStringFunction (r:Asn1AcnAst.AstRoot) (l:ProgrammingLanguage) (code
 
 let createSequenceOfFunction (r:Asn1AcnAst.AstRoot) (l:ProgrammingLanguage) (codec:CommonTypes.Codec) (t:Asn1AcnAst.Asn1Type) (o:Asn1AcnAst.SequenceOf) (typeDefinition:TypeDefinitionCommon) (baseTypeUperFunc : UPerFunction option) (isValidFunc: IsValidFunction option) (child:Asn1Type) (us:State)  =
     let nStringLength =
+        match o.minSize = o.maxSize,  l, codec with
+        | true , _,_    -> []
+        | false, Ada, _ -> [IntegerLocalVariable ("nStringLength", None)]
+        | false, C, Encode -> []
+        | false, C, Decode -> [Asn1SIntLocalVariable ("nCount", None)]
+(*
         match o.minSize <> o.maxSize && codec = Codec.Decode with
         | false  -> []
         | true ->
             match l with
             | Ada  -> [IntegerLocalVariable ("nStringLength", None)]
             | C    -> [Asn1SIntLocalVariable ("nCount", None)]
+*)
     let baseFuncName =  match baseTypeUperFunc  with None -> None | Some baseFunc -> baseFunc.funcName
     let funcBody (errCode:ErroCode) (p:FuncParamType) = 
         match baseFuncName with

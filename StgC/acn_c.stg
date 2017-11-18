@@ -494,8 +494,8 @@ ret = Acn_Dec_String_Ascii_External_Field_Determinant(pBitStrm, <nAsn1Max>, <sEx
 <A()>
 >>
 
-Acn_String_Ascii_Internal_Field_Determinant_encode(p, nAsn1Max, nAsn1Min) ::= "Acn_Enc_String_Ascii_Internal_Field_Determinant(pBitStrm, <nAsn1Max>, <nAsn1Min>, <p>);"
-Acn_String_Ascii_Internal_Field_Determinant_decode(p, nAsn1Max, nAsn1Min) ::= <<
+Acn_String_Ascii_Internal_Field_Determinant_encode(p, nAsn1Max, nAsn1Min, nInternalLengthDeterminantSizeInBits) ::= "Acn_Enc_String_Ascii_Internal_Field_Determinant(pBitStrm, <nAsn1Max>, <nAsn1Min>, <p>);"
+Acn_String_Ascii_Internal_Field_Determinant_decode(p, nAsn1Max, nAsn1Min, nInternalLengthDeterminantSizeInBits) ::= <<
 ret = Acn_Dec_String_Ascii_Internal_Field_Determinant(pBitStrm, <nAsn1Max>, <nAsn1Min>, <p>);
 <A()>
 >>
@@ -504,23 +504,23 @@ PrintAlphabet2(arrnCharSet) ::= <<
 static byte allowedCharSet[] = {<arrnCharSet:{ch|0x<ch;format="X2">}; wrap, anchor, separator=",">}; 
 >>
 
-Acn_String_CharIndex_FixSize_encode(p, nAsn1Max, arrnAlphabetAsciiCodes, nCharSetSize) ::= <<
+Acn_String_CharIndex_FixSize_encode(p, nAsn1Max, arrnAlphabetAsciiCodes, nCharSetSize, sTasName, nCharSize) ::= <<
 <PrintAlphabet2(arrnAlphabetAsciiCodes)>
 Acn_Enc_String_CharIndex_FixSize(pBitStrm, <nAsn1Max>, allowedCharSet, <nCharSetSize>, <p>);
 >>
 
-Acn_String_CharIndex_FixSize_decode(p, nAsn1Max, arrnAlphabetAsciiCodes, nCharSetSize) ::= <<
+Acn_String_CharIndex_FixSize_decode(p, nAsn1Max, arrnAlphabetAsciiCodes, nCharSetSize, sTasName, nCharSize) ::= <<
 <PrintAlphabet2(arrnAlphabetAsciiCodes)>
 ret = Acn_Dec_String_CharIndex_FixSize(pBitStrm, <nAsn1Max>, allowedCharSet, <nCharSetSize>, <p>);
 <A()>
 >>
 
-Acn_String_CharIndex_External_Field_Determinant_encode(p, nAsn1Max, arrnAlphabetAsciiCodes, nCharSetSize, sExtFld) ::= <<
+Acn_String_CharIndex_External_Field_Determinant_encode(p, nAsn1Max, arrnAlphabetAsciiCodes, nCharSetSize, sExtFld, sTasName, nCharSize) ::= <<
 <PrintAlphabet2(arrnAlphabetAsciiCodes)>
 Acn_Enc_String_CharIndex_External_Field_Determinant(pBitStrm, <nAsn1Max>, allowedCharSet, <nCharSetSize>, <p>);
 >>
 
-Acn_String_CharIndex_External_Field_Determinant_decode(p, nAsn1Max, arrnAlphabetAsciiCodes, nCharSetSize, sExtFld) ::= <<
+Acn_String_CharIndex_External_Field_Determinant_decode(p, nAsn1Max, arrnAlphabetAsciiCodes, nCharSetSize, sExtFld, sTasName, nCharSize) ::= <<
 <PrintAlphabet2(arrnAlphabetAsciiCodes)>
 ret = Acn_Dec_String_CharIndex_External_Field_Determinant(pBitStrm, <nAsn1Max>, allowedCharSet, <nCharSetSize>, <sExtFld>, <p>);
 <A()>
@@ -718,11 +718,9 @@ sequence_optional_always_present_child_encode(p, sAcc, sChName, sChildContent) :
 >>
 
 sequence_optional_always_present_child_decode(p, sAcc, sChName, sChildContent) ::= <<
-/*Decode <sChName> */
+/*Decode <sChName> (always present) */
 <p><sAcc>exist.<sChName> = 1;
-if (<p>exist.<sChName>) {
-	<sChildContent>
-}
+<sChildContent>
 >>
 
 
@@ -747,20 +745,20 @@ if (<p><sAcc>exist.<sChName>) {
 
 /* Choice like uper*/
 
-ChoiceChild_encode(p, sAcc, sChildID, nChildIndex, nLastItemIndex, sChildContent) ::= <<
+ChoiceChild_encode(p, sAcc, sChildID, nChildIndex, nLastItemIndex, sChildContent, sChildName, sChildTypeDef, sChoiceTypeName) ::= <<
 case <sChildID>:
 	BitStream_EncodeConstraintWholeNumber(pBitStrm, <nChildIndex>, 0, <nLastItemIndex>);
 	<sChildContent>
 	break;
 >>
-ChoiceChild_decode(p, sAcc, sChildID, nChildIndex, nLastItemIndex, sChildContent) ::= <<
+ChoiceChild_decode(p, sAcc, sChildID, nChildIndex, nLastItemIndex, sChildContent, sChildName, sChildTypeDef, sChoiceTypeName) ::= <<
 case <nChildIndex>:
 	<p><sAcc>kind = <sChildID>;
 	<sChildContent>
 	break;
 >>
 
-Choice_encode(p, sAcc, arrsChildren, nLastItemIndex, sChoiceIndexName, sErrCode) ::= <<
+Choice_encode(p, sAcc, arrsChildren, nLastItemIndex, sChoiceIndexName, sChoiceTypeDef, nIndexSizeInBits, sErrCode) ::= <<
 switch(<p><sAcc>kind) 
 {
 <arrsChildren: {ch|<ch>}; separator="\n">
@@ -770,7 +768,7 @@ default:
 }
 >>
 
-Choice_decode(p, sAcc, arrsChildren, nLastItemIndex, sChoiceIndexName, sErrCode) ::= <<
+Choice_decode(p, sAcc, arrsChildren, nLastItemIndex, sChoiceIndexName, sChoiceTypeDef, nIndexSizeInBits, sErrCode) ::= <<
 ret = BitStream_DecodeConstraintWholeNumber(pBitStrm, &<sChoiceIndexName>, 0, <nLastItemIndex>);
 *pErrCode = ret ? 0 : <sErrCode>;
 if (ret) {
@@ -786,19 +784,17 @@ if (ret) {
 
 /* Choice with presense determinants */
 
-
-ChoiceChild_preWhen_encode(p, sAcc, sChildID, sChildBody, arrsConditions, bFirst) ::= <<
+ChoiceChild_preWhen_encode(p, sAcc, sChildID, sChildBody, arrsConditions, bFirst, sChildName, sChildTypeDef, sChoiceTypeName) ::= <<
 case <sChildID>:
 	<sChildBody>
 	break;
 >>
 
-
 ChoiceChild_preWhen_bool_condition(sExtFld) ::= "<sExtFld>"
 ChoiceChild_preWhen_int_condition(sExtFld, nVal) ::= "(<sExtFld> == <nVal>)"
 ChoiceChild_preWhen_str_condition(sExtFld, sVal) ::= "(strcmp(<sExtFld>, \"<sVal>\") == 0)"
 
-ChoiceChild_preWhen_decode(p, sAcc, sChildID, sChildBody, arrsConditions, bFirst) ::= <<
+ChoiceChild_preWhen_decode(p, sAcc, sChildID, sChildBody, arrsConditions, bFirst, sChildName, sChildTypeDef, sChoiceTypeName) ::= <<
 <if(!bFirst)>else <endif>if (<arrsConditions; separator=" && ">) {
     <p><sAcc>kind = <sChildID>;
     <sChildBody>
@@ -811,7 +807,7 @@ switch(<p><sAcc>kind)
 {
 <arrsChildren; separator="\n">
 default:
-    *pErrCode = ERR_INVALID_CHOICE_ALTERNATIVE;         /*COVERAGE_IGNORE*/
+    *pErrCode = <sErrCode>;         /*COVERAGE_IGNORE*/
     ret = FALSE;                    /*COVERAGE_IGNORE*/
 }
 >>
@@ -820,7 +816,7 @@ Choice_preWhen_decode(p, sAcc, arrsChildren, sErrCode) ::= <<
 *pErrCode = 0;
 <arrsChildren; separator="\n">
 else {
-    *pErrCode = ERR_INVALID_CHOICE_ALTERNATIVE;         /*COVERAGE_IGNORE*/
+    *pErrCode = <sErrCode>;         /*COVERAGE_IGNORE*/
     ret = FALSE;                    /*COVERAGE_IGNORE*/
 }
 >>
@@ -830,13 +826,13 @@ else {
 
 
 
-ChoiceChild_Enum_encode(p, sAcc, sEnmName, sChildID, sChildBody) ::= <<
+ChoiceChild_Enum_encode(p, sAcc, sEnmName, sChildID, sChildBody, sChildName, sChildTypeDef, sChoiceTypeName) ::= <<
 case <sChildID>:    
 	<sChildBody>
 	break;
 >>
 
-ChoiceChild_Enum_decode(p, sAcc, sEnmName, sChildID, sChildBody) ::= <<
+ChoiceChild_Enum_decode(p, sAcc, sEnmName, sChildID, sChildBody, sChildName, sChildTypeDef, sChoiceTypeName) ::= <<
 case <sEnmName>:
 	<p><sAcc>kind = <sChildID>;
 	<sChildBody>
