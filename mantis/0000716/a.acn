@@ -1,0 +1,5 @@
+TEST-CASE DEFINITIONS ::= BEGIN
+	INT10 [size 10, encoding pos-int]
+END  
+
+
