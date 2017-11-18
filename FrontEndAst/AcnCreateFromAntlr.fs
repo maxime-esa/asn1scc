@@ -224,7 +224,10 @@ let private CheckCircularDependenciesInAcnConstants (constants : List<ITree>) =
         match cyclicDepds with
         | []        -> raise(BugErrorException(""))
         | (x,_)::xs -> 
-            let names = cyclicDepds |> Seq.map (fun (n,_) -> n.Value) |> Seq.StrJoin ", "
+            let printConstant (md:StringLoc, deps: StringLoc list) = 
+                sprintf "Anc constant '%s' depends on : %s" md.Value (deps |> List.map(fun z -> "'" + z.Value + "'") |> Seq.StrJoin ", ")
+            let names = cyclicDepds |> List.map printConstant |> Seq.StrJoin "\n\tand\n"
+            //let names = cyclicDepds |> Seq.map (fun (n,_) -> n.Value) |> Seq.StrJoin ", "
             SemanticError(x.Location, sprintf "Cyclic dependencies in ACN constants: %s" names)
     DoTopologicalSort2 independentConstants dependentConstansts comparer ExToThrow |> ignore
 

@@ -538,16 +538,23 @@ let rootCheckCyclicDeps (astRoot:list<ITree>) =
     let independentNodes = allTasses |> List.filter(fun (_,lst) -> lst.IsEmpty)  |> List.map fst
     let dependentNodes = allTasses |> List.filter(fun (_,lst) -> not lst.IsEmpty)    
     let excToThrow (lst:list<(StringLoc*StringLoc)*list<StringLoc*StringLoc>>) =
-        let depNodes = lst |> List.map(fun ((m,v),_) -> v)
-        let loc = depNodes.Head.Location
-        let str = depNodes |> List.map(fun x -> x.Value) |> Seq.StrJoin ", "
-        SemanticError (loc, sprintf "Cyclic dependencies detected : %s " str)
+        match lst with
+        | []        -> raise(BugErrorException(""))
+        | ((m,t),_)::xs -> 
+            let printTas ((md:StringLoc,ts:StringLoc), deps: (StringLoc*StringLoc) list) = 
+                sprintf "Type assignment '%s.%s' depends on : %s" md.Value ts.Value (deps |> List.map(fun (m,t) -> "'" + m.Value + "." + t.Value + "'") |> Seq.StrJoin ", ")
+            let names = lst |> List.map printTas |> Seq.StrJoin " and "
+            //let depNodes = lst |> List.map(fun ((m,v),_) -> v)
+            //let loc = depNodes.Head.Location
+            //let str = depNodes |> List.map(fun x -> x.Value) |> Seq.StrJoin ", "
+            SemanticError (t.Location, sprintf "Cyclic dependencies detected : %s" names)
     let comparer (m1:StringLoc, t1:StringLoc) (m2:StringLoc, t2:StringLoc) = m1.Value = m2.Value && t1.Value=t2.Value
     DoTopologicalSort2 independentNodes dependentNodes comparer excToThrow |> ignore
 
 let CreateAstRoot (list:ParameterizedAsn1Ast.AntlrParserResult list) (args:CommandLineSettings) =  
     let astRoot = list |> List.map (fun r -> r.rootItem)
     ITree.RegisterFiles(list |> Seq.map (fun x -> (x.rootItem, x.fileName)))
+    rootCheckCyclicDeps astRoot
     {
         AstRoot.Files = list |> Seq.toList  |> List.map(fun x -> CreateAsn1File astRoot (x.rootItem,x.fileName, x.tokens))
         args = args
