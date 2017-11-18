@@ -559,9 +559,27 @@ let CheckModule (m:Asn1Module) ast (pass :int)=
     m.Imports |> Seq.iter checkImport
 
     
-    
+let checkForCyclicModules ( ast:AstRoot) =
+    let allModules = ast.Modules |> List.map(fun z -> z.Name)
+    let independentModules = ast.Modules |> List.filter(fun m -> List.isEmpty m.Imports) |> List.map(fun m -> m.Name)
+    let dependentModules = ast.Modules |> List.filter(fun m -> not (List.isEmpty m.Imports)) |> List.map(fun m -> (m.Name, m.Imports |> List.map(fun imp -> imp.Name) ))
+    let sortedModules = 
+        DoTopologicalSort independentModules dependentModules 
+            (fun cyclicModules -> 
+                match cyclicModules with
+                | []    -> BugErrorException "Impossible"
+                | (m1,deps) ::_ ->
+                    let printModule (md:StringLoc, deps: StringLoc list) = 
+                        sprintf "Module '%s' depends on modules: %s" md.Value (deps |> List.map(fun z -> "'" + z.Value + "'") |> Seq.StrJoin ", ")
+                    let cycMods = cyclicModules |> List.map printModule |> Seq.StrJoin "\n\tand\n"
+                    SemanticError
+                        (m1.Location, 
+                         sprintf 
+                             "Cyclic modules detected:\n%s\n"  cycMods))
+    sortedModules
 
 let CheckFiles( ast:AstRoot) (pass :int) =
+    checkForCyclicModules ast |> ignore
     let modules = ast.Files |> Seq.collect(fun f -> f.Modules ) 
     // check for multiple module definitions
     modules |> Seq.map(fun m-> m.Name) |> CheckForDuplicates 

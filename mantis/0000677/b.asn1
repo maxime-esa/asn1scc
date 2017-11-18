@@ -1,0 +1,6 @@
+B DEFINITIONS ::=
+BEGIN
+    IMPORTS TypeC FROM A;
+
+    TypeB ::= TypeC
+END

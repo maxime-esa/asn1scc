@@ -91,7 +91,13 @@ let internal createProgramUnits (files: Asn1File list)  (l:ProgrammingLanguage) 
                 Seq.collect(fun imp -> imp.Types |> List.map (fun impType ->{TypeAssignmentInfo.modName = imp.Name.Value; tasName = impType.Value}  )) |> 
                 Seq.distinct |> Seq.toList
 
-            let soretedTypes = sortTypes fileTypes importedTypes |> List.map(fun ref -> tasSet.[ref])
+            let soretedTypes = 
+                sortTypes fileTypes importedTypes |> 
+                List.choose(fun ref -> 
+                    match tasSet.TryFind ref with
+                    | Some vl -> Some vl
+                    | None    -> None (*raise(SemanticError(emptyLocation, sprintf "Type assignment %s.%s cannot be resolved within progam unit %s" ref.modName ref.tasName f.FileNameWithoutExtension))*)
+                )
             let specFileName = f.FileNameWithoutExtension+"."+l.SpecExtention
             let bodyFileName = f.FileNameWithoutExtension+"."+l.BodyExtention
             let tetscase_specFileName = f.FileNameWithoutExtension+"_auto_tcs."+l.SpecExtention

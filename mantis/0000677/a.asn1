@@ -1,0 +1,12 @@
+A DEFINITIONS ::=
+BEGIN
+    IMPORTS TypeB FROM B;
+
+    TypeC ::= INTEGER
+
+    TypeA ::= SEQUENCE
+    {
+        b TypeB,
+        c TypeC
+    }
+END
