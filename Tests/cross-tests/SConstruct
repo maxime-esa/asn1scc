@@ -15,7 +15,7 @@ def scons_main():
     env = setup_environment()
     test_cases = glob('test-cases/*')
     reports = [process_test_case(env, os.path.basename(test_case)) for test_case in test_cases]
-    Default(env.Summary(["Non existing file"], reports))
+    Default(env.Summary([".NonExistingFile"], reports))
 
 def setup_environment():
     env = Environment()
@@ -28,19 +28,19 @@ def setup_environment():
     env['SCRIPT_DIR'] = Dir('#').abspath
     env['ASN_ROOT'] = os.path.dirname(os.path.dirname(env['SCRIPT_DIR']))
     env['BIN_DIR'] = os.path.join(env['ASN_ROOT'], 'Asn1f2', 'bin')
-    env['ASN_BIN'] = get_asn_bin(env['BIN_DIR'], os.path.join(env['ASN_ROOT'], 'circleci-build.sh'))
+    env['ASN_BIN'] = get_asn_bin(env['BIN_DIR'], 'xbuild', env['ASN_ROOT'])
     env['LANGUAGES'] = ['c', 'Ada']
     env['VARIABLES'] = {}
     env.Append(CPPPATH=[])
     return env
 
-def get_asn_bin(search_root, build_script):
+def get_asn_bin(search_root, build_script, cwd):
     binary = find_files_recursive(search_root, 'Asn1f2\.exe$')
     if not binary and build_script:
-        return_code = subprocess.call(build_script, cwd=os.path.dirname(build_script))
+        return_code = subprocess.call(build_script, cwd=cwd)
         if return_code != 0:
             raise ChildProcessError("Failed to build asn1f2")
-        return get_asn_bin(search_root, '')
+        return find_files_recursive(search_root, 'Asn1f2\.exe$')[0]
     return binary[0]
 
 def process_test_case(env, test_case):
@@ -78,7 +78,6 @@ def generate_reports(env, test_case, sources):
             for variable in grouper(len(templates), to_strings(test_case_output))]
 
 def report_for_variable(env, variable_files, sources, asn_output):
-    print(variable_files, sources, asn_output)
     all_sources = variable_files + sources + asn_output
     variable = variable_name(variable_files)
 
