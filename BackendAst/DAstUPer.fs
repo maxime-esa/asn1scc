@@ -316,6 +316,18 @@ let createOctetStringFunction (r:Asn1AcnAst.AstRoot) (l:ProgrammingLanguage) (co
 let createBitStringFunction (r:Asn1AcnAst.AstRoot) (l:ProgrammingLanguage) (codec:CommonTypes.Codec) (t:Asn1AcnAst.Asn1Type) (o:Asn1AcnAst.BitString) (typeDefinition:TypeDefinitionCommon) (baseTypeUperFunc : UPerFunction option) (isValidFunc: IsValidFunction option) (us:State)  =
     let i = sprintf "i%d" (t.id.SeqeuenceOfLevel + 1)
     let localVariables =
+        match o.minSize = o.maxSize,  l, codec with
+        | true , _,_    -> []
+        | false, Ada, _ -> [IntegerLocalVariable ("nStringLength", None)]
+        | false, C, Encode -> []
+        | false, C, Decode -> [Asn1SIntLocalVariable ("nCount", None)]
+    let localVariables =
+        match l with 
+        | C -> localVariables 
+        | Ada -> 
+            let lv = SequenceOfIndex (t.id.SeqeuenceOfLevel + 1, None)
+            lv::localVariables 
+(*
         match o.minSize <> o.maxSize && codec = Codec.Decode with
         | false  -> []
         | true ->
@@ -323,7 +335,7 @@ let createBitStringFunction (r:Asn1AcnAst.AstRoot) (l:ProgrammingLanguage) (code
             | Ada  -> 
                 let lv = SequenceOfIndex (t.id.SeqeuenceOfLevel + 1, None)
                 lv::[IntegerLocalVariable ("nStringLength", None)]
-            | C    -> [Asn1SIntLocalVariable ("nCount", None)]
+            | C    -> [Asn1SIntLocalVariable ("nCount", None)]*)
     let funcBody (errCode:ErroCode) (p:FuncParamType) = 
         let funcBodyContent = 
             match l with

@@ -545,7 +545,7 @@ let createOctetStringFunction (r:Asn1AcnAst.AstRoot) (deps:Asn1AcnAst.AcnInserte
     createPrimitiveFunction r l codec t typeDefinition  isValidFunc  funcBody soSparkAnnotations us
 
 let createBitStringFunction (r:Asn1AcnAst.AstRoot) (deps:Asn1AcnAst.AcnInsertedFieldDependencies) (l:ProgrammingLanguage) (codec:CommonTypes.Codec) (t:Asn1AcnAst.Asn1Type) (o:Asn1AcnAst.BitString) (typeDefinition:TypeDefinitionCommon)  (isValidFunc: IsValidFunction option) (uperFunc: UPerFunction) (us:State)  =
-    let bit_string_external_field                          = match l with C -> acn_c.bit_string_external_field       | Ada -> acn_c.bit_string_external_field
+    let nAlignSize = 0I;
 
     let funcBody (errCode:ErroCode) (acnArgs: (Asn1AcnAst.RelativePath*Asn1AcnAst.AcnParameter) list) (p:FuncParamType)        = 
         //let pp = match codec with CommonTypes.Encode -> p.getValue l | CommonTypes.Decode -> p.getPointer l
@@ -554,8 +554,15 @@ let createBitStringFunction (r:Asn1AcnAst.AstRoot) (deps:Asn1AcnAst.AcnInsertedF
             | SZ_EC_uPER                                              -> uperFunc.funcBody_e errCode p |> Option.map(fun x -> x.funcBody, x.errCodes, x.localVariables)
             | SZ_EC_ExternalField   _    -> 
                 let extField = getExternaField r deps t.id
-                let fncBody = bit_string_external_field p.p (p.getAcces l) (if o.minSize=0 then None else Some (BigInteger o.minSize)) (BigInteger o.maxSize) extField codec
-                Some(fncBody, [errCode], [])
+                match l with
+                | C     ->
+                    let fncBody = acn_c.bit_string_external_field p.p (p.getAcces l) (if o.minSize=0 then None else Some (BigInteger o.minSize)) (BigInteger o.maxSize) extField codec
+                    Some(fncBody, [errCode], [])
+                | Ada   ->
+                    let i = sprintf "i%d" (t.id.SeqeuenceOfLevel + 1)
+                    let internalItem = uper_a.InternalItem_bit_str p.p i  errCode.errCodeName codec 
+                    let fncBody = acn_c.oct_sqf_external_field p.p (p.getAcces l) i internalItem (if o.minSize=0 then None else Some (BigInteger o.minSize)) (BigInteger o.maxSize) extField nAlignSize errCode.errCodeName 1I 1I codec
+                    Some(fncBody, [errCode], [])
         match funcBodyContent with
         | None -> None
         | Some (funcBodyContent,errCodes, localVariables) -> Some ({AcnFuncBodyResult.funcBody = funcBodyContent; errCodes = errCodes; localVariables = localVariables})
