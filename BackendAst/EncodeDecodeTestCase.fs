@@ -56,12 +56,13 @@ let rec getAmberDecode (t:Asn1AcnAst.Asn1Type) =
     | _                          -> "&"
 
 let createUperEncDecFunction (r:Asn1AcnAst.AstRoot) (l:ProgrammingLanguage) (t:Asn1AcnAst.Asn1Type) (typeDefinition:TypeDefinitionCommon) (eqFunc:EqualFunction) (isValidFunc: IsValidFunction option) (encFunc : UPerFunction option) (decFunc : UPerFunction option)   (us:State)  =
-    let sEnc = ""
+    let sEnc = match l with C -> "" | Ada -> "UPER_"
     let funcName            = getFuncName r l sEnc t.id
+    let modName = ToC t.id.AcnAbsPath.Head
 
-    let printCodec_body = match l with C -> test_cases_c.PrintCodec_body   | Ada -> test_cases_c.PrintCodec_body
-    let printCodec_body_header = match l with C -> test_cases_c.PrintCodec_body_header   | Ada -> test_cases_c.PrintCodec_body_header
-    let joinItems = match l with C -> test_cases_c.JoinItems   | Ada -> test_cases_c.JoinItems
+    let printCodec_body = match l with C -> test_cases_c.PrintCodec_body   | Ada -> test_cases_a.PrintCodec_body
+    let printCodec_body_header = match l with C -> test_cases_c.PrintCodec_body_header   | Ada -> test_cases_a.PrintCodec_spec
+    let joinItems = match l with C -> test_cases_c.JoinItems   | Ada -> test_cases_a.JoinItems
 
     let p : FuncParamType = t.getParamType l Encode
     let varName = p.p
@@ -74,33 +75,33 @@ let createUperEncDecFunction (r:Asn1AcnAst.AstRoot) (l:ProgrammingLanguage) (t:A
     | Some funcName     -> 
         
         let printStatement stm sNestedContent = 
-            let encode = match l with C -> test_cases_c.Codec_Encode   | Ada -> test_cases_c.Codec_Encode
-            let decode = match l with C -> test_cases_c.Codec_Decode   | Ada -> test_cases_c.Codec_Decode
-            let validateOutput = match l with C -> test_cases_c.Codec_validate_output   | Ada -> test_cases_c.Codec_validate_output
-            let compareInputWithOutput = match l with C -> test_cases_c.Codec_compare_input_with_output   | Ada -> test_cases_c.Codec_compare_input_with_output
+            let encode = match l with C -> test_cases_c.Codec_Encode   | Ada -> test_cases_a.Codec_Encode
+            let decode = match l with C -> test_cases_c.Codec_Decode   | Ada -> test_cases_a.Codec_Decode
+            let validateOutput = match l with C -> test_cases_c.Codec_validate_output   | Ada -> test_cases_a.Codec_validate_output
+            let compareInputWithOutput = match l with C -> test_cases_c.Codec_compare_input_with_output   | Ada -> test_cases_a.Codec_compare_input_with_output
             let content= 
                 match stm with
                 |Encode_input           -> option {
                                                 let! encF = encFunc
                                                 let! encFunName = encF.funcName
-                                                return encode encFunName varName
+                                                return encode modName encFunName varName
                                            }
                 |Decode_output          -> option {
                                                 let! decF = decFunc
                                                 let! decFunName = decF.funcName
-                                                return decode decFunName typeDefinition.name sEnc sAmberDecode 
+                                                return decode modName decFunName typeDefinition.name sEnc sAmberDecode 
                                            }
                     
                 |Validate_output        -> 
                                            option {
                                                 let! f = isValidFunc
                                                 let! fname = f.funcName
-                                                return validateOutput fname sAmberIsValid
+                                                return validateOutput modName fname sAmberIsValid
                                            }
                 |Compare_input_output   -> 
                                            option {
                                                 let! fname = eqFunc.isEqualFuncName
-                                                return compareInputWithOutput fname varName sAmberIsValid
+                                                return compareInputWithOutput modName fname varName sAmberIsValid
                                            }                
             joinItems (content.orElse "") sNestedContent
 
@@ -116,8 +117,8 @@ let createUperEncDecFunction (r:Asn1AcnAst.AstRoot) (l:ProgrammingLanguage) (t:A
                         | Some childrenCont    -> Some (printStatement x  (Some childrenCont))
                 printStatements [Encode_input; Decode_output; Validate_output; Compare_input_output]
 
-            let func = printCodec_body funcName typeDefinition.name sStar varName sEnc (sNestedStatements.orElse "")
-            let funcDef = printCodec_body_header funcName typeDefinition.name sStar varName
+            let func = printCodec_body modName funcName typeDefinition.name sStar varName sEnc (sNestedStatements.orElse "")
+            let funcDef = printCodec_body_header funcName  modName typeDefinition.name sStar varName
             let ret = 
                 {
                     EncodeDecodeTestFunc.funcName   = funcName
@@ -131,10 +132,11 @@ let createAcnEncDecFunction (r:Asn1AcnAst.AstRoot) (l:ProgrammingLanguage) (t:As
     let sEnc = "ACN_"
 
     let funcName            = getFuncName r l sEnc t.id
+    let modName             = ToC t.id.AcnAbsPath.Head
 
-    let printCodec_body = match l with C -> test_cases_c.PrintCodec_body   | Ada -> test_cases_c.PrintCodec_body
-    let printCodec_body_header = match l with C -> test_cases_c.PrintCodec_body_header   | Ada -> test_cases_c.PrintCodec_body_header
-    let joinItems = match l with C -> test_cases_c.JoinItems   | Ada -> test_cases_c.JoinItems
+    let printCodec_body = match l with C -> test_cases_c.PrintCodec_body   | Ada -> test_cases_a.PrintCodec_body
+    let printCodec_body_header = match l with C -> test_cases_c.PrintCodec_body_header   | Ada -> test_cases_a.PrintCodec_spec
+    let joinItems = match l with C -> test_cases_c.JoinItems   | Ada -> test_cases_a.JoinItems
 
     let p : FuncParamType = t.getParamType l Encode
     let varName = p.p
@@ -149,33 +151,33 @@ let createAcnEncDecFunction (r:Asn1AcnAst.AstRoot) (l:ProgrammingLanguage) (t:As
         | None              -> None, us
         | Some funcName     -> 
             let printStatement stm sNestedContent = 
-                let encode = match l with C -> test_cases_c.Codec_Encode   | Ada -> test_cases_c.Codec_Encode
-                let decode = match l with C -> test_cases_c.Codec_Decode   | Ada -> test_cases_c.Codec_Decode
-                let validateOutput = match l with C -> test_cases_c.Codec_validate_output   | Ada -> test_cases_c.Codec_validate_output
-                let compareInputWithOutput = match l with C -> test_cases_c.Codec_compare_input_with_output   | Ada -> test_cases_c.Codec_compare_input_with_output
+                let encode = match l with C -> test_cases_c.Codec_Encode   | Ada -> test_cases_a.Codec_Encode
+                let decode = match l with C -> test_cases_c.Codec_Decode   | Ada -> test_cases_a.Codec_Decode
+                let validateOutput = match l with C -> test_cases_c.Codec_validate_output   | Ada -> test_cases_a.Codec_validate_output
+                let compareInputWithOutput = match l with C -> test_cases_c.Codec_compare_input_with_output   | Ada -> test_cases_a.Codec_compare_input_with_output
                 let content= 
                     match stm with
                     |Encode_input           -> option {
                                                     let! encF = encFunc
                                                     let! encFunName = encF.funcName
-                                                    return encode encFunName varName
+                                                    return encode modName encFunName varName
                                                }
                     |Decode_output          -> option {
                                                     let! decF = decFunc
                                                     let! decFunName = decF.funcName
-                                                    return decode decFunName typeDefinition.name sEnc sAmberDecode 
+                                                    return decode modName decFunName typeDefinition.name sEnc sAmberDecode 
                                                }
                     
                     |Validate_output        -> 
                                                option {
                                                     let! f = isValidFunc
                                                     let! fname = f.funcName
-                                                    return validateOutput fname sAmberIsValid
+                                                    return validateOutput modName fname sAmberIsValid
                                                }
                     |Compare_input_output   -> 
                                                option {
                                                     let! fname = eqFunc.isEqualFuncName
-                                                    return compareInputWithOutput fname varName sAmberIsValid
+                                                    return compareInputWithOutput modName fname varName sAmberIsValid
                                                }                
                 joinItems (content.orElse "") sNestedContent
 
@@ -192,8 +194,8 @@ let createAcnEncDecFunction (r:Asn1AcnAst.AstRoot) (l:ProgrammingLanguage) (t:As
 
                     printStatements [Encode_input; Decode_output; Validate_output; Compare_input_output]
 
-                let func = printCodec_body funcName typeDefinition.name sStar varName sEnc (sNestedStatements.orElse "")
-                let funcDef = printCodec_body_header funcName typeDefinition.name sStar varName
+                let func = printCodec_body modName funcName typeDefinition.name sStar varName sEnc (sNestedStatements.orElse "")
+                let funcDef = printCodec_body_header funcName modName typeDefinition.name sStar varName
         
                 let ret = 
                     {

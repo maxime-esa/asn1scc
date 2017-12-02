@@ -160,7 +160,7 @@ let private printUnit (r:DAst.AstRoot) (l:ProgrammingLanguage) (encodings: Commo
     let tstCasesHdrContent =
         match l with
         | C     -> test_cases_c.PrintAutomaticTestCasesHeaderFile (pu.tetscase_specFileName.Replace(".","_")) pu.name typeDefs
-        | Ada   -> test_cases_c.PrintAutomaticTestCasesHeaderFile (pu.tetscase_specFileName.Replace(".","_")) pu.name typeDefs
+        | Ada   -> test_cases_a.PrintCodecsFile_spec pu.name pu.importedProgramUnits typeDefs
     File.WriteAllText(tetscase_specFileName, tstCasesHdrContent.Replace("\r",""))
         
     //sourse file
@@ -221,7 +221,7 @@ let private printUnit (r:DAst.AstRoot) (l:ProgrammingLanguage) (encodings: Commo
     let tstCasesHdrContent =
         match l with
         | C     -> test_cases_c.PrintAutomaticTestCasesSourceFile pu.tetscase_specFileName pu.importedProgramUnits encDecFuncs
-        | Ada   -> test_cases_c.PrintAutomaticTestCasesSourceFile pu.tetscase_specFileName pu.importedProgramUnits encDecFuncs
+        | Ada   -> test_cases_a.PrintCodecsFile_body pu.name pu.importedProgramUnits [] encDecFuncs
     File.WriteAllText(tetscase_SrcFileName, tstCasesHdrContent.Replace("\r",""))
 
 let TestSuiteFileName = "testsuite"
@@ -265,14 +265,21 @@ let private CreateAdaMain (r:AstRoot) bGenTestCases outDir =
 
 
 let CreateTestSuiteFile (r:AstRoot) (l:ProgrammingLanguage) outDir vasName =
+    let generate_dat_file  = match l with C -> test_cases_c.PrintSuite_call_codec_generate_dat_file | Ada -> test_cases_a.PrintMain_call_codec_generate_dat_file
+    let call_codec =         match l with C -> test_cases_c.PrintSuite_call_codec                   | Ada -> test_cases_a.PrintMain_call_codec
+
     let GetEncodingString = function    
-        | UPER  -> ""
+        | UPER  -> match l with C -> "" | Ada -> "UPER_"
         | ACN   -> "ACN_"
         | BER   -> "BER_"
         | XER   -> "XER_"
-
-    let includedPackages =  r.programUnits |> Seq.map(fun x -> x.tetscase_specFileName)
+    
+    let includedPackages =  
+        match l with
+        | C     -> r.programUnits |> Seq.map(fun x -> x.tetscase_specFileName)
+        | Ada   -> r.programUnits |> Seq.collect(fun x -> [x.name; x.tetscase_name])
     let PrintTestCase (v:ValueAssignment) (m:Asn1Module) (sTasName : string)  (idx :int) initFuncName (uperEncDecTestFunc  : EncodeDecodeTestFunc option) (acnEncDecTestFunc   : EncodeDecodeTestFunc option) =
+        let modName = ToC m.Name.Value
         let rec gAmber (t:Asn1Type) = 
             match t.Kind with
             | Integer      _ -> ""  , "&"
@@ -298,9 +305,9 @@ let CreateTestSuiteFile (r:AstRoot) (l:ProgrammingLanguage) outDir vasName =
             match bGenerateDatFile, enc with
             | false,_     -> ""
             | true, ACN   -> ""
-            | true, XER   -> test_cases_c.PrintSuite_call_codec_generate_dat_file sTasName encAmper (GetEncodingString enc) "Byte"
-            | true, BER   -> test_cases_c.PrintSuite_call_codec_generate_dat_file sTasName encAmper (GetEncodingString enc) "Byte"
-            | true, uPER  -> test_cases_c.PrintSuite_call_codec_generate_dat_file sTasName encAmper (GetEncodingString enc) "Bit"
+            | true, XER   -> generate_dat_file modName sTasName encAmper (GetEncodingString enc) "Byte"
+            | true, BER   -> generate_dat_file modName sTasName encAmper (GetEncodingString enc) "Byte"
+            | true, uPER  -> generate_dat_file modName sTasName encAmper (GetEncodingString enc) "Bit"
 
         let bStatic = match v.Type.ActualType.Kind with Integer _ | Enumerated(_) -> false | _ -> true
          
@@ -308,14 +315,14 @@ let CreateTestSuiteFile (r:AstRoot) (l:ProgrammingLanguage) outDir vasName =
                                         match e with
                                         | Asn1Encoding.UPER  -> 
                                             match uperEncDecTestFunc with
-                                            | Some _    -> test_cases_c.PrintSuite_call_codec sTasName encAmper (GetEncodingString e) sValue sTestCaseIndex (ToC v.Name.Value) bStatic (GetDatFile e) initFuncName initAmper
+                                            | Some _    -> call_codec modName sTasName encAmper (GetEncodingString e) sValue sTestCaseIndex (ToC v.Name.Value) bStatic (GetDatFile e) initFuncName initAmper
                                             | None      -> ""
                                         | Asn1Encoding.ACN   -> 
                                             match acnEncDecTestFunc with
-                                            | Some _    -> test_cases_c.PrintSuite_call_codec sTasName encAmper (GetEncodingString e) sValue sTestCaseIndex (ToC v.Name.Value) bStatic (GetDatFile e) initFuncName initAmper
+                                            | Some _    -> call_codec modName sTasName encAmper (GetEncodingString e) sValue sTestCaseIndex (ToC v.Name.Value) bStatic (GetDatFile e) initFuncName initAmper
                                             | _         -> ""
-                                        | Asn1Encoding.XER   -> test_cases_c.PrintSuite_call_codec sTasName encAmper (GetEncodingString e) sValue sTestCaseIndex (ToC v.Name.Value) bStatic (GetDatFile e) initFuncName initAmper
-                                        | Asn1Encoding.BER   -> test_cases_c.PrintSuite_call_codec sTasName encAmper (GetEncodingString e) sValue sTestCaseIndex (ToC v.Name.Value) bStatic (GetDatFile e) initFuncName initAmper
+                                        | Asn1Encoding.XER   -> call_codec modName sTasName encAmper (GetEncodingString e) sValue sTestCaseIndex (ToC v.Name.Value) bStatic (GetDatFile e) initFuncName initAmper
+                                        | Asn1Encoding.BER   -> call_codec modName sTasName encAmper (GetEncodingString e) sValue sTestCaseIndex (ToC v.Name.Value) bStatic (GetDatFile e) initFuncName initAmper
                                  ) |> Seq.StrJoin "\n\n"
         
     let mutable idx = 0;
@@ -323,17 +330,10 @@ let CreateTestSuiteFile (r:AstRoot) (l:ProgrammingLanguage) outDir vasName =
         seq {
             for m in r.Files |> List.collect(fun f -> f.Modules) do
                 for v in m.ValueAssignments do
-//                    match v.Type.Kind with
-//                    | ReferenceType ref -> 
-                        
-                        //let actMod = r.getModuleByName ref.baseInfo.modName
                         if vasName = "ALL" || v.Name.Value = vasName then
                             idx <- idx + 1
                             let initFuncName = v.Type.initFunction.initFuncName
-                            //yield PrintTestCase v actMod v.Type.typeDefinition.typeDefinitionBodyWithinSeq  idx initFuncName
-                            //yield PrintTestCase v actMod (ToC2(r.args.TypePrefix + ref.baseInfo.tasName.Value) )  idx initFuncName v.Type.uperEncDecTestFunc v.Type.acnEncDecTestFunc
                             yield PrintTestCase v m (getTypeDecl r v )  idx initFuncName v.Type.uperEncDecTestFunc v.Type.acnEncDecTestFunc
-//                    | _                 -> ()
                 if vasName = "ALL" then
                     for t in m.TypeAssignments do
                         let hasEncodeFunc = hasAcnEncodeFunction t.Type.acnEncFunction t.Type.acnParameters 
@@ -346,14 +346,20 @@ let CreateTestSuiteFile (r:AstRoot) (l:ProgrammingLanguage) outDir vasName =
                             
         }  |> Seq.toList
 
-    let contentC = test_cases_c.PrintTestSuiteSource TestSuiteFileName includedPackages funcs
-    let outCFileName = Path.Combine(outDir, TestSuiteFileName + ".c")
-    File.WriteAllText(outCFileName, contentC.Replace("\r",""))
+    match l with
+    | C ->
+        let contentC = test_cases_c.PrintTestSuiteSource TestSuiteFileName includedPackages funcs
+        let outCFileName = Path.Combine(outDir, TestSuiteFileName + "." + l.BodyExtention)
+        File.WriteAllText(outCFileName, contentC.Replace("\r",""))
 
-    let contentH = test_cases_c.PrintTestSuiteHeader()
-    let outHFileName = Path.Combine(outDir, TestSuiteFileName + ".h")
-    File.WriteAllText(outHFileName, contentH.Replace("\r",""))
-
+        let contentH = test_cases_c.PrintTestSuiteHeader()
+        let outHFileName = Path.Combine(outDir, TestSuiteFileName + "." + l.SpecExtention)
+        File.WriteAllText(outHFileName, contentH.Replace("\r",""))
+    | Ada ->
+        let contentC = test_cases_a.PrintMain includedPackages funcs [] [] false
+        let outCFileName = Path.Combine(outDir, "mainprogram." + l.BodyExtention)
+        File.WriteAllText(outCFileName, contentC.Replace("\r",""))
+        
 
 
 let generateVisualStudtioProject (r:DAst.AstRoot) outDir =
@@ -381,6 +387,8 @@ let generateAll outDir (r:DAst.AstRoot) (encodings: CommonTypes.Asn1Encoding lis
         CreateTestSuiteFile r ProgrammingLanguage.C outDir "ALL"
         generateVisualStudtioProject r outDir
     | Ada  -> 
-        CreateAdaMain r false outDir
+        //CreateAdaMain r false outDir
+        CreateTestSuiteFile r ProgrammingLanguage.Ada outDir "ALL"
+
         CreateAdaIndexFile r false outDir
 

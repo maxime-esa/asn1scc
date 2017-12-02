@@ -991,18 +991,6 @@ ChoiceChild_tmpVar(sName, sTypeDecl) ::= "<sName>_tmp:<sTypeDecl>;"
 
 
 Declare_ChoiceIndex()::="index:<rtlModuleName()>.Asn1Int;"
-Choice_decode(sTasName, arrsChildren, nIndexMax, nIndexSizeInBits) ::= <<
-val := <sTasName>_Init;
-result.ErrorCode := <rtlModuleName()>.ERR_INSUFFICIENT_DATA;
-<rtlModuleName()>.UPER_Dec_ConstraintWholeNumber(S, K, index, 0, <nIndexMax>, <nIndexSizeInBits>, result.Success);
-IF result.Success THEN
-    CASE <sTasName>_index_range(index) IS
-        <arrsChildren; separator="\n">
-    END CASE;
-END IF;
->>
-
-
 
 
 

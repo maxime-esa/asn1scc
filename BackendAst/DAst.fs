@@ -653,7 +653,8 @@ type Asn1File = {
 }
 
 type ProgramUnit = {
-    name    : string
+    name                    : string
+    tetscase_name           : string
     specFileName            : string
     bodyFileName            : string
     tetscase_specFileName   : string

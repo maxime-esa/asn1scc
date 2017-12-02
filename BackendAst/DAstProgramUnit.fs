@@ -102,8 +102,8 @@ let internal createProgramUnits (files: Asn1File list)  (l:ProgrammingLanguage) 
             let bodyFileName = f.FileNameWithoutExtension+"."+l.BodyExtention
             let tetscase_specFileName = f.FileNameWithoutExtension+"_auto_tcs."+l.SpecExtention
             let tetscase_bodyFileName = f.FileNameWithoutExtension+"_auto_tcs."+l.BodyExtention
-            
-            {ProgramUnit.name = f.FileNameWithoutExtension; specFileName = specFileName; bodyFileName=bodyFileName; sortedTypeAssignments = soretedTypes; valueAssignments = fileValueAssignments; importedProgramUnits = importedProgramUnits; tetscase_specFileName=tetscase_specFileName; tetscase_bodyFileName=tetscase_bodyFileName})
+            let tetscase_name = f.FileNameWithoutExtension+"_auto_tcs"
+            {ProgramUnit.name = f.FileNameWithoutExtension; specFileName = specFileName; bodyFileName=bodyFileName; sortedTypeAssignments = soretedTypes; valueAssignments = fileValueAssignments; importedProgramUnits = importedProgramUnits; tetscase_specFileName=tetscase_specFileName; tetscase_bodyFileName=tetscase_bodyFileName; tetscase_name=tetscase_name})
     | Ada   -> 
 
         files |>
@@ -117,11 +117,12 @@ let internal createProgramUnits (files: Asn1File list)  (l:ProgrammingLanguage) 
                 Seq.collect(fun imp -> imp.Types |> List.map (fun impType ->{TypeAssignmentInfo.modName = imp.Name.Value; tasName = impType.Value})) |> 
                 Seq.distinct |> Seq.toList        
             let soretedTypes = sortTypes moduTypes importedTypes |> List.map(fun ref -> typesMap.[ref])
-            let specFileName = m.Name.Value.ToLower() + "." + l.SpecExtention
-            let bodyFileName = m.Name.Value.ToLower() + "." + l.BodyExtention
-            let tetscase_specFileName = m.Name.Value.ToLower() + "_auto_tcs." + l.SpecExtention
-            let tetscase_bodyFileName = m.Name.Value.ToLower() + "_auto_tcs." + l.BodyExtention
+            let specFileName = ToC (m.Name.Value.ToLower()) + "." + l.SpecExtention
+            let bodyFileName = ToC (m.Name.Value.ToLower()) + "." + l.BodyExtention
+            let tetscase_specFileName = ToC (m.Name.Value.ToLower()) + "_auto_tcs." + l.SpecExtention
+            let tetscase_bodyFileName = ToC (m.Name.Value.ToLower()) + "_auto_tcs." + l.BodyExtention
             let importedProgramUnits = m.Imports |> List.map (fun im -> ToC im.Name.Value)
-            {ProgramUnit.name = m.Name.Value; specFileName = specFileName; bodyFileName=bodyFileName; sortedTypeAssignments = soretedTypes; valueAssignments = valueAssignments; importedProgramUnits = importedProgramUnits; tetscase_specFileName=tetscase_specFileName; tetscase_bodyFileName=tetscase_bodyFileName})
+            let tetscase_name = ToC (m.Name.Value.ToLower()+"_auto_tcs")
+            {ProgramUnit.name = ToC m.Name.Value; specFileName = specFileName; bodyFileName=bodyFileName; sortedTypeAssignments = soretedTypes; valueAssignments = valueAssignments; importedProgramUnits = importedProgramUnits; tetscase_specFileName=tetscase_specFileName; tetscase_bodyFileName=tetscase_bodyFileName; tetscase_name=tetscase_name})
 
 
