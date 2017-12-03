@@ -518,21 +518,21 @@ IS
     pre => K+1>= S'First and  K + 72 <= S'Last,
     post => K >= K'Old +16 and K <=K'Old+72;
 
-    PROCEDURE Acn_Enc_Int_BCD_ConstSize (S : in out BitArray; K : in out Natural; IntVal:IN Asn1Int; nNibbles:IN Integer)
+    PROCEDURE Acn_Enc_Int_BCD_ConstSize (S : in out BitArray; K : in out Natural; IntVal:IN Asn1UInt; nNibbles:IN Integer)
     with depends => ( K =>( K, nNibbles ),
                 S =>( S, IntVal, K, nNibbles)),
     pre =>  IntVal >= 0 and nNibbles>=0 and nNibbles<=18 and IntVal<=10**nNibbles-1 and
              K+1>= S'First and K + 4*nNibbles <= S'Last,
     post => K = K'Old + 4*nNibbles;
 
-    PROCEDURE Acn_Enc_Int_BCD_VarSize_LengthEmbedded(S : in out BitArray; K : in out Natural; IntVal:IN Asn1Int)
+    PROCEDURE Acn_Enc_Int_BCD_VarSize_LengthEmbedded(S : in out BitArray; K : in out Natural; IntVal:IN Asn1UInt)
     with depends => ( K =>( K, IntVal ),
                 S =>( S, IntVal, K)),
     pre =>  IntVal >= 0 and
              K+1>= S'First and K + 88 <= S'Last,
     post => K >= K'Old  and K <=K'Old+88;
 
-    PROCEDURE Acn_Enc_Int_BCD_VarSize_NullTerminated(S : in out BitArray; K : in out Natural; IntVal:IN Asn1Int)
+    PROCEDURE Acn_Enc_Int_BCD_VarSize_NullTerminated(S : in out BitArray; K : in out Natural; IntVal:IN Asn1UInt)
     with depends => ( K =>( K, IntVal ),
                 S =>( S, IntVal, K)),
     pre =>  IntVal >= 0 and
@@ -737,7 +737,7 @@ IS
     pre =>  K.K+1>= S'First and  K.K + 72 <= S'Last,
     post => K.K >= K'Old.K  and K.K <=K'Old.K+72;
 
-    PROCEDURE Acn_Dec_Int_BCD_ConstSize (S : in BitArray; K : in out DECODE_PARAMS; IntVal:OUT Asn1Int; minVal:IN Asn1Int; maxVal:IN Asn1Int; nNibbles:IN Integer; Result:OUT ASN1_RESULT)
+    PROCEDURE Acn_Dec_Int_BCD_ConstSize (S : in BitArray; K : in out DECODE_PARAMS; IntVal:OUT Asn1UInt; minVal:IN Asn1UInt; maxVal:IN Asn1UInt; nNibbles:IN Integer; Result:OUT ASN1_RESULT)
     with depends => ( (IntVal,
                 Result) =>( K, S, nNibbles, minVal, maxVal ),
                 K      =>( K, S, nNibbles)),
@@ -747,7 +747,7 @@ IS
              ( Result.Success = False and then (IntVal = minVal));
 
 
-    PROCEDURE Acn_Dec_Int_BCD_VarSize_LengthEmbedded(S : in BitArray; K : in out DECODE_PARAMS; IntVal:OUT Asn1Int; Result:OUT ASN1_RESULT)
+    PROCEDURE Acn_Dec_Int_BCD_VarSize_LengthEmbedded(S : in BitArray; K : in out DECODE_PARAMS; IntVal:OUT Asn1UInt; Result:OUT ASN1_RESULT)
     with depends => ( (IntVal,
                 Result) =>( K, S ),
                 K      =>( K)),
@@ -756,7 +756,7 @@ IS
              ( Result.Success = True  and then (IntVal>= 0)) and
              ( Result.Success = False and then (IntVal = 0));
 
-    PROCEDURE Acn_Dec_Int_BCD_VarSize_NullTerminated(S : in BitArray; K : in out DECODE_PARAMS; IntVal:OUT Asn1Int; minVal:IN Asn1Int; maxVal:IN Asn1Int; Result:OUT ASN1_RESULT)
+    PROCEDURE Acn_Dec_Int_BCD_VarSize_NullTerminated(S : in BitArray; K : in out DECODE_PARAMS; IntVal:OUT Asn1UInt; minVal:IN Asn1UInt; maxVal:IN Asn1UInt; Result:OUT ASN1_RESULT)
     with depends => ( (IntVal,
                 Result) =>( K, S, minVal, maxVal ),
                 K      =>( K, S)),

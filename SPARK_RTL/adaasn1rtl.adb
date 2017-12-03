@@ -1324,11 +1324,11 @@ PACKAGE BODY adaasn1rtl with SPARK_Mode IS
 
 
 
-    PROCEDURE Acn_Enc_Int_BCD_ConstSize (S : in out BitArray; K : in out Natural; IntVal:IN Asn1Int; nNibbles:IN Integer)
+    PROCEDURE Acn_Enc_Int_BCD_ConstSize (S : in out BitArray; K : in out Natural; IntVal:IN Asn1UInt; nNibbles:IN Integer)
     IS
         totalNibbles:Integer:=1;
         tmp  : OctetArray100 := OctetArray100'(others => 0);
-        intValCopy : Asn1Int;
+        intValCopy : Asn1UInt;
     BEGIN
         intValCopy := IntVal;
         WHILE intValCopy>0 and totalNibbles<=nNibbles LOOP
@@ -1345,18 +1345,18 @@ PACKAGE BODY adaasn1rtl with SPARK_Mode IS
         END LOOP;
     END Acn_Enc_Int_BCD_ConstSize;
 
-    PROCEDURE Acn_Enc_Int_BCD_VarSize_LengthEmbedded(S : in out BitArray; K : in out Natural; IntVal:IN Asn1Int)
+    PROCEDURE Acn_Enc_Int_BCD_VarSize_LengthEmbedded(S : in out BitArray; K : in out Natural; IntVal:IN Asn1UInt)
     IS
         pragma SPARK_Mode(Off);
     BEGIN
         null;
     END Acn_Enc_Int_BCD_VarSize_LengthEmbedded;
 
-    PROCEDURE Acn_Enc_Int_BCD_VarSize_NullTerminated(S : in out BitArray; K : in out Natural; IntVal:IN Asn1Int)
+    PROCEDURE Acn_Enc_Int_BCD_VarSize_NullTerminated(S : in out BitArray; K : in out Natural; IntVal:IN Asn1UInt)
     IS
         totalNibbles:Integer:=1;
         tmp  : OctetArray100 := OctetArray100'(others => 0);
-        intValCopy : Asn1Int;
+        intValCopy : Asn1UInt;
     BEGIN
         intValCopy := IntVal;
         WHILE intValCopy>0 and totalNibbles<=18 LOOP
@@ -1882,11 +1882,11 @@ PACKAGE BODY adaasn1rtl with SPARK_Mode IS
     END Acn_Dec_Int_TwosComplement_VarSize_LengthEmbedded;
 
 
-    PROCEDURE Acn_Dec_Int_BCD_ConstSize (S : in BitArray; K : in out DECODE_PARAMS; IntVal:OUT Asn1Int; minVal:IN Asn1Int; maxVal:IN Asn1Int; nNibbles:IN Integer; Result:OUT ASN1_RESULT)
+    PROCEDURE Acn_Dec_Int_BCD_ConstSize (S : in BitArray; K : in out DECODE_PARAMS; IntVal:OUT Asn1UInt; minVal:IN Asn1UInt; maxVal:IN Asn1UInt; nNibbles:IN Integer; Result:OUT ASN1_RESULT)
     IS
         digit:Asn1Byte;
         I : Integer;
-        max_aux : CONSTANT Asn1Int := Asn1Int'Last/10 - 9;
+        max_aux : CONSTANT Asn1UInt := Asn1UInt'Last/10 - 9;
     BEGIN
         intVal:=0;
         Result := ASN1_RESULT'(Success   => TRUE,ErrorCode => ERR_INSUFFICIENT_DATA);
@@ -1900,7 +1900,7 @@ PACKAGE BODY adaasn1rtl with SPARK_Mode IS
             Result.Success := Result.Success AND digit<=9 AND intVal>=0 AND intVal <=max_aux;
             IF Result.Success THEN
                 intVal := intVal*10;
-                intVal := intVal + Asn1Int(digit);
+                intVal := intVal + Asn1UInt(digit);
                 I:= I -1;
             END IF;
         END LOOP;
@@ -1911,18 +1911,18 @@ PACKAGE BODY adaasn1rtl with SPARK_Mode IS
         END IF;
     END Acn_Dec_Int_BCD_ConstSize;
 
-    PROCEDURE Acn_Dec_Int_BCD_VarSize_LengthEmbedded(S : in BitArray; K : in out DECODE_PARAMS; IntVal:OUT Asn1Int; Result:OUT ASN1_RESULT)
+    PROCEDURE Acn_Dec_Int_BCD_VarSize_LengthEmbedded(S : in BitArray; K : in out DECODE_PARAMS; IntVal:OUT Asn1UInt; Result:OUT ASN1_RESULT)
     IS
         pragma SPARK_Mode(Off);
     BEGIN
         null;
     END Acn_Dec_Int_BCD_VarSize_LengthEmbedded;
 
-    PROCEDURE Acn_Dec_Int_BCD_VarSize_NullTerminated(S : in BitArray; K : in out DECODE_PARAMS; IntVal:OUT Asn1Int; minVal:IN Asn1Int; maxVal:IN Asn1Int; Result:OUT ASN1_RESULT)
+    PROCEDURE Acn_Dec_Int_BCD_VarSize_NullTerminated(S : in BitArray; K : in out DECODE_PARAMS; IntVal:OUT Asn1UInt; minVal:IN Asn1UInt; maxVal:IN Asn1UInt; Result:OUT ASN1_RESULT)
     IS
         digit:Asn1Byte;
         I : Integer;
-        max_aux : CONSTANT Asn1Int := Asn1Int'Last/10 - 9;
+        max_aux : CONSTANT Asn1UInt := Asn1UInt'Last/10 - 9;
         stopDigitFound : BOOLEAN :=FALSE;
     BEGIN
         intVal:=0;
@@ -1938,7 +1938,7 @@ PACKAGE BODY adaasn1rtl with SPARK_Mode IS
             stopDigitFound := digit=16#F#;
             IF Result.Success AND (NOT stopDigitFound) THEN
                 intVal := intVal*10;
-                intVal := intVal + Asn1Int(digit);
+                intVal := intVal + Asn1UInt(digit);
             END IF;
             I:= I + 1;
         END LOOP;
