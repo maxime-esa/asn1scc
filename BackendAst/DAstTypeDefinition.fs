@@ -61,8 +61,10 @@ let createInteger (r:Asn1AcnAst.AstRoot) (l:ProgrammingLanguage) (t:Asn1AcnAst.A
         | Ada                    -> 
             let typeDefinitionBody = 
                 match o.uperRange with
+                | Concrete(a,b)  when o.isUnsigned   ->   header_a.Declare_PosInteger_min_max a b
                 | Concrete(a,b)    ->   header_a.Declare_Integer_min_max a b
                 | NegInf (a)       ->   header_a.Declare_Integer_negInf a
+                | PosInf (a) when o.isUnsigned      ->   header_a.Declare_PosInteger_posInf a
                 | PosInf (a)       ->   header_a.Declare_Integer_posInf a
                 | Full             ->   header_a.Declare_Integer ()    
             let completeDefintion = getCompleteDefinition l SUBTYPE typeDefinitionBody typeDefinitionName None []
@@ -89,7 +91,7 @@ let createPrmAcnInteger (r:Asn1AcnAst.AstRoot) (l:ProgrammingLanguage)  =
 
 let createAcnInteger (r:Asn1AcnAst.AstRoot) (l:ProgrammingLanguage) (a:Asn1AcnAst.AcnInteger) =
     let Declare_Integer     =  match l with  C  -> header_c.Declare_Integer  | Ada   -> header_a.Declare_Integer 
-    let Declare_PosInteger  =  match l with  C  -> header_c.Declare_PosInteger  | Ada   -> header_a.Declare_Integer  
+    let Declare_PosInteger  =  match l with  C  -> header_c.Declare_PosInteger  | Ada   -> header_a.Declare_PosInteger  
     match a.isUnsigned with
     | true     -> Declare_PosInteger ()
     | false    -> Declare_Integer ()

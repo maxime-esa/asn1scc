@@ -354,6 +354,11 @@ PrintErrorCode(sErrorName, nErrCode, sComment) ::= "<sErrorName>:CONSTANT INTEGE
 
 Declare_spark_Integer() ::="<rtlModuleName()>.Asn1Int"
 Declare_Integer() ::="<rtlModuleName()>.Asn1Int"
+Declare_PosInteger() ::="<rtlModuleName()>.Asn1UInt"
+Declare_PosInteger_min_max(nMin, nMax) ::="<rtlModuleName()>.Asn1UInt range <nMin>..<nMax>"
+Declare_PosInteger_posInf(nMin) ::="<rtlModuleName()>.Asn1UInt range <nMin>..<rtlModuleName()>.Asn1UInt'Last"
+
+
 Declare_Integer_min_max(nMin, nMax) ::="<rtlModuleName()>.Asn1Int range <nMin>..<nMax>"
 Declare_Integer_posInf(nMin) ::="<rtlModuleName()>.Asn1Int range <nMin>..<rtlModuleName()>.Asn1Int'Last"
 Declare_Integer_negInf(nMax) ::="<rtlModuleName()>.Asn1Int range <rtlModuleName()>.Asn1Int'First..<nMax>"

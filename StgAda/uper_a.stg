@@ -126,6 +126,12 @@ result.ErrorCode := <sErrCode>;
 <rtlModuleName()>.UPER_Dec_ConstraintWholeNumber(S, K, <p>, <nMin>, <nMax>, <nBits>, result.Success);
 >>
 
+IntFullyConstraintPos_encode(p, nMin, nMax, nBits, sErrCode) ::= "<rtlModuleName()>.UPER_Enc_ConstraintPosWholeNumber(S, K, <p>, <nMin>, <nBits>);"
+IntFullyConstraintPos_decode(p, nMin, nMax, nBits, sErrCode) ::= <<
+result.ErrorCode := <sErrCode>;
+<rtlModuleName()>.UPER_Dec_ConstraintPosWholeNumber(S, K, <p>, <nMin>, <nMax>, <nBits>, result.Success);
+>>
+
 /*case: A :: = INTEGER */
 IntUnconstraint_encode(p, sErrCode, bCoverageIgnore) ::= "<rtlModuleName()>.UPER_Enc_UnConstraintWholeNumber(S, K, <p>);"
 IntUnconstraint_decode(p, sErrCode, bCoverageIgnore) ::= <<
@@ -147,6 +153,12 @@ IntSemiConstraint_encode(p, nMin, sErrCode) ::= "<rtlModuleName()>.UPER_Enc_Semi
 IntSemiConstraint_decode(p, nMin, sErrCode) ::= <<
 result.ErrorCode := <sErrCode>;
 <rtlModuleName()>.UPER_Dec_SemiConstraintWholeNumber(S, K, <p>, <nMin>, result.Success);
+>>
+
+IntSemiConstraintPos_encode(p, nMin, sErrCode) ::= "<rtlModuleName()>.UPER_Enc_SemiConstraintPosWholeNumber(S, K, <p>, <nMin>);"
+IntSemiConstraintPos_decode(p, nMin, sErrCode) ::= <<
+result.ErrorCode := <sErrCode>;
+<rtlModuleName()>.UPER_Dec_SemiConstraintPosWholeNumber(S, K, <p>, <nMin>, result.Success);
 >>
 
 
@@ -504,6 +516,7 @@ str_FixedSize_decode(p, sTasName, i, sInternalItem, nFixedSize, nIntItemMinSize,
 result := <rtlModuleName()>.ASN1_RESULT'(Success => TRUE, ErrorCode => 0);
 <i> := <sTasName>_index'First; 
 <loopFixedItem_dec(i=i, sInternalItem=sInternalItem, fixedSize=nFixedSize, nfixedSizeUperLimit = nFixedSize, nCurOffset="0", nAlignSize=nAlignSize, nIntItemMinSize=nIntItemMinSize, nIntItemMaxSize=nIntItemMaxSize)>
+<p>(<nFixedSize> + 1) := adaasn1rtl.NUL;
 >>
 
 str_VarSize_encode(p, sTasName, i, sInternalItem, nSizeMin, nSizeMax, nSizeInBits, nIntItemMinSize, nIntItemMaxSize, nAlignSize) ::= <<
@@ -522,6 +535,13 @@ result.ErrorCode := <rtlModuleName()>.ERR_INSUFFICIENT_DATA;
 <rtlModuleName()>.UPER_Dec_ConstraintWholeNumberInt(S, K, nStringLength, <nSizeMin>, <nSizeMax>, <nSizeInBits>, result.Success);
 <i> := <sTasName>_index'First; 
 <loopFixedItem_dec(i=i, sInternalItem=sInternalItem, fixedSize="nStringLength", nfixedSizeUperLimit = nSizeMax, nCurOffset=nSizeInBits, nAlignSize=nAlignSize, nIntItemMinSize=nIntItemMinSize, nIntItemMaxSize=nIntItemMaxSize)>
+
+--add nulls until the end
+while <i>\<= <nSizeMax> + 1  loop
+    pragma Loop_Invariant (<i> >=1 and <i>\<=<nSizeMax> + 1);
+    <p>(<i>) := adaasn1rtl.NUL;
+    <i> := <i> + 1;
+end loop;
 >>
 
 

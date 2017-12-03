@@ -1024,7 +1024,7 @@ PresenceDependency(v, sSeqPath, sAcc, sChildName) ::= <<
 
 
 
-SizeDependency(v, sCount) ::= "<v> := <rtlModuleName()>.Asn1Int(<sCount>);"
+SizeDependency(v, sCount) ::= "<v> := <rtlModuleName()>.Asn1UInt(<sCount>);"
 
 
 getStringSize(p) ::= "<rtlModuleName()>.getStringSize(<p>)"

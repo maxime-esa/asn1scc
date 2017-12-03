@@ -237,11 +237,19 @@ let CreateCMainFile (r:AstRoot)  (l:ProgrammingLanguage) outDir  =
 
 
 
-let CreateCMakeFile (r:AstRoot)  outDir  =
-    let files = r.Files |> Seq.map(fun x -> x.FileNameWithoutExtension.ToLower() )
-    let content = aux_c.PrintMakeFile files
-    let outFileName = Path.Combine(outDir, "Makefile")
-    File.WriteAllText(outFileName, content.Replace("\r",""))
+let CreateMakeFile (r:AstRoot) (l:ProgrammingLanguage) outDir  =
+    match l with
+    | C ->
+        let files = r.Files |> Seq.map(fun x -> x.FileNameWithoutExtension.ToLower() )
+        let content = aux_c.PrintMakeFile files
+        let outFileName = Path.Combine(outDir, "Makefile")
+        File.WriteAllText(outFileName, content.Replace("\r",""))
+    | Ada ->
+        let mods = aux_a.rtlModuleName()::(r.programUnits |> List.map(fun pu -> pu.name ))
+        let content = aux_a.PrintMakeFile  mods
+        let outFileName = Path.Combine(outDir, "Makefile")
+        File.WriteAllText(outFileName, content.Replace("\r",""))
+
 
 let private CreateAdaIndexFile (r:AstRoot) bGenTestCases outDir =
     let mods = r.programUnits |> Seq.map(fun x -> (ToC x.name).ToLower()) |>Seq.toList
@@ -380,9 +388,9 @@ let generateAll outDir (r:DAst.AstRoot) (encodings: CommonTypes.Asn1Encoding lis
     r.programUnits |> Seq.iter (printUnit r r.lang encodings outDir)
     //print extra such make files etc
     //print_debug.DoWork r outDir "debug.txt"
+    CreateMakeFile r r.lang outDir
     match r.lang with
     | C    -> 
-        CreateCMakeFile r outDir
         CreateCMainFile r  ProgrammingLanguage.C outDir
         CreateTestSuiteFile r ProgrammingLanguage.C outDir "ALL"
         generateVisualStudtioProject r outDir

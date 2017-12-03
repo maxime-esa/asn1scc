@@ -226,8 +226,7 @@ let createEnumComn (r:Asn1AcnAst.AstRoot) (l:ProgrammingLanguage) (codec:CommonT
     let sFirstItemName = o.items.Head.getBackendName l
     let localVar =
         match min >= 0I with
-        | true when l = C -> Asn1UIntLocalVariable (intVal,None)
-        | true  -> Asn1SIntLocalVariable (intVal,None)
+        | true -> Asn1UIntLocalVariable (intVal,None)
         | false -> Asn1SIntLocalVariable (intVal,None)
     let pVal = VALUE intVal
     let funcBody (errCode:ErroCode) (acnArgs: (Asn1AcnAst.RelativePath*Asn1AcnAst.AcnParameter) list) (p:FuncParamType)        = 
