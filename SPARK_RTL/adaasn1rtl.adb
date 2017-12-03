@@ -8,6 +8,7 @@ use type Interfaces.Unsigned_16;
 use type Interfaces.Integer_8;
 use type Interfaces.Unsigned_64;
 use type Interfaces.Integer_64;
+use Interfaces;
 
 PACKAGE BODY adaasn1rtl with SPARK_Mode IS
 
@@ -620,6 +621,25 @@ PACKAGE BODY adaasn1rtl with SPARK_Mode IS
       Enc_UInt(S,K, ActualEncodedValue, nBytes);
    END UPER_Enc_SemiConstraintWholeNumber;
 
+    PROCEDURE UPER_Enc_SemiConstraintPosWholeNumber (
+                                                  S : in out BitArray;
+                                                  K : in out Natural;
+                                                  IntVal : IN     Asn1UInt;
+                                                  MinVal : IN     Asn1UInt)
+    IS
+        nBytes : Integer;
+        ActualEncodedValue : Asn1UInt;
+    BEGIN
+      ActualEncodedValue  := IntVal -  MinVal;
+
+        nBytes:=GetBytes(ActualEncodedValue);
+
+      -- encode length
+      BitStream_AppendByte(S,K, Interfaces.Unsigned_8(nBytes),FALSE);
+      --Encode number
+      Enc_UInt(S,K, ActualEncodedValue, nBytes);
+   END UPER_Enc_SemiConstraintPosWholeNumber;
+
 
 
 
@@ -730,6 +750,35 @@ PACKAGE BODY adaasn1rtl with SPARK_Mode IS
 
    END UPER_Dec_SemiConstraintWholeNumber;
 
+
+   PROCEDURE UPER_Dec_SemiConstraintPosWholeNumber (
+                                            S : in BitArray;
+                                            K : in out DECODE_PARAMS;
+				            IntVal : OUT Asn1UInt;
+         				    MinVal : IN  Asn1UInt;
+                                            Result : OUT Boolean)
+   IS
+      NBytes  : Asn1Int;
+--      ByteVal : Asn1UInt;
+      Ret     : Asn1UInt;
+--      I_MAX   : Integer;
+--      I	      : Integer;
+   BEGIN
+
+      IntVal := MinVal;
+      UPER_Dec_ConstraintWholeNumber(S,K,NBytes,0,255,8,Result);
+      IF Result AND NBytes>=1 AND NBytes<=8 THEN
+            Dec_UInt(S, K, Integer(nBytes), Ret, result);
+            IF result THEN
+                IntVal := Ret + MinVal;
+                Result := IntVal>= MinVal;
+                IF NOT Result THEN IntVal := MinVal; END IF;
+            END IF;
+      ELSE
+      	 Result :=FALSE;
+      END IF;
+
+   END UPER_Dec_SemiConstraintPosWholeNumber;
 
     PROCEDURE UPER_Enc_UnConstraintWholeNumber (
                                                 S : in out BitArray;

@@ -1,6 +1,8 @@
 WITH Ada.Characters.Latin_1;
 WITH Interfaces;
+use Interfaces;
 use type Interfaces.Integer_64;
+
 
 --    inherit Ada.Characters.Latin_1,
 --            Interfaces;
@@ -200,6 +202,30 @@ IS
     post => K.K >= K'Old.K +8 and K.K <= K'Old.K + 72 and
              IntVal>= MinVal;
 
+
+    PROCEDURE UPER_Enc_SemiConstraintPosWholeNumber(S : in out BitArray;
+                                                K : in out Natural;
+                                                IntVal:IN Asn1UInt;
+                                                MinVal:IN Asn1UInt)
+      with depends => (
+                        (K) =>( IntVal, K, MinVal),
+                        (S) =>( S, IntVal, K, MinVal)
+                       ),
+    pre => IntVal - MinVal >= 0  and
+            K+1>= S'First and  K + 72 <= S'Last,
+    post => K >= K'Old +16 and K <=K'Old+72;
+
+   PROCEDURE UPER_Dec_SemiConstraintPosWholeNumber (
+                                            S : in BitArray;
+                                            K : in out DECODE_PARAMS;
+				            IntVal :    OUT Asn1UInt;
+         				    MinVal : IN     Asn1UInt;
+                                             Result : OUT Boolean)
+    with depends => ( (IntVal,Result) =>( K,      MinVal,      S ),
+                K      => (K,      S)),
+    pre =>  K.K+1>= S'First and K.K + 72 <= S'Last,
+    post => K.K >= K'Old.K +8 and K.K <= K'Old.K + 72 and
+             IntVal>= MinVal;
 
 
 
