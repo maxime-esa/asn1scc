@@ -386,7 +386,7 @@ IS
 
 
 
-    PROCEDURE Acn_Enc_Int_PositiveInteger_ConstSize (S : in out BitArray; K : in out Natural; IntVal:IN Asn1Int; Size:IN Integer)
+    PROCEDURE Acn_Enc_Int_PositiveInteger_ConstSize (S : in out BitArray; K : in out Natural; IntVal:IN Asn1UInt; Size:IN Integer)
     with depends => ( K =>( K, Size ),
                 S =>( S, IntVal, K, Size)),
     pre =>  IntVal >= 0 and Size>=0 and Size<=64 and IntVal<=2**Size-1 and
@@ -394,7 +394,7 @@ IS
     post => K = K'Old + Size;
 
 
-    PROCEDURE Acn_Enc_Int_PositiveInteger_ConstSize_8 (S : in out BitArray; K : in out Natural; IntVal:IN Asn1Int)
+    PROCEDURE Acn_Enc_Int_PositiveInteger_ConstSize_8 (S : in out BitArray; K : in out Natural; IntVal:IN Asn1UInt)
     with depends => ( K =>( K ),
                 S =>( S, IntVal, K)),
     pre =>  IntVal >= 0 and IntVal<=255 and
@@ -402,49 +402,49 @@ IS
     post => K = K'Old + 8;
 
 
-    PROCEDURE Acn_Enc_Int_PositiveInteger_ConstSize_big_endian_16 (S : in out BitArray; K : in out Natural; IntVal:IN Asn1Int)
+    PROCEDURE Acn_Enc_Int_PositiveInteger_ConstSize_big_endian_16 (S : in out BitArray; K : in out Natural; IntVal:IN Asn1UInt)
     with depends => ( K =>( K ),
                 S =>( S, IntVal, K)),
     pre =>  IntVal >= 0 and IntVal<=65535 and
              K+1>= S'First and K + 16 <= S'Last,
     post => K = K'Old + 16;
 
-    PROCEDURE Acn_Enc_Int_PositiveInteger_ConstSize_big_endian_32 (S : in out BitArray; K : in out Natural; IntVal:IN Asn1Int)
+    PROCEDURE Acn_Enc_Int_PositiveInteger_ConstSize_big_endian_32 (S : in out BitArray; K : in out Natural; IntVal:IN Asn1UInt)
     with depends => ( K =>( K ),
                 S =>( S, IntVal, K)),
     pre =>  IntVal >= 0 and IntVal<=4294967295 and
              K+1>= S'First and K + 32 <= S'Last,
     post => K = K'Old + 32;
 
-    PROCEDURE Acn_Enc_Int_PositiveInteger_ConstSize_big_endian_64 (S : in out BitArray; K : in out Natural; IntVal:IN Asn1Int)
+    PROCEDURE Acn_Enc_Int_PositiveInteger_ConstSize_big_endian_64 (S : in out BitArray; K : in out Natural; IntVal:IN Asn1UInt)
     with depends => ( K =>( K ),
                 S =>( S, IntVal, K)),
     pre =>  IntVal >= 0  and
              K+1>= S'First and K + 64 <= S'Last,
     post => K = K'Old + 64;
 
-    PROCEDURE Acn_Enc_Int_PositiveInteger_ConstSize_little_endian_16 (S : in out BitArray; K : in out Natural; IntVal:IN Asn1Int)
+    PROCEDURE Acn_Enc_Int_PositiveInteger_ConstSize_little_endian_16 (S : in out BitArray; K : in out Natural; IntVal:IN Asn1UInt)
     with depends => ( K =>( K ),
                 S =>( S, IntVal, K)),
     pre =>  IntVal >= 0 and IntVal<=65535 and
              K+1>= S'First and K + 16 <= S'Last,
     post => K = K'Old + 16;
 
-    PROCEDURE Acn_Enc_Int_PositiveInteger_ConstSize_little_endian_32 (S : in out BitArray; K : in out Natural; IntVal:IN Asn1Int)
+    PROCEDURE Acn_Enc_Int_PositiveInteger_ConstSize_little_endian_32 (S : in out BitArray; K : in out Natural; IntVal:IN Asn1UInt)
     with depends => ( K =>( K ),
                 S =>( S, IntVal, K)),
     pre =>  IntVal >= 0 and IntVal<=4294967295 and
              K+1>= S'First and K + 32 <= S'Last,
     post => K = K'Old + 32;
 
-    PROCEDURE Acn_Enc_Int_PositiveInteger_ConstSize_little_endian_64 (S : in out BitArray; K : in out Natural; IntVal:IN Asn1Int)
+    PROCEDURE Acn_Enc_Int_PositiveInteger_ConstSize_little_endian_64 (S : in out BitArray; K : in out Natural; IntVal:IN Asn1UInt)
     with depends => ( K =>( K ),
                 S =>( S, IntVal, K)),
     pre =>  IntVal >= 0  and
              K+1>= S'First and K + 64 <= S'Last,
     post => K = K'Old + 64;
 
-    PROCEDURE Acn_Enc_Int_PositiveInteger_VarSize_LengthEmbedded(S : in out BitArray; K : in out Natural; IntVal:IN Asn1Int)
+    PROCEDURE Acn_Enc_Int_PositiveInteger_VarSize_LengthEmbedded(S : in out BitArray; K : in out Natural; IntVal:IN Asn1UInt)
       with depends => (
                         (K) =>(IntVal,  K),
                         (S) =>( S,  IntVal,  K)
@@ -565,7 +565,7 @@ IS
 
 
 
-    PROCEDURE Acn_Dec_Int_PositiveInteger_ConstSize (S : in BitArray; K : in out DECODE_PARAMS; IntVal:OUT Asn1Int; minVal:IN Asn1Int; maxVal:IN Asn1Int; nSizeInBits:IN Integer; Result:OUT ASN1_RESULT)
+    PROCEDURE Acn_Dec_Int_PositiveInteger_ConstSize (S : in BitArray; K : in out DECODE_PARAMS; IntVal:OUT Asn1UInt; minVal:IN Asn1UInt; maxVal:IN Asn1UInt; nSizeInBits:IN Integer; Result:OUT ASN1_RESULT)
     with depends => ( IntVal =>( K, nSizeInBits, S, minVal, maxVal ),
                 Result =>( K, nSizeInBits, S, minVal, maxVal ),
                 K      => (K,  nSizeInBits)),
@@ -576,7 +576,7 @@ IS
              ( Result.Success = False and then (IntVal = minVal));
 
 
-    PROCEDURE Acn_Dec_Int_PositiveInteger_ConstSize_8(S : in BitArray; K : in out DECODE_PARAMS; IntVal:OUT Asn1Int; minVal:IN Asn1Int; maxVal:IN Asn1Int; Result:OUT ASN1_RESULT)
+    PROCEDURE Acn_Dec_Int_PositiveInteger_ConstSize_8(S : in BitArray; K : in out DECODE_PARAMS; IntVal:OUT Asn1UInt; minVal:IN Asn1UInt; maxVal:IN Asn1UInt; Result:OUT ASN1_RESULT)
     with depends => ( (IntVal, Result) =>( K, S, minVal, maxVal  ),
                 K      =>( K)),
     pre =>  K.K+1>= S'First and  K.K + 8 <= S'Last,
@@ -584,7 +584,7 @@ IS
              ( Result.Success = True  and then ( ((IntVal>= minVal) AND (IntVal <=maxVal)))) and
              ( Result.Success = False and then (IntVal = minVal));
 
-    PROCEDURE Acn_Dec_Int_PositiveInteger_ConstSize_big_endian_16(S : in BitArray; K : in out DECODE_PARAMS; IntVal:OUT Asn1Int; minVal:IN Asn1Int; maxVal:IN Asn1Int; Result:OUT ASN1_RESULT)
+    PROCEDURE Acn_Dec_Int_PositiveInteger_ConstSize_big_endian_16(S : in BitArray; K : in out DECODE_PARAMS; IntVal:OUT Asn1UInt; minVal:IN Asn1UInt; maxVal:IN Asn1UInt; Result:OUT ASN1_RESULT)
     with depends => ( (IntVal,
                 Result) =>( K, S, minVal, maxVal  ),
                 K      =>( K)),
@@ -593,7 +593,7 @@ IS
              ( Result.Success = True  and then ( ((IntVal>= minVal) AND (IntVal <=maxVal)))) and
              ( Result.Success = False and then (IntVal = minVal));
 
-    PROCEDURE Acn_Dec_Int_PositiveInteger_ConstSize_big_endian_32(S : in BitArray; K : in out DECODE_PARAMS; IntVal:OUT Asn1Int; minVal:IN Asn1Int; maxVal:IN Asn1Int; Result:OUT ASN1_RESULT)
+    PROCEDURE Acn_Dec_Int_PositiveInteger_ConstSize_big_endian_32(S : in BitArray; K : in out DECODE_PARAMS; IntVal:OUT Asn1UInt; minVal:IN Asn1UInt; maxVal:IN Asn1UInt; Result:OUT ASN1_RESULT)
     with depends => ( (IntVal,
                 Result) =>( K, S, minVal, maxVal  ),
                 K      =>( K)),
@@ -602,7 +602,7 @@ IS
              ( Result.Success = True  and then ( ((IntVal>= minVal) AND (IntVal <=maxVal)))) and
              ( Result.Success = False and then (IntVal = minVal));
 
-    PROCEDURE Acn_Dec_Int_PositiveInteger_ConstSize_big_endian_64(S : in BitArray; K : in out DECODE_PARAMS; IntVal:OUT Asn1Int; minVal:IN Asn1Int; maxVal:IN Asn1Int; Result:OUT ASN1_RESULT)
+    PROCEDURE Acn_Dec_Int_PositiveInteger_ConstSize_big_endian_64(S : in BitArray; K : in out DECODE_PARAMS; IntVal:OUT Asn1UInt; minVal:IN Asn1UInt; maxVal:IN Asn1UInt; Result:OUT ASN1_RESULT)
     with depends => ( (IntVal,
                 Result) =>( K, S, minVal, maxVal  ),
                 K      =>( K)),
@@ -611,7 +611,7 @@ IS
              ( Result.Success = True  and then ( ((IntVal>= minVal) AND (IntVal <=maxVal)))) and
              ( Result.Success = False and then (IntVal = minVal));
 
-    PROCEDURE Acn_Dec_Int_PositiveInteger_ConstSize_little_endian_16(S : in BitArray; K : in out DECODE_PARAMS; IntVal:OUT Asn1Int; minVal:IN Asn1Int; maxVal:IN Asn1Int; Result:OUT ASN1_RESULT)
+    PROCEDURE Acn_Dec_Int_PositiveInteger_ConstSize_little_endian_16(S : in BitArray; K : in out DECODE_PARAMS; IntVal:OUT Asn1UInt; minVal:IN Asn1UInt; maxVal:IN Asn1UInt; Result:OUT ASN1_RESULT)
     with depends => ( (IntVal,
                 Result) =>( K, S, minVal, maxVal  ),
                 K      =>( K)),
@@ -620,7 +620,7 @@ IS
              ( Result.Success = True  and then ( ((IntVal>= minVal) AND (IntVal <=maxVal)))) and
              ( Result.Success = False and then (IntVal = minVal));
 
-    PROCEDURE Acn_Dec_Int_PositiveInteger_ConstSize_little_endian_32(S : in BitArray; K : in out DECODE_PARAMS; IntVal:OUT Asn1Int; minVal:IN Asn1Int; maxVal:IN Asn1Int; Result:OUT ASN1_RESULT)
+    PROCEDURE Acn_Dec_Int_PositiveInteger_ConstSize_little_endian_32(S : in BitArray; K : in out DECODE_PARAMS; IntVal:OUT Asn1UInt; minVal:IN Asn1UInt; maxVal:IN Asn1UInt; Result:OUT ASN1_RESULT)
     with depends => ( (IntVal,
                 Result) =>( K, S, minVal, maxVal  ),
                 K      =>( K)),
@@ -629,7 +629,7 @@ IS
              ( Result.Success = True  and then ( ((IntVal>= minVal) AND (IntVal <=maxVal)))) and
              ( Result.Success = False and then (IntVal = minVal));
 
-    PROCEDURE Acn_Dec_Int_PositiveInteger_ConstSize_little_endian_64(S : in BitArray; K : in out DECODE_PARAMS; IntVal:OUT Asn1Int; minVal:IN Asn1Int; maxVal:IN Asn1Int; Result:OUT ASN1_RESULT)
+    PROCEDURE Acn_Dec_Int_PositiveInteger_ConstSize_little_endian_64(S : in BitArray; K : in out DECODE_PARAMS; IntVal:OUT Asn1UInt; minVal:IN Asn1UInt; maxVal:IN Asn1UInt; Result:OUT ASN1_RESULT)
     with depends => ( (IntVal,
                 Result) =>( K, S, minVal, maxVal  ),
                 K      =>( K)),
@@ -638,7 +638,7 @@ IS
              ( Result.Success = True  and then ( ((IntVal>= minVal) AND (IntVal <=maxVal)))) and
              ( Result.Success = False and then (IntVal = minVal));
 
-    PROCEDURE Acn_Dec_Int_PositiveInteger_VarSize_LengthEmbedded(S : in BitArray; K : in out DECODE_PARAMS; IntVal:OUT Asn1Int; minVal:IN Asn1Int; Result:OUT ASN1_RESULT)
+    PROCEDURE Acn_Dec_Int_PositiveInteger_VarSize_LengthEmbedded(S : in BitArray; K : in out DECODE_PARAMS; IntVal:OUT Asn1UInt; minVal:IN Asn1UInt; Result:OUT ASN1_RESULT)
     with depends => ( (IntVal,
                 Result) =>( K, S, minVal ),
                 K      =>( K, S)),

@@ -464,12 +464,6 @@ PACKAGE BODY adaasn1rtl with SPARK_Mode IS
       return ret;
     End To_UInt;
 
-    FUNCTION To_UInt32(IntVal: Asn1Int) return Interfaces.Unsigned_32
-    --# pre IntVal >= 0 and IntVal <= Interfaces.Unsigned_32'Last;
-    IS
-    Begin
-    	return Interfaces.Unsigned_32(IntVal);
-    End To_UInt32;
 
     FUNCTION Int32_UInt32(IntVal: Interfaces.Integer_32) return Interfaces.Unsigned_32
     IS
@@ -502,12 +496,6 @@ PACKAGE BODY adaasn1rtl with SPARK_Mode IS
 
 
 
-    FUNCTION To_UInt16(IntVal: Asn1Int) return Interfaces.Unsigned_16
-    --# pre IntVal >= 0 and IntVal <= Interfaces.Unsigned_16'Last;
-    IS
-    Begin
-    	return Interfaces.Unsigned_16(IntVal);
-    End To_UInt16;
 
 
     FUNCTION Int16_UInt16(IntVal: Interfaces.Integer_16) return Interfaces.Unsigned_16
@@ -1150,42 +1138,42 @@ PACKAGE BODY adaasn1rtl with SPARK_Mode IS
 -- ACN Functions
 
 
-    PROCEDURE Acn_Enc_Int_PositiveInteger_ConstSize (S : in out BitArray; K : in out Natural; IntVal:IN Asn1Int; Size:IN Integer)
+    PROCEDURE Acn_Enc_Int_PositiveInteger_ConstSize (S : in out BitArray; K : in out Natural; IntVal:IN Asn1UInt; Size:IN Integer)
     IS
     BEGIN
-        UPER_Enc_ConstraintWholeNumber(S, K, IntVal, 0, Size);
+        UPER_Enc_ConstraintPosWholeNumber(S, K, IntVal, 0, Size);
     END Acn_Enc_Int_PositiveInteger_ConstSize;
 
 
-    PROCEDURE Acn_Enc_Int_PositiveInteger_ConstSize_8 (S : in out BitArray; K : in out Natural; IntVal:IN Asn1Int)
+    PROCEDURE Acn_Enc_Int_PositiveInteger_ConstSize_8 (S : in out BitArray; K : in out Natural; IntVal:IN Asn1UInt)
     IS
     BEGIN
-        UPER_Enc_ConstraintWholeNumber(S, K, IntVal, 0, 8);
+        UPER_Enc_ConstraintPosWholeNumber(S, K, IntVal, 0, 8);
     END Acn_Enc_Int_PositiveInteger_ConstSize_8;
 
-    PROCEDURE Acn_Enc_Int_PositiveInteger_ConstSize_big_endian_16 (S : in out BitArray; K : in out Natural; IntVal:IN Asn1Int)
+    PROCEDURE Acn_Enc_Int_PositiveInteger_ConstSize_big_endian_16 (S : in out BitArray; K : in out Natural; IntVal:IN Asn1UInt)
     IS
     BEGIN
-        UPER_Enc_ConstraintWholeNumber(S, K, IntVal, 0, 16);
+        UPER_Enc_ConstraintPosWholeNumber(S, K, IntVal, 0, 16);
     END Acn_Enc_Int_PositiveInteger_ConstSize_big_endian_16;
 
-    PROCEDURE Acn_Enc_Int_PositiveInteger_ConstSize_big_endian_32 (S : in out BitArray; K : in out Natural; IntVal:IN Asn1Int)
+    PROCEDURE Acn_Enc_Int_PositiveInteger_ConstSize_big_endian_32 (S : in out BitArray; K : in out Natural; IntVal:IN Asn1UInt)
     IS
     BEGIN
-        UPER_Enc_ConstraintWholeNumber(S, K, IntVal, 0, 32);
+        UPER_Enc_ConstraintPosWholeNumber(S, K, IntVal, 0, 32);
     END Acn_Enc_Int_PositiveInteger_ConstSize_big_endian_32;
 
-    PROCEDURE Acn_Enc_Int_PositiveInteger_ConstSize_big_endian_64 (S : in out BitArray; K : in out Natural; IntVal:IN Asn1Int)
+    PROCEDURE Acn_Enc_Int_PositiveInteger_ConstSize_big_endian_64 (S : in out BitArray; K : in out Natural; IntVal:IN Asn1UInt)
     IS
     BEGIN
-        UPER_Enc_ConstraintWholeNumber(S, K, IntVal, 0, 64);
+        UPER_Enc_ConstraintPosWholeNumber(S, K, IntVal, 0, 64);
     END Acn_Enc_Int_PositiveInteger_ConstSize_big_endian_64;
 
-    PROCEDURE Acn_Enc_Int_PositiveInteger_ConstSize_little_endian_16 (S : in out BitArray; K : in out Natural; IntVal:IN Asn1Int)
+    PROCEDURE Acn_Enc_Int_PositiveInteger_ConstSize_little_endian_16 (S : in out BitArray; K : in out Natural; IntVal:IN Asn1UInt)
     IS
 	tmp : OctetArray2;
     BEGIN
-    	tmp := UInt16_to_OctetArray2(To_UInt16(IntVal));
+    	tmp := UInt16_to_OctetArray2(Interfaces.Unsigned_16(IntVal));
 	IF NOT RequiresReverse(K>0) THEN
 		FOR I IN  RANGE_1_2 LOOP
                 --# assert K~+1>= S'First and K~ + 64 <= S'Last and K = K~ + 8*(8-I);
@@ -1199,11 +1187,11 @@ PACKAGE BODY adaasn1rtl with SPARK_Mode IS
 	END IF;
     END Acn_Enc_Int_PositiveInteger_ConstSize_little_endian_16;
 
-    PROCEDURE Acn_Enc_Int_PositiveInteger_ConstSize_little_endian_32 (S : in out BitArray; K : in out Natural; IntVal:IN Asn1Int)
+    PROCEDURE Acn_Enc_Int_PositiveInteger_ConstSize_little_endian_32 (S : in out BitArray; K : in out Natural; IntVal:IN Asn1UInt)
     IS
 	tmp : OctetArray4;
     BEGIN
-    	tmp := UInt32_to_OctetArray4(To_UInt32(IntVal));
+    	tmp := UInt32_to_OctetArray4(Interfaces.Unsigned_32(IntVal));
 	IF NOT RequiresReverse(K>0) THEN
 		FOR I IN  RANGE_1_4 LOOP
                 --# assert K~+1>= S'First and K~ + 64 <= S'Last and K = K~ + 8*(8-I);
@@ -1217,11 +1205,11 @@ PACKAGE BODY adaasn1rtl with SPARK_Mode IS
 	END IF;
     END Acn_Enc_Int_PositiveInteger_ConstSize_little_endian_32;
 
-    PROCEDURE Acn_Enc_Int_PositiveInteger_ConstSize_little_endian_64 (S : in out BitArray; K : in out Natural; IntVal:IN Asn1Int)
+    PROCEDURE Acn_Enc_Int_PositiveInteger_ConstSize_little_endian_64 (S : in out BitArray; K : in out Natural; IntVal:IN Asn1UInt)
     IS
 	tmp : OctetArray8;
     BEGIN
-    	tmp := Asn1UInt_to_OctetArray8(To_UInt(IntVal));
+    	tmp := Asn1UInt_to_OctetArray8(IntVal);
 	IF NOT RequiresReverse(K>0) THEN
 		FOR I IN  RANGE_1_8 LOOP
                 --# assert K~+1>= S'First and K~ + 64 <= S'Last and K = K~ + 8*(8-I);
@@ -1236,10 +1224,10 @@ PACKAGE BODY adaasn1rtl with SPARK_Mode IS
     END Acn_Enc_Int_PositiveInteger_ConstSize_little_endian_64;
 
 
-    PROCEDURE Acn_Enc_Int_PositiveInteger_VarSize_LengthEmbedded(S : in out BitArray; K : in out Natural; IntVal:IN Asn1Int)
+    PROCEDURE Acn_Enc_Int_PositiveInteger_VarSize_LengthEmbedded(S : in out BitArray; K : in out Natural; IntVal:IN Asn1UInt)
     IS
     BEGIN
-        UPER_Enc_SemiConstraintWholeNumber(S, K, IntVal, 0);
+        UPER_Enc_SemiConstraintPosWholeNumber(S, K, IntVal, 0);
     END Acn_Enc_Int_PositiveInteger_VarSize_LengthEmbedded;
 
 
@@ -1409,14 +1397,14 @@ PACKAGE BODY adaasn1rtl with SPARK_Mode IS
 
 
 
-    PROCEDURE Acn_Dec_Int_PositiveInteger_ConstSize (S : in BitArray; K : in out DECODE_PARAMS; IntVal:OUT Asn1Int; minVal:IN Asn1Int; maxVal:IN Asn1Int; nSizeInBits:IN Integer; Result:OUT ASN1_RESULT)
+    PROCEDURE Acn_Dec_Int_PositiveInteger_ConstSize (S : in BitArray; K : in out DECODE_PARAMS; IntVal:OUT Asn1UInt; minVal:IN Asn1UInt; maxVal:IN Asn1UInt; nSizeInBits:IN Integer; Result:OUT ASN1_RESULT)
     IS
         encVal : Asn1UInt;
     BEGIN
     	result.ErrorCode := 0;
         BitStream_Decode_Non_Negative_Integer(S, K, encVal, nSizeInBits, result.Success);
         IF result.Success THEN
-            IntVal := To_Int(encVal);
+            IntVal := encVal;
 
             Result.Success := IntVal>= MinVal AND IntVal <=MaxVal;
             IF NOT Result.Success THEN
@@ -1429,35 +1417,35 @@ PACKAGE BODY adaasn1rtl with SPARK_Mode IS
         END IF;
     END Acn_Dec_Int_PositiveInteger_ConstSize;
 
-    PROCEDURE Acn_Dec_Int_PositiveInteger_ConstSize_8(S : in BitArray; K : in out DECODE_PARAMS; IntVal:OUT Asn1Int; minVal:IN Asn1Int; maxVal:IN Asn1Int; Result:OUT ASN1_RESULT)
+    PROCEDURE Acn_Dec_Int_PositiveInteger_ConstSize_8(S : in BitArray; K : in out DECODE_PARAMS; IntVal:OUT Asn1UInt; minVal:IN Asn1UInt; maxVal:IN Asn1UInt; Result:OUT ASN1_RESULT)
     IS
     BEGIN
         Acn_Dec_Int_PositiveInteger_ConstSize(S, K, IntVal, minVal, maxVal, 8, result);
     END Acn_Dec_Int_PositiveInteger_ConstSize_8;
 
-    PROCEDURE Acn_Dec_Int_PositiveInteger_ConstSize_big_endian_16(S : in BitArray; K : in out DECODE_PARAMS; IntVal:OUT Asn1Int; minVal:IN Asn1Int; maxVal:IN Asn1Int; Result:OUT ASN1_RESULT)
+    PROCEDURE Acn_Dec_Int_PositiveInteger_ConstSize_big_endian_16(S : in BitArray; K : in out DECODE_PARAMS; IntVal:OUT Asn1UInt; minVal:IN Asn1UInt; maxVal:IN Asn1UInt; Result:OUT ASN1_RESULT)
     IS
     BEGIN
          Acn_Dec_Int_PositiveInteger_ConstSize(S, K, IntVal, minVal, maxVal, 16, result);
     END Acn_Dec_Int_PositiveInteger_ConstSize_big_endian_16;
 
-    PROCEDURE Acn_Dec_Int_PositiveInteger_ConstSize_big_endian_32(S : in BitArray; K : in out DECODE_PARAMS; IntVal:OUT Asn1Int; minVal:IN Asn1Int; maxVal:IN Asn1Int; Result:OUT ASN1_RESULT)
+    PROCEDURE Acn_Dec_Int_PositiveInteger_ConstSize_big_endian_32(S : in BitArray; K : in out DECODE_PARAMS; IntVal:OUT Asn1UInt; minVal:IN Asn1UInt; maxVal:IN Asn1UInt; Result:OUT ASN1_RESULT)
     IS
     BEGIN
          Acn_Dec_Int_PositiveInteger_ConstSize(S, K, IntVal, minVal, maxVal, 32, result);
     END Acn_Dec_Int_PositiveInteger_ConstSize_big_endian_32;
 
-    PROCEDURE Acn_Dec_Int_PositiveInteger_ConstSize_big_endian_64(S : in BitArray; K : in out DECODE_PARAMS; IntVal:OUT Asn1Int; minVal:IN Asn1Int; maxVal:IN Asn1Int; Result:OUT ASN1_RESULT)
+    PROCEDURE Acn_Dec_Int_PositiveInteger_ConstSize_big_endian_64(S : in BitArray; K : in out DECODE_PARAMS; IntVal:OUT Asn1UInt; minVal:IN Asn1UInt; maxVal:IN Asn1UInt; Result:OUT ASN1_RESULT)
     IS
     BEGIN
          Acn_Dec_Int_PositiveInteger_ConstSize(S, K, IntVal, minVal, maxVal, 64, result);
     END Acn_Dec_Int_PositiveInteger_ConstSize_big_endian_64;
 
-    PROCEDURE Acn_Dec_Int_PositiveInteger_ConstSize_little_endian_16(S : in BitArray; K : in out DECODE_PARAMS; IntVal:OUT Asn1Int; minVal:IN Asn1Int; maxVal:IN Asn1Int; Result:OUT ASN1_RESULT)
+    PROCEDURE Acn_Dec_Int_PositiveInteger_ConstSize_little_endian_16(S : in BitArray; K : in out DECODE_PARAMS; IntVal:OUT Asn1UInt; minVal:IN Asn1UInt; maxVal:IN Asn1UInt; Result:OUT ASN1_RESULT)
     IS
 	tmp : OctetArray2:=OctetArray2'(others=>0);
         I   : INTEGER;
-        ret : Asn1Int;
+        ret : Asn1UInt;
     BEGIN
 	Result := ASN1_RESULT'(Success   => TRUE,ErrorCode => ERR_INSUFFICIENT_DATA);
         ret := MinVal;
@@ -1477,7 +1465,7 @@ PACKAGE BODY adaasn1rtl with SPARK_Mode IS
             END LOOP;
 	END IF;
         IF Result.Success THEN
-	    ret := Asn1Int(OctetArray2_to_UInt16(tmp));
+	    ret := Asn1UInt(OctetArray2_to_UInt16(tmp));
             Result.Success := ret>= MinVal AND ret <=MaxVal;
         END IF;
         IF Result.Success THEN
@@ -1487,11 +1475,11 @@ PACKAGE BODY adaasn1rtl with SPARK_Mode IS
         END IF;
     END Acn_Dec_Int_PositiveInteger_ConstSize_little_endian_16;
 
-    PROCEDURE Acn_Dec_Int_PositiveInteger_ConstSize_little_endian_32(S : in BitArray; K : in out DECODE_PARAMS; IntVal:OUT Asn1Int; minVal:IN Asn1Int; maxVal:IN Asn1Int; Result:OUT ASN1_RESULT)
+    PROCEDURE Acn_Dec_Int_PositiveInteger_ConstSize_little_endian_32(S : in BitArray; K : in out DECODE_PARAMS; IntVal:OUT Asn1UInt; minVal:IN Asn1UInt; maxVal:IN Asn1UInt; Result:OUT ASN1_RESULT)
     IS
 	tmp : OctetArray4:=OctetArray4'(others=>0);
         I   : INTEGER;
-        ret : Asn1Int;
+        ret : Asn1UInt;
     BEGIN
 	Result := ASN1_RESULT'(Success   => TRUE,ErrorCode => ERR_INSUFFICIENT_DATA);
         ret := MinVal;
@@ -1511,7 +1499,7 @@ PACKAGE BODY adaasn1rtl with SPARK_Mode IS
             END LOOP;
 	END IF;
         IF Result.Success THEN
-	    ret := Asn1Int(OctetArray4_to_UInt32(tmp));
+	    ret := Asn1UInt(OctetArray4_to_UInt32(tmp));
             Result.Success := ret>= MinVal AND ret <=MaxVal;
         END IF;
         IF Result.Success THEN
@@ -1521,11 +1509,11 @@ PACKAGE BODY adaasn1rtl with SPARK_Mode IS
         END IF;
     END Acn_Dec_Int_PositiveInteger_ConstSize_little_endian_32;
 
-    PROCEDURE Acn_Dec_Int_PositiveInteger_ConstSize_little_endian_64(S : in BitArray; K : in out DECODE_PARAMS; IntVal:OUT Asn1Int; minVal:IN Asn1Int; maxVal:IN Asn1Int; Result:OUT ASN1_RESULT)
+    PROCEDURE Acn_Dec_Int_PositiveInteger_ConstSize_little_endian_64(S : in BitArray; K : in out DECODE_PARAMS; IntVal:OUT Asn1UInt; minVal:IN Asn1UInt; maxVal:IN Asn1UInt; Result:OUT ASN1_RESULT)
     IS
 	tmp : OctetArray8:=OctetArray8'(others=>0);
         I   : INTEGER;
-        ret : Asn1Int;
+        ret : Asn1UInt;
     BEGIN
 	Result := ASN1_RESULT'(Success   => TRUE,ErrorCode => ERR_INSUFFICIENT_DATA);
         ret := MinVal;
@@ -1545,7 +1533,7 @@ PACKAGE BODY adaasn1rtl with SPARK_Mode IS
             END LOOP;
 	END IF;
         IF Result.Success THEN
-	    ret := To_Int(OctetArray8_to_Asn1UInt(tmp));
+	    ret := OctetArray8_to_Asn1UInt(tmp);
             Result.Success := ret>= MinVal AND ret <=MaxVal;
         END IF;
         IF Result.Success THEN
@@ -1556,7 +1544,7 @@ PACKAGE BODY adaasn1rtl with SPARK_Mode IS
     END Acn_Dec_Int_PositiveInteger_ConstSize_little_endian_64;
 
 
-    PROCEDURE Acn_Dec_Int_PositiveInteger_VarSize_LengthEmbedded(S : in BitArray; K : in out DECODE_PARAMS; IntVal:OUT Asn1Int; minVal:IN Asn1Int; Result:OUT ASN1_RESULT)
+    PROCEDURE Acn_Dec_Int_PositiveInteger_VarSize_LengthEmbedded(S : in BitArray; K : in out DECODE_PARAMS; IntVal:OUT Asn1UInt; minVal:IN Asn1UInt; Result:OUT ASN1_RESULT)
     IS
       NBytes  : Asn1Int;
       Ret     : Asn1UInt;
@@ -1568,7 +1556,7 @@ PACKAGE BODY adaasn1rtl with SPARK_Mode IS
       IF Result.Success AND NBytes>=1 AND NBytes<=8 THEN
             Dec_UInt(S, K, Integer(nBytes), Ret, result.Success);
             IF result.Success THEN
-                IntVal := To_Int(Ret);
+                IntVal := Ret;
                 Result.Success := IntVal>= MinVal;
                 IF NOT Result.Success THEN
                      IntVal := MinVal;
