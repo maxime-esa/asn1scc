@@ -2542,7 +2542,7 @@ PACKAGE BODY adaasn1rtl with SPARK_Mode IS
 
     END Acn_Enc_String_Ascii_External_Field_Determinant;
 
-    PROCEDURE Acn_Dec_String_Ascii_External_Field_Determinant(S : in BitArray; K : in out DECODE_PARAMS; extSizeDeterminatFld : IN Asn1Int; strVal : in out String; Result:OUT ASN1_RESULT)
+    PROCEDURE Acn_Dec_String_Ascii_External_Field_Determinant(S : in BitArray; K : in out DECODE_PARAMS; extSizeDeterminatFld : IN Asn1UInt; strVal : in out String; Result:OUT ASN1_RESULT)
     IS
          I:Integer:=strVal'First;
          charIndex:Integer;
