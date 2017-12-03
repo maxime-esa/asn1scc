@@ -263,6 +263,44 @@ IS
              ( Result = True  and then ( ((IntVal>= MinVal) AND (IntVal <=MaxVal)))) and
              ( Result = False and then (IntVal = MinVal));
 
+
+
+    PROCEDURE UPER_Enc_ConstraintPosWholeNumber(
+                                            S : in out BitArray;
+                                            K : in out Natural;
+                                            IntVal : IN     Asn1UInt;
+                                            MinVal : IN     Asn1UInt;
+                                            nSizeInBits : IN Integer
+                                           )
+    with depends => ( K =>( K, nSizeInBits ),
+                S =>( S, IntVal, K, MinVal, nSizeInBits)),
+    pre =>  IntVal >= MinVal and nSizeInBits>=0 and nSizeInBits<=64 and
+             K+1>= S'First and K + nSizeInBits <= S'Last,
+    post => K = K'Old + nSizeInBits;
+
+
+
+
+    PROCEDURE UPER_Dec_ConstraintPosWholeNumber(
+                                            S : in BitArray;
+                                            K : in out DECODE_PARAMS;
+                                            IntVal : out     Asn1UInt;
+                                            MinVal : IN     Asn1UInt;
+                                            MaxVal : IN     Asn1UInt;
+                                             nSizeInBits : IN Integer;
+                                             Result : OUT boolean
+                                           )
+    with depends => ( (IntVal,Result) =>( K,      MaxVal,      MinVal,      nSizeInBits,      S ),
+                K      => (K,      nSizeInBits)),
+    pre =>  nSizeInBits>=0 and nSizeInBits<=64 and
+             K.K+1>= S'First and  K.K + nSizeInBits <= S'Last,
+    post => K.K = K'Old.K + nSizeInBits and
+             ( Result = True  and then ( ((IntVal>= MinVal) AND (IntVal <=MaxVal)))) and
+             ( Result = False and then (IntVal = MinVal));
+
+
+
+
     PROCEDURE UPER_Dec_ConstraintWholeNumberInt(
                                             S : in BitArray;
                                             K : in out DECODE_PARAMS;

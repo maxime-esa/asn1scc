@@ -554,6 +554,20 @@ PACKAGE BODY adaasn1rtl with SPARK_Mode IS
     END UPER_Enc_ConstraintWholeNumber;
 
 
+    PROCEDURE UPER_Enc_ConstraintPosWholeNumber(
+                                            S : in out BitArray;
+                                            K : in out Natural;
+                                            IntVal : IN     Asn1UInt;
+                                            MinVal : IN     Asn1UInt;
+                                            nSizeInBits : IN Integer
+                                           )
+    IS
+        encVal : Asn1UInt;
+    BEGIN
+        encVal := IntVal - MinVal;
+        BitStream_Encode_Non_Negative_Integer(S, K, encVal, nSizeInBits);
+    END UPER_Enc_ConstraintPosWholeNumber;
+
 
 
     PROCEDURE UPER_Dec_ConstraintWholeNumber(
@@ -582,6 +596,36 @@ PACKAGE BODY adaasn1rtl with SPARK_Mode IS
 
 
     END UPER_Dec_ConstraintWholeNumber;
+
+
+
+    PROCEDURE UPER_Dec_ConstraintPosWholeNumber(
+                                            S : in BitArray;
+                                            K : in out DECODE_PARAMS;
+                                            IntVal : out     Asn1UInt;
+                                            MinVal : IN     Asn1UInt;
+                                            MaxVal : IN     Asn1UInt;
+                                             nSizeInBits : IN Integer;
+                                             Result : OUT Boolean
+                                            )
+    IS
+        encVal : Asn1UInt;
+    BEGIN
+        BitStream_Decode_Non_Negative_Integer(S, K, encVal, nSizeInBits, Result);
+        IF Result THEN
+            IntVal := encVal + MinVal;
+
+            Result := IntVal>= MinVal AND IntVal <=MaxVal;
+            IF NOT Result THEN
+                IntVal := MinVal;
+            END IF;
+        ELSE
+            IntVal := MinVal;
+        END IF;
+
+
+    END UPER_Dec_ConstraintPosWholeNumber;
+
 
     PROCEDURE UPER_Dec_ConstraintWholeNumberInt(
                                             S : in BitArray;
