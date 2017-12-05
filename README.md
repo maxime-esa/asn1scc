@@ -10,14 +10,14 @@ Build status
 Executive summary
 =================
 
-This repository contains the complete source code and tests of the ASN1SCC
+This repository contains the complete source code and tests of the **ASN1SCC**
 compiler ; an ASN.1 compiler that targets C and Ada, while placing specific
-emphasis on embedded systems (no black-box run-time library, portable code
+emphasis on embedded systems: no black-box run-time library, portable code
 able to run under any OS (embedded or otherwise), no dynamic memory used
 anywhere, etc.
 
 You can read a comprehensive paper about the compiler and its features
-[here (PDF)](http://web1.see.asso.fr/erts2012/Site/0P2RUC89/7C-4.pdf),
+[here (PDF)](https://raw.githubusercontent.com/ttsiodras/asn1scc/master/Docs/paper.pdf),
 or a blog post with hands-on examples
 [here](https://www.thanassis.space/asn1.html).
 
@@ -190,7 +190,7 @@ and you can see some simple usage examples in a related
 You can also read about
 [how the compiler has been used in the TASTE project](http://www.semantix.gr/assert/)
 to target safety-critical systems - and maybe also check out the
-official [TASTE project site](http://taste.tuxfamily.org).
+official [TASTE project site](https://taste.tools).
 
 Credits
 =======
