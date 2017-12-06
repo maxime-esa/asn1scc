@@ -130,7 +130,7 @@ let rec printValue (r:DAst.AstRoot) (l:ProgrammingLanguage)  (t:Asn1Type) (paren
             | SequenceOf so -> 
                 let typeDefName  = if parentValue.IsSome then so.typeDefinition.typeDefinitionBodyWithinSeq else so.typeDefinition.name
                 let childVals = v |> List.map (fun chv -> printValue r l so.childType (Some gv) chv.kind)
-                let sDefValue = printValue r l t None (getDefaultValueByType so.childType)
+                let sDefValue = printValue r l so.childType None (getDefaultValueByType so.childType)
                 variables_a.PrintSequenceOfValue typeDefName (so.baseInfo.minSize = so.baseInfo.maxSize) (BigInteger v.Length) childVals sDefValue
             | _         -> raise(BugErrorException "unexpected type")
 
