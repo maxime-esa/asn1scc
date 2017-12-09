@@ -144,8 +144,8 @@ let private createAcnIntegerFunctionInternal (r:Asn1AcnAst.AstRoot) (l:Programmi
     let ASCII_ConstSize                              = match l with C -> acn_c.ASCII_ConstSize                            | Ada -> acn_a.ASCII_ConstSize                           
     let ASCII_VarSize_NullTerminated                 = match l with C -> acn_c.ASCII_VarSize_NullTerminated               | Ada -> acn_a.ASCII_VarSize_NullTerminated              
     //+++ todo write ada stg macros for ASCII_UINT_ConstSize, ASCII_UINT_VarSize_NullTerminated
-    let ASCII_UINT_ConstSize                         = match l with C -> acn_c.ASCII_UINT_ConstSize                       | Ada -> acn_c.ASCII_UINT_ConstSize                      
-    let ASCII_UINT_VarSize_NullTerminated            = match l with C -> acn_c.ASCII_UINT_VarSize_NullTerminated          | Ada -> acn_c.ASCII_UINT_VarSize_NullTerminated         
+    let ASCII_UINT_ConstSize                         = match l with C -> acn_c.ASCII_UINT_ConstSize                       | Ada -> acn_a.ASCII_UINT_ConstSize                      
+    let ASCII_UINT_VarSize_NullTerminated            = match l with C -> acn_c.ASCII_UINT_VarSize_NullTerminated          | Ada -> acn_a.ASCII_UINT_VarSize_NullTerminated         
     let BCD_ConstSize                                = match l with C -> acn_c.BCD_ConstSize                              | Ada -> acn_a.BCD_ConstSize                             
     let BCD_VarSize_NullTerminated                   = match l with C -> acn_c.BCD_VarSize_NullTerminated                 | Ada -> acn_a.BCD_VarSize_NullTerminated                
 
@@ -182,8 +182,8 @@ let private createAcnIntegerFunctionInternal (r:Asn1AcnAst.AstRoot) (l:Programmi
             |Asn1AcnAst.TwosComplement_ConstSize bitSize                   ->  Some(TwosComplement_ConstSize pp None None (BigInteger bitSize) nUperMin nUperMax codec, [errCode])
             |Asn1AcnAst.ASCII_ConstSize size                               ->  Some(ASCII_ConstSize pp None None nUperMin nUperMax ((BigInteger size)/8I) codec, [errCode])
             |Asn1AcnAst.ASCII_VarSize_NullTerminated nullByte              ->  Some(ASCII_VarSize_NullTerminated pp None None nUperMin nUperMax codec, [errCode])
-            |Asn1AcnAst.ASCII_UINT_ConstSize size                          ->  Some(ASCII_UINT_ConstSize pp ((BigInteger size)/8I) None codec, [errCode])
-            |Asn1AcnAst.ASCII_UINT_VarSize_NullTerminated nullByte         ->  Some(ASCII_UINT_VarSize_NullTerminated pp  None codec, [errCode])
+            |Asn1AcnAst.ASCII_UINT_ConstSize size                          ->  Some(ASCII_UINT_ConstSize pp None None nUperMin nUperMax ((BigInteger size)/8I) codec, [errCode])
+            |Asn1AcnAst.ASCII_UINT_VarSize_NullTerminated nullByte         ->  Some(ASCII_UINT_VarSize_NullTerminated pp  None None nUperMin nUperMax codec, [errCode])
             |Asn1AcnAst.BCD_ConstSize size                                 ->  Some(BCD_ConstSize pp None None nUperMin nUperMax ((BigInteger size)/4I) codec, [errCode])
             |Asn1AcnAst.BCD_VarSize_NullTerminated nullByte                ->  Some(BCD_VarSize_NullTerminated pp None None nUperMin nUperMax codec, [errCode])
         match funcBodyContent with
@@ -219,7 +219,7 @@ let createEnumComn (r:Asn1AcnAst.AstRoot) (l:ProgrammingLanguage) (codec:CommonT
     let EnumeratedEncValues                 = match l with C -> acn_c.EnumeratedEncValues             | Ada -> acn_a.EnumeratedEncValues
     let Enumerated_item                     = match l with C -> acn_c.Enumerated_item                 | Ada -> acn_a.Enumerated_item
     //let IntFullyConstraint                  = match l with C -> uper_c.IntFullyConstraint       | Ada -> uper_a.IntFullyConstraint
-    let IntFullyConstraintPos   = match l with C -> uper_c.IntFullyConstraintPos    | Ada -> uper_a.IntFullyConstraint
+    let IntFullyConstraintPos   = match l with C -> uper_c.IntFullyConstraintPos    | Ada -> uper_a.IntFullyConstraintPos
     let min = o.items |> List.map(fun x -> x.acnEncodeValue) |> Seq.min
     let max = o.items |> List.map(fun x -> x.acnEncodeValue) |> Seq.max
     let intVal = "intVal"

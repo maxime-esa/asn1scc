@@ -323,8 +323,8 @@ ret = Acn_Dec_SInt_ASCII_VarSize_NullTerminated(pBitStrm, <p>);
 <A()>
 >>
 
-ASCII_UINT_ConstSize_encode(p, nSizeInBytes, soMF) ::= "Acn_Enc_UInt_ASCII_ConstSize(pBitStrm, <if(soMF)><soMF>_encode(<p>)<else><p><endif>, <nSizeInBytes>);"
-ASCII_UINT_ConstSize_decode(p, nSizeInBytes, soMF) ::= <<
+ASCII_UINT_ConstSize_encode(p, soMF, soMFM, nUperMin, nUperMax, nSizeInBytes) ::= "Acn_Enc_UInt_ASCII_ConstSize(pBitStrm, <if(soMF)><soMF>_encode(<p>)<else><p><endif>, <nSizeInBytes>);"
+ASCII_UINT_ConstSize_decode(p, soMF, soMFM, nUperMin, nUperMax, nSizeInBytes) ::= <<
 ret = Acn_Dec_UInt_ASCII_ConstSize(pBitStrm, <p>, <nSizeInBytes>);
 <MF(soMF)>
 <A()>
@@ -337,8 +337,8 @@ ret = Acn_Dec_UInt_ASCII_VarSize_LengthEmbedded(pBitStrm, <p>);
 <A()>
 >>
 
-ASCII_UINT_VarSize_NullTerminated_encode(p, soMF) ::= "Acn_Enc_UInt_ASCII_VarSize_NullTerminated(pBitStrm, <if(soMF)><soMF>_encode(<p>)<else><p><endif>);"
-ASCII_UINT_VarSize_NullTerminated_decode(p, soMF) ::= <<
+ASCII_UINT_VarSize_NullTerminated_encode(p, soMF, soMFM, nUperMin, nUperMax) ::= "Acn_Enc_UInt_ASCII_VarSize_NullTerminated(pBitStrm, <if(soMF)><soMF>_encode(<p>)<else><p><endif>);"
+ASCII_UINT_VarSize_NullTerminated_decode(p, soMF, soMFM, nUperMin, nUperMax) ::= <<
 ret = Acn_Dec_UInt_ASCII_VarSize_NullTerminated(pBitStrm, <p>);
 <MF(soMF)>
 <A()>

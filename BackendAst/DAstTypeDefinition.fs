@@ -285,8 +285,9 @@ let createEnumerated (r:Asn1AcnAst.AstRoot) (l:ProgrammingLanguage) (t:Asn1AcnAs
         | Ada                    -> 
             //match baseDefinition with
             //| None  ->
-                let arrsEnumNames = o.items |> List.map( fun i -> i.getBackendName l)
-                let arrsEnumNamesAndValues = o.items |> List.map( fun i -> header_a.ENUMERATED_tas_decl_item (i.getBackendName l) i.definitionValue)
+                let orderedItems = o.items |> List.sortBy(fun i -> i.definitionValue)
+                let arrsEnumNames = orderedItems |> List.map( fun i -> i.getBackendName l)
+                let arrsEnumNamesAndValues = orderedItems |> List.map( fun i -> header_a.ENUMERATED_tas_decl_item (i.getBackendName l) i.definitionValue)
                 let nIndexMax = BigInteger ((Seq.length o.items)-1)
                 let completeDefintion = header_a.ENUMERATED_tas_decl typeDefinitionName arrsEnumNames arrsEnumNamesAndValues nIndexMax
                 completeDefintion, typeDefinitionName, (Some completeDefintion) 

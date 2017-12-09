@@ -385,6 +385,21 @@ ASCII_ConstSize_decode(p, soMF, soMFM, nUperMin, nUperMax, nSizeInBytes) ::= <<
 <endif>
 >>
 
+
+ASCII_UINT_ConstSize_encode(p, soMF, soMFM, nUperMin, nUperMax, nSizeInBytes) ::= "<rtlModuleName()>.Acn_Enc_UInt_ASCII_ConstSize(S, K, <MFen(soMF=soMF, soMFM=soMFM, p=p)>, <nSizeInBytes>);"
+ASCII_UINT_ConstSize_decode(p, soMF, soMFM, nUperMin, nUperMax, nSizeInBytes) ::= <<
+<if(soMF)>
+<rtlModuleName()>.Acn_Dec_UInt_ASCII_ConstSize(S, K, mapFuncIntVal, Asn1Int'First, Asn1Int'Last, <nSizeInBytes>, result);
+<MF(p=p, soMF=soMF, soMFM=soMFM, nUperMin=nUperMin, nUperMax=nUperMax)>
+
+<else>
+<rtlModuleName()>.Acn_Dec_UInt_ASCII_ConstSize(S, K, <p>, <nUperMin>, <nUperMax>, <nSizeInBytes>, result);
+
+<endif>
+>>
+
+
+
 ASCII_VarSize_LengthEmbedded_encode(p, soMF, soMFM) ::= "<rtlModuleName()>.Acn_Enc_Int_ASCII_VarSize_LengthEmbedded(S, K, <MFen(soMF=soMF, soMFM=soMFM, p=p)>);"
 ASCII_VarSize_LengthEmbedded_decode(p, soMF, soMFM) ::= <<
 <if(soMF)>
@@ -411,6 +426,18 @@ ASCII_VarSize_NullTerminated_decode(p, soMF, soMFM, nUperMin, nUperMax) ::= <<
 <endif>
 >>
 
+
+ASCII_UINT_VarSize_NullTerminated_encode(p, soMF, soMFM, nUperMin, nUperMax) ::= "<rtlModuleName()>.Acn_Enc_UInt_ASCII_VarSize_NullTerminated(S, K, <MFen(soMF=soMF, soMFM=soMFM, p=p)>);"
+ASCII_UINT_VarSize_NullTerminated_decode(p, soMF, soMFM, nUperMin, nUperMax) ::= <<
+<if(soMF)>
+<rtlModuleName()>.Acn_Dec_UInt_ASCII_VarSize_NullTerminated(S, K, mapFuncIntVal, result);
+<MF(p=p, soMF=soMF, soMFM=soMFM, nUperMin=nUperMin, nUperMax=nUperMax)>
+
+<else>
+<rtlModuleName()>.Acn_Dec_UInt_ASCII_VarSize_NullTerminated(S, K, <p>, result);
+
+<endif>
+>>
 
 
 /************************ OLD macros ***********************************************************************/
