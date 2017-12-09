@@ -559,9 +559,10 @@ let createBitStringFunction (r:Asn1AcnAst.AstRoot) (deps:Asn1AcnAst.AcnInsertedF
                     Some(fncBody, [errCode], [])
                 | Ada   ->
                     let i = sprintf "i%d" (t.id.SeqeuenceOfLevel + 1)
+                    let lv = SequenceOfIndex (t.id.SeqeuenceOfLevel + 1, None)
                     let internalItem = uper_a.InternalItem_bit_str p.p i  errCode.errCodeName codec 
-                    let fncBody = acn_c.oct_sqf_external_field p.p (p.getAcces l) i internalItem (if o.minSize=0 then None else Some (BigInteger o.minSize)) (BigInteger o.maxSize) extField nAlignSize errCode.errCodeName 1I 1I codec
-                    Some(fncBody, [errCode], [])
+                    let fncBody = acn_a.oct_sqf_external_field p.p (p.getAcces l) i internalItem (if o.minSize=0 then None else Some (BigInteger o.minSize)) (BigInteger o.maxSize) extField nAlignSize errCode.errCodeName 1I 1I codec
+                    Some(fncBody, [errCode], [lv])
         match funcBodyContent with
         | None -> None
         | Some (funcBodyContent,errCodes, localVariables) -> Some ({AcnFuncBodyResult.funcBody = funcBodyContent; errCodes = errCodes; localVariables = localVariables})
@@ -931,7 +932,8 @@ let createChoiceFunction (r:Asn1AcnAst.AstRoot) (deps:Asn1AcnAst.AcnInsertedFiel
 
     let nMin = 0I
     let nMax = BigInteger(Seq.length children) - 1I
-    let nBits = (GetNumberOfBitsForNonNegativeInteger (nMax-nMin))
+    //let nBits = (GetNumberOfBitsForNonNegativeInteger (nMax-nMin))
+    let nIndexSizeInBits = (GetNumberOfBitsForNonNegativeInteger (BigInteger (children.Length - 1)))
     let sChoiceIndexName = typeDefinition.name + "_index_tmp"
 
     let ec =  
@@ -977,7 +979,7 @@ let createChoiceFunction (r:Asn1AcnAst.AstRoot) (deps:Asn1AcnAst.AcnInsertedFiel
                         let sChoiceTypeName = typeDefinitionName
                         match ec with
                         | CEC_uper  -> 
-                            Some (choiceChild p.p (p.getAcces l) child.presentWhenName (BigInteger idx) nMax childContent.funcBody sChildName sChildTypeDef sChoiceTypeName codec)
+                            Some (choiceChild p.p (p.getAcces l) child.presentWhenName (BigInteger idx) nIndexSizeInBits nMax childContent.funcBody sChildName sChildTypeDef sChoiceTypeName codec)
                         | CEC_enum enm -> 
                             let enmItem = enm.items |> List.find(fun itm -> itm.Name.Value = child.Name.Value)
                             Some (choiceChild_Enum p.p (p.getAcces l) (enmItem.getBackendName l) child.presentWhenName childContent.funcBody sChildName sChildTypeDef sChoiceTypeName codec)
@@ -1004,8 +1006,7 @@ let createChoiceFunction (r:Asn1AcnAst.AstRoot) (deps:Asn1AcnAst.AcnInsertedFiel
             match ec with
             | CEC_uper        -> 
                 //let ret = choice p.p (p.getAcces l) childrenContent (BigInteger (children.Length - 1)) sChoiceIndexName errCode.errCodeName typeDefinitionName nBits  codec
-                let nBits = (GetNumberOfBitsForNonNegativeInteger (BigInteger (children.Length - 1)))
-                choice_uper p.p (p.getAcces l) childrenStatements nMax sChoiceIndexName typeDefinitionName nBits errCode.errCodeName codec
+                choice_uper p.p (p.getAcces l) childrenStatements nMax sChoiceIndexName typeDefinitionName nIndexSizeInBits errCode.errCodeName codec
             | CEC_enum   enm  -> 
                 let extField = getExternaField r deps t.id
                 choice_Enum p.p (p.getAcces l) childrenStatements extField errCode.errCodeName codec

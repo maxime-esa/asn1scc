@@ -79,7 +79,7 @@ let private printUnit (r:DAst.AstRoot) (l:ProgrammingLanguage) (encodings: Commo
         tases |> 
         List.map(fun tas -> 
             let type_defintion = tas.Type.typeDefinition.completeDefinition
-            let init_def        = tas.Type.initFunction.initFuncDef
+            let init_def        = match l with C -> tas.Type.initFunction.initFuncDef | Ada -> None
             let equal_defs      = collectEqualFuncs tas.Type |> List.choose(fun ef -> ef.isEqualFuncDef)
             let isValid        = 
                 match tas.Type.isValidFunction with
@@ -166,7 +166,7 @@ let private printUnit (r:DAst.AstRoot) (l:ProgrammingLanguage) (encodings: Commo
     //sourse file
     let arrsTypeAssignments = 
         tases |> List.map(fun t -> 
-            let initialize        = t.Type.initFunction.initFunc
+            let initialize        = match l with C -> t.Type.initFunction.initFunc | Ada -> None
             //let eqFuncs = collectEqualDeffinitions t |> List.choose(fun ef -> ef.isEqualFunc)
             let eqFuncs = collectEqualFuncs t.Type |> List.choose(fun ef -> ef.isEqualFunc)
             let isValid = match t.Type.isValidFunction with None -> None | Some isVal -> isVal.func

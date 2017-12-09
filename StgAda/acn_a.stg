@@ -627,6 +627,7 @@ PrintTypeNoUpdate_decode(sMainBody, bAligmentApplied, nAligmentValue) ::= <<
 >>
 
 loopFixedItem_enc (i, fixedSize, nfixedSizeUperLimit, sInternalItem, nCurOffset, nAlignSize, nIntItemMinSize, nIntItemMaxSize)::= /*nogen*/<<    
+<i> := 1;
 while <i>\<= <fixedSize> loop
     pragma Loop_Invariant (<i> >=1 and <i>\<=<fixedSize>);
     pragma Loop_Invariant (K >= K'Loop_Entry);
@@ -637,6 +638,7 @@ end loop;
 >>
 
 loopFixedItem_dec (i, fixedSize, nfixedSizeUperLimit, sInternalItem, nCurOffset, nAlignSize, nIntItemMinSize, nIntItemMaxSize)::= /*nogen*/<<    
+<i> := 1;
 while <i>\<= <fixedSize> AND result.Success loop
     pragma Loop_Invariant (<i> >=1 and <i>\<=<fixedSize>);
     pragma Loop_Invariant (K.K >= K'Loop_Entry.K);
@@ -916,13 +918,13 @@ if result.Success AND <sChoiceIndexName> \>= 0 AND  <sChoiceIndexName> \<= <nLas
 end if;
 >>
 
-ChoiceChild_encode(p, sAcc, sChildID, nChildIndex, nLastItemIndex, sChildContent, sChildName, sChildTypeDef, sChoiceTypeName) ::= <<
+ChoiceChild_encode(p, sAcc, sChildID, nChildIndex, nIndexSizeInBits, nLastItemIndex, sChildContent, sChildName, sChildTypeDef, sChoiceTypeName) ::= <<
 when <sChildID> =>
-    <rtlModuleName()>.UPER_Enc_ConstraintWholeNumber(S, K, <nChildIndex>, 0, <nLastItemIndex>);
+    <rtlModuleName()>.UPER_Enc_ConstraintWholeNumber(S, K, <nChildIndex>, 0, <nIndexSizeInBits>);
 	<sChildContent>
 >>
 
-ChoiceChild_decode(p, sAcc, sChildID, nChildIndex, nLastItemIndex, sChildContent, sChildName, sChildTypeDef, sChoiceTypeName) ::= <<
+ChoiceChild_decode(p, sAcc, sChildID, nChildIndex, nIndexSizeInBits, nLastItemIndex, sChildContent, sChildName, sChildTypeDef, sChoiceTypeName) ::= <<
 when <nChildIndex> =>
   declare
      <sChildName>_tmp:<sChildTypeDef>;

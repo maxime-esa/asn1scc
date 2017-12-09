@@ -378,13 +378,13 @@ ReferenceType2_decode(p, sModName, sName) ::= "<ReferenceType1_decode(p=p, sName
 
 /* CHOICE START*/
 
-choice_child_encode(p, sAcc, sChildID, nChildIndex, nLastItemIndex, sChildContent, sChildName, sChildTypeDef, sChoiceTypeName) ::= <<
+choice_child_encode(p, sAcc, sChildID, nChildIndex, nIndexSizeInBits, nLastItemIndex, sChildContent, sChildName, sChildTypeDef, sChoiceTypeName) ::= <<
 case <sChildID>:
 	BitStream_EncodeConstraintWholeNumber(pBitStrm, <nChildIndex>, 0, <nLastItemIndex>);
 	<sChildContent>
 	break;
 >>
-choice_child_decode(p, sAcc, sChildID, nChildIndex, nLastItemIndex, sChildContent, sChildName, sChildTypeDef, sChoiceTypeName) ::= <<
+choice_child_decode(p, sAcc, sChildID, nChildIndex, nIndexSizeInBits, nLastItemIndex, sChildContent, sChildName, sChildTypeDef, sChoiceTypeName) ::= <<
 case <nChildIndex>:
 	<p><sAcc>kind = <sChildID>;
 	<sChildContent>

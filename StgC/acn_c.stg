@@ -745,13 +745,13 @@ if (<p><sAcc>exist.<sChName>) {
 
 /* Choice like uper*/
 
-ChoiceChild_encode(p, sAcc, sChildID, nChildIndex, nLastItemIndex, sChildContent, sChildName, sChildTypeDef, sChoiceTypeName) ::= <<
+ChoiceChild_encode(p, sAcc, sChildID, nChildIndex, nIndexSizeInBits, nLastItemIndex, sChildContent, sChildName, sChildTypeDef, sChoiceTypeName) ::= <<
 case <sChildID>:
 	BitStream_EncodeConstraintWholeNumber(pBitStrm, <nChildIndex>, 0, <nLastItemIndex>);
 	<sChildContent>
 	break;
 >>
-ChoiceChild_decode(p, sAcc, sChildID, nChildIndex, nLastItemIndex, sChildContent, sChildName, sChildTypeDef, sChoiceTypeName) ::= <<
+ChoiceChild_decode(p, sAcc, sChildID, nChildIndex, nIndexSizeInBits, nLastItemIndex, sChildContent, sChildName, sChildTypeDef, sChoiceTypeName) ::= <<
 case <nChildIndex>:
 	<p><sAcc>kind = <sChildID>;
 	<sChildContent>

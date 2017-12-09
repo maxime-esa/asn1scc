@@ -163,6 +163,11 @@ let createSequenceInitFunc (r:Asn1AcnAst.AstRoot) (l:ProgrammingLanguage) (t:Asn
     let initSequence                = match l with C -> init_c.initSequence | Ada -> init_a.initSequence
     let initSequence_optionalChild  = match l with C -> init_c.initSequence_optionalChild | Ada -> init_a.initSequence_optionalChild
     let funcBody (p:FuncParamType) v = 
+        let dummy =
+            match typeDefinition.name = "MyPDU" with
+            | true  -> 1
+            | false -> 0
+
         let childrenRet = 
             match v with
             | SeqValue iv     -> 
@@ -188,8 +193,9 @@ let createSequenceInitFunc (r:Asn1AcnAst.AstRoot) (l:ProgrammingLanguage) (t:Asn
 
 let createChoiceInitFunc (r:Asn1AcnAst.AstRoot) (l:ProgrammingLanguage) (t:Asn1AcnAst.Asn1Type) (o :Asn1AcnAst.Choice) (typeDefinition:TypeDefinitionCommon) (children:ChChildInfo list) iv =     
     //let initChoice = match l with C -> init_c.initChoice | Ada -> init_a.initChoice
+
     let funcBody (p:FuncParamType) v = 
-        let children = 
+        let childrenOut = 
             match v with
             | ChValue iv     -> 
                 children |> 
@@ -202,16 +208,29 @@ let createChoiceInitFunc (r:Asn1AcnAst.AstRoot) (l:ProgrammingLanguage) (t:Asn1A
                             let chContent = chChild.chType.initFunction.initFuncBody (p.getChChild l chChild.c_name chChild.chType.isIA5String) iv.Value.kind
                             Some (init_c.initChoice p.p (p.getAcces l) chContent chChild.presentWhenName) 
                         | Ada ->
+                            let sChildTypeName = 
+                                match chChild.chType.tasInfo with
+                                | Some tasInfo  -> ToC2(r.args.TypePrefix + tasInfo.tasName)
+                                | None          ->
+                                    match chChild.chType.Kind with
+                                    | ReferenceType ref ->     ToC2(r.args.TypePrefix + ref.baseInfo.tasName.Value)
+                                    | _                 ->
+                                        chChild.chType.typeDefinition.typeDefinitionBodyWithinSeq
                             let sChildTempVarName = chChild.chType.typeDefinition.name.L1 + "_tmp"
-                            let sChildTypeName = chChild.chType.typeDefinition.typeDefinitionBodyWithinSeq
-                            let sChoiceTypeName = typeDefinition.name
+                            let sChoiceTypeName = 
+                                match t.tasInfo with
+                                | Some tasInfo  -> ToC2(r.args.TypePrefix + tasInfo.tasName)
+                                | None          ->
+                                    match chChild.chType.Kind with
+                                    | ReferenceType ref -> ToC2(r.args.TypePrefix + ref.baseInfo.tasName.Value)
+                                    | _                 -> typeDefinition.typeDefinitionBodyWithinSeq
                             let sChildName = chChild.c_name
                             let chContent = chChild.chType.initFunction.initFuncBody (VALUE sChildTempVarName) iv.Value.kind
                             Some (init_a.initChoice p.p (p.getAcces l) chContent chChild.presentWhenName sChildTempVarName sChildTypeName sChoiceTypeName sChildName) 
                         ) 
 
             | _               -> raise(BugErrorException "UnexpectedValue")
-        children |> Seq.head
+        childrenOut |> Seq.head
 
     createInitFunctionCommon r l t typeDefinition funcBody iv 
 

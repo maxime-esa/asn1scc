@@ -75,7 +75,7 @@ let createPrimitiveFunction (r:Asn1AcnAst.AstRoot) (l:ProgrammingLanguage) (code
 
 let getIntfuncBodyByCons (r:Asn1AcnAst.AstRoot) (l:ProgrammingLanguage) (codec:CommonTypes.Codec) uperRange errLoc isUnsigned (cons: IntegerTypeConstraint list) (allCons: IntegerTypeConstraint list) (errCode:ErroCode) (p:FuncParamType) = 
     let pp = match codec with CommonTypes.Encode -> p.getValue l | CommonTypes.Decode -> p.getPointer l
-    let IntNoneRequired         = match l with C -> uper_c.IntNoneRequired          | Ada -> (fun p min   errCode codec -> uper_a.IntFullyConstraint p min min 0I errCode codec)
+    let IntNoneRequired         = match l with C -> uper_c.IntNoneRequired          | Ada -> (fun p min   errCode codec -> if min > 0I then  (uper_a.IntFullyConstraintPos p min min 0I errCode codec) else (uper_a.IntFullyConstraint p min min 0I errCode codec))
     let IntFullyConstraintPos   = match l with C -> uper_c.IntFullyConstraintPos    | Ada -> uper_a.IntFullyConstraintPos
     let IntFullyConstraint      = match l with C -> uper_c.IntFullyConstraint       | Ada -> uper_a.IntFullyConstraint
     let IntSemiConstraintPos    = match l with C -> uper_c.IntSemiConstraintPos     | Ada -> uper_a.IntSemiConstraintPos
@@ -513,6 +513,7 @@ let createChoiceFunction (r:Asn1AcnAst.AstRoot) (l:ProgrammingLanguage) (codec:C
     let funcBody (errCode:ErroCode) (p:FuncParamType) = 
         match baseFuncName with
         | None ->
+            let nIndexSizeInBits = (GetNumberOfBitsForNonNegativeInteger (BigInteger (children.Length - 1)))
             let childrenContent3 =
                 children |> 
                 List.mapi(fun i child ->
@@ -528,13 +529,12 @@ let createChoiceFunction (r:Asn1AcnAst.AstRoot) (l:ProgrammingLanguage) (codec:C
                         let sChildName = child.c_name
                         let sChildTypeDef = child.chType.typeDefinition.typeDefinitionBodyWithinSeq
                         let sChoiceTypeName = typeDefinitionName
-                        choice_child p.p (p.getAcces l) child.presentWhenName (BigInteger i) (BigInteger (children.Length - 1)) childContent.funcBody sChildName sChildTypeDef sChoiceTypeName codec, childContent.localVariables, childContent.errCodes )
+                        choice_child p.p (p.getAcces l) child.presentWhenName (BigInteger i) nIndexSizeInBits (BigInteger (children.Length - 1)) childContent.funcBody sChildName sChildTypeDef sChoiceTypeName codec, childContent.localVariables, childContent.errCodes )
             let childrenContent = childrenContent3 |> List.map(fun (s,_,_) -> s)
             let childrenLocalvars = childrenContent3 |> List.collect(fun (_,s,_) -> s)
             let childrenErrCodes = childrenContent3 |> List.collect(fun (_,_,s) -> s)
-            let nBits = (GetNumberOfBitsForNonNegativeInteger (BigInteger (children.Length - 1)))
             
-            let ret = choice p.p (p.getAcces l) childrenContent (BigInteger (children.Length - 1)) sChoiceIndexName errCode.errCodeName typeDefinitionName nBits  codec
+            let ret = choice p.p (p.getAcces l) childrenContent (BigInteger (children.Length - 1)) sChoiceIndexName errCode.errCodeName typeDefinitionName nIndexSizeInBits  codec
             Some ({UPERFuncBodyResult.funcBody = ret; errCodes = errCode::childrenErrCodes; localVariables = localVariables@childrenLocalvars})
         | Some baseFuncName ->
             let funcBodyContent = callBaseTypeFunc l (p.getPointer l) baseFuncName codec

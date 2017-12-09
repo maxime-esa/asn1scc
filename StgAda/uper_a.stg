@@ -367,13 +367,13 @@ end if;
 
 /* CHOICE START*/
 
-choice_child_encode(p, sAcc, sChildID, nChildIndex, nLastItemIndex, sChildContent, sChildName, sChildTypeDef, sChoiceTypeName) ::= <<
+choice_child_encode(p, sAcc, sChildID, nChildIndex, nIndexSizeInBits, nLastItemIndex, sChildContent, sChildName, sChildTypeDef, sChoiceTypeName) ::= <<
 when <sChildID> =>
-    <rtlModuleName()>.UPER_Enc_ConstraintWholeNumber(S, K, <nChildIndex>, 0, <nLastItemIndex>);
+    <rtlModuleName()>.UPER_Enc_ConstraintWholeNumber(S, K, <nChildIndex>, 0, <nIndexSizeInBits>);
     <sChildContent>
 >>
 
-choice_child_decode(p, sAcc, sChildID, nChildIndex, nLastItemIndex, sChildContent, sChildName, sChildTypeDef, sChoiceTypeName) ::= <<
+choice_child_decode(p, sAcc, sChildID, nChildIndex, nIndexSizeInBits, nLastItemIndex, sChildContent, sChildName, sChildTypeDef, sChoiceTypeName) ::= <<
 when <nChildIndex> =>
   declare
      <sChildName>_tmp:<sChildTypeDef>;
@@ -507,14 +507,14 @@ InternalItem_string_with_alpha_decode(p, sTasName, i, nLastItemIndex, arrnAlphab
 
 
 str_FixedSize_encode(p, sTasName, i, sInternalItem, nFixedSize, nIntItemMinSize, nIntItemMaxSize, nAlignSize) ::= <<
-<i> := <sTasName>_index'First; 
+<i> := 1; 
 <loopFixedItem_enc(i=i, sInternalItem=sInternalItem, fixedSize=nFixedSize, nfixedSizeUperLimit = nFixedSize, nCurOffset="0", nAlignSize=nAlignSize, nIntItemMinSize=nIntItemMinSize, nIntItemMaxSize=nIntItemMaxSize)>
 >>
 
 str_FixedSize_decode(p, sTasName, i, sInternalItem, nFixedSize, nIntItemMinSize, nIntItemMaxSize, nAlignSize) ::= <<
 --val := <sTasName>_Init;
 result := <rtlModuleName()>.ASN1_RESULT'(Success => TRUE, ErrorCode => 0);
-<i> := <sTasName>_index'First; 
+<i> := 1; 
 <loopFixedItem_dec(i=i, sInternalItem=sInternalItem, fixedSize=nFixedSize, nfixedSizeUperLimit = nFixedSize, nCurOffset="0", nAlignSize=nAlignSize, nIntItemMinSize=nIntItemMinSize, nIntItemMaxSize=nIntItemMaxSize)>
 <p>(<nFixedSize> + 1) := adaasn1rtl.NUL;
 >>
@@ -522,7 +522,7 @@ result := <rtlModuleName()>.ASN1_RESULT'(Success => TRUE, ErrorCode => 0);
 str_VarSize_encode(p, sTasName, i, sInternalItem, nSizeMin, nSizeMax, nSizeInBits, nIntItemMinSize, nIntItemMaxSize, nAlignSize) ::= <<
 nStringLength := <rtlModuleName()>.getStringSize(<p>);
 result.Success := nStringLength >= <nSizeMin> AND nStringLength \<= <nSizeMax>;
-<i> := <sTasName>_index'First; 
+<i> := 1; 
 if result.Success THEN
     <rtlModuleName()>.UPER_Enc_ConstraintWholeNumber(S, K, <rtlModuleName()>.Asn1Int(nStringLength), <nSizeMin>, <nSizeInBits>);
     <loopFixedItem_enc(i=i, sInternalItem=sInternalItem, fixedSize="nStringLength", nfixedSizeUperLimit = nSizeMax, nCurOffset=nSizeInBits, nAlignSize=nAlignSize, nIntItemMinSize=nIntItemMinSize, nIntItemMaxSize=nIntItemMaxSize)>
@@ -533,7 +533,7 @@ str_VarSize_decode(p, sTasName, i, sInternalItem, nSizeMin, nSizeMax, nSizeInBit
 --val := <sTasName>_Init;
 result.ErrorCode := <rtlModuleName()>.ERR_INSUFFICIENT_DATA; 
 <rtlModuleName()>.UPER_Dec_ConstraintWholeNumberInt(S, K, nStringLength, <nSizeMin>, <nSizeMax>, <nSizeInBits>, result.Success);
-<i> := <sTasName>_index'First; 
+<i> := 1; 
 <loopFixedItem_dec(i=i, sInternalItem=sInternalItem, fixedSize="nStringLength", nfixedSizeUperLimit = nSizeMax, nCurOffset=nSizeInBits, nAlignSize=nAlignSize, nIntItemMinSize=nIntItemMinSize, nIntItemMaxSize=nIntItemMaxSize)>
 
 --add nulls until the end
@@ -574,13 +574,13 @@ end if;
 >>
 
 octect_FixedSize_encode(p, sTasName, i, sInternalItem, nFixedSize, nIntItemMinSize, nIntItemMaxSize, nAlignSize) ::= <<
-<i> := <sTasName>_index'First; 
+<i> := 1; 
 <loopFixedItem_enc(i=i, sInternalItem=sInternalItem, fixedSize=nFixedSize, nfixedSizeUperLimit = nFixedSize, nCurOffset="0", nAlignSize=nAlignSize, nIntItemMinSize=nIntItemMinSize, nIntItemMaxSize=nIntItemMaxSize)>
 >>
 
 octect_FixedSize_decode(p, sTasName, i, sInternalItem, nFixedSize, nIntItemMinSize, nIntItemMaxSize, nAlignSize) ::= <<
 result := <rtlModuleName()>.ASN1_RESULT'(Success => TRUE, ErrorCode => 0);
-<i> := <sTasName>_index'First; 
+<i> := 1; 
 <loopFixedItem_dec(i=i, sInternalItem=sInternalItem, fixedSize=nFixedSize, nfixedSizeUperLimit = nFixedSize, nCurOffset="0", nAlignSize=nAlignSize, nIntItemMinSize=nIntItemMinSize, nIntItemMaxSize=nIntItemMaxSize)>
 >>
 
@@ -588,7 +588,7 @@ octect_VarSize_encode(p, sAcc, sTasName, i, sInternalItem, nSizeMin, nSizeMax, n
 nStringLength := <p><sAcc>Length;
 result.Success := nStringLength >= <nSizeMin> AND nStringLength \<= <nSizeMax>;
 result.errorCode := <sErrCode>;
-<i> := <sTasName>_index'First; 
+<i> := 1; 
 if result.Success THEN
     <rtlModuleName()>.UPER_Enc_ConstraintWholeNumber(S, K, <rtlModuleName()>.Asn1Int(nStringLength), <nSizeMin>, <nSizeInBits>);
     <loopFixedItem_enc(i=i, sInternalItem=sInternalItem, fixedSize="nStringLength", nfixedSizeUperLimit = nSizeMax, nCurOffset=nSizeInBits, nAlignSize=nAlignSize, nIntItemMinSize=nIntItemMinSize, nIntItemMaxSize=nIntItemMaxSize)>
@@ -598,7 +598,8 @@ end if;
 octect_VarSize_decode(p, sAcc, sTasName, i, sInternalItem, nSizeMin, nSizeMax, nSizeInBits, nIntItemMinSize, nIntItemMaxSize, nAlignSize, sErrCode) ::= <<
 <rtlModuleName()>.UPER_Dec_ConstraintWholeNumberInt(S, K, nStringLength, <nSizeMin>, <nSizeMax>, <nSizeInBits>, result.Success);
 result.errorCode := <sErrCode>;
-<i> := <sTasName>_index'First; 
+<i> := 1; 
+<p>.Length := nStringLength;
 <loopFixedItem_dec(i=i, sInternalItem=sInternalItem, fixedSize="nStringLength", nfixedSizeUperLimit = nSizeMax, nCurOffset=nSizeInBits, nAlignSize=nAlignSize, nIntItemMinSize=nIntItemMinSize, nIntItemMaxSize=nIntItemMaxSize)>
 >>
 
