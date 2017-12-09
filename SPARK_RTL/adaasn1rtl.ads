@@ -547,6 +547,14 @@ IS
              K+1>= S'First and K + 8*nChars <= S'Last,
     post => K = K'Old + 8*nChars;
 
+    PROCEDURE Acn_Enc_UInt_ASCII_ConstSize (S : in out BitArray; K : in out Natural; IntVal:IN Asn1UInt; nChars:IN Integer)
+    with depends => ( K =>( K, nChars ),
+                S =>( S, IntVal, K, nChars)),
+    pre =>  nChars>=0 and nChars<=18 and IntVal>=0 and IntVal<=10**(nChars)-1 and
+       	     IntVal>=0 and IntVal<=999999999999999999 and
+             K+1>= S'First and K + 8*nChars <= S'Last,
+    post => K = K'Old + 8*nChars;
+
     PROCEDURE Acn_Enc_Int_ASCII_VarSize_LengthEmbedded(S : in out BitArray; K : in out Natural; IntVal:IN Asn1Int)
     with depends => ( K =>( K, IntVal ),
                 S =>( S, IntVal, K)),
@@ -766,6 +774,15 @@ IS
              ( Result.Success = False and then (IntVal = minVal));
 
     PROCEDURE Acn_Dec_Int_ASCII_ConstSize (S : in BitArray; K : in out DECODE_PARAMS; IntVal:OUT Asn1Int; minVal:IN Asn1Int; maxVal:IN Asn1Int; nChars:IN Integer; Result:OUT ASN1_RESULT)
+    with depends => ( (IntVal,
+                Result) =>( K, S, nChars, minVal, maxVal ),
+                K      =>( K, S, nChars)),
+    pre =>  K.K+1>= S'First and  K.K + 8*nChars <= S'Last and nChars>=1 and nChars<=19,
+    post => K.K >= K'Old.K  and K.K <=K'Old.K+8*nChars and
+             ( Result.Success = True  and then ( ((IntVal>= minVal) AND (IntVal <=maxVal)))) and
+             ( Result.Success = False and then (IntVal = minVal));
+
+    PROCEDURE Acn_Dec_UInt_ASCII_ConstSize (S : in BitArray; K : in out DECODE_PARAMS; IntVal:OUT Asn1UInt; minVal:IN Asn1UInt; maxVal:IN Asn1UInt; nChars:IN Integer; Result:OUT ASN1_RESULT)
     with depends => ( (IntVal,
                 Result) =>( K, S, nChars, minVal, maxVal ),
                 K      =>( K, S, nChars)),

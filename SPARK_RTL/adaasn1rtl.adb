@@ -1977,6 +1977,29 @@ PACKAGE BODY adaasn1rtl with SPARK_Mode IS
         END LOOP;
     END Acn_Enc_Int_ASCII_ConstSize;
 
+    PROCEDURE Acn_Enc_UInt_ASCII_ConstSize (S : in out BitArray; K : in out Natural; IntVal:IN Asn1UInt; nChars:IN Integer)
+    IS
+        I : INTEGER;
+        tmp  : OctetArray100 := OctetArray100'(others => Character'Pos('0'));
+        intValCopy : Asn1UInt;
+    BEGIN
+        intValCopy := IntVal;
+
+        I := nChars;
+        WHILE intValCopy>0 and I>=2 LOOP
+        --# assert I>=2 and I<=nChars and K~ + 1>=S'First and K~ + 8*nChars <= S'Last and K~=K;
+            tmp(I) := Interfaces.Unsigned_8(Character'Pos('0') + (intValCopy MOD 10));
+            I := I - 1;
+            intValCopy := intValCopy / 10;
+        END LOOP;
+
+        FOR J IN INTEGER range 1..nChars LOOP
+        --# assert K~ + 1>=S'First and K~ + 8*nChars <= S'Last and K = K~ + (J-1)*8;
+            BitStream_AppendByte(S, K, tmp(J), FALSE);
+        END LOOP;
+    END Acn_Enc_UInt_ASCII_ConstSize;
+
+
     PROCEDURE Acn_Dec_Int_ASCII_ConstSize (S : in BitArray; K : in out DECODE_PARAMS; IntVal:OUT Asn1Int; minVal:IN Asn1Int; maxVal:IN Asn1Int; nChars:IN Integer; Result:OUT ASN1_RESULT)
     IS
         digit: Asn1Byte;
@@ -2023,6 +2046,42 @@ PACKAGE BODY adaasn1rtl with SPARK_Mode IS
             intVal:=minVal;
         END IF;
     END Acn_Dec_Int_ASCII_ConstSize;
+
+
+    PROCEDURE Acn_Dec_UInt_ASCII_ConstSize (S : in BitArray; K : in out DECODE_PARAMS; IntVal:OUT Asn1UInt; minVal:IN Asn1UInt; maxVal:IN Asn1UInt; nChars:IN Integer; Result:OUT ASN1_RESULT)
+    IS
+        digit: Asn1Byte;
+        Ch   : Character;
+
+        I : Integer;
+        max_aux : CONSTANT Asn1UInt := Asn1UInt'Last/10 - 9;
+	negative:BOOLEAN:=FALSE;
+    BEGIN
+        intVal:=0;
+        Result := ASN1_RESULT'(Success   => TRUE,ErrorCode => ERR_INSUFFICIENT_DATA);
+        I := nChars;
+        WHILE I>0 AND Result.Success LOOP
+            --# assert K~.K+1>= S'First and  K~.K + 8*nChars <= S'Last and
+            --#        I>0 and I<=nChars-1 and
+            --#        K.K = K~.K + (nChars-I)*8;
+            BitStream_DecodeByte(S, K, digit, Result.Success);
+            ch := Character'Val(digit);
+            digit := Character'Pos(ch) - Character'Pos('0');
+
+            Result.Success := Result.Success AND digit<=9 AND intVal <=max_aux;
+            IF Result.Success THEN
+                intVal := intVal*10;
+                intVal := intVal + Asn1UInt(digit);
+                I:= I -1;
+            END IF;
+        END LOOP;
+
+        Result.Success := Result.Success AND THEN ((IntVal>= minVal) AND (IntVal <=maxVal));
+	IF NOT Result.Success THEN
+            intVal:=minVal;
+        END IF;
+    END Acn_Dec_UInt_ASCII_ConstSize;
+
 
     PROCEDURE Acn_Dec_Int_ASCII_VarSize_LengthEmbedded(S : in BitArray; K : in out DECODE_PARAMS; IntVal:OUT Asn1Int; Result:OUT ASN1_RESULT)
     IS
