@@ -25,7 +25,7 @@ type Asn1Type with
         | SequenceOf     x -> x.uperMinSizeInBits
         | Sequence       x -> x.uperMinSizeInBits
         | Choice         x -> x.uperMinSizeInBits
-        | ReferenceType  x -> x.baseType.uperMinSizeInBits
+        | ReferenceType  x -> x.resolvedType.uperMinSizeInBits
 
     member this.uperMaxSizeInBits =
         match this.Kind with
@@ -41,7 +41,7 @@ type Asn1Type with
         | SequenceOf     x -> x.uperMaxSizeInBits
         | Sequence       x -> x.uperMaxSizeInBits
         | Choice         x -> x.uperMaxSizeInBits
-        | ReferenceType  x -> x.baseType.uperMaxSizeInBits
+        | ReferenceType  x -> x.resolvedType.uperMaxSizeInBits
 
     member this.acnMinSizeInBits =
         match this.Kind with
@@ -57,7 +57,7 @@ type Asn1Type with
         | SequenceOf     x -> x.acnMinSizeInBits
         | Sequence       x -> x.acnMinSizeInBits
         | Choice         x -> x.acnMinSizeInBits
-        | ReferenceType  x -> x.baseType.acnMinSizeInBits
+        | ReferenceType  x -> x.resolvedType.acnMinSizeInBits
 
     member this.acnMaxSizeInBits =
         match this.Kind with
@@ -73,11 +73,11 @@ type Asn1Type with
         | SequenceOf     x -> x.acnMaxSizeInBits
         | Sequence       x -> x.acnMaxSizeInBits
         | Choice         x -> x.acnMaxSizeInBits
-        | ReferenceType  x -> x.baseType.acnMaxSizeInBits
+        | ReferenceType  x -> x.resolvedType.acnMaxSizeInBits
 
     member this.ActualType =
         match this.Kind with
-        | ReferenceType t-> t.baseType.ActualType
+        | ReferenceType t-> t.resolvedType.ActualType
         | Integer      _ -> this
         | Real         _ -> this
         | IA5String    _ -> this
@@ -91,6 +91,13 @@ type Asn1Type with
         | Sequence     _ -> this
         | Choice       _ -> this
 
+    member this.tasInfo =
+        match this.typeAssignmentInfo with
+        | Some tasInfo  -> Some tasInfo
+        | None          ->
+            match this.inheritInfo with
+            | Some tasInfo  -> Some tasInfo.AsTasInfo
+            | None          -> None
 
 type AcnInsertedType with
     member this.acnMinSizeInBits =
@@ -165,7 +172,7 @@ let rec getASN1Name  (t:Asn1Type) =
     | SequenceOf    _  -> "SEQUENCE OF"
     | Sequence      _  -> "SEQUENCE"
     | Choice        _  -> "CHOICE"
-    | ReferenceType r  -> getASN1Name r.baseType
+    | ReferenceType r  -> getASN1Name r.resolvedType
 
 type Integer with
     member this.AllCons  = this.cons@this.withcons

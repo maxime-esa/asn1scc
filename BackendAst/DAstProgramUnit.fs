@@ -41,7 +41,7 @@ let private sortTypes (typesToSort: Asn1Type list) (imports :TypeAssignmentInfo 
     let allNodes = 
         typesToSort |> 
         List.choose( fun tas -> 
-            match tas.tasInfo with
+            match tas.typeAssignmentInfo with
             | Some tasInfo  -> Some ( (tasInfo, getTypeDependencies tas ))
             | None          -> raise (BugErrorException "All TypeAssignemts must have tasInfo") )
     let independentNodes = allNodes |> List.filter(fun (_,list) -> List.isEmpty list) |> List.map(fun (n,l) -> n)
@@ -91,7 +91,7 @@ let internal createProgramUnits (files: Asn1File list)  (l:ProgrammingLanguage) 
                 Seq.collect(fun imp -> imp.Types |> List.map (fun impType ->{TypeAssignmentInfo.modName = imp.Name.Value; tasName = impType.Value}  )) |> 
                 Seq.distinct |> Seq.toList
 
-            let soretedTypes = 
+            let sortedTypes = 
                 sortTypes fileTypes importedTypes |> 
                 List.choose(fun ref -> 
                     match tasSet.TryFind ref with
@@ -103,7 +103,7 @@ let internal createProgramUnits (files: Asn1File list)  (l:ProgrammingLanguage) 
             let tetscase_specFileName = f.FileNameWithoutExtension+"_auto_tcs."+l.SpecExtention
             let tetscase_bodyFileName = f.FileNameWithoutExtension+"_auto_tcs."+l.BodyExtention
             let tetscase_name = f.FileNameWithoutExtension+"_auto_tcs"
-            {ProgramUnit.name = f.FileNameWithoutExtension; specFileName = specFileName; bodyFileName=bodyFileName; sortedTypeAssignments = soretedTypes; valueAssignments = fileValueAssignments; importedProgramUnits = importedProgramUnits; tetscase_specFileName=tetscase_specFileName; tetscase_bodyFileName=tetscase_bodyFileName; tetscase_name=tetscase_name})
+            {ProgramUnit.name = f.FileNameWithoutExtension; specFileName = specFileName; bodyFileName=bodyFileName; sortedTypeAssignments = sortedTypes; valueAssignments = fileValueAssignments; importedProgramUnits = importedProgramUnits; tetscase_specFileName=tetscase_specFileName; tetscase_bodyFileName=tetscase_bodyFileName; tetscase_name=tetscase_name})
     | Ada   -> 
 
         files |>
@@ -116,13 +116,13 @@ let internal createProgramUnits (files: Asn1File list)  (l:ProgrammingLanguage) 
                 m.Imports |>
                 Seq.collect(fun imp -> imp.Types |> List.map (fun impType ->{TypeAssignmentInfo.modName = imp.Name.Value; tasName = impType.Value})) |> 
                 Seq.distinct |> Seq.toList        
-            let soretedTypes = sortTypes moduTypes importedTypes |> List.map(fun ref -> typesMap.[ref])
+            let sortedTypes = sortTypes moduTypes importedTypes |> List.map(fun ref -> typesMap.[ref])
             let specFileName = ToC (m.Name.Value.ToLower()) + "." + l.SpecExtention
             let bodyFileName = ToC (m.Name.Value.ToLower()) + "." + l.BodyExtention
             let tetscase_specFileName = ToC (m.Name.Value.ToLower()) + "_auto_tcs." + l.SpecExtention
             let tetscase_bodyFileName = ToC (m.Name.Value.ToLower()) + "_auto_tcs." + l.BodyExtention
             let importedProgramUnits = m.Imports |> List.map (fun im -> ToC im.Name.Value)
             let tetscase_name = ToC (m.Name.Value.ToLower()+"_auto_tcs")
-            {ProgramUnit.name = ToC m.Name.Value; specFileName = specFileName; bodyFileName=bodyFileName; sortedTypeAssignments = soretedTypes; valueAssignments = valueAssignments; importedProgramUnits = importedProgramUnits; tetscase_specFileName=tetscase_specFileName; tetscase_bodyFileName=tetscase_bodyFileName; tetscase_name=tetscase_name})
+            {ProgramUnit.name = ToC m.Name.Value; specFileName = specFileName; bodyFileName=bodyFileName; sortedTypeAssignments = sortedTypes; valueAssignments = valueAssignments; importedProgramUnits = importedProgramUnits; tetscase_specFileName=tetscase_specFileName; tetscase_bodyFileName=tetscase_bodyFileName; tetscase_name=tetscase_name})
 
 

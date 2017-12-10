@@ -15,11 +15,15 @@ let getTypeDecl (r:DAst.AstRoot) (vas:ValueAssignment) =
     | Integer _
     | Real _
     | Boolean _     -> 
-        match t.tasInfo with| Some tasInfo    -> ToC2(r.args.TypePrefix + tasInfo.tasName) | None    -> t.typeDefinition.typeDefinitionBodyWithinSeq
+        match t.tasInfo with
+        | Some tasInfo    -> ToC2(r.args.TypePrefix + tasInfo.tasName) 
+        | None            -> t.typeDefinition.typeDefinitionBodyWithinSeq
     | ReferenceType ref ->
         ToC2(r.args.TypePrefix + ref.baseInfo.tasName.Value) 
     | _             -> 
-        match t.tasInfo with| Some tasInfo    -> ToC2(r.args.TypePrefix + tasInfo.tasName) | None    -> t.typeDefinition.name
+        match t.tasInfo with
+        | Some tasInfo    -> ToC2(r.args.TypePrefix + tasInfo.tasName) 
+        | None            -> t.typeDefinition.name
 
 let printValueAssignment (r:DAst.AstRoot) (l:ProgrammingLanguage)  (vas:ValueAssignment) =
     let sName = vas.c_name
@@ -301,7 +305,7 @@ let CreateTestSuiteFile (r:AstRoot) (l:ProgrammingLanguage) outDir vasName =
             | SequenceOf   _ -> "&" , "&"
             | Sequence     _ -> "&" , "&"
             | Choice       _ -> "&" , "&"
-            | ReferenceType r -> gAmber r.baseType
+            | ReferenceType r -> gAmber r.resolvedType
 
         let encAmper, initAmper = gAmber v.Type
         //let packageName = ToC m.Name.Value

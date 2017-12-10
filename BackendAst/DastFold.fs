@@ -57,7 +57,7 @@ let foldAsn1Type
                 let newChildren = chInfo.children |> foldMap (fun curState ch -> chChild t chInfo ch (loopType ch.chType  curState)) us
                 chTypeFunc t chInfo newChildren
             | ReferenceType ref     ->
-                let baseType = loopType ref.baseType us
+                let baseType = loopType ref.resolvedType us
                 refTypeFunc t ref baseType
         typeFunc t newKind
     loopType t us

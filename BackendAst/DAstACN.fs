@@ -1024,7 +1024,7 @@ let createReferenceFunction (r:Asn1AcnAst.AstRoot) (l:ProgrammingLanguage) (code
     match codec with
     | Codec.Encode  -> baseType.getAcnFunction codec, us
     | Codec.Decode  -> 
-        let paramsArgsPairs = List.zip o.acnArguments o.baseType.acnParameters
+        let paramsArgsPairs = List.zip o.acnArguments o.resolvedType.acnParameters
         let baseTypeAcnFunction = baseType.getAcnFunction codec 
         let ret =
             match baseTypeAcnFunction with

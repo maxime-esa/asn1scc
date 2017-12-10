@@ -129,6 +129,27 @@ type TypeDefinitionCommon = {
     completeDefinitionWithinSeq : string option
 }
 
+type TypeDefinition2 = {
+    /// The name of the defined type. If type is a type assignment then is the name of the type assignment.
+    /// if the type is an inner type (i.e. within a SEQUENCE/SEQUENCE OF/CHOICE) then name is created as 
+    /// parentType.typedefName + "_" + component_name
+    typedefName : string
+
+    /// the complete definition of the type
+    /// e.g. C : typedef asn1SccSint MyInt4;
+    /// and Ada: SUBTYPE MyInt4 IS adaasn1rtl.Asn1Int range 0..25;    
+    typedefBody : string
+
+    /// Child type definitions (must appear before definition this type).
+    /// Used only by composite types
+    childen : TypeDefinition2 list
+}
+
+type TypeDefintionKind =
+    | ReferenceToExistingDefinition    of string                /// indicates that no extra type definition is required (e.g. INTEGER without constraints or reference type without new constraints)
+    | NewTypeDefinition                of TypeDefinition2       /// indicates that a new type is defined
+
+
 type ErroCode = {
     errCodeValue    : int
     errCodeName     : string
@@ -543,7 +564,7 @@ and Choice = {
 
 and ReferenceType = {
     baseInfo            : Asn1AcnAst.ReferenceType
-    baseType            : Asn1Type
+    resolvedType        : Asn1Type
 
     typeDefinition      : TypeDefinitionCommon
     printValue          : (Asn1ValueKind option) -> (Asn1ValueKind) -> string
@@ -584,9 +605,13 @@ and Asn1Type = {
     acnParameters   : AcnParameter list
     Location        : SrcLoc //Line no, Char pos
 
-    //when tasInfo has a value it indicates that this type is
+    //when inheritInfo has a value it indicates that this type is
     //a specialization of a reference type.
-    tasInfo         : TypeAssignmentInfo option
+    inheritInfo   : InheritanceInfo option
+
+    //it simply indicates that this type is under a type assignment
+    typeAssignmentInfo  : TypeAssignmentInfo option
+
     Kind            : Asn1TypeKind
 }
 

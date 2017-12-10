@@ -54,6 +54,8 @@
     <Reference Include="System" />
     <Reference Include="System.Core" />
     <Reference Include="System.Numerics" />
+    <Reference Include="System.Xml" />
+    <Reference Include="System.Xml.Linq" />
   </ItemGroup>
   <ItemGroup>
     <Compile Include="AssemblyInfo.fs" />
@@ -62,6 +64,7 @@
     <Compile Include="DastFold.fs" />
     <Compile Include="DAstBaseTypesEquivalence.fs" />
     <Compile Include="DAstTypeDefinition.fs" />
+    <Compile Include="DAstTypeDefinition2.fs" />
     <Compile Include="DAstInitialize.fs" />
     <Compile Include="DAstVariables.fs" />
     <Compile Include="DAstEqual.fs" />
@@ -73,6 +76,7 @@
     <Compile Include="DAstConstruction.fs" />
     <Compile Include="GenerateFiles.fs" />
     <None Include="Script.fsx" />
+    <Compile Include="DAstExportToXml.fs" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\CommonTypes\CommonTypes.fsproj">

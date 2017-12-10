@@ -506,14 +506,21 @@ with
 
 
 
-
 type Asn1Type = {
     id              : ReferenceToType
     Kind            : Asn1TypeKind
     acnAligment     : AcnAligment option
     acnParameters   : AcnParameter list
     Location        : SrcLoc //Line no, Char pos
-    tasInfo         : TypeAssignmentInfo option
+
+    /// Indicates that this type
+    /// is a subclass (or inherits) from referencType
+    /// (i.e. this type resolves the reference type)
+    inheritInfo     : InheritanceInfo option
+
+    //it simply indicates that this type is under a type assignment
+    typeAssignmentInfo  : TypeAssignmentInfo option
+
 }
 
 
@@ -609,7 +616,7 @@ and ReferenceType = {
     tasName     : StringLoc
     tabularized : bool
     acnArguments: RelativePath list
-    baseType    : Asn1Type
+    resolvedType: Asn1Type
 }
 
 

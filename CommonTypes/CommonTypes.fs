@@ -109,11 +109,25 @@ type ScopeNode =
 type ReferenceToType = 
     | ReferenceToType of ScopeNode list
 
+
+type InheritanceInfo = {
+    modName : string
+    tasName : string
+    hasAdditionalConstraints : bool //indicates that the new type has additional constraints e.g. BaseType(200..400) vs BaseType
+}
+
+
 type TypeAssignmentInfo = {
     modName : string
     tasName : string
 }
 
+type InheritanceInfo with
+    member this.AsTasInfo =
+        {
+            TypeAssignmentInfo.tasName = this.tasName
+            modName = this.modName
+        }
 
 
 

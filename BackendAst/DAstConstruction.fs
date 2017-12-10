@@ -502,17 +502,17 @@ let private createChoiceChild (r:Asn1AcnAst.AstRoot) (l:ProgrammingLanguage) (m:
         }
     ret, us
 
-let private createReferenceType (r:Asn1AcnAst.AstRoot) (deps:Asn1AcnAst.AcnInsertedFieldDependencies) (l:ProgrammingLanguage) (m:Asn1AcnAst.Asn1Module) (t:Asn1AcnAst.Asn1Type) (o:Asn1AcnAst.ReferenceType) (newBaseType:Asn1Type, us:State) =
+let private createReferenceType (r:Asn1AcnAst.AstRoot) (deps:Asn1AcnAst.AcnInsertedFieldDependencies) (l:ProgrammingLanguage) (m:Asn1AcnAst.Asn1Module) (t:Asn1AcnAst.Asn1Type) (o:Asn1AcnAst.ReferenceType) (newResolvedType:Asn1Type, us:State) =
     let newPrms, us0 = t.acnParameters |> foldMap(fun ns p -> mapAcnParameter r deps l m t p ns) us
-    let typeDefinition = DAstTypeDefinition.createReferenceType r l t o newBaseType us
-    let equalFunction       = DAstEqual.createReferenceTypeEqualFunction r l t o newBaseType
-    let initialValue        = {Asn1Value.kind=newBaseType.initialValue;id=ReferenceToValue([],[]);loc=emptyLocation}
-    let initFunction        = DAstInitialize.createReferenceType r l t o newBaseType
-    let isValidFunction, s1     = DAstValidate.createReferenceTypeFunction r l t o typeDefinition newBaseType us
-    let uperEncFunction, s2     = DAstUPer.createReferenceFunction r l Codec.Encode t o typeDefinition isValidFunction newBaseType s1
-    let uperDecFunction, s3     = DAstUPer.createReferenceFunction r l Codec.Decode t o typeDefinition isValidFunction newBaseType s2
-    let acnEncFunction, s4      = DAstACN.createReferenceFunction r l Codec.Encode t o typeDefinition  isValidFunction newBaseType s3
-    let acnDecFunction, s5      = DAstACN.createReferenceFunction r l Codec.Decode t o typeDefinition  isValidFunction newBaseType s4
+    let typeDefinition = DAstTypeDefinition.createReferenceType r l t o newResolvedType us
+    let equalFunction       = DAstEqual.createReferenceTypeEqualFunction r l t o newResolvedType
+    let initialValue        = {Asn1Value.kind=newResolvedType.initialValue;id=ReferenceToValue([],[]);loc=emptyLocation}
+    let initFunction        = DAstInitialize.createReferenceType r l t o newResolvedType
+    let isValidFunction, s1     = DAstValidate.createReferenceTypeFunction r l t o typeDefinition newResolvedType us
+    let uperEncFunction, s2     = DAstUPer.createReferenceFunction r l Codec.Encode t o typeDefinition isValidFunction newResolvedType s1
+    let uperDecFunction, s3     = DAstUPer.createReferenceFunction r l Codec.Decode t o typeDefinition isValidFunction newResolvedType s2
+    let acnEncFunction, s4      = DAstACN.createReferenceFunction r l Codec.Encode t o typeDefinition  isValidFunction newResolvedType s3
+    let acnDecFunction, s5      = DAstACN.createReferenceFunction r l Codec.Decode t o typeDefinition  isValidFunction newResolvedType s4
     
     let uperEncDecTestFunc,s6         = EncodeDecodeTestCase.createUperEncDecFunction r l t typeDefinition equalFunction isValidFunction (Some uperEncFunction) (Some uperDecFunction) s5
     let acnEncDecTestFunc ,s7         = EncodeDecodeTestCase.createAcnEncDecFunction r l t typeDefinition equalFunction isValidFunction acnEncFunction acnDecFunction s6
@@ -520,9 +520,9 @@ let private createReferenceType (r:Asn1AcnAst.AstRoot) (deps:Asn1AcnAst.AcnInser
     let ret = 
         {
             ReferenceType.baseInfo = o
-            baseType            = newBaseType
+            resolvedType        = newResolvedType
             typeDefinition      = typeDefinition
-            printValue          = DAstVariables.createReferenceTypeFunction r l t o typeDefinition newBaseType
+            printValue          = DAstVariables.createReferenceTypeFunction r l t o typeDefinition newResolvedType
             initialValue        = initialValue
             initFunction        = initFunction
             equalFunction       = equalFunction
@@ -533,7 +533,7 @@ let private createReferenceType (r:Asn1AcnAst.AstRoot) (deps:Asn1AcnAst.AcnInser
             acnDecFunction      = acnDecFunction.Value
             uperEncDecTestFunc  = uperEncDecTestFunc
             acnEncDecTestFunc   = acnEncDecTestFunc
-            automaticTestCasesValues = newBaseType.automaticTestCasesValues
+            automaticTestCasesValues = newResolvedType.automaticTestCasesValues
         }
     ((ReferenceType ret),newPrms), s7
 
@@ -574,7 +574,8 @@ let private mapType (r:Asn1AcnAst.AstRoot) (deps:Asn1AcnAst.AcnInsertedFieldDepe
                 acnAligment   = t.acnAligment
                 acnParameters = newPrms 
                 Location      = t.Location
-                tasInfo       = t.tasInfo
+                inheritInfo = t.inheritInfo
+                typeAssignmentInfo = t.typeAssignmentInfo
             }, us)
         t
         us 

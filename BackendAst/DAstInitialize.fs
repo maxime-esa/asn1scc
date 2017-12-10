@@ -6,6 +6,7 @@ open System.IO
 
 open FsUtils
 open CommonTypes
+open Asn1AcnAstUtilFunctions
 open DAst
 open DAstUtilFunctions
 
@@ -209,7 +210,7 @@ let createChoiceInitFunc (r:Asn1AcnAst.AstRoot) (l:ProgrammingLanguage) (t:Asn1A
                             Some (init_c.initChoice p.p (p.getAcces l) chContent chChild.presentWhenName) 
                         | Ada ->
                             let sChildTypeName = 
-                                match chChild.chType.tasInfo with
+                                match chChild.chType.inheritInfo with
                                 | Some tasInfo  -> ToC2(r.args.TypePrefix + tasInfo.tasName)
                                 | None          ->
                                     match chChild.chType.Kind with

@@ -489,9 +489,9 @@ let createChoice (r:Asn1AcnAst.AstRoot) (l:ProgrammingLanguage) (t:Asn1AcnAst.As
 
 
 let createReferenceType (r:Asn1AcnAst.AstRoot) (l:ProgrammingLanguage) (t:Asn1AcnAst.Asn1Type) (o:Asn1AcnAst.ReferenceType)  (baseType:Asn1Type ) (us:State) =
-    match o.baseType.Kind with
+    match o.resolvedType.Kind with
     | Asn1AcnAst.Integer ii   when ii.isUnsigned ->
-        createInteger r l o.baseType  ii   us
+        createInteger r l o.resolvedType  ii   us
     | _             ->
         let typeDefinitionName = 
             match t.tasInfo with

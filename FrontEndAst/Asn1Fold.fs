@@ -266,7 +266,7 @@ let foldType
                         chChildFunc ch newChildType newState) us
                 choiceFunc ti newChildren newState
             | ReferenceType  ti -> 
-               let newBaseType, newState = loopType ti.baseType us
+               let newBaseType, newState = loopType ti.resolvedType us
                refType ti newBaseType newState
         typeFunc t newKind newState
     loopType t us
@@ -318,7 +318,7 @@ let foldType2
                 let newChildren = ti.children |> foldMap (fun curState ch -> chChildFunc ch (loopType ch.Type curState)) us
                 choiceFunc t ti newChildren 
             | ReferenceType  ti -> 
-               refType t ti (loopType ti.baseType us)
+               refType t ti (loopType ti.resolvedType us)
         typeFunc t newKind
     loopType t us
 

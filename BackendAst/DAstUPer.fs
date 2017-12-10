@@ -555,7 +555,7 @@ let createReferenceFunction (r:Asn1AcnAst.AstRoot) (l:ProgrammingLanguage) (code
     let baseFncName = typeDefinitionName + codec.suffix
 
     let t1              = Asn1AcnAstUtilFunctions.GetActualTypeByName r o.modName o.tasName
-    let t1WithExtensios = o.baseType;
+    let t1WithExtensios = o.resolvedType;
     match TypesEquivalence.uperEquivalence t1 t1WithExtensios with
     | true  ->
         let soSparkAnnotations = None

@@ -33,8 +33,8 @@ let rec uperEquivalence (t1:Asn1Type) (t2:Asn1Type) =
             let r1 = zipedChildren |> Seq.forall (fun (c1,c2) -> uperEquivalence c1.Type c2.Type)
             let r2 = ch1.cons = ch2.cons
             r1 && r2
-    | ReferenceType r1, _       -> uperEquivalence r1.baseType t2
-    | _ , ReferenceType r2       -> uperEquivalence t1 r2.baseType 
+    | ReferenceType r1, _       -> uperEquivalence r1.resolvedType t2
+    | _ , ReferenceType r2       -> uperEquivalence t1 r2.resolvedType 
     | _                         -> false
             
         

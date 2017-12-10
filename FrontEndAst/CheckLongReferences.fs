@@ -52,7 +52,7 @@ let private checkRelativePath (curState:AcnInsertedFieldDependencies) (parents: 
             let rec findSeq p =
                 match p.Kind with
                 | Sequence seq      -> seq.children |> Seq.exists(fun c -> c.Name = x1) 
-                | ReferenceType ref ->findSeq ref.baseType
+                | ReferenceType ref ->findSeq ref.resolvedType
                 | _            -> raise(SemanticError(x1.Location, (sprintf "Invalid reference '%s'" (path |> Seq.StrJoin "."))))
             parents |> List.rev |>  Seq.tryFind findSeq
         let rec checkSeqWithPath (seq:Asn1Type) (path : StringLoc list)=   
@@ -76,7 +76,7 @@ let private checkRelativePath (curState:AcnInsertedFieldDependencies) (parents: 
                         match ch with
                         | Asn1Child ch -> checkSeqWithPath ch.Type xs
                         | _            -> raise(SemanticError(x1.Location, (sprintf "Invalid reference '%s'" (path |> Seq.StrJoin "."))))
-            | ReferenceType ref -> checkSeqWithPath ref.baseType path
+            | ReferenceType ref -> checkSeqWithPath ref.resolvedType path
             | _            -> raise(SemanticError(x1.Location, (sprintf "Invalid reference '%s'" (path |> Seq.StrJoin "."))))
 
         match parSeq with
@@ -289,12 +289,12 @@ let rec private checkType (r:AstRoot) (parents: Asn1Type list) (curentPath : Sco
                 | _                                  -> raise(SemanticError(loc, (sprintf "Invalid argument type. Expecting %s got %s " (prm.asn1Type.ToString()) (c.Type.AsString))))
             checkRelativePath curState parents t visibleParameters   (RelativePath path)  checkParameter checkAcnType
 
-        match ref.acnArguments.Length = ref.baseType.acnParameters.Length with
+        match ref.acnArguments.Length = ref.resolvedType.acnParameters.Length with
         | true  -> ()
-        | false -> raise(SemanticError(t.Location, (sprintf "Expecting %d arguments, provide %d" ref.acnArguments.Length ref.baseType.acnParameters.Length)))
-        let ziped = List.zip ref.acnArguments ref.baseType.acnParameters
+        | false -> raise(SemanticError(t.Location, (sprintf "Expecting %d arguments, provide %d" ref.acnArguments.Length ref.resolvedType.acnParameters.Length)))
+        let ziped = List.zip ref.acnArguments ref.resolvedType.acnParameters
         let ns = ziped |> List.fold(fun s c -> checkArgument s c) curState
-        checkType r parents curentPath ref.baseType ns
+        checkType r parents curentPath ref.resolvedType ns
 
 
 let checkAst (r:AstRoot) =

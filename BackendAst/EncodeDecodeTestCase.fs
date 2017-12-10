@@ -46,13 +46,13 @@ let rec getAmberIsValid (t:Asn1AcnAst.Asn1Type) =
     | Asn1AcnAst.SequenceOf   _ -> "&"
     | Asn1AcnAst.Sequence     _ -> "&"
     | Asn1AcnAst.Choice       _ -> "&"
-    | Asn1AcnAst.ReferenceType z -> getAmberIsValid z.baseType
+    | Asn1AcnAst.ReferenceType z -> getAmberIsValid z.resolvedType
 
 let rec getAmberDecode (t:Asn1AcnAst.Asn1Type) = 
     match t.Kind with
     | Asn1AcnAst.IA5String    _ -> ""
     | Asn1AcnAst.NumericString _ -> ""
-    | Asn1AcnAst.ReferenceType z -> getAmberDecode z.baseType
+    | Asn1AcnAst.ReferenceType z -> getAmberDecode z.resolvedType
     | _                          -> "&"
 
 let createUperEncDecFunction (r:Asn1AcnAst.AstRoot) (l:ProgrammingLanguage) (t:Asn1AcnAst.Asn1Type) (typeDefinition:TypeDefinitionCommon) (eqFunc:EqualFunction) (isValidFunc: IsValidFunction option) (encFunc : UPerFunction option) (decFunc : UPerFunction option)   (us:State)  =

@@ -336,7 +336,7 @@ type Asn1AcnAst.Asn1Type with
                 | Asn1AcnAst.SequenceOf   _ -> POINTER "pVal"
                 | Asn1AcnAst.Sequence     _ -> POINTER "pVal"
                 | Asn1AcnAst.Choice       _ -> POINTER "pVal"
-                | Asn1AcnAst.ReferenceType r -> r.baseType.getParamType l c
+                | Asn1AcnAst.ReferenceType r -> r.resolvedType.getParamType l c
             | Decode  ->
                 match this.Kind with
                 | Asn1AcnAst.Integer      _ -> POINTER "pVal"
@@ -351,7 +351,7 @@ type Asn1AcnAst.Asn1Type with
                 | Asn1AcnAst.SequenceOf   _ -> POINTER "pVal"
                 | Asn1AcnAst.Sequence     _ -> POINTER "pVal"
                 | Asn1AcnAst.Choice       _ -> POINTER "pVal"
-                | Asn1AcnAst.ReferenceType r -> r.baseType.getParamType l c
+                | Asn1AcnAst.ReferenceType r -> r.resolvedType.getParamType l c
     member this.getParamValue (p:FuncParamType) (l:ProgrammingLanguage) (c:Codec) =
         match l with
         | Ada   -> p.p
@@ -371,12 +371,12 @@ type Asn1AcnAst.Asn1Type with
                 | Asn1AcnAst.SequenceOf   _ -> p.getPointer l
                 | Asn1AcnAst.Sequence     _ -> p.getPointer l
                 | Asn1AcnAst.Choice       _ -> p.getPointer l
-                | Asn1AcnAst.ReferenceType r -> r.baseType.getParamValue p l c
+                | Asn1AcnAst.ReferenceType r -> r.resolvedType.getParamValue p l c
             | Decode  ->
                 match this.Kind with
                 | Asn1AcnAst.IA5String    _  -> p.getValue l //FIXARRAY "val"
                 | Asn1AcnAst.NumericString _ -> p.getValue l// FIXARRAY "val"
-                | Asn1AcnAst.ReferenceType r -> r.baseType.getParamValue p l c
+                | Asn1AcnAst.ReferenceType r -> r.resolvedType.getParamValue p l c
                 | _                          -> p.getPointer l
         
 
@@ -385,7 +385,7 @@ type Asn1Type
 with
     member this.ActualType =
         match this.Kind with
-        | ReferenceType t-> t.baseType.ActualType
+        | ReferenceType t-> t.resolvedType.ActualType
         | Integer      _ -> this
         | Real         _ -> this
         | IA5String    _ -> this
@@ -536,7 +536,7 @@ with
         | SequenceOf   t -> t.baseInfo.uperMaxSizeInBits
         | Sequence     t -> t.baseInfo.uperMaxSizeInBits
         | Choice       t -> t.baseInfo.uperMaxSizeInBits
-        | ReferenceType ref -> ref.baseInfo.baseType.uperMaxSizeInBits
+        | ReferenceType ref -> ref.baseInfo.resolvedType.uperMaxSizeInBits
     member this.uperMinSizeInBits =
         match this.Kind with
         | Integer      t -> t.baseInfo.uperMinSizeInBits
@@ -550,7 +550,7 @@ with
         | SequenceOf   t -> t.baseInfo.uperMinSizeInBits
         | Sequence     t -> t.baseInfo.uperMinSizeInBits
         | Choice       t -> t.baseInfo.uperMinSizeInBits
-        | ReferenceType ref -> ref.baseInfo.baseType.uperMinSizeInBits
+        | ReferenceType ref -> ref.baseInfo.resolvedType.uperMinSizeInBits
 
 
     member this.acnEncFunction : AcnFunction option =
@@ -664,7 +664,7 @@ with
                 | SequenceOf   _ -> POINTER "pVal"
                 | Sequence     _ -> POINTER "pVal"
                 | Choice       _ -> POINTER "pVal"
-                | ReferenceType r -> r.baseType.getParamType l c
+                | ReferenceType r -> r.resolvedType.getParamType l c
             | Decode  ->
                 match this.Kind with
                 | Integer      _ -> POINTER "pVal"
@@ -678,7 +678,14 @@ with
                 | SequenceOf   _ -> POINTER "pVal"
                 | Sequence     _ -> POINTER "pVal"
                 | Choice       _ -> POINTER "pVal"
-                | ReferenceType r -> r.baseType.getParamType l c
+                | ReferenceType r -> r.resolvedType.getParamType l c
+    member this.tasInfo =
+        match this.typeAssignmentInfo with
+        | Some tasInfo  -> Some tasInfo
+        | None          ->
+            match this.inheritInfo with
+            | Some tasInfo  -> Some tasInfo.AsTasInfo
+            | None          -> None
 
 
 

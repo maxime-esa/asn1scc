@@ -122,7 +122,9 @@ let main argv =
         // print front ent ast as xml 
         match args.AstXmlAbsFileName with
         | ""    -> ()
-        | _     -> ExportToXml.exportFile frontEntAst acnDeps args.AstXmlAbsFileName
+        | _     -> 
+            ExportToXml.exportFile frontEntAst acnDeps args.AstXmlAbsFileName
+
 
         // construct backend ast
         let backends = 
@@ -138,7 +140,12 @@ let main argv =
         backends |> 
             Seq.iter (fun r -> 
                 GenerateFiles.generateAll outDir r args.encodings
-                exportRTL outDir r.lang)
+                exportRTL outDir r.lang
+                match args.AstXmlAbsFileName with
+                | ""    -> ()
+                | _     -> DAstExportToXml.exportFile r acnDeps ("backend_" + args.AstXmlAbsFileName)
+                
+                )
 
 
         0
