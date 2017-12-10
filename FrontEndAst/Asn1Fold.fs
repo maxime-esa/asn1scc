@@ -271,6 +271,11 @@ let foldType
         typeFunc t newKind newState
     loopType t us
 
+type ParentInfo<'T> = {
+    parent : Asn1Type
+    name   : string option
+    parentData : 'T
+}
 
 let foldType2
     intFunc
@@ -290,37 +295,45 @@ let foldType2
     chChildFunc
     refType 
     typeFunc
+    preSeqOfFunc
+    preSeqFunc
+    preChoiceFunc
+    (parentInfo : ParentInfo<'T> option)
     (t:Asn1Type) 
     (us:'UserState) 
     =
-    let rec loopType (t:Asn1Type) (us:'UserState) =
+    let rec loopType (pi : ParentInfo<'T> option) (t:Asn1Type) (us:'UserState) =
         let newKind=
             match t.Kind with
-            | Integer        ti -> intFunc t ti us
-            | Real           ti -> realFunc t ti us
-            | IA5String      ti -> ia5StringFunc t ti us
-            | NumericString  ti -> numStringFunc t ti us
-            | OctetString    ti -> octStringFunc t ti us
-            | NullType       ti -> nullTypeFunc t ti us
-            | BitString      ti -> bitStringFunc t ti us
-            | Boolean        ti -> boolFunc t ti us
-            | Enumerated     ti -> enumFunc t ti us
-            | SequenceOf     ti -> seqOfFunc t ti (loopType ti.child us) 
+            | Integer        ti -> intFunc pi t ti us
+            | Real           ti -> realFunc pi t ti us
+            | IA5String      ti -> ia5StringFunc pi t ti us
+            | NumericString  ti -> numStringFunc pi t ti us
+            | OctetString    ti -> octStringFunc pi t ti us
+            | NullType       ti -> nullTypeFunc pi t ti us
+            | BitString      ti -> bitStringFunc pi t ti us
+            | Boolean        ti -> boolFunc pi t ti us
+            | Enumerated     ti -> enumFunc pi t ti us
+            | SequenceOf     ti -> 
+                let parentData:'T = preSeqOfFunc pi t ti
+                seqOfFunc pi t ti (loopType (Some {ParentInfo.parent = t ; name=None; parentData=parentData}) ti.child us) 
             | Sequence       ti -> 
+                let parentData:'T = preSeqFunc pi t ti
                 let newChildren = 
                     ti.children |> 
                     foldMap (fun curState ch -> 
                         match ch with
-                        | Asn1Child asn1Chlld   -> seqAsn1ChildFunc asn1Chlld (loopType asn1Chlld.Type curState)
+                        | Asn1Child asn1Chlld   -> seqAsn1ChildFunc asn1Chlld (loopType (Some {ParentInfo.parent = t ; name=Some asn1Chlld.Name.Value; parentData=parentData}) asn1Chlld.Type curState)
                         | AcnChild  acnChild    -> seqAcnChildFunc  acnChild curState) us
-                seqFunc t ti newChildren 
+                seqFunc pi t ti newChildren 
             | Choice         ti -> 
-                let newChildren = ti.children |> foldMap (fun curState ch -> chChildFunc ch (loopType ch.Type curState)) us
-                choiceFunc t ti newChildren 
+                let parentData:'T = preChoiceFunc pi t ti
+                let newChildren = ti.children |> foldMap (fun curState ch -> chChildFunc ch (loopType (Some {ParentInfo.parent = t ; name=Some ch.Name.Value; parentData=parentData}) ch.Type curState)) us
+                choiceFunc pi t ti newChildren 
             | ReferenceType  ti -> 
-               refType t ti (loopType ti.resolvedType us)
-        typeFunc t newKind
-    loopType t us
+               refType pi t ti (loopType pi ti.resolvedType us)
+        typeFunc pi t newKind
+    loopType parentInfo t us
 
 // EVALUATE CONSTRAINTS
 let evalGenericCon (c:GenericConstraint<'v>)  eqFunc value =

@@ -25,13 +25,17 @@ requires_definition		: true or false
 		}
 		
 		
+let getTypeDefinitionName (r:Asn1AcnAst.AstRoot) (l:ProgrammingLanguage) (id : ReferenceToType) =
+    let longName = id.AcnAbsPath.Tail |> Seq.StrJoin "_"
+    ToC2(r.args.TypePrefix + longName.Replace("#","elem"))
 	  
 
 *)
 
-let getPotentialTypedefName (r:AstRoot) (t:Asn1Type)  (potentialTypedefName:string)   =
+
+let getTypedefName (r:Asn1AcnAst.AstRoot) (pi : Asn1Fold.ParentInfo<ParentInfoData> option) (t:Asn1AcnAst.Asn1Type)   =
     match t.typeAssignmentInfo with
-    | Some tasInfo      ->  tasInfo.tasName
+    | Some tasInfo      ->  ToC2(r.args.TypePrefix + tasInfo.tasName)
     | None              ->
         // I am the subtype of a reference type
         // If the reference type defines no extra constraints
@@ -39,8 +43,20 @@ let getPotentialTypedefName (r:AstRoot) (t:Asn1Type)  (potentialTypedefName:stri
         // otherwise
         //      define a new type that extends tasInfo
         match t.inheritInfo with
-        | Some tasInfo  when not tasInfo.hasAdditionalConstraints    ->  tasInfo.tasName
-        | _                 -> potentialTypedefName
-            
+        | Some tasInfo  when not tasInfo.hasAdditionalConstraints    ->  ToC2(r.args.TypePrefix + tasInfo.tasName)
+        | _                 -> 
+            match pi with
+            | Some parentInfo   ->
+                match parentInfo.name with
+                | Some nm -> ToC2(parentInfo.parentData.typedefName + "_" + nm)
+                | None    -> ToC2(parentInfo.parentData.typedefName + "_" + "elem")
+            | None              ->
+                raise(BugErrorException "type has no typeAssignmentInfo and No parent!!!")
+                
+    
+    
+
+let getPotentialTypedefName (r:AstRoot) (t:Asn1Type)  (potentialTypedefName:string)   =
+    t.newTypeDefName        
 
 

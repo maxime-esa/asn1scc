@@ -15,6 +15,9 @@ type State = {
     curErrCodeNames : Set<String>
 }
 
+type ParentInfoData = {
+    typedefName : string
+}
 
 
 
@@ -613,6 +616,7 @@ and Asn1Type = {
     typeAssignmentInfo  : TypeAssignmentInfo option
 
     Kind            : Asn1TypeKind
+    newTypeDefName  : string
 }
 
 
