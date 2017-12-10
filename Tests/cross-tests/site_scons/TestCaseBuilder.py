@@ -12,7 +12,7 @@ class MultipleReferenceTypeError(Exception):
 def _prepare_test_case(target, source, env):
     test_case = _get_test_case_name(source)
     for targets in izip(*[iter(target)] * len(templates)):
-        asn_header = os.path.splitext(os.path.basename(str(source[1])))[0] + '.h'
+        asn_header = os.path.splitext(os.path.basename(str(source[0])))[0] + '.h'
         dir_name = os.path.dirname(str(targets[0]))
         for target_file, template in izip(targets, templates):
             file_content = template.format(
@@ -68,7 +68,7 @@ def _has_exactly_one_reference(assignment):
 
 def _append_targets(assignment, target, env):
     name = assignment.attrib['Name']
-    target_directory = os.path.join(env['BUILD_DIR'], name)
+    target_directory = os.path.join(env['ENCODING_DIR'], name)
     target.append(File(os.path.join(target_directory, 'c_proxy.h')))
     target.append(File(os.path.join(target_directory, 'c_proxy.c')))
     target.append(File(os.path.join(target_directory, 'ada_accessors.ads')))

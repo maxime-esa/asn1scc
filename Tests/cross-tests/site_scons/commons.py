@@ -7,9 +7,12 @@ from collections import namedtuple
 
 import SCons
 
-Result = namedtuple('Result', ['test_case', 'decoder', 'encoder', 'decoded', 'encoded'])
+Result = namedtuple('Result', ['test_case', 'encoding', 'decoder', 'encoder', 'decoded', 'encoded'])
 
 class ChildProcessError(BaseException):
+    pass
+
+class TooManyFilesError(BaseException):
     pass
 
 def find_files_recursive(search_path, file_regex):
@@ -25,6 +28,17 @@ def glob_files_recursive(search_path, file_regex):
     for node in SCons.Script.Glob(os.path.join(search_path, "*")):
         _handle_node(node, regex, out)
     return out
+
+def find_unique_file(search_path, file_regex):
+    return _expect_one(find_files_recursive(search_path, file_regex))
+
+def glob_unique_file(search_path, file_regex):
+    return _expect_one(glob_files_recursive(search_path, file_regex))
+
+def _expect_one(files):
+    if len(files) != 1:
+        raise TooManyFilesError("Found {} files: {}".format(len(files), files))
+    return files[0]
 
 def _handle_node(node, regex, out):
     if type(node) is SCons.Node.FS.Dir:

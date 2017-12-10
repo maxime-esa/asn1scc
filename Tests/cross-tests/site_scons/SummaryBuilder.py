@@ -18,8 +18,9 @@ def _handle_pair(line):
     return result.encoded == result.decoded
 
 def _format_output(result):
-    return 'Test case: {} {} with decoder {} = [{}], encoder {} = [{}]'.format(
+    return 'Test case: {} using encoding {}: {} with decoder {} = [{}], encoder {} = [{}]'.format(
         result.test_case,
+        result.encoding,
         'passed' if result.decoded == result.encoded else 'failed',
         result.decoder,
         result.decoded,

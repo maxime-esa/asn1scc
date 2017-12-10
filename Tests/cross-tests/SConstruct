@@ -67,15 +67,26 @@ def get_sources_for_test_case(test_case):
 
 def generate_reports(env, test_case, sources):
     test_dir = test_case_dir(test_case)
-    test_files = glob_files_recursive(test_dir, '.*(asn1|acn)$')
-    temporary_xml = os.path.join(test_dir, '.tmp.xml')
-    test_case_output = env.TestCase(target=[temporary_xml], source=[test_files, env['ASN_BIN']])
-    asn_output = to_strings(env.Asn([],
-                            [env['ASN_BIN']] + test_files,
-                            BASENAMES=basenames(env, test_files),
-                            DIRNAME=env['BUILD_DIR']))
+    test_file = glob_unique_file(test_dir, '.*\.asn1$')
+    encodings_files = glob_files_recursive(test_dir, '.*\.acn$')
+    return [generate_reports_per_encoding(env, test_case, [test_file, encoding], sources)
+            for encoding in encodings_files]
+
+def generate_reports_per_encoding(env, test_case, test_files, sources):
+    temporary_xml = os.path.join(test_case_dir(test_case), '.tmp.xml')
+    encoding = encoding_name(test_files)
+    env['ENCODING_DIR'] = os.path.join(env['BUILD_DIR'], encoding)
+    test_case_output = env.TestCase(target=[temporary_xml],
+                                    source=[test_files, env['ASN_BIN']])
+    asn_output = to_strings(env.Asn(target=[],
+                                    source=[env['ASN_BIN']] + test_files,
+                                    BASENAMES=basenames(env, test_files),
+                                    DIRNAME=env['ENCODING_DIR']))
     return [report_for_variable(env, list(variable), sources, asn_output)
             for variable in grouper(len(templates), to_strings(test_case_output))]
+
+def encoding_name(test_files):
+    return os.path.splitext(os.path.basename(test_files[1]))[0]
 
 def report_for_variable(env, variable_files, sources, asn_output):
     all_sources = variable_files + sources + asn_output
@@ -102,14 +113,14 @@ def c_binary(env, variable, sources, ada_accessors_o):
     return env.Program([bin_name(env, 'c', variable)], obj + ada_accessors_o)
 
 def bin_name(env, language, variable):
-    return os.path.join(env['BUILD_DIR'], "{}_{}_bin".format(variable, language))
+    return os.path.join(env['ENCODING_DIR'], "{}_{}_bin".format(variable, language))
 
 def build_ada_accessors(env, variable, asn_output):
     variable_dir = variable_dirname(env, variable)
     ada_accessors_src = list(to_strings(ada_files('ada_accessors', variable_dir))
                              + get_files_with_suffix(asn_output, 'adb|ads'))
     ada_accessors_obj = [os.path.join(variable_dir, 'ada_accessors.o')]
-    include_dirs = [env['BUILD_DIR'], variable_dir]
+    include_dirs = [env['BUILD_DIR'], variable_dir, env['ENCODING_DIR']]
     output_dir = variable_dir
     env.Command(
         ada_accessors_obj,
@@ -119,7 +130,7 @@ def build_ada_accessors(env, variable, asn_output):
     return ada_accessors_obj, ada_accessors_src
 
 def variable_dirname(env, variable):
-    return os.path.join(env['BUILD_DIR'], variable)
+    return os.path.join(env['ENCODING_DIR'], variable)
 
 def ada_files(basename, directory):
     return [os.path.join(directory, basename + '.adb'),
@@ -137,9 +148,9 @@ def ada_binary(env, variable, sources, ada_accessors_o, ada_accessors_src):
                         + env.Object(os.path.join(env['BUILD_DIR'], 'file_utility.c'))
                         + ada_accessors_o,
                     ADA_MAIN = ada_main,
-                    INCLUDE=[variable_dir, env['BUILD_DIR']])[0]
+                    INCLUDE=[variable_dir, env['BUILD_DIR'], env['ENCODING_DIR']])[0]
 
 def report_name(env, variable):
-    return os.path.join(env['BUILD_DIR'], variable + "_report")
+    return os.path.join(env['ENCODING_DIR'], variable + "_report")
 
 scons_main()

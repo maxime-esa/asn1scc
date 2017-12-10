@@ -14,7 +14,7 @@ R'''
 
 #include <stdbool.h>
 #include <stdio.h>
-#include "../file_utility.h"
+#include "../../file_utility.h"
 #include "../{asn_header}"
 
 bool proxy_decode() {{
@@ -215,7 +215,7 @@ R'''
 #include <string.h>
 
 #include "../{asn_header}"
-#include "../file_utility.h"
+#include "../../file_utility.h"
 
 extern int get(char buffer[], int index);
 extern void set(char buffer[], int index, int value);
