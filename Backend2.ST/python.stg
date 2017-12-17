@@ -89,7 +89,7 @@ variables["$sName$"] = type("$sName$", (object,), {
 
 >>
 
-TypeGeneric(nLine, nPos, sSubType) ::= <<
+TypeGeneric(nLine, nPos, sAsnFile, sSubType) ::= <<
 "Line": $nLine$, "CharPositionInLine": $nPos$, $sSubType$
 >>
 

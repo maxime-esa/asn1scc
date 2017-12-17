@@ -645,13 +645,15 @@ namespace Asn1f2
 
         public static List<Tuple<ITree, string, IToken[]>> ParseAsn1InputFiles(IEnumerable<string> inputFiles)
         {
-            var groupedByFileName = inputFiles.GroupBy(f => Path.GetFileName(f)).ToList();
+            //var groupedByFileName = inputFiles.GroupBy(f => Path.GetFileName(f)).ToList();
+            var groupedByFileName = inputFiles.GroupBy(f => f).ToList();
             return groupedByFileName.Select(f => Parse(f, fs => new asn1Lexer(fs), ts => new asn1Parser(ts), p => (CommonTree)p.moduleDefinitions().Tree)).ToList();
         }
 
         public static List<Tuple<ITree, string, IToken[]>> ParseAcnInputFiles(IEnumerable<string> inputFiles)
         {
-            var groupedByFileName = inputFiles.GroupBy(f => Path.GetFileName(f));
+            //var groupedByFileName = inputFiles.GroupBy(f => Path.GetFileName(f));
+            var groupedByFileName = inputFiles.GroupBy(f => f);
             return groupedByFileName.Select(f => Parse(f, fs => new acnLexer(fs), ts => new acnParser(ts), p => (CommonTree)p.moduleDefinitions().Tree)).ToList();
         }
 

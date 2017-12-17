@@ -73,8 +73,8 @@ VasXml(sName, nLine, nPos, sType, sValue, sCName) ::= <<
 </VariableAssignment>
 >>
 
-TypeGeneric(nLine, nPos, sSubType) ::= <<
-<Type Line="$nLine$" CharPositionInLine="$nPos$">
+TypeGeneric(nLine, nPos, sAsnFile, sSubType) ::= <<
+<Type Line="$nLine$" CharPositionInLine="$nPos$" Asn1File="$sAsnFile$">
     $sSubType$
 </Type>
 >>
