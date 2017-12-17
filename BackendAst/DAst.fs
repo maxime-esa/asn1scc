@@ -132,7 +132,10 @@ type TypeDefinitionCommon = {
     completeDefinitionWithinSeq : string option
 }
 
-type TypeDefinition2 = {
+type NewTypeDefinition = {
+    /// the module where this type is defined
+    programUnit  : string
+
     /// The name of the defined type. If type is a type assignment then is the name of the type assignment.
     /// if the type is an inner type (i.e. within a SEQUENCE/SEQUENCE OF/CHOICE) then name is created as 
     /// parentType.typedefName + "_" + component_name
@@ -141,16 +144,23 @@ type TypeDefinition2 = {
     /// the complete definition of the type
     /// e.g. C : typedef asn1SccSint MyInt4;
     /// and Ada: SUBTYPE MyInt4 IS adaasn1rtl.Asn1Int range 0..25;    
-    typedefBody : string
-
-    /// Child type definitions (must appear before definition this type).
-    /// Used only by composite types
-    childen : TypeDefinition2 list
+    /// For composite types, typedefBody contains also the definition of any 
+    /// inner children
+    typedefBody : unit -> string
 }
 
-type TypeDefintionKind =
-    | ReferenceToExistingDefinition    of string                /// indicates that no extra type definition is required (e.g. INTEGER without constraints or reference type without new constraints)
-    | NewTypeDefinition                of TypeDefinition2       /// indicates that a new type is defined
+type ReferenceToExistingDefinition = {
+    /// the module where this type is defined
+    programUnit  : string
+    /// The name of the defined type. 
+    typedefName : string
+}
+
+type TypeDefintion2 =
+    /// indicates that no extra type definition is required (e.g. INTEGER without constraints or type reference type without new constraints)
+    | ReferenceToExistingDefinition    of ReferenceToExistingDefinition                
+    /// indicates that a new type is defined
+    | NewTypeDefinition                of NewTypeDefinition       
 
 
 type ErroCode = {

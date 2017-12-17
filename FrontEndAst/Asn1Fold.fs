@@ -271,9 +271,14 @@ let foldType
         typeFunc t newKind newState
     loopType t us
 
+/// Provides information about the parent of one type.
 type ParentInfo<'T> = {
+    /// the parent ASN.1 Type
     parent : Asn1Type
+    /// the name of the component or alternative this type exists
     name   : string option
+    /// Information obtained by the preSeqOfFunc, preSeqFunc and preChoiceFunc
+    /// which are called before visting the children
     parentData : 'T
 }
 

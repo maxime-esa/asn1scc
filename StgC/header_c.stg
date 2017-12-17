@@ -46,6 +46,10 @@ Define_Type(sTypeDefinitionBody, sTypeDefinitionName, noArrLength, arrsChildldre
 typedef <sTypeDefinitionBody> <sTypeDefinitionName><if(noArrLength)>[<noArrLength>]<endif>;
 >>
 
+Define_SubType(sTypeDefinitionName, soOtherPackage, sOtherType) ::= <<
+typedef <sOtherType> <sTypeDefinitionName>;
+>>
+
 
 Declare_Integer() ::="asn1SccSint"
 Declare_PosInteger() ::="asn1SccUint"

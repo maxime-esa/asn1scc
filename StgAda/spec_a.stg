@@ -353,8 +353,13 @@ PROCEDURE <sTasName>_ACN_Encode_update_<sParamName>(val : IN <sTasName>; <sParam
 PrintErrorCode(sErrorName, nErrCode, sComment) ::= "<sErrorName>:CONSTANT INTEGER := <nErrCode>; -- <sComment>"
 
 Declare_spark_Integer() ::="<rtlModuleName()>.Asn1Int"
+
+Declare_IntegerNoRTL() ::="Asn1Int"
+Declare_PosIntegerNoRTL() ::="Asn1UInt"
+
 Declare_Integer() ::="<rtlModuleName()>.Asn1Int"
 Declare_PosInteger() ::="<rtlModuleName()>.Asn1UInt"
+
 Declare_PosInteger_min_max(nMin, nMax) ::="<rtlModuleName()>.Asn1UInt range <nMin>..<nMax>"
 Declare_PosInteger_posInf(nMin) ::="<rtlModuleName()>.Asn1UInt range <nMin>..<rtlModuleName()>.Asn1UInt'Last"
 
@@ -365,10 +370,12 @@ Declare_Integer_negInf(nMax) ::="<rtlModuleName()>.Asn1Int range <rtlModuleName(
 
 
 Declare_BOOLEAN() ::= "<rtlModuleName()>.Asn1Boolean"
-
 Declare_REAL() ::= "<rtlModuleName()>.Asn1Real"
-
 Declare_NULL() ::= "<rtlModuleName()>.Asn1NullType"
+
+Declare_BOOLEANNoRTL() ::= "Asn1Boolean"
+Declare_REALNoRTL() ::= "Asn1Real"
+Declare_NULLNoRTL() ::= "Asn1NullType"
 
 Declare_Reference1(sName) ::= "<sName>"
 Declare_Reference2(sModName,sName) ::= "<sModName>.<sName>"
@@ -376,3 +383,6 @@ Declare_Reference2(sModName,sName) ::= "<sModName>.<sName>"
 
 
 
+Define_SubType(sTypeDefinitionName, soOtherPackage, sOtherType) ::= <<
+SUBTYPE <sTypeDefinitionName> is <if(soOtherPackage)><soOtherPackage>.<endif><sOtherType>;
+>>

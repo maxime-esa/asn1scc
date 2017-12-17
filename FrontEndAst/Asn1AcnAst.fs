@@ -518,7 +518,7 @@ type Asn1Type = {
     /// (i.e. this type resolves the reference type)
     inheritInfo     : InheritanceInfo option
 
-    //it simply indicates that this type is under a type assignment
+    /// it indicates that this type is directly under a type assignment.
     typeAssignmentInfo  : TypeAssignmentInfo option
 
 }

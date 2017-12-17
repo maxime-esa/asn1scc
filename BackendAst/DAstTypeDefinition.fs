@@ -29,7 +29,7 @@ let getCompleteDefinition l (typeOrSubsType:TypeOrSubsType) typeDefinitionBody t
     | Ada   ->
         let typeOrSubsType = sprintf "%A" typeOrSubsType 
         header_a.Define_Type typeOrSubsType typeDefinitionName typeDefinitionBody  childldrenCompleteDefintions
-
+(*
 let hasSingleValueConstraint (c:SizableTypeConstraint<'v>) =
     foldSizableTypeConstraint2
         (fun e1 e2 b s      -> e1 || e2, s)
@@ -42,7 +42,7 @@ let hasSingleValueConstraint (c:SizableTypeConstraint<'v>) =
         (fun intCon s       -> false,s)
         c
         0 |> fst
-
+*)
 
 
 //let ds = {dummy=0}
