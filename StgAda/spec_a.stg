@@ -382,7 +382,10 @@ Declare_Reference2(sModName,sName) ::= "<sModName>.<sName>"
 
 
 
+Define_SubType_int_range(soParentTypePackage, sParentType, noMin, noMax) ::= <<
+range <if(noMin)><noMin><else><if(soParentTypePackage)><soParentTypePackage>.<endif><sParentType>'First<endif> .. <if(noMax)><noMax><else><if(soParentTypePackage)><soParentTypePackage>.<endif><sParentType>'Last<endif>
+>>
 
-Define_SubType(sTypeDefinitionName, soOtherPackage, sOtherType) ::= <<
-SUBTYPE <sTypeDefinitionName> is <if(soOtherPackage)><soOtherPackage>.<endif><sOtherType>;
+Define_SubType(sTypeDefinitionName, soParentTypePackage, sParentType, soNewRange) ::= <<
+SUBTYPE <sTypeDefinitionName> is <if(soParentTypePackage)><soParentTypePackage>.<endif><sParentType><if(soNewRange)> <soNewRange><endif>;
 >>

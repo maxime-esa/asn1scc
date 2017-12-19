@@ -46,8 +46,9 @@ Define_Type(sTypeDefinitionBody, sTypeDefinitionName, noArrLength, arrsChildldre
 typedef <sTypeDefinitionBody> <sTypeDefinitionName><if(noArrLength)>[<noArrLength>]<endif>;
 >>
 
-Define_SubType(sTypeDefinitionName, soOtherPackage, sOtherType) ::= <<
-typedef <sOtherType> <sTypeDefinitionName>;
+
+Define_SubType(sTypeDefinitionName, soParentTypePackage, sParentType, soNewRange) ::= <<
+typedef <sParentType> <sTypeDefinitionName>;
 >>
 
 

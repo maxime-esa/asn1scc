@@ -219,6 +219,19 @@ type LocalVariable with
         | C,    AcnInsertedChild(name, vartype)           -> sprintf "%s %s;" vartype name
         | Ada,    AcnInsertedChild(name, vartype)         -> sprintf "%s:%s;" name vartype
 
+
+type TypeDefintionOrReference with 
+    member this.longTypedefName  =
+        match this with
+        | TypeDefinition  td ->
+            td.typedefName
+        | ReferenceToExistingDefinition ref ->
+            match ref.programUnit with
+            | Some pu -> pu + "." + ref.typedefName
+            | None    -> ref.typedefName
+            
+
+
 type Asn1AcnAst.NamedItem with
     member this.getBackendName l = 
         match l with
@@ -634,7 +647,8 @@ with
         | Choice       t -> t.automaticTestCasesValues
         | ReferenceType t-> t.automaticTestCasesValues
 
-
+    member this.typeDefintionOrReference : TypeDefintionOrReference =
+        raise(BugErrorException "Unimplemented property")
 
     member this.isIA5String =
         match this.Kind with

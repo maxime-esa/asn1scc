@@ -132,10 +132,7 @@ type TypeDefinitionCommon = {
     completeDefinitionWithinSeq : string option
 }
 
-type NewTypeDefinition = {
-    /// the module where this type is defined
-    programUnit  : string
-
+type TypeDefinition = {
     /// The name of the defined type. If type is a type assignment then is the name of the type assignment.
     /// if the type is an inner type (i.e. within a SEQUENCE/SEQUENCE OF/CHOICE) then name is created as 
     /// parentType.typedefName + "_" + component_name
@@ -151,16 +148,17 @@ type NewTypeDefinition = {
 
 type ReferenceToExistingDefinition = {
     /// the module where this type is defined
-    programUnit  : string
+    /// if the value is not present then is the same as the "caller"
+    programUnit  : string option
     /// The name of the defined type. 
     typedefName : string
 }
 
-type TypeDefintion2 =
+type TypeDefintionOrReference =
     /// indicates that no extra type definition is required (e.g. INTEGER without constraints or type reference type without new constraints)
     | ReferenceToExistingDefinition    of ReferenceToExistingDefinition                
     /// indicates that a new type is defined
-    | NewTypeDefinition                of NewTypeDefinition       
+    | TypeDefinition                of TypeDefinition       
 
 
 type ErroCode = {
