@@ -93,7 +93,8 @@ type Asn1Type with
 
     member this.tasInfo =
         match this.typeAssignmentInfo with
-        | Some tasInfo  -> Some tasInfo
+        | Some (TypeAssignmentInfo tasInfo)  -> Some tasInfo
+        | Some (ValueAssignmentInfo tasInfo)  -> None
         | None          ->
             match this.inheritInfo with
             | Some tasInfo  -> Some tasInfo.AsTasInfo

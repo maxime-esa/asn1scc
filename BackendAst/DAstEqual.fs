@@ -149,7 +149,7 @@ let isEqualBodyChoiceChild  (choiceTypeDefName:string) (l:ProgrammingLanguage) (
     | Ada       ->
         equal_a.isEqual_Choice_Child o.presentWhenName sInnerStatement, lvars
 
-let isEqualBodyChoice  (typeDefinition:TypeDefinitionCommon) (l:ProgrammingLanguage) (children:ChChildInfo list) (childAccess: string) (v1:string) (v2:string)  = 
+let isEqualBodyChoice  (typeDefinitionCmn:TypeDefinitionCommon) (l:ProgrammingLanguage) (children:ChChildInfo list) (childAccess: string) (v1:string) (v2:string)  = 
     let childrenConent,lvars =   
         children |> 
         List.map(fun c -> 
@@ -163,7 +163,7 @@ let isEqualBodyChoice  (typeDefinition:TypeDefinitionCommon) (l:ProgrammingLangu
     let lvars = lvars |> List.collect id
     match l with
     |C   -> Some(equal_c.isEqual_Choice v1 v2 childAccess childrenConent, lvars)
-    |Ada -> Some(equal_a.isEqual_Choice v1 v2 typeDefinition.name childrenConent, lvars)
+    |Ada -> Some(equal_a.isEqual_Choice v1 v2 typeDefinitionCmn.name childrenConent, lvars)
 
 
 let getEqualFuncName (r:Asn1AcnAst.AstRoot) (l:ProgrammingLanguage) (id : ReferenceToType) =

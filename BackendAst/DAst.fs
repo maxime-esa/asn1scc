@@ -267,6 +267,7 @@ type Integer = {
     //baseTypeEquivalence: BaseTypesEquivalence<Integer>
 
     typeDefinition      : TypeDefinitionCommon
+    definitionOrRef     : TypeDefintionOrReference
     printValue          : (Asn1ValueKind option) -> (Asn1ValueKind) -> string
     initialValue        : IntegerValue
     initFunction        : InitFunction
@@ -289,6 +290,7 @@ type Enumerated = {
     //DAst properties
     //baseTypeEquivalence: BaseTypesEquivalence<Enumerated>
     typeDefinition      : TypeDefinitionCommon
+    definitionOrRef     : TypeDefintionOrReference
     printValue          : (Asn1ValueKind option) -> (Asn1ValueKind) -> string
     initialValue        : EnumValue
     initFunction        : InitFunction
@@ -310,6 +312,7 @@ type Real = {
     //DAst properties
     //baseTypeEquivalence: BaseTypesEquivalence<Real>
     typeDefinition      : TypeDefinitionCommon
+    definitionOrRef     : TypeDefintionOrReference
     printValue          : (Asn1ValueKind option) -> (Asn1ValueKind) -> string
     initialValue        : RealValue
     initFunction        : InitFunction
@@ -332,6 +335,7 @@ type Boolean = {
     //DAst properties
     //baseTypeEquivalence: BaseTypesEquivalence<Boolean>
     typeDefinition      : TypeDefinitionCommon
+    definitionOrRef     : TypeDefintionOrReference
     printValue          : (Asn1ValueKind option) -> (Asn1ValueKind) -> string
     initialValue        : BooleanValue
     initFunction        : InitFunction
@@ -354,6 +358,7 @@ type NullType = {
     //DAst properties
     //baseTypeEquivalence: BaseTypesEquivalence<NullType>
     typeDefinition      : TypeDefinitionCommon
+    definitionOrRef     : TypeDefintionOrReference
     printValue          : (Asn1ValueKind option) -> (Asn1ValueKind) -> string
     initFunction        : InitFunction
     initialValue        : NullValue
@@ -373,6 +378,7 @@ type StringType = {
     //DAst properties
     //baseTypeEquivalence: BaseTypesEquivalence<StringType>
     typeDefinition      : TypeDefinitionCommon
+    definitionOrRef     : TypeDefintionOrReference
     printValue          : (Asn1ValueKind option) -> (Asn1ValueKind) -> string
     initialValue        :  StringValue
     initFunction        : InitFunction
@@ -396,6 +402,7 @@ type OctetString = {
     //DAst properties
     //baseTypeEquivalence: BaseTypesEquivalence<OctetString>
     typeDefinition      : TypeDefinitionCommon
+    definitionOrRef     : TypeDefintionOrReference
     printValue          : (Asn1ValueKind option) -> (Asn1ValueKind) -> string
     initialValue        : OctetStringValue
     initFunction        : InitFunction
@@ -419,6 +426,7 @@ type BitString = {
     //DAst properties
     //baseTypeEquivalence: BaseTypesEquivalence<BitString>
     typeDefinition      : TypeDefinitionCommon
+    definitionOrRef     : TypeDefintionOrReference
     printValue          : (Asn1ValueKind option) -> (Asn1ValueKind) -> string
     initialValue        : BitStringValue
     initFunction        : InitFunction
@@ -442,6 +450,7 @@ type SequenceOf = {
     //DAst properties
     //baseTypeEquivalence: BaseTypesEquivalence<SequenceOf>
     typeDefinition      : TypeDefinitionCommon
+    definitionOrRef     : TypeDefintionOrReference
     printValue          : (Asn1ValueKind option) -> (Asn1ValueKind) -> string
     initialValue        : SeqOfValue
     initFunction        : InitFunction
@@ -516,6 +525,7 @@ and Sequence = {
     //DAst properties
     //baseTypeEquivalence: BaseTypesEquivalence<Sequence>
     typeDefinition      : TypeDefinitionCommon
+    definitionOrRef     : TypeDefintionOrReference
     printValue          : (Asn1ValueKind option) -> (Asn1ValueKind) -> string
     initialValue        : SeqValue
     initFunction        : InitFunction
@@ -557,6 +567,7 @@ and Choice = {
     //DAst properties
     //baseTypeEquivalence: BaseTypesEquivalence<Choice>
     typeDefinition      : TypeDefinitionCommon
+    definitionOrRef     : TypeDefintionOrReference
     printValue          : (Asn1ValueKind option) -> (Asn1ValueKind) -> string
     initialValue        : ChValue
     initFunction        : InitFunction
@@ -578,6 +589,7 @@ and ReferenceType = {
     resolvedType        : Asn1Type
 
     typeDefinition      : TypeDefinitionCommon
+    definitionOrRef     : TypeDefintionOrReference
     printValue          : (Asn1ValueKind option) -> (Asn1ValueKind) -> string
     initialValue        : Asn1Value
     initFunction        : InitFunction
@@ -621,7 +633,7 @@ and Asn1Type = {
     inheritInfo   : InheritanceInfo option
 
     //it simply indicates that this type is under a type assignment
-    typeAssignmentInfo  : TypeAssignmentInfo option
+    typeAssignmentInfo  : AssignmentInfo option
 
     Kind            : Asn1TypeKind
     newTypeDefName  : string

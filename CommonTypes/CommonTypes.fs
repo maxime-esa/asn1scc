@@ -122,6 +122,16 @@ type TypeAssignmentInfo = {
     tasName : string
 }
 
+type ValueAssignmentInfo = {
+    modName : string
+    vasName : string
+}
+
+type AssignmentInfo =
+    | TypeAssignmentInfo    of TypeAssignmentInfo
+    | ValueAssignmentInfo   of ValueAssignmentInfo
+
+
 type InheritanceInfo with
     member this.AsTasInfo =
         {

@@ -70,7 +70,7 @@ let getDeterminantTypeCheckEqual (r:Asn1AcnAst.AstRoot) (l:ProgrammingLanguage) 
         | Asn1AcnAst.AcnPrmRefType (md,ts)  -> multiAcnUpdate_checkEqual_pri
 
 
-let createPrimitiveFunction (r:Asn1AcnAst.AstRoot) (l:ProgrammingLanguage) (codec:CommonTypes.Codec) (t:Asn1AcnAst.Asn1Type) (typeDefinition:TypeDefinitionCommon) (isValidFunc: IsValidFunction option)  (funcBody:ErroCode->((Asn1AcnAst.RelativePath*Asn1AcnAst.AcnParameter) list) -> FuncParamType -> (AcnFuncBodyResult option)) soSparkAnnotations (us:State)  =
+let private createAcnFunction (r:Asn1AcnAst.AstRoot) (l:ProgrammingLanguage) (codec:CommonTypes.Codec) (t:Asn1AcnAst.Asn1Type) (typeDefinition:TypeDefinitionCommon) (isValidFunc: IsValidFunction option)  (funcBody:ErroCode->((Asn1AcnAst.RelativePath*Asn1AcnAst.AcnParameter) list) -> FuncParamType -> (AcnFuncBodyResult option)) soSparkAnnotations (us:State)  =
     let funcNameAndtasInfo   = getFuncName r l codec t.id
     let errCodeName         = ToC ("ERR_ACN" + (codec.suffix.ToUpper()) + "_" + ((t.id.AcnAbsPath |> Seq.skip 1 |> Seq.StrJoin("-")).Replace("#","elm")))
     let errCode, ns = getNextValidErrorCode us errCodeName
@@ -212,7 +212,7 @@ let createAcnIntegerFunction (r:Asn1AcnAst.AstRoot) (l:ProgrammingLanguage) (cod
 let createIntegerFunction (r:Asn1AcnAst.AstRoot) (l:ProgrammingLanguage) (codec:CommonTypes.Codec) (t:Asn1AcnAst.Asn1Type) (o:Asn1AcnAst.Integer) (typeDefinition:TypeDefinitionCommon)  (isValidFunc: IsValidFunction option) (uperFunc: UPerFunction) (us:State)  =
     let funcBody = createAcnIntegerFunctionInternal r l codec o.uperRange o.acnEncodingClass uperFunc.funcBody_e
     let soSparkAnnotations = None
-    createPrimitiveFunction r l codec t typeDefinition isValidFunc  (fun e acnArgs p -> funcBody e acnArgs p) soSparkAnnotations  us
+    createAcnFunction r l codec t typeDefinition isValidFunc  (fun e acnArgs p -> funcBody e acnArgs p) soSparkAnnotations  us
 
 
 let createEnumComn (r:Asn1AcnAst.AstRoot) (l:ProgrammingLanguage) (codec:CommonTypes.Codec) (typeId : ReferenceToType) (o:Asn1AcnAst.Enumerated) (typeDefinitionName:string)  =
@@ -247,11 +247,11 @@ let createEnumComn (r:Asn1AcnAst.AstRoot) (l:ProgrammingLanguage) (codec:CommonT
         | Some (funcBodyContent,errCodes, localVariables) -> Some ({AcnFuncBodyResult.funcBody = funcBodyContent; errCodes = errCodes; localVariables = localVariables})
     funcBody
 
-let createEnumeratedFunction (r:Asn1AcnAst.AstRoot) (l:ProgrammingLanguage) (codec:CommonTypes.Codec) (t:Asn1AcnAst.Asn1Type) (o:Asn1AcnAst.Enumerated) (typeDefinition:TypeDefinitionCommon)  (isValidFunc: IsValidFunction option) (uperFunc: UPerFunction) (us:State)  =
-    let typeDefinitionName = getTypeDefinitionName t.id.tasInfo typeDefinition
+let createEnumeratedFunction (r:Asn1AcnAst.AstRoot) (l:ProgrammingLanguage) (codec:CommonTypes.Codec) (t:Asn1AcnAst.Asn1Type) (o:Asn1AcnAst.Enumerated) (typeDefinition:TypeDefinitionCommon)  (defOrRed:TypeDefintionOrReference) (isValidFunc: IsValidFunction option) (uperFunc: UPerFunction) (us:State)  =
+    let typeDefinitionName = defOrRed.longTypedefName l //getTypeDefinitionName t.id.tasInfo typeDefinition
     let funcBody = createEnumComn r l codec t.id o typeDefinitionName
     let soSparkAnnotations = None
-    createPrimitiveFunction r l codec t typeDefinition  isValidFunc  funcBody soSparkAnnotations  us
+    createAcnFunction r l codec t typeDefinition  isValidFunc  funcBody soSparkAnnotations  us
 
 
 let createAcnEnumeratedFunction (r:Asn1AcnAst.AstRoot) (l:ProgrammingLanguage) (codec:CommonTypes.Codec) (typeId : ReferenceToType) (t:Asn1AcnAst.AcnReferenceToEnumerated)  (us:State)  =
@@ -282,7 +282,7 @@ let createRealrFunction (r:Asn1AcnAst.AstRoot) (l:ProgrammingLanguage) (codec:Co
         | None -> None
         | Some (funcBodyContent,errCodes) -> Some ({AcnFuncBodyResult.funcBody = funcBodyContent; errCodes = errCodes; localVariables = []})
     let soSparkAnnotations = None
-    createPrimitiveFunction r l codec t typeDefinition isValidFunc  (fun e acnArgs p -> funcBody e acnArgs p) soSparkAnnotations us
+    createAcnFunction r l codec t typeDefinition isValidFunc  (fun e acnArgs p -> funcBody e acnArgs p) soSparkAnnotations us
 
 
 let nestChildItems (l:ProgrammingLanguage) (codec:CommonTypes.Codec) children = 
@@ -341,7 +341,7 @@ let createBooleanFunction (r:Asn1AcnAst.AstRoot) (l:ProgrammingLanguage) (codec:
                 
         {AcnFuncBodyResult.funcBody = funcBodyContent; errCodes = [errCode]; localVariables = []}    
     let soSparkAnnotations = None
-    createPrimitiveFunction r l codec t typeDefinition  isValidFunc  (fun e acnArgs p -> Some (funcBody e acnArgs p)) soSparkAnnotations us
+    createAcnFunction r l codec t typeDefinition  isValidFunc  (fun e acnArgs p -> Some (funcBody e acnArgs p)) soSparkAnnotations us
 
 
 
@@ -374,7 +374,7 @@ let createNullTypeFunction (r:Asn1AcnAst.AstRoot) (l:ProgrammingLanguage) (codec
             let ret = nullType pp arrBytes (BigInteger encPattern.Value.Length) arrsBits errCode.errCodeName codec
             Some ({AcnFuncBodyResult.funcBody = ret; errCodes = [errCode]; localVariables = []})
     let soSparkAnnotations = None
-    createPrimitiveFunction r l codec t typeDefinition  isValidFunc  funcBody soSparkAnnotations us
+    createAcnFunction r l codec t typeDefinition  isValidFunc  funcBody soSparkAnnotations us
 
 
 let getExternaField0 (r:Asn1AcnAst.AstRoot) (deps:Asn1AcnAst.AcnInsertedFieldDependencies) asn1TypeIdWithDependency func1 =
@@ -440,7 +440,7 @@ let createStringFunction (r:Asn1AcnAst.AstRoot) (deps:Asn1AcnAst.AcnInsertedFiel
         | None -> None
         | Some (funcBodyContent,errCodes, localVars) -> Some ({AcnFuncBodyResult.funcBody = funcBodyContent; errCodes = errCodes; localVariables = localVars})
     let soSparkAnnotations = None
-    createPrimitiveFunction r l codec t typeDefinition  isValidFunc  funcBody soSparkAnnotations us
+    createAcnFunction r l codec t typeDefinition  isValidFunc  funcBody soSparkAnnotations us
 
 
 let createAcnStringFunction (r:Asn1AcnAst.AstRoot) (deps:Asn1AcnAst.AcnInsertedFieldDependencies) (l:ProgrammingLanguage) (codec:CommonTypes.Codec) (typeId : ReferenceToType) (t:Asn1AcnAst.AcnReferenceToIA5String)  (us:State)  =
@@ -541,7 +541,7 @@ let createOctetStringFunction (r:Asn1AcnAst.AstRoot) (deps:Asn1AcnAst.AcnInserte
         | None -> None
         | Some (funcBodyContent,errCodes, localVariables) -> Some ({AcnFuncBodyResult.funcBody = funcBodyContent; errCodes = errCodes; localVariables = lv::localVariables})
     let soSparkAnnotations = None
-    createPrimitiveFunction r l codec t typeDefinition  isValidFunc  funcBody soSparkAnnotations us
+    createAcnFunction r l codec t typeDefinition  isValidFunc  funcBody soSparkAnnotations us
 
 let createBitStringFunction (r:Asn1AcnAst.AstRoot) (deps:Asn1AcnAst.AcnInsertedFieldDependencies) (l:ProgrammingLanguage) (codec:CommonTypes.Codec) (t:Asn1AcnAst.Asn1Type) (o:Asn1AcnAst.BitString) (typeDefinition:TypeDefinitionCommon)  (isValidFunc: IsValidFunction option) (uperFunc: UPerFunction) (us:State)  =
     let nAlignSize = 0I;
@@ -567,7 +567,7 @@ let createBitStringFunction (r:Asn1AcnAst.AstRoot) (deps:Asn1AcnAst.AcnInsertedF
         | None -> None
         | Some (funcBodyContent,errCodes, localVariables) -> Some ({AcnFuncBodyResult.funcBody = funcBodyContent; errCodes = errCodes; localVariables = localVariables})
     let soSparkAnnotations = None
-    createPrimitiveFunction r l codec t typeDefinition  isValidFunc  funcBody soSparkAnnotations us
+    createAcnFunction r l codec t typeDefinition  isValidFunc  funcBody soSparkAnnotations us
 
 
 
@@ -632,7 +632,7 @@ let createSequenceOfFunction (r:Asn1AcnAst.AstRoot) (deps:Asn1AcnAst.AcnInserted
                     let funcBodyContent = external_field p.p (p.getAcces l) i internalItem (if o.minSize=0 then None else Some (BigInteger o.minSize)) (BigInteger o.maxSize) extField nAlignSize errCode.errCodeName o.child.acnMinSizeInBits.AsBigInt o.child.acnMaxSizeInBits.AsBigInt  codec
                     Some ({AcnFuncBodyResult.funcBody = funcBodyContent; errCodes = errCode::childErrCodes; localVariables = lv::localVariables})
     let soSparkAnnotations = None
-    createPrimitiveFunction r l codec t typeDefinition  isValidFunc  funcBody soSparkAnnotations us
+    createAcnFunction r l codec t typeDefinition  isValidFunc  funcBody soSparkAnnotations us
 
 
 let rec handleSingleUpdateDependency (r:Asn1AcnAst.AstRoot) (deps:Asn1AcnAst.AcnInsertedFieldDependencies) (l:ProgrammingLanguage) (m:Asn1AcnAst.Asn1Module) (d:AcnDependency)  (us:State) =
@@ -911,7 +911,7 @@ let createSequenceFunction (r:Asn1AcnAst.AstRoot) (deps:Asn1AcnAst.AcnInsertedFi
         match l with
         | C     -> None
         | Ada   -> None
-    createPrimitiveFunction r l codec t typeDefinition  isValidFunc  funcBody soSparkAnnotations  us
+    createAcnFunction r l codec t typeDefinition  isValidFunc  funcBody soSparkAnnotations  us
 
 
 type private AcnChoiceEncClass =
@@ -919,7 +919,7 @@ type private AcnChoiceEncClass =
     | CEC_enum          of Asn1AcnAst.Enumerated
     | CEC_presWhen
 
-let createChoiceFunction (r:Asn1AcnAst.AstRoot) (deps:Asn1AcnAst.AcnInsertedFieldDependencies) (l:ProgrammingLanguage) (codec:CommonTypes.Codec) (t:Asn1AcnAst.Asn1Type) (o:Asn1AcnAst.Choice) (typeDefinition:TypeDefinitionCommon) (isValidFunc: IsValidFunction option) (children:ChChildInfo list) (acnPrms:AcnParameter list)  (us:State)  =
+let createChoiceFunction (r:Asn1AcnAst.AstRoot) (deps:Asn1AcnAst.AcnInsertedFieldDependencies) (l:ProgrammingLanguage) (codec:CommonTypes.Codec) (t:Asn1AcnAst.Asn1Type) (o:Asn1AcnAst.Choice) (typeDefinition:TypeDefinitionCommon) (defOrRef:TypeDefintionOrReference) (isValidFunc: IsValidFunction option) (children:ChChildInfo list) (acnPrms:AcnParameter list)  (us:State)  =
     let choice_uper          =  match l with C -> acn_c.Choice                | Ada -> acn_a.Choice  
     let choiceChild          =  match l with C -> acn_c.ChoiceChild           | Ada -> acn_a.ChoiceChild
     let choice_Enum          =  match l with C -> acn_c.Choice_Enum           | Ada -> acn_a.Choice_Enum
@@ -955,7 +955,7 @@ let createChoiceFunction (r:Asn1AcnAst.AstRoot) (deps:Asn1AcnAst.AcnInsertedFiel
         | CEC_presWhen, CommonTypes.Decode  -> []
         | CEC_uper, CommonTypes.Decode  -> [(Asn1SIntLocalVariable (sChoiceIndexName, None))]
 
-    let typeDefinitionName = getTypeDefinitionName t.id.tasInfo typeDefinition
+    let typeDefinitionName = defOrRef.longTypedefName l//getTypeDefinitionName t.id.tasInfo typeDefinition
 
     let funcBody (errCode:ErroCode) (acnArgs: (Asn1AcnAst.RelativePath*Asn1AcnAst.AcnParameter) list) (p:FuncParamType) = 
         let handleChild (idx:int) (child:ChChildInfo) =
@@ -975,7 +975,7 @@ let createChoiceFunction (r:Asn1AcnAst.AstRoot) (deps:Asn1AcnAst.AcnInsertedFiel
                 | Some childContent ->
                     let childBody = 
                         let sChildName = child.c_name
-                        let sChildTypeDef = child.chType.typeDefinition.typeDefinitionBodyWithinSeq
+                        let sChildTypeDef = child.chType.typeDefintionOrReference.longTypedefName l //child.chType.typeDefinition.typeDefinitionBodyWithinSeq
                         let sChoiceTypeName = typeDefinitionName
                         match ec with
                         | CEC_uper  -> 
@@ -1018,7 +1018,7 @@ let createChoiceFunction (r:Asn1AcnAst.AstRoot) (deps:Asn1AcnAst.AcnInsertedFiel
         match l with
         | C     -> None
         | Ada   -> None
-    createPrimitiveFunction r l codec t typeDefinition  isValidFunc  funcBody soSparkAnnotations  us
+    createAcnFunction r l codec t typeDefinition  isValidFunc  funcBody soSparkAnnotations  us
 
 let createReferenceFunction (r:Asn1AcnAst.AstRoot) (l:ProgrammingLanguage) (codec:CommonTypes.Codec) (t:Asn1AcnAst.Asn1Type) (o:Asn1AcnAst.ReferenceType) (typeDefinition:TypeDefinitionCommon) (isValidFunc: IsValidFunction option) (baseType:Asn1Type) (us:State)  =
     match codec with

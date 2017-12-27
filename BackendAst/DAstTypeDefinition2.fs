@@ -28,33 +28,12 @@ requires_definition		: true or false
 *)
 
 
-let getTypedefName (r:Asn1AcnAst.AstRoot) (pi : Asn1Fold.ParentInfo<ParentInfoData> option) (t:Asn1AcnAst.Asn1Type)   =
-    match t.typeAssignmentInfo with
-    | Some tasInfo      ->  ToC2(r.args.TypePrefix + tasInfo.tasName)
-    | None              ->
-        // I am the subtype of a reference type
-        // If the reference type defines no extra constraints
-        //      then there is not need to define a new type
-        // otherwise
-        //      define a new type that extends tasInfo
-        match t.inheritInfo with
-        | Some tasInfo    when not tasInfo.hasAdditionalConstraints  ->  ToC2(r.args.TypePrefix + tasInfo.tasName)
-        | Some tasInfo      -> ToC2(r.args.TypePrefix + tasInfo.tasName)
-        | None              -> 
-            match pi with
-            | Some parentInfo   ->
-                match parentInfo.name with
-                | Some nm -> ToC2(parentInfo.parentData.typedefName + "_" + nm)
-                | None    -> ToC2(parentInfo.parentData.typedefName + "_" + "elem")
-            | None              ->
-                raise(BugErrorException "type has no typeAssignmentInfo and No parent!!!")
-                
-    
-    
+
+ 
 
 let getPotentialTypedefName (r:AstRoot) (t:Asn1Type)  (potentialTypedefName:string)   =
     t.newTypeDefName        
-
+    
 
 let createPrmAcnInteger (r:Asn1AcnAst.AstRoot) (l:ProgrammingLanguage)  =
     let Declare_Integer     =  match l with  C  -> header_c.Declare_Integer  | Ada   -> header_a.Declare_Integer 
@@ -96,8 +75,54 @@ type private DefineTypeAux =
 type typeDefitionKindFunc =
     | GetSubTypeRangeFnc of  (unit-> string )*(string option -> string -> string)     
 
+let getTypedefName (r:Asn1AcnAst.AstRoot) (pi : Asn1Fold.ParentInfo<ParentInfoData> option) (t:Asn1AcnAst.Asn1Type)   =
+    match t.typeAssignmentInfo with
+    | Some (TypeAssignmentInfo tasInfo)       ->  ToC2(r.args.TypePrefix + tasInfo.tasName) // I am a type assignment
+    | Some (ValueAssignmentInfo vasInfo)      ->  ToC2(r.args.TypePrefix + vasInfo.vasName) // I am a type assignment
+    | None              ->  // I am an inner type
+        match t.inheritInfo with
+        | Some inhInfo      -> (*I am a reference type*) ToC2(r.args.TypePrefix + inhInfo.tasName)
+        | None              -> 
+            match pi with
+            | Some parentInfo   ->
+                match parentInfo.name with
+                | Some nm -> ToC2(parentInfo.parentData.typedefName + "_" + nm)
+                | None    -> ToC2(parentInfo.parentData.typedefName + "_" + "elem")
+            | None              ->
+                raise(BugErrorException "type has no typeAssignmentInfo and No parent!!!")
+                
+(*
 
-let private createTypeGeneric (r:Asn1AcnAst.AstRoot)  (l) (pi : Asn1Fold.ParentInfo<ParentInfoData> option) (t:Asn1AcnAst.Asn1Type) (defineNewType:DefineTypeAux)   =
+                            Type Assignment ?
+                            /               \
+                          No                Yes --> New type definition with typedefname = Type Assignement Name
+                           |                        
+                 (=> Composite Type Child)
+                           |
+                           |
+                                 (Is Primitive types with base definition in RTL  ?)
+                               /                                                     \
+                              Yes (Int,Real,Bool, Null)                               No (Octet, bit, IA5String, Enumerated, Sequence, Sequence Of, choice)
+                               |                                                      |
+                        (has extra range?)                                          (Is reference Type)
+                  /                             \                                    /                  \ 
+                 /                               \                                  /                    \
+                Yes                              No                                 Yes                   No
+                 |                                |                                  |                     |
+             New Subtype                      Reference to                          Reference to             New Type
+            Definition with                   Existing                               Existing              Definition with 
+           typedef name =                     Definition                             Definition                name = 
+parent type typedefName + child Name         (The existing definition                                       parent type typedefName + child Name
+and with base type the referneced type       may be the base
+or  base type in RTL                         definition in RTL or
+                                             the base type if this is
+                                             a referenced type)  
+
+*)
+
+
+
+let private createTypeGeneric (r:Asn1AcnAst.AstRoot)  l (pi : Asn1Fold.ParentInfo<ParentInfoData> option) (t:Asn1AcnAst.Asn1Type) (defineNewType:DefineTypeAux)   =
     let programUnit = ToC t.id.ModName
     let rtlModuleName  = match l with C -> None                                          | Ada -> Some (header_a.rtlModuleName())
     let defineSubType l = match l with C -> header_c.Define_SubType | Ada -> header_a.Define_SubType
@@ -115,14 +140,14 @@ let private createTypeGeneric (r:Asn1AcnAst.AstRoot)  (l) (pi : Asn1Fold.ParentI
                     | false -> Some (ToC inhInfo.modName), (ToC2(r.args.TypePrefix + inhInfo.tasName))
         let soNewRange = subAux.getNewRange soInheritParentTypePackage sInheritParentType
         match soNewRange with
-        | None when  innerType    -> 
+        | None when  innerType    -> (*If there is no new range and is an inner type, then just make a reference to existing type*)
             ReferenceToExistingDefinition {ReferenceToExistingDefinition.programUnit = soInheritParentTypePackage; typedefName=sInheritParentType}         
-        | _     ->
+        | _     -> (*Otherwise, create a new type which is a subtype of the existing type*)
             let completeDefintion = defineSubType l typedefName soInheritParentTypePackage sInheritParentType soNewRange
             TypeDefinition {TypeDefinition.typedefName = typedefName; typedefBody = (fun () -> completeDefintion)}
     
     match t.typeAssignmentInfo with
-    | Some tasInfo      ->  (*I am a type assignmet ==> Always define a new type*)
+    | Some (TypeAssignmentInfo tasInfo)      ->  (*I am a type assignmet ==> Always define a new type*)
         let typedefName = (ToC2(r.args.TypePrefix + tasInfo.tasName))
         match t.inheritInfo with
         | Some inheritInfo  when not inheritInfo.hasAdditionalConstraints -> 
@@ -136,6 +161,18 @@ let private createTypeGeneric (r:Asn1AcnAst.AstRoot)  (l) (pi : Asn1Fold.ParentI
             | DefineNewTypeAux ntAux  ->
                 let completeDefintion = ntAux.getCompleteDefintion  programUnit typedefName 
                 TypeDefinition {TypeDefinition.typedefName = typedefName; typedefBody = (fun () -> completeDefintion)}
+    | Some (ValueAssignmentInfo vasInfo)      ->  (*I am a value assignmet ==> Reference an existing or throw a user exception*)
+        match t.inheritInfo with
+        | Some inheritInfo   ->  
+            let baseTypeProgramUnit = if programUnit = ToC inheritInfo.modName then None else Some (ToC inheritInfo.modName)
+            ReferenceToExistingDefinition {ReferenceToExistingDefinition.programUnit = baseTypeProgramUnit; typedefName=ToC2(r.args.TypePrefix + inheritInfo.tasName)}
+        | None   -> 
+            match defineNewType with
+            | DefineSubTypeAux subAux -> 
+                let soInheritParentTypePackage, sInheritParentType =  rtlModuleName, subAux.getRtlTypeName()
+                ReferenceToExistingDefinition {ReferenceToExistingDefinition.programUnit = soInheritParentTypePackage; typedefName=sInheritParentType}         
+            | DefineNewTypeAux ntAux  ->
+                raise(SemanticError(t.Location, "Anonymous types are not supported. Please define a new type and then use it in the value assignment"))
     | None              -> (*I am a SEQUENCE or SEQUENCE OF or CHOICE child.*)
         let typedefName = 
             match pi with
@@ -260,10 +297,10 @@ let createSequenceOf (r:Asn1AcnAst.AstRoot) (l:ProgrammingLanguage) (pi : Asn1Fo
     let getCompleteDefinition (programUnit:string) (typeDefinitionName:string) =
         match l with
         | C                      -> 
-            let typeDefinitionBody = header_c.Declare_SequenceOf (o.minSize = o.maxSize) childDefinition.longTypedefName (BigInteger o.maxSize) ""
+            let typeDefinitionBody = header_c.Declare_SequenceOf (o.minSize = o.maxSize) (childDefinition.longTypedefName l) (BigInteger o.maxSize) ""
             header_c.Define_Type typeDefinitionBody typeDefinitionName None (getChildDefinition childDefinition)
         | Ada                    -> 
-            header_a.SEQUENCE_OF_tas_decl typeDefinitionName (BigInteger o.minSize) (BigInteger o.maxSize) (o.minSize = o.maxSize) childDefinition.longTypedefName (getChildDefinition childDefinition)
+            header_a.SEQUENCE_OF_tas_decl typeDefinitionName (BigInteger o.minSize) (BigInteger o.maxSize) (o.minSize = o.maxSize) (childDefinition.longTypedefName l) (getChildDefinition childDefinition)
     createTypeGeneric r l pi t (DefineNewTypeAux {DefineNewTypeAux.getCompleteDefintion = getCompleteDefinition})
 
 
@@ -273,13 +310,13 @@ let createSequence (r:Asn1AcnAst.AstRoot) (l:ProgrammingLanguage) (pi : Asn1Fold
     let getCompleteDefinition (programUnit:string) (typeDefinitionName:string) =
         match l with
         | C                      ->
-            let handleChild (o:Asn1Child) = header_c.PrintSeq_ChoiceChild o.Type.typeDefintionOrReference.longTypedefName o.c_name ""
+            let handleChild (o:Asn1Child) = header_c.PrintSeq_ChoiceChild (o.Type.typeDefintionOrReference.longTypedefName l ) o.c_name ""
             let childrenBodies = children |> List.map handleChild
             let optChildNames  = children |> List.choose(fun c -> match c.Optionality with Some _ -> Some c.Name.Value | None -> None)
             let typeDefinitionBody = header_c.Declare_Sequence childrenBodies optChildNames
             header_c.Define_Type typeDefinitionBody typeDefinitionName None childldrenCompleteDefintions
         | Ada                    -> 
-            let handleChild (o:Asn1Child) = header_a.SEQUENCE_tas_decl_child o.c_name o.Type.typeDefintionOrReference.longTypedefName
+            let handleChild (o:Asn1Child) = header_a.SEQUENCE_tas_decl_child o.c_name (o.Type.typeDefintionOrReference.longTypedefName l)
             let childrenBodies = children |> List.map handleChild
             let optChildren  = children |> List.choose(fun c -> match c.Optionality with Some _ -> Some(header_a.SEQUENCE_tas_decl_child_bit c.Name.Value) | None -> None)
             header_a.SEQUENCE_tas_decl typeDefinitionName childrenBodies optChildren childldrenCompleteDefintions
@@ -290,13 +327,13 @@ let createChoice (r:Asn1AcnAst.AstRoot) (l:ProgrammingLanguage) (pi : Asn1Fold.P
     let getCompleteDefinition (programUnit:string) (typeDefinitionName:string) =
         match l with
         | C                      ->
-            let handleChild (o:ChChildInfo) = header_c.PrintSeq_ChoiceChild o.chType.typeDefinition.typeDefinitionBodyWithinSeq o.c_name ""
+            let handleChild (o:ChChildInfo) = header_c.PrintSeq_ChoiceChild (o.chType.typeDefintionOrReference.longTypedefName l) o.c_name ""
             let chEnms = children |> List.map(fun c -> c.presentWhenName)
             let childrenBodies = children |> List.map handleChild
             let typeDefinitionBody = header_c.Declare_Choice (choiceIDForNone t.id) chEnms childrenBodies 
             header_c.Define_Type typeDefinitionBody typeDefinitionName None childldrenCompleteDefintions
         | Ada                    -> 
-            let handleChild (o:ChChildInfo) = header_a.CHOICE_tas_decl_child o.c_name  o.chType.typeDefinition.typeDefinitionBodyWithinSeq o.presentWhenName
+            let handleChild (o:ChChildInfo) = header_a.CHOICE_tas_decl_child o.c_name  (o.chType.typeDefintionOrReference.longTypedefName l) o.presentWhenName
             let chEnms = children |> List.map(fun c -> c.presentWhenName)
             let childrenBodies = children |> List.map handleChild
             let nIndexMax = BigInteger ((Seq.length children)-1)

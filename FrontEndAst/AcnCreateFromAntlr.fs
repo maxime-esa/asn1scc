@@ -971,7 +971,7 @@ let rec private mergeType (asn1:Asn1Ast.AstRoot) (acn:AcnAst) (m:Asn1Ast.Asn1Mod
                            (acnArgs : Asn1AcnAst.RelativePath list)
                            (acnParameters   : AcnParameter list)
                            (inferitInfo : InheritanceInfo option) 
-                           (typeAssignmentInfo : TypeAssignmentInfo option): Asn1Type=
+                           (typeAssignmentInfo : AssignmentInfo option): Asn1Type=
     let acnProps =
         match acnType with
         | None      -> []
@@ -1288,7 +1288,7 @@ let private mergeTAS (asn1:Asn1Ast.AstRoot) (acn:AcnAst) (m:Asn1Ast.Asn1Module) 
         c_name = tas.c_name
         ada_name = tas.ada_name
         //Type = mergeType asn1 acn m tas.Type [MD m.Name.Value; TA tas.Name.Value] (acnTas |> Option.map(fun x -> x.typeEncodingSpec)) [] [] [] acnParameters (Some {TypeAssignmentInfo.modName = m.Name.Value; tasName = tas.Name.Value})
-        Type = mergeType asn1 acn m tas.Type [MD m.Name.Value; TA tas.Name.Value] (acnTas |> Option.map(fun x -> x.typeEncodingSpec)) [] [] [] acnParameters None (Some {TypeAssignmentInfo.modName = m.Name.Value; tasName = tas.Name.Value})
+        Type = mergeType asn1 acn m tas.Type [MD m.Name.Value; TA tas.Name.Value] (acnTas |> Option.map(fun x -> x.typeEncodingSpec)) [] [] [] acnParameters None (Some (TypeAssignmentInfo {TypeAssignmentInfo.modName = m.Name.Value; tasName = tas.Name.Value}))
         Comments = tas.Comments
     }
 
@@ -1297,7 +1297,7 @@ let private mergeValueAssigment (asn1:Asn1Ast.AstRoot) (acn:AcnAst) (m:Asn1Ast.A
         ValueAssignment.Name = vas.Name
         c_name = vas.c_name
         ada_name = vas.ada_name
-        Type = mergeType asn1 acn m vas.Type [MD m.Name.Value; VA vas.Name.Value] None [] [] [] [] None None
+        Type = mergeType asn1 acn m vas.Type [MD m.Name.Value; VA vas.Name.Value] None [] [] [] [] None (Some (ValueAssignmentInfo {ValueAssignmentInfo.modName = m.Name.Value; vasName = vas.Name.Value}))
         Value = ValuesMapping.mapValue asn1 vas.Type vas.Value
     }
 

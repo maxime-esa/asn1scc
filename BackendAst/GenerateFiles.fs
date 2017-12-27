@@ -82,7 +82,10 @@ let private printUnit (r:DAst.AstRoot) (l:ProgrammingLanguage) (encodings: Commo
     let typeDefs = 
         tases |> 
         List.map(fun tas -> 
-            let type_defintion = tas.Type.typeDefinition.completeDefinition
+            let type_defintion = //tas.Type.typeDefinition.completeDefinition
+                match tas.Type.typeDefintionOrReference with
+                | TypeDefinition td -> td.typedefBody ()      
+                | ReferenceToExistingDefinition _   -> raise(BugErrorException "Type Assignment with no Type Defintion")
             let init_def        = match l with C -> tas.Type.initFunction.initFuncDef | Ada -> None
             let equal_defs      = collectEqualFuncs tas.Type |> List.choose(fun ef -> ef.isEqualFuncDef)
             let isValid        = 

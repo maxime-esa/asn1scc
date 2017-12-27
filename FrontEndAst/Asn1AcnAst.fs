@@ -519,7 +519,7 @@ type Asn1Type = {
     inheritInfo     : InheritanceInfo option
 
     /// it indicates that this type is directly under a type assignment.
-    typeAssignmentInfo  : TypeAssignmentInfo option
+    typeAssignmentInfo  : AssignmentInfo option
 
 }
 

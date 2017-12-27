@@ -221,13 +221,16 @@ type LocalVariable with
 
 
 type TypeDefintionOrReference with 
-    member this.longTypedefName  =
+    member this.longTypedefName  l =
         match this with
         | TypeDefinition  td ->
             td.typedefName
         | ReferenceToExistingDefinition ref ->
             match ref.programUnit with
-            | Some pu -> pu + "." + ref.typedefName
+            | Some pu -> 
+                match l with
+                | Ada   -> pu + "." + ref.typedefName
+                | C     -> ref.typedefName
             | None    -> ref.typedefName
             
 
@@ -648,7 +651,19 @@ with
         | ReferenceType t-> t.automaticTestCasesValues
 
     member this.typeDefintionOrReference : TypeDefintionOrReference =
-        raise(BugErrorException "Unimplemented property")
+        match this.Kind with
+        | Integer      t -> t.definitionOrRef
+        | Real         t -> t.definitionOrRef
+        | IA5String    t -> t.definitionOrRef
+        | OctetString  t -> t.definitionOrRef
+        | NullType     t -> t.definitionOrRef
+        | BitString    t -> t.definitionOrRef
+        | Boolean      t -> t.definitionOrRef
+        | Enumerated   t -> t.definitionOrRef
+        | SequenceOf   t -> t.definitionOrRef
+        | Sequence     t -> t.definitionOrRef
+        | Choice       t -> t.definitionOrRef
+        | ReferenceType t-> t.definitionOrRef
 
     member this.isIA5String =
         match this.Kind with
@@ -695,7 +710,8 @@ with
                 | ReferenceType r -> r.resolvedType.getParamType l c
     member this.tasInfo =
         match this.typeAssignmentInfo with
-        | Some tasInfo  -> Some tasInfo
+        | Some (TypeAssignmentInfo tasInfo)  -> Some tasInfo
+        | Some (ValueAssignmentInfo _)  -> None
         | None          ->
             match this.inheritInfo with
             | Some tasInfo  -> Some tasInfo.AsTasInfo
