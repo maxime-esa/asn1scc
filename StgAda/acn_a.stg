@@ -519,12 +519,13 @@ result.ErrorCode := <sErrCode>;
 
 
 
-Null_pattern2_encode(sLongName) ::= <<
-<rtlModuleName()>.Acn_Enc_NullType_pattern2(S, K, <sLongName>_pattern);
+Null_pattern2_encode(p, arruNullValueAsByteArray, nSize, arrsBits, sErrCode) ::= <<
+<rtlModuleName()>.Acn_Enc_NullType_pattern2(S, K, BitArray'(<arrsBits; separator=",">));
 >>
 
-Null_pattern2_decode(sLongName) ::= <<
-<rtlModuleName()>.Acn_Dec_NullType_pattern2(S, K, <sLongName>_pattern, result);
+Null_pattern2_decode(p, arruNullValueAsByteArray, nSize, arrsBits, sErrCode) ::= <<
+<rtlModuleName()>.Acn_Dec_NullType_pattern2(S, K, BitArray'(<arrsBits; separator=",">), result);
+result.ErrorCode := <sErrCode>;
 >>
 
 
@@ -767,17 +768,20 @@ result.ErrorCode := <sErrCode>;
 
 sequence_presense_optChild_pres_bool_encode(p, sAcc, sChName, sExtFldName) ::= ""
 sequence_presense_optChild_pres_bool_decode(p, sAcc, sChName, sExtFldName) ::= <<
-<p>.Exist.<sChName> := if <sExtFldName> then 1 else 0 end if;
+<p>.Exist.<sChName> := (if <sExtFldName> then 1 else 0);
+result.Success := true;
 >>
 
 sequence_presense_optChild_pres_int_encode(p, sAcc, sChName, sExtFldName, nIntVal) ::= ""
 sequence_presense_optChild_pres_int_decode(p, sAcc, sChName, sExtFldName, nIntVal) ::= <<
-<p>.Exist.<sChName> := if <sExtFldName> = <nIntVal> then 1 else 0 end if;
+<p>.Exist.<sChName> := (if <sExtFldName> = <nIntVal> then 1 else 0);
+result.Success := true;
 >>
 
 sequence_presense_optChild_pres_str_encode(p, sAcc, sChName, sExtFldName, sVal) ::= ""
 sequence_presense_optChild_pres_str_decode(p, sAcc, sChName, sExtFldName, sVal) ::= <<
-<p>.Exist.<sChName> := if <sExtFldName> = "<nIntVal>" then 1 else 0 end if;
+<p>.Exist.<sChName> := (if <sExtFldName> = "<nIntVal>" then 1 else 0);
+result.Success := true;
 >>
 
 
@@ -995,7 +999,7 @@ when <sChildID> =>
 Choice_preWhen_decode(p, sAcc, arrsChildren, sErrCode) ::= <<
 result := <rtlModuleName()>.ASN1_RESULT'(Success => true, ErrorCode => 0);
 <arrsChildren; separator="\n">
-    result := <rtlModuleName()>.ASN1_RESULT'(Success => false, ErrorCode => <ErrorCode>);
+    result := <rtlModuleName()>.ASN1_RESULT'(Success => false, ErrorCode => <sErrCode>);
 end if;
 >>
 
@@ -1036,8 +1040,6 @@ begin
     
     <arrsLocalUpdateStatements; separator="\n">
     
-    result := <rtlModuleName()>.ASN1_RESULT'(Success => <sTmpVar0>\<=<nMax>, ErrorCode => <rtlModuleName()>.ERR_INCORRECT_DATA);
-
     <v> := <v0>;
     result := <rtlModuleName()>.ASN1_RESULT'(Success => result.Success and (<arrsLocalCheckEquality; separator=" and ">), ErrorCode => <sErrCode>);
 end;
@@ -1047,7 +1049,7 @@ end;
 
 
 PresenceDependency(v, sSeqPath, sAcc, sChildName) ::= <<
-<v> = (<sSeqPath><sAcc>exist.<sChildName> = 1);
+<v> := (<sSeqPath><sAcc>exist.<sChildName> = 1);
 >>
 
 

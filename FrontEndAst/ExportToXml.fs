@@ -199,7 +199,7 @@ let exportChoiceDeterminant (a:RelativePath option) =
     | None                     -> []
 
 let exprtRefTypeArgument ((RelativePath path): RelativePath) =
-     [XAttribute(xname "argument", (path |> Seq.StrJoin ".") )]
+     [XElement(xname "argument", (path |> Seq.StrJoin ".") )]
 
 let exportAcnBooleanEncoding (a:AcnBooleanEncoding option) =
     match a with

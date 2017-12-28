@@ -10,26 +10,52 @@ open DAst
 open DAstUtilFunctions
 
 (*
+type TypeDefintionOrReference =
+    /// indicates that no extra type definition is required (e.g. INTEGER without constraints or type reference type without new constraints)
+    | ReferenceToExistingDefinition    of ReferenceToExistingDefinition                
+    /// indicates that a new type is defined
+    | TypeDefinition                of TypeDefinition       
 
-typedef_name 			: the type definition name.
-completedFintion		: the complete defintion of the type // optional
-requires_definition		: true or false
 
 	examples
-	  A ::= INTEGER				-> typedef_name = "A", requires_definition = true, completedFintion = Some ("SUBTYPE A is adaasn1rtl.Asn1UInt")
+	  A ::= INTEGER				-> {TypeDefinition.typedefName = "A"; typedefBody="typedef A Asn1SInt"}
 	  
-	  C ::= SEQUENCE  {			-> typedef_name = "C", requires_definition = true							completedFintion = Some ("TYPE C is RECORD ... END RECORD")
-			a1   INTEGER		-> typedef_name = "adaasn1rtl.Asn1Int", requires_definition = false			completedFintion = None
-			a2	 A				-> typedef_name = "A", requires_definition = false							completedFintion = None
-			a3	 A(1..20)		-> typedef_name = "C_a3", requires_definition = true						completedFintion = Some ("SUBTYPE C_a3 is A range 0..15")
+	  C ::= SEQUENCE  {			-> {TypeDefinition.typedefName = "C"; typedefBody="typedef struct{ ... }"}
+			a1   INTEGER		-> {ReferenceToExistingDefinition.programUnit="adaasn1rtl";  typedefName="Asn1Int"} 
+			a2	 A				-> {ReferenceToExistingDefinition.programUnit=None;  typedefName="A"} //program unit is none since the type being referenced is in the same module as the referenced type
+			a3	 A(1..20)		-> {TypeDefinition.typedefName = "C_a3"; typedefBody = "SUBTYPE C_a3 is A range 0..15"}
 		}
 		
 		
+
+                            Type Assignment ?
+                            /               \
+                          No                Yes --> New type definition with typedefname = Type Assignement Name
+                           |                        
+                 (=> Composite Type Child)
+                           |
+                           |
+                                 (Is Primitive types with base definition in RTL  ?)
+                               /                                                     \
+                              Yes (Int,Real,Bool, Null)                               No (Octet, bit, IA5String, Enumerated, Sequence, Sequence Of, choice)
+                               |                                                      |
+                        (has extra range?)                                          (Is reference Type with no extra constraint)
+                  /                             \                                    /                  \ 
+                 /                               \                                  /                    \
+                Yes                              No                                 Yes                   No
+                 |                                |                                  |                     |
+             New Subtype                      Reference to                          Reference to             New Type
+            Definition with                   Existing                               Existing              Definition with 
+           typedef name =                     Definition                             Definition                name = 
+parent type typedefName + child Name         (The existing definition                                       parent type typedefName + child Name
+and with base type the referneced type       may be the base
+or  base type in RTL                         definition in RTL or
+                                             the base type if this is
+                                             a referenced type)  
+
 *)
 
 
-
- 
 
 let getPotentialTypedefName (r:AstRoot) (t:Asn1Type)  (potentialTypedefName:string)   =
     t.newTypeDefName        
@@ -91,35 +117,6 @@ let getTypedefName (r:Asn1AcnAst.AstRoot) (pi : Asn1Fold.ParentInfo<ParentInfoDa
             | None              ->
                 raise(BugErrorException "type has no typeAssignmentInfo and No parent!!!")
                 
-(*
-
-                            Type Assignment ?
-                            /               \
-                          No                Yes --> New type definition with typedefname = Type Assignement Name
-                           |                        
-                 (=> Composite Type Child)
-                           |
-                           |
-                                 (Is Primitive types with base definition in RTL  ?)
-                               /                                                     \
-                              Yes (Int,Real,Bool, Null)                               No (Octet, bit, IA5String, Enumerated, Sequence, Sequence Of, choice)
-                               |                                                      |
-                        (has extra range?)                                          (Is reference Type)
-                  /                             \                                    /                  \ 
-                 /                               \                                  /                    \
-                Yes                              No                                 Yes                   No
-                 |                                |                                  |                     |
-             New Subtype                      Reference to                          Reference to             New Type
-            Definition with                   Existing                               Existing              Definition with 
-           typedef name =                     Definition                             Definition                name = 
-parent type typedefName + child Name         (The existing definition                                       parent type typedefName + child Name
-and with base type the referneced type       may be the base
-or  base type in RTL                         definition in RTL or
-                                             the base type if this is
-                                             a referenced type)  
-
-*)
-
 
 
 let private createTypeGeneric (r:Asn1AcnAst.AstRoot)  l (pi : Asn1Fold.ParentInfo<ParentInfoData> option) (t:Asn1AcnAst.Asn1Type) (defineNewType:DefineTypeAux)   =
@@ -188,10 +185,10 @@ let private createTypeGeneric (r:Asn1AcnAst.AstRoot)  l (pi : Asn1Fold.ParentInf
             defineSubTypeAux programUnit typedefName t.inheritInfo subAux true
         | DefineNewTypeAux ntAux  ->
             match t.inheritInfo with
-            | Some inheritInfo   ->  
+            | Some inheritInfo  when not inheritInfo.hasAdditionalConstraints ->  
                 let baseTypeProgramUnit = if programUnit = ToC inheritInfo.modName then None else Some (ToC inheritInfo.modName)
                 ReferenceToExistingDefinition {ReferenceToExistingDefinition.programUnit = baseTypeProgramUnit; typedefName=ToC2(r.args.TypePrefix + inheritInfo.tasName)}
-            | None   -> 
+            | _   -> 
                 let completeDefintion = ntAux.getCompleteDefintion  programUnit typedefName 
                 TypeDefinition {TypeDefinition.typedefName = typedefName; typedefBody = (fun () -> completeDefintion)}
 

@@ -560,9 +560,11 @@ let createReferenceFunction (r:Asn1AcnAst.AstRoot) (l:ProgrammingLanguage) (code
     | true  ->
         let soSparkAnnotations = None
         let funcBody (errCode:ErroCode) (p:FuncParamType) = 
-            let funcBodyContent = callBaseTypeFunc l (t.getParamValue p l codec) baseFncName codec
-            Some {UPERFuncBodyResult.funcBody = funcBodyContent; errCodes = [errCode]; localVariables = []}    
-
+            match (baseType.getUperFunction codec).funcBody p with
+            | Some _    -> 
+                let funcBodyContent = callBaseTypeFunc l (t.getParamValue p l codec) baseFncName codec
+                Some {UPERFuncBodyResult.funcBody = funcBodyContent; errCodes = [errCode]; localVariables = []}    
+            | None      -> None
         createPrimitiveFunction r l codec t typeDefinition None  isValidFunc  funcBody soSparkAnnotations  us
     | false -> 
         baseType.getUperFunction codec, us

@@ -657,13 +657,18 @@ and Asn1TypeKind =
 
 
 let getNextValidErrorCode (cur:State) (errCodeName:string) =
+    
+    //if (errCodeName.ToUpper() = "ERR_ACN_ENCODE_TC_DATA_HEADER_TCPACKETPUSVERSIONNUMBER") then
+    //    let aaa = cur.curErrCodeNames |> Set.toArray
+    //    printfn "???"
+        
     let rec getErroCode (errCodeName:string) = 
         match cur.curErrCodeNames.Contains errCodeName with
         | false -> {ErroCode.errCodeName = errCodeName; errCodeValue = cur.currErrorCode}
         | true  -> 
             getErroCode (errCodeName + "_2")
 
-    let errCode = getErroCode errCodeName
+    let errCode = getErroCode (errCodeName.ToUpper())
     errCode, {cur with currErrorCode = cur.currErrorCode + 1; curErrCodeNames = cur.curErrCodeNames.Add errCode.errCodeName}
 
 type TypeAssignment = {

@@ -352,11 +352,11 @@ let createAcnNullTypeFunction (r:Asn1AcnAst.AstRoot) (l:ProgrammingLanguage) (co
 
     let funcBody (errCode:ErroCode) (acnArgs: (Asn1AcnAst.RelativePath*Asn1AcnAst.AcnParameter) list) (p:FuncParamType) = 
         let pp = match codec with CommonTypes.Encode -> p.getValue l | CommonTypes.Decode -> p.getPointer l
-        let nullType         = match l with C -> acn_c.Null          | Ada -> acn_a.Null_pattern
+        let nullType         = match l with C -> acn_c.Null          | Ada -> acn_a.Null_pattern2
         match o.acnProperties.encodingPattern with
         | None      -> None
         | Some encPattern   ->
-            let arrsBits = encPattern.Value.ToCharArray() |> Seq.map(fun x -> if x='0' then "0" else "1") |> Seq.toList
+            let arrsBits = encPattern.Value.ToCharArray() |> Seq.mapi(fun i x -> ((i+1).ToString()) + "=>" + if x='0' then "0" else "1") |> Seq.toList
             let arrBytes = bitStringValueToByteArray encPattern
             let ret = nullType pp arrBytes (BigInteger encPattern.Value.Length) arrsBits errCode.errCodeName codec
             Some ({AcnFuncBodyResult.funcBody = ret; errCodes = [errCode]; localVariables = []})
@@ -365,11 +365,11 @@ let createAcnNullTypeFunction (r:Asn1AcnAst.AstRoot) (l:ProgrammingLanguage) (co
 let createNullTypeFunction (r:Asn1AcnAst.AstRoot) (l:ProgrammingLanguage) (codec:CommonTypes.Codec) (t:Asn1AcnAst.Asn1Type) (o:Asn1AcnAst.NullType) (typeDefinition:TypeDefinitionCommon) (isValidFunc: IsValidFunction option) (us:State)  =
     let funcBody (errCode:ErroCode) (acnArgs: (Asn1AcnAst.RelativePath*Asn1AcnAst.AcnParameter) list) (p:FuncParamType) = 
         let pp = match codec with CommonTypes.Encode -> p.getValue l | CommonTypes.Decode -> p.getPointer l
-        let nullType         = match l with C -> acn_c.Null          | Ada -> acn_a.Null_pattern
+        let nullType         = match l with C -> acn_c.Null          | Ada -> acn_a.Null_pattern2
         match o.acnProperties.encodingPattern with
         | None      -> None
         | Some encPattern   ->
-            let arrsBits = encPattern.Value.ToCharArray() |> Seq.map(fun x -> if x='0' then "0" else "1") |> Seq.toList
+            let arrsBits = encPattern.Value.ToCharArray() |> Seq.mapi(fun i x -> ((i+1).ToString()) + "=>" + if x='0' then "0" else "1") |> Seq.toList
             let arrBytes = bitStringValueToByteArray encPattern
             let ret = nullType pp arrBytes (BigInteger encPattern.Value.Length) arrsBits errCode.errCodeName codec
             Some ({AcnFuncBodyResult.funcBody = ret; errCodes = [errCode]; localVariables = []})
@@ -711,11 +711,11 @@ and getUpdateFunctionUsedInEncoding (r:Asn1AcnAst.AstRoot) (deps:Asn1AcnAst.AcnI
         let ret, ns = handleSingleUpdateDependency r deps l m d1 us
         ret, ns
     | d1::dds         -> 
-        let errCodeName         = ToC ("ERR_ACN" + (Encode.suffix.ToUpper()) + "_UPDATE_" + ((acnChildOrAcnParameterId.AcnAbsPath |> Seq.skip 1 |> Seq.StrJoin("-")).Replace("#","elm")))
+        let _errCodeName         = ToC ("ERR_ACN" + (Encode.suffix.ToUpper()) + "_UPDATE_" + ((acnChildOrAcnParameterId.AcnAbsPath |> Seq.skip 1 |> Seq.StrJoin("-")).Replace("#","elm")))
         //let errCode             = {ErroCode.errCodeName = errCodeName; errCodeValue = errCodeValue}
         //let errCodeValue        = us.currErrCode
         //let us = {us with currErrCode = us.currErrCode + 1}
-        let errCode, us = getNextValidErrorCode us errCodeName
+        let errCode, us = getNextValidErrorCode us _errCodeName
 
 
         let ds = d1::dds
@@ -751,7 +751,7 @@ and getUpdateFunctionUsedInEncoding (r:Asn1AcnAst.AstRoot) (deps:Asn1AcnAst.AcnI
                     let cmp = getDeterminantTypeCheckEqual r l d.determinant
                     let vi = sprintf "%s%02d" (getAcnDeterminantName acnChildOrAcnParameterId) (i+1)
                     cmp v0 vi )
-            let updateStatement = multiAcnUpdate vTarget.p c_name0 errCodeName localVars arrsLocalUpdateStatements arrsLocalCheckEquality
+            let updateStatement = multiAcnUpdate vTarget.p c_name0 errCode.errCodeName localVars arrsLocalUpdateStatements arrsLocalCheckEquality
             updateStatement
 
         let ret = Some(({AcnChildUpdateResult.func = multiUpdateFunc; errCodes=[errCode]}))

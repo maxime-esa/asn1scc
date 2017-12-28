@@ -97,21 +97,21 @@ let rec printValue (r:DAst.AstRoot) (l:ProgrammingLanguage)  (t:Asn1Type) (paren
         | BitStringValue    v -> 
             match t.ActualType.Kind with
             | OctetString os    -> 
-                let typeDefName  = if parentValue.IsSome then os.typeDefinition.typeDefinitionBodyWithinSeq else os.typeDefinition.name
+                let typeDefName  = t.typeDefintionOrReference.longTypedefName l//if parentValue.IsSome then os.typeDefinition.typeDefinitionBodyWithinSeq else os.typeDefinition.name
                 let bytes = bitStringValueToByteArray (StringLoc.ByValue v)
                 variables_a.PrintOctetStringValue typeDefName (os.baseInfo.minSize = os.baseInfo.maxSize) bytes (BigInteger bytes.Length)
             | BitString   bs    -> 
-                let typeDefName  = if parentValue.IsSome then bs.typeDefinition.typeDefinitionBodyWithinSeq else bs.typeDefinition.name
+                let typeDefName  = t.typeDefintionOrReference.longTypedefName l //if parentValue.IsSome then bs.typeDefinition.typeDefinitionBodyWithinSeq else bs.typeDefinition.name
                 let arBits = v.ToCharArray() |> Array.map(fun x -> x.ToString())
                 variables_a.PrintBitStringValue typeDefName (bs.baseInfo.minSize = bs.baseInfo.maxSize) arBits (BigInteger arBits.Length)
             | _         -> raise(BugErrorException "unexpected type")
         | OctetStringValue  v -> 
             match t.ActualType.Kind with
             | OctetString os    -> 
-                let typeDefName  = if parentValue.IsSome then os.typeDefinition.typeDefinitionBodyWithinSeq else os.typeDefinition.name
+                let typeDefName  = t.typeDefintionOrReference.longTypedefName l//if parentValue.IsSome then os.typeDefinition.typeDefinitionBodyWithinSeq else os.typeDefinition.name
                 variables_a.PrintOctetStringValue typeDefName (os.baseInfo.minSize = os.baseInfo.maxSize) v (BigInteger v.Length)
             | BitString   bs    -> 
-                let typeDefName  = if parentValue.IsSome then bs.typeDefinition.typeDefinitionBodyWithinSeq else bs.typeDefinition.name
+                let typeDefName  = t.typeDefintionOrReference.longTypedefName l//if parentValue.IsSome then bs.typeDefinition.typeDefinitionBodyWithinSeq else bs.typeDefinition.name
                 let bittring = byteArrayToBitStringValue v
                 let arBits = bittring.ToCharArray() |> Array.map(fun x -> x.ToString()) 
                 let maxLen = if (arBits.Length > bs.baseInfo.maxSize) then (bs.baseInfo.maxSize-1) else (arBits.Length-1)
@@ -128,7 +128,7 @@ let rec printValue (r:DAst.AstRoot) (l:ProgrammingLanguage)  (t:Asn1Type) (paren
         | SeqOfValue        v -> 
             match t.ActualType.Kind with
             | SequenceOf so -> 
-                let typeDefName  = if parentValue.IsSome then so.typeDefinition.typeDefinitionBodyWithinSeq else so.typeDefinition.name
+                let typeDefName  = t.typeDefintionOrReference.longTypedefName l //if parentValue.IsSome then so.typeDefinition.typeDefinitionBodyWithinSeq else so.typeDefinition.name
                 let childVals = v |> List.map (fun chv -> printValue r l so.childType (Some gv) chv.kind)
                 let sDefValue = printValue r l so.childType None (getDefaultValueByType so.childType)
                 variables_a.PrintSequenceOfValue typeDefName (so.baseInfo.minSize = so.baseInfo.maxSize) (BigInteger v.Length) childVals sDefValue
@@ -137,7 +137,7 @@ let rec printValue (r:DAst.AstRoot) (l:ProgrammingLanguage)  (t:Asn1Type) (paren
         | SeqValue          v -> 
             match t.ActualType.Kind with
             | Sequence s -> 
-                let typeDefName  = if parentValue.IsSome then s.typeDefinition.typeDefinitionBodyWithinSeq else s.typeDefinition.name
+                let typeDefName  = t.typeDefintionOrReference.longTypedefName l//if parentValue.IsSome then s.typeDefinition.typeDefinitionBodyWithinSeq else s.typeDefinition.name
                 let optChildren = 
                     s.children |>
                     List.choose(fun ch -> match ch with Asn1Child a -> Some a | AcnChild _ -> None) |>
@@ -169,14 +169,15 @@ let rec printValue (r:DAst.AstRoot) (l:ProgrammingLanguage)  (t:Asn1Type) (paren
         | ChValue           v -> 
             match t.ActualType.Kind with
             | Choice s -> 
-                let typeDefName  = 
+                let typeDefName  = t.typeDefintionOrReference.longTypedefName l
+                    (*
                     match t.tasInfo with
                     | Some tasInfo  -> ToC2(r.args.TypePrefix + tasInfo.tasName)
                     | None          ->
                         match t.Kind with
                         | ReferenceType ref ->     ToC2(r.args.TypePrefix + ref.baseInfo.tasName.Value)
                         | _                 ->
-                            if parentValue.IsSome then s.typeDefinition.typeDefinitionBodyWithinSeq else s.typeDefinition.name
+                            if parentValue.IsSome then s.typeDefinition.typeDefinitionBodyWithinSeq else s.typeDefinition.name*)
                 s.children |>
                 List.filter(fun x -> x.Name.Value = v.name)  |>
                 List.map(fun x -> variables_a.PrintChoiceValue typeDefName x.c_name (printValue r l  x.chType (Some gv) v.Value.kind) x.presentWhenName) |>

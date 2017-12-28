@@ -40,9 +40,9 @@ let private createAcnChild (r:Asn1AcnAst.AstRoot) (deps:Asn1AcnAst.AcnInsertedFi
         match ch.Type with
         | Asn1AcnAst.AcnInteger  a -> DAstACN.createAcnIntegerFunction r l Codec.Decode ch.id a ns1
         | Asn1AcnAst.AcnBoolean  a -> DAstACN.createAcnBooleanFunction r l Codec.Decode ch.id a ns1
-        | Asn1AcnAst.AcnNullType a -> DAstACN.createAcnNullTypeFunction r l Codec.Decode ch.id a us
-        | Asn1AcnAst.AcnReferenceToEnumerated a -> DAstACN.createAcnEnumeratedFunction r l Codec.Decode ch.id a us
-        | Asn1AcnAst.AcnReferenceToIA5String a -> DAstACN.createAcnStringFunction r deps l Codec.Decode ch.id a us
+        | Asn1AcnAst.AcnNullType a -> DAstACN.createAcnNullTypeFunction r l Codec.Decode ch.id a ns1
+        | Asn1AcnAst.AcnReferenceToEnumerated a -> DAstACN.createAcnEnumeratedFunction r l Codec.Decode ch.id a ns1
+        | Asn1AcnAst.AcnReferenceToIA5String a -> DAstACN.createAcnStringFunction r deps l Codec.Decode ch.id a ns1
         
     let funcUpdateStatement, ns3 = DAstACN.getUpdateFunctionUsedInEncoding r deps l m ch.id ns2
 
