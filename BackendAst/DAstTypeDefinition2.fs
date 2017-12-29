@@ -185,7 +185,8 @@ let private createTypeGeneric (r:Asn1AcnAst.AstRoot)  l (pi : Asn1Fold.ParentInf
             defineSubTypeAux programUnit typedefName t.inheritInfo subAux true
         | DefineNewTypeAux ntAux  ->
             match t.inheritInfo with
-            | Some inheritInfo  when not inheritInfo.hasAdditionalConstraints ->  
+            //| Some inheritInfo  when not inheritInfo.hasAdditionalConstraints ->  //when enabled test cases 14-RealCases/NPAL.asn1 fails
+            | Some inheritInfo   ->  
                 
                 let baseTypeProgramUnit = if programUnit = ToC inheritInfo.modName then None else Some (ToC inheritInfo.modName)
                 ReferenceToExistingDefinition {ReferenceToExistingDefinition.programUnit = baseTypeProgramUnit; typedefName=ToC2(r.args.TypePrefix + inheritInfo.tasName)}
