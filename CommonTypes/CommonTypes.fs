@@ -102,7 +102,7 @@ type ScopeNode =
     | TA of string          //TYPE ASSIGNMENT
     | VA of string          //VALUE ASSIGNMENT
     | SEQ_CHILD of string   //SEQUENCE child
-    | CH_CHILD of string    //CHOICE child
+    | CH_CHILD of string*string    //CHOICE child, choice child present when name
     | PRM of string         //ACN parameter
     | SQF                   //SEQUENCE OF CHILD
 
@@ -149,7 +149,7 @@ type ScopeNode with
         | VA strVal
         | PRM strVal
         | SEQ_CHILD strVal
-        | CH_CHILD strVal -> strVal
+        | CH_CHILD (strVal,_) -> strVal
         | SQF             -> "#"
     member this.StrValue = this.AsString
 
@@ -214,9 +214,9 @@ type ReferenceToType with
         member this.getSeqChildId (childName:string) =
             match this with
             | ReferenceToType path -> ReferenceToType (path@[SEQ_CHILD childName])
-        member this.getChildId (childName:string) =
+        member this.getChildId (childName:string) (presentWhenName:string)=
             match this with
-            | ReferenceToType path -> ReferenceToType (path@[CH_CHILD childName])
+            | ReferenceToType path -> ReferenceToType (path@[CH_CHILD (childName, presentWhenName)])
         member this.getParamId (paramName:string) =
             match this with
             | ReferenceToType ((MD mdName)::(TA tasName)::[]) -> ReferenceToType ((MD mdName)::(TA tasName)::[PRM paramName])
@@ -238,7 +238,7 @@ type ReferenceToType with
             | ReferenceToType path -> 
                 match path |> List.rev |> List.head with
                 | SEQ_CHILD name   -> name
-                | CH_CHILD name    -> name
+                | CH_CHILD (name,_)    -> name
                 | _                             -> raise (BugErrorException "error in lastitem")
         member this.parentTypeId =
             match this with

@@ -1209,10 +1209,10 @@ let rec private mergeType (asn1:Asn1Ast.AstRoot) (acn:AcnAst) (m:Asn1Ast.Asn1Mod
                                 | _ -> None)
                 match cc with
                 | None      ->  
-                    let newChild = mergeType asn1 acn m c.Type (curPath@[CH_CHILD c.Name.Value]) None [] childWithCons [] [] None  None
+                    let newChild = mergeType asn1 acn m c.Type (curPath@[CH_CHILD (c.Name.Value, c.present_when_name)]) None [] childWithCons [] [] None  None
                     {ChChildInfo.Name = c.Name; c_name = c.c_name; ada_name = c.ada_name; Type  = newChild; acnPresentWhenConditions = acnPresentWhenConditions; Comments = c.Comments;present_when_name = c.present_when_name}
                 | Some cc   ->
-                    let newChild = mergeType asn1 acn m c.Type (curPath@[CH_CHILD c.Name.Value]) (Some cc.childEncodingSpec) [] childWithCons cc.argumentList [] None  None
+                    let newChild = mergeType asn1 acn m c.Type (curPath@[CH_CHILD (c.Name.Value, c.present_when_name)]) (Some cc.childEncodingSpec) [] childWithCons cc.argumentList [] None  None
                     {ChChildInfo.Name = c.Name; c_name = c.c_name; ada_name = c.ada_name; Type  = newChild; acnPresentWhenConditions = acnPresentWhenConditions; Comments = c.Comments; present_when_name = c.present_when_name}
             let mergedChildren = 
                 match acnType with
@@ -1255,7 +1255,7 @@ let rec private mergeType (asn1:Asn1Ast.AstRoot) (acn:AcnAst) (m:Asn1Ast.Asn1Mod
                 | None      -> None
                 | Some x    -> Some x.typeEncodingSpec
             let mergedAcnEncSpec = mergeAcnEncodingSpecs acnType baseTypeAcnEncSpec
-            let hasAdditionalConstraints = allCons.Length > 0
+            let hasAdditionalConstraints = restCons.Length > 0
             let inheritanceInfo = (Some {InheritanceInfo.modName = rf.modName.Value; tasName = rf.tasName.Value; hasAdditionalConstraints=hasAdditionalConstraints})
             let resolvedType     = mergeType asn1 acn m oldBaseType curPath mergedAcnEncSpec restCons withCompCons acnArgs baseTypeAcnParams inheritanceInfo typeAssignmentInfo
             let newRef       = {ReferenceType.modName = rf.modName; tasName = rf.tasName; tabularized = rf.tabularized; acnArguments = acnArguments; resolvedType=resolvedType}

@@ -50,9 +50,33 @@ let getDeterminantTypeDefinitionBodyWithinSeq (r:Asn1AcnAst.AstRoot) (l:Programm
         | Asn1AcnAst.AcnPrmRefType (md,ts)  -> DAstTypeDefinition.getTypeDefinitionName r l (ReferenceToType [MD md.Value; TA ts.Value])
 
 
+let getDeterminant_macro (r:Asn1AcnAst.AstRoot) (l:ProgrammingLanguage) (det:Determinant) pri_macro str_macro = 
+    match det with
+    | AcnChildDeterminant       ch ->
+        match ch.Type with
+        | Asn1AcnAst.AcnInteger  a  -> pri_macro
+        | Asn1AcnAst.AcnNullType _  -> pri_macro
+        | Asn1AcnAst.AcnBoolean  _  -> pri_macro
+        | Asn1AcnAst.AcnReferenceToEnumerated a -> pri_macro
+        | Asn1AcnAst.AcnReferenceToIA5String a -> str_macro
+
+    | AcnParameterDeterminant   prm ->
+        match prm.asn1Type with
+        | Asn1AcnAst.AcnPrmInteger  _       -> pri_macro
+        | Asn1AcnAst.AcnPrmBoolean  _       -> pri_macro
+        | Asn1AcnAst.AcnPrmNullType _       -> pri_macro
+        | Asn1AcnAst.AcnPrmRefType (md,ts)  -> pri_macro
+
+let getDeterminantTypeUpdateMacro (r:Asn1AcnAst.AstRoot) (l:ProgrammingLanguage) (det:Determinant) = 
+    let MultiAcnUpdate_get_first_init_value_pri     =  match l with C -> acn_c.MultiAcnUpdate_get_first_init_value_pri        | Ada -> acn_a.MultiAcnUpdate_get_first_init_value_pri
+    let MultiAcnUpdate_get_first_init_value_str     =  match l with C -> acn_c.MultiAcnUpdate_get_first_init_value_str        | Ada -> acn_a.MultiAcnUpdate_get_first_init_value_str
+    getDeterminant_macro r l det MultiAcnUpdate_get_first_init_value_pri MultiAcnUpdate_get_first_init_value_str
+
 let getDeterminantTypeCheckEqual (r:Asn1AcnAst.AstRoot) (l:ProgrammingLanguage) (det:Determinant) = 
     let multiAcnUpdate_checkEqual_pri     =  match l with C -> acn_c.MultiAcnUpdate_checkEqual_pri        | Ada -> acn_a.MultiAcnUpdate_checkEqual_pri
     let multiAcnUpdate_checkEqual_str     =  match l with C -> acn_c.MultiAcnUpdate_checkEqual_str        | Ada -> acn_a.MultiAcnUpdate_checkEqual_str
+    getDeterminant_macro r l det multiAcnUpdate_checkEqual_pri multiAcnUpdate_checkEqual_str
+    (*
     match det with
     | AcnChildDeterminant       ch ->
         match ch.Type with
@@ -68,7 +92,7 @@ let getDeterminantTypeCheckEqual (r:Asn1AcnAst.AstRoot) (l:ProgrammingLanguage) 
         | Asn1AcnAst.AcnPrmBoolean  _       -> multiAcnUpdate_checkEqual_pri
         | Asn1AcnAst.AcnPrmNullType _       -> multiAcnUpdate_checkEqual_pri
         | Asn1AcnAst.AcnPrmRefType (md,ts)  -> multiAcnUpdate_checkEqual_pri
-
+        *)
 
 let private createAcnFunction (r:Asn1AcnAst.AstRoot) (l:ProgrammingLanguage) (codec:CommonTypes.Codec) (t:Asn1AcnAst.Asn1Type) (typeDefinition:TypeDefinitionCommon) (isValidFunc: IsValidFunction option)  (funcBody:ErroCode->((Asn1AcnAst.RelativePath*Asn1AcnAst.AcnParameter) list) -> FuncParamType -> (AcnFuncBodyResult option)) soSparkAnnotations (us:State)  =
     let funcNameAndtasInfo   = getFuncName r l codec t.id
@@ -645,6 +669,8 @@ let rec handleSingleUpdateDependency (r:Asn1AcnAst.AstRoot) (deps:Asn1AcnAst.Acn
     let choiceDependencyStrPres_child   = match l with C -> acn_c.ChoiceDependencyStrPres_child     | Ada -> acn_a.ChoiceDependencyStrPres_child
     let choiceDependencyEnum            = match l with C -> acn_c.ChoiceDependencyEnum              | Ada -> acn_a.ChoiceDependencyEnum
     let choiceDependencyEnum_Item       = match l with C -> acn_c.ChoiceDependencyEnum_Item         | Ada -> acn_a.ChoiceDependencyEnum_Item
+    let checkAccessPath                 = match l with C -> acn_c.checkAccessPath                   | Ada -> acn_a.checkAccessPath
+    
 
     match d.dependencyKind with
     | AcnDepRefTypeArgument           acnPrm   -> 
@@ -657,13 +683,19 @@ let rec handleSingleUpdateDependency (r:Asn1AcnAst.AstRoot) (deps:Asn1AcnAst.Acn
             Some ({AcnChildUpdateResult.func = updateFunc; errCodes=prmUpdateStatement.errCodes}), ns1
     | AcnDepSizeDeterminant         -> 
         let updateFunc (vTarget : FuncParamType) (pSrcRoot : FuncParamType)  = 
-            let pSizeable = getAccessFromScopeNodeList d.asn1Type false l pSrcRoot
-            sizeDependency (vTarget.getValue l) (getSizeableSize pSizeable.p (pSizeable.getAcces l))
+            let pSizeable, checkPath = getAccessFromScopeNodeList d.asn1Type false l pSrcRoot
+            let updateStatement = sizeDependency (vTarget.getValue l) (getSizeableSize pSizeable.p (pSizeable.getAcces l))
+            match checkPath with
+            | []    -> updateStatement
+            | _     -> checkAccessPath checkPath updateStatement
         Some ({AcnChildUpdateResult.func = updateFunc; errCodes=[]}), us
     | AcnDepIA5StringSizeDeterminant    ->
         let updateFunc (vTarget : FuncParamType) (pSrcRoot : FuncParamType)  = 
-            let pSizeable = getAccessFromScopeNodeList d.asn1Type true l pSrcRoot
-            sizeDependency (vTarget.getValue l) (getStringSize pSizeable.p)
+            let pSizeable, checkPath = getAccessFromScopeNodeList d.asn1Type true l pSrcRoot
+            let updateStatement = sizeDependency (vTarget.getValue l) (getStringSize pSizeable.p)
+            match checkPath with
+            | []    -> updateStatement
+            | _     -> checkAccessPath checkPath updateStatement
         Some ({AcnChildUpdateResult.func = updateFunc; errCodes=[]}), us
     | AcnDepPresenceBool              -> 
         let updateFunc (vTarget : FuncParamType) (pSrcRoot : FuncParamType)  = 
@@ -671,14 +703,16 @@ let rec handleSingleUpdateDependency (r:Asn1AcnAst.AstRoot) (deps:Asn1AcnAst.Acn
             let parDecTypeSeq =
                 match d.asn1Type with
                 | ReferenceToType (nodes) -> ReferenceToType (nodes |> List.rev |> List.tail |> List.rev)
-            let pDecParSeq = getAccessFromScopeNodeList parDecTypeSeq false l pSrcRoot
+            let pDecParSeq, checkPath = getAccessFromScopeNodeList parDecTypeSeq false l pSrcRoot
             let updateStatement = presenceDependency v (pDecParSeq.p) (pDecParSeq.getAcces l) (ToC d.asn1Type.lastItem)
-            updateStatement
+            match checkPath with
+            | []    -> updateStatement
+            | _     -> checkAccessPath checkPath updateStatement
         Some ({AcnChildUpdateResult.func = updateFunc; errCodes=[]}), us
     | AcnDepPresence   (relPath, chc)               -> 
         let updateFunc (vTarget : FuncParamType) (pSrcRoot : FuncParamType)  = 
             let v = vTarget.getValue l
-            let choicePath = getAccessFromScopeNodeList d.asn1Type false l pSrcRoot
+            let choicePath, checkPath = getAccessFromScopeNodeList d.asn1Type false l pSrcRoot
             let arrsChildUpdates = 
                 chc.children |> 
                 List.map(fun ch -> 
@@ -687,19 +721,23 @@ let rec handleSingleUpdateDependency (r:Asn1AcnAst.AstRoot) (deps:Asn1AcnAst.Acn
                     | PresenceInt   (_, intVal) -> choiceDependencyIntPres_child v ch.presentWhenName intVal.Value
                     | PresenceStr   (_, strVal) -> choiceDependencyStrPres_child v ch.presentWhenName strVal.Value )
             let updateStatement = choiceDependencyPres choicePath.p (choicePath.getAcces l) arrsChildUpdates
-            updateStatement
+            match checkPath with
+            | []    -> updateStatement
+            | _     -> checkAccessPath checkPath updateStatement
         Some ({AcnChildUpdateResult.func = updateFunc; errCodes=[]}), us
     | AcnDepChoiceDeteterminant       (enm,chc)      -> 
         let updateFunc (vTarget : FuncParamType) (pSrcRoot : FuncParamType)  = 
             let v = vTarget.getValue l
-            let choicePath = getAccessFromScopeNodeList d.asn1Type false l pSrcRoot
+            let choicePath, checkPath = getAccessFromScopeNodeList d.asn1Type false l pSrcRoot
             let arrsChildUpdates = 
                 chc.children |> 
                 List.map(fun ch -> 
                     let enmItem = enm.items |> List.find(fun itm -> itm.Name.Value = ch.Name.Value)
                     choiceDependencyEnum_Item v ch.presentWhenName (enmItem.getBackendName l) )
             let updateStatement = choiceDependencyEnum choicePath.p (choicePath.getAcces l) arrsChildUpdates
-            updateStatement
+            match checkPath with
+            | []    -> updateStatement
+            | _     -> checkAccessPath checkPath updateStatement
         Some ({AcnChildUpdateResult.func = updateFunc; errCodes=[]}), us
 
 and getUpdateFunctionUsedInEncoding (r:Asn1AcnAst.AstRoot) (deps:Asn1AcnAst.AcnInsertedFieldDependencies) (l:ProgrammingLanguage) (m:Asn1AcnAst.Asn1Module) (acnChildOrAcnParameterId) (us:State) : (AcnChildUpdateResult option*State)=
@@ -712,9 +750,6 @@ and getUpdateFunctionUsedInEncoding (r:Asn1AcnAst.AstRoot) (deps:Asn1AcnAst.AcnI
         ret, ns
     | d1::dds         -> 
         let _errCodeName         = ToC ("ERR_ACN" + (Encode.suffix.ToUpper()) + "_UPDATE_" + ((acnChildOrAcnParameterId.AcnAbsPath |> Seq.skip 1 |> Seq.StrJoin("-")).Replace("#","elm")))
-        //let errCode             = {ErroCode.errCodeName = errCodeName; errCodeValue = errCodeValue}
-        //let errCodeValue        = us.currErrCode
-        //let us = {us with currErrCode = us.currErrCode + 1}
         let errCode, us = getNextValidErrorCode us _errCodeName
 
 
@@ -725,8 +760,8 @@ and getUpdateFunctionUsedInEncoding (r:Asn1AcnAst.AstRoot) (deps:Asn1AcnAst.AcnI
             List.mapi(fun i d1 -> 
                 let c_name = sprintf "%s%02d" (getAcnDeterminantName acnChildOrAcnParameterId) i
                 let typegetDeterminantTypeDefinitionBodyWithinSeq = getDeterminantTypeDefinitionBodyWithinSeq r l d1.determinant
-                AcnInsertedChild (c_name, typegetDeterminantTypeDefinitionBodyWithinSeq)) |>
-            List.map(fun lv -> lv.GetDeclaration l)
+                [AcnInsertedChild (c_name, typegetDeterminantTypeDefinitionBodyWithinSeq); BooleanLocalVariable (c_name+"_is_initialized", Some false)]) |>
+            List.collect(fun lvList -> lvList |> List.map (fun lv -> lv.GetDeclaration l))
         let localUpdateFuns,ns =
             ds |>
             List.fold(fun (updates, ns) d1 -> 
@@ -745,13 +780,19 @@ and getUpdateFunctionUsedInEncoding (r:Asn1AcnAst.AstRoot) (deps:Asn1AcnAst.AcnI
                     | Some fn   -> Some(fn.func lv pSrcRoot)) |>
                 List.choose id
             let v0 = sprintf "%s%02d" (getAcnDeterminantName acnChildOrAcnParameterId) 0
+            let arrsGetFirstIntValue =
+                ds |>
+                List.mapi (fun i d -> 
+                    let cmp = getDeterminantTypeUpdateMacro r l d.determinant
+                    let vi = sprintf "%s%02d" (getAcnDeterminantName acnChildOrAcnParameterId) i
+                    cmp v vi (i=0) )
             let arrsLocalCheckEquality = 
-                dds |> 
+                ds |> 
                 List.mapi (fun i d -> 
                     let cmp = getDeterminantTypeCheckEqual r l d.determinant
-                    let vi = sprintf "%s%02d" (getAcnDeterminantName acnChildOrAcnParameterId) (i+1)
-                    cmp v0 vi )
-            let updateStatement = multiAcnUpdate vTarget.p c_name0 errCode.errCodeName localVars arrsLocalUpdateStatements arrsLocalCheckEquality
+                    let vi = sprintf "%s%02d" (getAcnDeterminantName acnChildOrAcnParameterId) i
+                    cmp v vi )
+            let updateStatement = multiAcnUpdate vTarget.p c_name0 errCode.errCodeName localVars arrsLocalUpdateStatements arrsGetFirstIntValue arrsLocalCheckEquality
             updateStatement
 
         let ret = Some(({AcnChildUpdateResult.func = multiUpdateFunc; errCodes=[errCode]}))
@@ -779,13 +820,20 @@ let createSequenceFunction (r:Asn1AcnAst.AstRoot) (deps:Asn1AcnAst.AcnInsertedFi
     let sequence_optional_child                 = match l with C -> acn_c.sequence_optional_child                | Ada -> acn_a.sequence_optional_child             
     let sequence_optional_always_present        = match l with C -> acn_c.sequence_optional_always_present_child | Ada -> acn_a.sequence_optional_always_present_child
     let sequence_default_child                  = match l with C -> acn_c.sequence_default_child                 | Ada -> acn_a.sequence_default_child              
+    let sequence_acn_child                      = match l with C -> acn_c.sequence_acn_child                     | Ada -> acn_a.sequence_acn_child              
     //let baseFuncName =  match baseTypeUperFunc  with None -> None | Some baseFunc -> baseFunc.funcName
 
     let acnChildren = children |>  List.choose(fun x -> match x with AcnChild z -> Some z | Asn1Child _ -> None)
     let asn1Children = children |>  List.choose(fun x -> match x with Asn1Child z -> Some z | AcnChild _ -> None)
 
     let funcBody (errCode:ErroCode) (acnArgs: (Asn1AcnAst.RelativePath*Asn1AcnAst.AcnParameter) list) (p:FuncParamType) = 
-        let acnlocalVariablesCh = acnChildren |>  List.filter(fun x -> match x.Type with Asn1AcnAst.AcnNullType _ -> false | _ -> true) |>  List.map(fun x -> AcnInsertedChild(x.c_name, x.typeDefinitionBodyWithinSeq))
+        let acnlocalVariablesCh = 
+            acnChildren |>  
+            List.filter(fun x -> match x.Type with Asn1AcnAst.AcnNullType _ -> false | _ -> true) |>  
+            List.collect(fun x -> 
+                match codec with
+                | Encode     -> [AcnInsertedChild(x.c_name, x.typeDefinitionBodyWithinSeq); BooleanLocalVariable(x.c_name+"_is_initialized", Some false)]
+                | Decode    -> [AcnInsertedChild(x.c_name, x.typeDefinitionBodyWithinSeq)])
         
         let acnlocalVariablesPrms = 
             match t.id.tasInfo with
@@ -874,8 +922,21 @@ let createSequenceFunction (r:Asn1AcnAst.AstRoot) (deps:Asn1AcnAst.AcnInsertedFi
                     match childContentResult with
                     | None              -> ()
                     | Some childContent ->
-                        let childBody = Some (sequence_mandatory_child acnChild.c_name childContent.funcBody codec)
-                        yield (AcnChildEncodeStatement, childBody, childContent.localVariables, childContent.errCodes)
+                        match codec with
+                        | Encode   ->
+                            match acnChild.Type with
+                            | Asn1AcnAst.AcnNullType _   ->
+                                let childBody = Some (sequence_mandatory_child acnChild.c_name childContent.funcBody codec)
+                                yield (AcnChildEncodeStatement, childBody, childContent.localVariables, childContent.errCodes)
+                            | _             ->
+                                let _errCodeName         = ToC ("ERR_ACN" + (codec.suffix.ToUpper()) + "_" + ((acnChild.id.AcnAbsPath |> Seq.skip 1 |> Seq.StrJoin("-")).Replace("#","elm")) + "_UNITIALIZED")
+                                let errCode, ns = getNextValidErrorCode us _errCodeName
+                        
+                                let childBody = Some (sequence_acn_child acnChild.c_name childContent.funcBody errCode.errCodeName codec)
+                                yield (AcnChildEncodeStatement, childBody, childContent.localVariables, errCode::childContent.errCodes)
+                        | Decode    ->
+                            let childBody = Some (sequence_mandatory_child acnChild.c_name childContent.funcBody codec)
+                            yield (AcnChildEncodeStatement, childBody, childContent.localVariables, childContent.errCodes)
 
             } |> Seq.toList
 

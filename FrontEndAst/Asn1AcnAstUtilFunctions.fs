@@ -262,7 +262,7 @@ let locateTypeByRefId (r:AstRoot) (ReferenceToType nodes) =
                     | None      -> raise(UserException(sprintf "Invalid child name '%s'" chName ))
                 | _  -> raise(UserException(sprintf "Invalid path '%s'" origPath.AsString ))
             | _  -> raise(UserException(sprintf "Invalid path '%s'" origPath.AsString ))
-        | (CH_CHILD chName)::rest  -> 
+        | (CH_CHILD (chName, _))::rest  -> 
             match parent with
             | ASN1_TYPE t ->
                 match t.Kind with

@@ -83,6 +83,11 @@ type ProgrammingLanguage with
         match this with
         |C      -> 0
         |Ada    -> 1
+    member this.boolean =
+        match this with
+        |C      -> "flag"
+        |Ada    -> "Boolean"
+
 
 
 
@@ -155,6 +160,13 @@ type FuncParamType  with
             let newPath = sprintf "%s%su.%s" this.p (this.getAcces l) childName
             if childTypeIsString then (FIXARRAY newPath) else (VALUE newPath)
 
+    member this.getChChildIsPresent (l:ProgrammingLanguage) (childPresentName:string)  =
+        match l with
+        | Ada   -> 
+            sprintf "%s.kind = %s_PRESENT" this.p childPresentName
+        | C     -> 
+            sprintf "%s%skind == %s_PRESENT" this.p (this.getAcces l) childPresentName
+
 
 let getAccessFromScopeNodeList (ReferenceToType nodes)  (childTypeIsString: bool) (l:ProgrammingLanguage) (pVal : FuncParamType) =
     let handleNode zeroBasedSeqeuenceOfLevel (pVal : FuncParamType) (n:ScopeNode) (childTypeIsString: bool) = 
@@ -162,24 +174,26 @@ let getAccessFromScopeNodeList (ReferenceToType nodes)  (childTypeIsString: bool
         | MD _
         | TA _
         | PRM _
-        | VA _          -> raise(BugErrorException "getAccessFromScopeNodeList")
-        | SEQ_CHILD chName  -> pVal.getSeqChild l (ToC chName) childTypeIsString
-        | CH_CHILD  chName  -> pVal.getChChild l (ToC chName) childTypeIsString
+        | VA _              -> raise(BugErrorException "getAccessFromScopeNodeList")
+        | SEQ_CHILD chName  -> [], pVal.getSeqChild l (ToC chName) childTypeIsString
+        | CH_CHILD (chName,pre_name)  -> 
+            
+            [pVal.getChChildIsPresent l pre_name], pVal.getChChild l (ToC chName) childTypeIsString
         | SQF               -> 
             let curIdx = sprintf "i%d" (zeroBasedSeqeuenceOfLevel + 1)
 
-            pVal.getArrayItem l curIdx childTypeIsString
+            [], pVal.getArrayItem l curIdx childTypeIsString
 
     match nodes with
-    | (MD md)::(TA tas)::(PRM prm)::[]  -> VALUE (ToC (md + "_" + tas + "_" + prm))
+    | (MD md)::(TA tas)::(PRM prm)::[]  -> (VALUE (ToC (md + "_" + tas + "_" + prm)), [])
     | (MD md)::(TA tas):: xs            ->
         let length = Seq.length xs
         let ret = 
             xs |> 
-            List.fold(fun (curPath, zeroBasedSeqeuenceOfLevel, idx) n -> 
-                let newPath = handleNode zeroBasedSeqeuenceOfLevel curPath n (childTypeIsString && idx=length)
+            List.fold(fun (curPath, curCheckExp, zeroBasedSeqeuenceOfLevel, idx) n -> 
+                let chekPath, newPath = handleNode zeroBasedSeqeuenceOfLevel curPath n (childTypeIsString && idx=length)
                 let zeroBasedSeqeuenceOfLevel = match n with SQF -> zeroBasedSeqeuenceOfLevel + 1 | _ -> zeroBasedSeqeuenceOfLevel
-                (newPath, zeroBasedSeqeuenceOfLevel, idx+1)) (pVal,0, 1) |> (fun (a,_,_) -> a)
+                (newPath, chekPath@curCheckExp, zeroBasedSeqeuenceOfLevel, idx+1)) (pVal,[], 0, 1) |> (fun (a,chekPath,_,_) -> a, chekPath)
         ret 
     | _                                 -> raise(BugErrorException "getAccessFromScopeNodeList")
 
@@ -194,6 +208,7 @@ type LocalVariable with
         | Asn1UIntLocalVariable(name,_)   -> name
         | FlagLocalVariable(name,_)       -> name
         | AcnInsertedChild(name,_)        -> name
+        | BooleanLocalVariable(name,_)    -> name
     member this.GetDeclaration (l:ProgrammingLanguage) =
         match l, this with
         | C,    SequenceOfIndex (i,None)                  -> sprintf "int i%d;" i
@@ -216,6 +231,10 @@ type LocalVariable with
         | C,    FlagLocalVariable (name,Some iv)          -> sprintf "flag %s=%d;" name iv
         | Ada,  FlagLocalVariable (name,None)             -> sprintf "%s:adaasn1rtl.BIT;" name
         | Ada,  FlagLocalVariable (name,Some iv)          -> sprintf "%s:adaasn1rtl.BIT:=%d;" name iv
+        | C,    BooleanLocalVariable (name,None)          -> sprintf "flag %s;" name
+        | C,    BooleanLocalVariable (name,Some iv)       -> sprintf "flag %s=%s;" name (if iv then "TRUE" else "FALSE")
+        | Ada,  BooleanLocalVariable (name,None)          -> sprintf "%s:Boolean;" name
+        | Ada,  BooleanLocalVariable (name,Some iv)       -> sprintf "%s:Boolean:=%s;" name (if iv then "True" else "False")
         | C,    AcnInsertedChild(name, vartype)           -> sprintf "%s %s;" vartype name
         | Ada,    AcnInsertedChild(name, vartype)         -> sprintf "%s:%s;" name vartype
 

@@ -31,30 +31,47 @@ let private getTypeDependencies (t:Asn1Type) : (TypeAssignmentInfo list )
         (fun o sq (children,_) -> (children |> List.collect id)@prms)
         (fun _ _ ch newChild -> newChild@prms, ())
         (fun o ch (children, _) -> (children|> List.collect id)@prms)
-        (fun o ref baseType -> (ref.AsTypeAssignmentInfo::baseType)@prms)
+        (fun o ref baseType -> ref.AsTypeAssignmentInfo::prms)
         (fun o newKind  -> newKind@prms)
 
 
         
+let rec private  getTypeDependencies2 (t:Asn1Type) : (TypeAssignmentInfo list )    =
+    let prms = t.acnParameters |> List.choose(fun z -> match z.asn1Type with Asn1AcnAst.AcnPrmRefType (mdName,tsName) -> Some ({TypeAssignmentInfo.modName = mdName.Value; tasName = tsName.Value}) | _ -> None )    
+    match t.Kind with
+    | Integer      _             -> prms
+    | Real         _             -> prms
+    | IA5String    _             -> prms
+    | OctetString  _             -> prms
+    | NullType     _             -> prms
+    | BitString    _             -> prms
+    | Boolean      _             -> prms
+    | Enumerated   _             -> prms
+    | SequenceOf    sqof         -> prms@(getTypeDependencies2 sqof.childType) 
+    | Sequence      children     -> prms@(children.Asn1Children |> List.collect (fun ch -> getTypeDependencies2 ch.Type))
+    | Choice        children     -> prms@(children.children |> List.collect (fun ch -> getTypeDependencies2 ch.chType))
+    | ReferenceType ref          -> ref.AsTypeAssignmentInfo::prms
 
 let private sortTypes (typesToSort: Asn1Type list) (imports :TypeAssignmentInfo list) =
     let allNodes = 
         typesToSort |> 
         List.choose( fun tas -> 
             match tas.typeAssignmentInfo with
-            | Some (TypeAssignmentInfo tasInfo)  -> Some ( (tasInfo, getTypeDependencies tas ))
+            | Some (TypeAssignmentInfo tasInfo)  -> Some ( (tasInfo, getTypeDependencies2 tas ))
             | Some (ValueAssignmentInfo _)  
             | None          -> raise (BugErrorException "All TypeAssignemts must have tasInfo") )
     let independentNodes = allNodes |> List.filter(fun (_,list) -> List.isEmpty list) |> List.map(fun (n,l) -> n)
     let dependentNodes = allNodes |> List.filter(fun (_,list) -> not (List.isEmpty list) )
     let sortedTypeAss = 
         DoTopologicalSort (imports @ independentNodes) dependentNodes 
-            (fun c -> 
-            SemanticError
-                (emptyLocation, 
-                 sprintf 
-                     "Recursive types are not compatible with embedded systems.\nASN.1 grammar has cyclic dependencies: %A" 
-                     c))
+            (fun cyclicTasses -> 
+                match cyclicTasses with
+                | []    -> BugErrorException "Impossible"
+                | (m1,deps) ::_ ->
+                    let printTas (md:TypeAssignmentInfo, deps: TypeAssignmentInfo list) = 
+                        sprintf "Type assignment '%s.%s' depends on : %s" md.modName md.tasName (deps |> List.map(fun z -> "'" + z.modName + "." + z.tasName + "'") |> Seq.StrJoin ", ")
+                    let cycTasses = cyclicTasses |> List.map printTas |> Seq.StrJoin "\n\tand\n"
+                    SemanticError(emptyLocation, sprintf "Cyclic Types detected:\n%s\n"  cycTasses)                    )
     sortedTypeAss
 
 let internal createProgramUnits (files: Asn1File list)  (l:ProgrammingLanguage) =
@@ -106,11 +123,16 @@ let internal createProgramUnits (files: Asn1File list)  (l:ProgrammingLanguage) 
             let tetscase_name = f.FileNameWithoutExtension+"_auto_tcs"
             {ProgramUnit.name = f.FileNameWithoutExtension; specFileName = specFileName; bodyFileName=bodyFileName; sortedTypeAssignments = sortedTypes; valueAssignments = fileValueAssignments; importedProgramUnits = importedProgramUnits; tetscase_specFileName=tetscase_specFileName; tetscase_bodyFileName=tetscase_bodyFileName; tetscase_name=tetscase_name})
     | Ada   -> 
+        let typesMap = 
+            files |> 
+            List.collect(fun f -> f.Modules) |>
+            List.collect(fun m ->
+                m.TypeAssignments |> List.map(fun tas -> tas.AsTypeAssignmentInfo m.Name.Value, tas) 
+            ) |> Map.ofList
 
         files |>
         List.collect(fun f -> f.Modules |> List.map (fun m -> f,m)) |>
         List.map(fun (f,m) ->
-            let typesMap = m.TypeAssignments |> List.map(fun tas -> tas.AsTypeAssignmentInfo m.Name.Value, tas) |> Map.ofList
             let moduTypes = m.TypeAssignments |> List.map(fun x -> x.Type)
             let valueAssignments = m.ValueAssignments
             let importedTypes = 

@@ -145,7 +145,7 @@ let private printUnit (r:DAst.AstRoot) (l:ProgrammingLanguage) (encodings: Commo
         match l with
         | C     -> 
             let arrsUtilityDefines = []
-            header_c.PrintHeaderFile pu.name pu.importedProgramUnits typeDefs (arrsValues@arrsHeaderAnonymousValues) arrsPrototypes arrsUtilityDefines
+            header_c.PrintHeaderFile (ToC pu.name) pu.importedProgramUnits typeDefs (arrsValues@arrsHeaderAnonymousValues) arrsPrototypes arrsUtilityDefines
         | Ada   -> 
             let arrsPrivateChoices = []
             header_a.PrintPackageSpec pu.name pu.importedProgramUnits typeDefs (arrsValues@arrsHeaderAnonymousValues) arrsPrivateChoices
@@ -166,7 +166,7 @@ let private printUnit (r:DAst.AstRoot) (l:ProgrammingLanguage) (encodings: Commo
     let tetscase_specFileName = Path.Combine(outDir, pu.tetscase_specFileName)
     let tstCasesHdrContent =
         match l with
-        | C     -> test_cases_c.PrintAutomaticTestCasesHeaderFile (pu.tetscase_specFileName.Replace(".","_")) pu.name typeDefs
+        | C     -> test_cases_c.PrintAutomaticTestCasesHeaderFile (ToC pu.tetscase_specFileName) pu.name typeDefs
         | Ada   -> test_cases_a.PrintCodecsFile_spec pu.name pu.importedProgramUnits typeDefs
     File.WriteAllText(tetscase_specFileName, tstCasesHdrContent.Replace("\r",""))
         

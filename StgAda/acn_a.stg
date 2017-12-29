@@ -784,6 +784,19 @@ sequence_presense_optChild_pres_str_decode(p, sAcc, sChName, sExtFldName, sVal) 
 result.Success := true;
 >>
 
+sequence_acn_child_encode(sChName, sChildContent, sErrCode) ::= <<
+--Encode <sChName> 
+if <sChName>_is_initialized then
+    result := <rtlModuleName()>.ASN1_RESULT'(Success => TRUE, ErrorCode => 0);
+    <sChildContent>
+else
+    result := <rtlModuleName()>.ASN1_RESULT'(Success => False, ErrorCode => <sErrCode>);
+end if;
+>>
+sequence_acn_child_decode(sChName, sChildContent, sErrCode) ::= <<
+--Decode <sChName> 
+<sChildContent>
+>>
 
 
 sequence_mandatory_child_encode(sChName, sChildContent) ::= <<
@@ -1030,18 +1043,35 @@ Declare_ChoiceIndex()::="index:<rtlModuleName()>.Asn1Int;"
 /* Updates */
 
 
-MultiAcnUpdate_checkEqual_pri(p1,p2) ::= "(<p1> = <p2>)"
-MultiAcnUpdate_checkEqual_str(p1,p2) ::= "(<p1> = <p2>)"
+MultiAcnUpdate_checkEqual_pri0(p1,p2) ::= "(<p1> = <p2>)"
+MultiAcnUpdate_checkEqual_str0(p1,p2) ::= "(<p1> = <p2>)"
 
-MultiAcnUpdate(v, v0, sErrCode, arrsLocalDeclarations, arrsLocalUpdateStatements, arrsLocalCheckEquality) ::= <<
+MultiAcnUpdate_get_first_init_value_pri(sV0, sVi, bIsFirst) ::= <<
+<if(bIsFirst)>if<else>elsif<endif> <sVi>_is_initialized then
+    <sV0> := <sVi>;
+>>
+
+MultiAcnUpdate_get_first_init_value_str(sV0, sVi, bIsFirst) ::= <<
+<MultiAcnUpdate_get_first_init_value_pri(sV0=sV0, sVi=sVi, bIsFirst=bIsFirst)>
+>>
+
+MultiAcnUpdate_checkEqual_pri(sV0, sVi) ::= "((<sVi>_is_initialized and <sV0> = <sVi>) or not <sVi>_is_initialized)"
+MultiAcnUpdate_checkEqual_str(sV0, sVi) ::= "((<sVi>_is_initialized and <sV0> = <sVi>) or not <sVi>_is_initialized)"
+
+MultiAcnUpdate(v, v0, sErrCode, arrsLocalDeclarations, arrsLocalUpdateStatements, arrsGetFirstIntValue, arrsLocalCheckEquality) ::= <<
 declare
     <arrsLocalDeclarations; separator="\n">
 begin
     
     <arrsLocalUpdateStatements; separator="\n">
     
-    <v> := <v0>;
+    <arrsGetFirstIntValue; separator="\n"> 
+    else 
+        result := <rtlModuleName()>.ASN1_RESULT'(Success => False, ErrorCode => <sErrCode>);
+    end if;
+
     result := <rtlModuleName()>.ASN1_RESULT'(Success => result.Success and (<arrsLocalCheckEquality; separator=" and ">), ErrorCode => <sErrCode>);
+    <v>_is_initialized := result.Success;
 end;
 >>
 
@@ -1049,13 +1079,17 @@ end;
 
 
 PresenceDependency(v, sSeqPath, sAcc, sChildName) ::= <<
+<v>_is_initialized := TRUE;
 <v> := (<sSeqPath><sAcc>exist.<sChildName> = 1);
 >>
 
 
 
 
-SizeDependency(v, sCount) ::= "<v> := <rtlModuleName()>.Asn1UInt(<sCount>);"
+SizeDependency(v, sCount) ::= <<
+<v>_is_initialized := TRUE;
+<v> := <rtlModuleName()>.Asn1UInt(<sCount>);
+>>
 
 
 getStringSize(p) ::= "<rtlModuleName()>.getStringSize(<p>)"
@@ -1071,11 +1105,13 @@ end case;
 
 ChoiceDependencyIntPres_child(v, sChildNamePrese, nChildRetVal) ::= <<
 when <sChildNamePrese> =>
+    <v>_is_initialized := TRUE;
 	<v> := <nChildRetVal>; 
 >>
 
 ChoiceDependencyStrPres_child(v, sChildNamePrese, sChildRetVal) ::= <<
 when <sChildNamePrese> =>
+    <v>_is_initialized := TRUE;
 	<v> := "<nChildRetVal>"; 
 >>
 
@@ -1083,6 +1119,7 @@ when <sChildNamePrese> =>
 
 ChoiceDependencyEnum_Item(v, sChildCID, sEnumCName) ::= <<
 when <sChildCID> =>
+    <v>_is_initialized := TRUE;
 	<v> := <sEnumCName>; 
 >>
 
@@ -1093,6 +1130,12 @@ end case;
 >>
 
 
+
+checkAccessPath(arrsCheckPaths, sUpdateStatement) ::= <<
+if (<arrsCheckPaths; separator=" && ">) then
+    <sUpdateStatement>
+end if;
+>>
 
 
 
