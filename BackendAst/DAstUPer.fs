@@ -551,8 +551,21 @@ let getFuncName (r:Asn1AcnAst.AstRoot) (l:ProgrammingLanguage) (codec:CommonType
 *)
 
 let createReferenceFunction (r:Asn1AcnAst.AstRoot) (l:ProgrammingLanguage) (codec:CommonTypes.Codec) (t:Asn1AcnAst.Asn1Type) (o:Asn1AcnAst.ReferenceType) (typeDefinition:TypeDefinitionCommon) (isValidFunc: IsValidFunction option) (baseType:Asn1Type) (us:State)  =
+    
+    if (t.id.AsString.StartsWith("Onboard-Parameters.Parameter-Value")) then
+        let aaa = t.id.AsString
+        ()
+
+
     let typeDefinitionName = ToC2(r.args.TypePrefix + o.tasName.Value)
-    let baseFncName = typeDefinitionName + codec.suffix
+    let baseFncName = 
+        match l with
+        | C     -> typeDefinitionName + codec.suffix
+        | Ada   -> 
+            match t.id.ModName = o.modName.Value with
+            | true  -> typeDefinitionName + codec.suffix
+            | false -> (ToC o.modName.Value) + "." + typeDefinitionName + codec.suffix
+
 
     let t1              = Asn1AcnAstUtilFunctions.GetActualTypeByName r o.modName o.tasName
     let t1WithExtensios = o.resolvedType;

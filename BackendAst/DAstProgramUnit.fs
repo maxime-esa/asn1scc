@@ -139,7 +139,7 @@ let internal createProgramUnits (files: Asn1File list)  (l:ProgrammingLanguage) 
                 m.Imports |>
                 Seq.collect(fun imp -> imp.Types |> List.map (fun impType ->{TypeAssignmentInfo.modName = imp.Name.Value; tasName = impType.Value})) |> 
                 Seq.distinct |> Seq.toList        
-            let sortedTypes = sortTypes moduTypes importedTypes |> List.map(fun ref -> typesMap.[ref])
+            let sortedTypes = sortTypes moduTypes importedTypes |> List.filter(fun z -> z.modName = m.Name.Value) |> List.map(fun ref -> typesMap.[ref]) 
             let specFileName = ToC (m.Name.Value.ToLower()) + "." + l.SpecExtention
             let bodyFileName = ToC (m.Name.Value.ToLower()) + "." + l.BodyExtention
             let tetscase_specFileName = ToC (m.Name.Value.ToLower()) + "_auto_tcs." + l.SpecExtention

@@ -333,13 +333,18 @@ let createReferenceTypeEqualFunction (r:Asn1AcnAst.AstRoot) (l:ProgrammingLangua
         //| None            -> ToC2(r.args.TypePrefix + o.tasName.Value)
         ToC2(r.args.TypePrefix + o.tasName.Value)
 
-    let baseEqName = typeDefinitionName + "_Equal"
+    let baseEqName = //typeDefinitionName + "_Equal"
+        match l with
+        | C     -> typeDefinitionName + "_Equal"
+        | Ada   -> 
+            match t.id.ModName = o.modName.Value with
+            | true  -> typeDefinitionName + "_Equal"
+            | false -> (ToC o.modName.Value) + "." + typeDefinitionName + "_Equal"
 
     match baseType.Kind with
     | Integer _
     | Real _
     | Boolean _
-    | Enumerated _
     | NullType _
     | IA5String _       -> baseType.equalFunction
     | OctetString _
@@ -359,6 +364,7 @@ let createReferenceTypeEqualFunction (r:Asn1AcnAst.AstRoot) (l:ProgrammingLangua
             isEqualFunc                    = None
             isEqualFuncDef                 = None
         }    
+    | Enumerated _
     | SequenceOf _
     | Sequence _
     | Choice   _      ->
