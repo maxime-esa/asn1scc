@@ -47,7 +47,7 @@ let createInitFunctionCommon (r:Asn1AcnAst.AstRoot) (l:ProgrammingLanguage)   (o
 
 let createIntegerInitFunc (r:Asn1AcnAst.AstRoot) (l:ProgrammingLanguage) (t:Asn1AcnAst.Asn1Type) (o:Asn1AcnAst.Integer) (typeDefinition:TypeDefinitionCommon) iv =
     let initInteger = match l with C -> init_c.initInteger | Ada -> init_a.initInteger
-    let funcBody (p:FuncParamType) v = 
+    let funcBody (p:CallerScope) v = 
         let vl = 
             match v with
             | IntegerValue iv   -> iv
@@ -57,7 +57,7 @@ let createIntegerInitFunc (r:Asn1AcnAst.AstRoot) (l:ProgrammingLanguage) (t:Asn1
 
 let createRealInitFunc (r:Asn1AcnAst.AstRoot) (l:ProgrammingLanguage) (t:Asn1AcnAst.Asn1Type) (o :Asn1AcnAst.Real) (typeDefinition:TypeDefinitionCommon) iv = 
     let initReal = match l with C -> init_c.initReal | Ada -> init_a.initReal
-    let funcBody (p:FuncParamType) v = 
+    let funcBody (p:CallerScope) v = 
         let vl = 
             match v with
             | RealValue iv   -> iv
@@ -67,7 +67,7 @@ let createRealInitFunc (r:Asn1AcnAst.AstRoot) (l:ProgrammingLanguage) (t:Asn1Acn
 
 let createIA5StringInitFunc (r:Asn1AcnAst.AstRoot) (l:ProgrammingLanguage) (t:Asn1AcnAst.Asn1Type) (o :Asn1AcnAst.StringType   ) (typeDefinition:TypeDefinitionCommon) iv = 
     let initIA5String = match l with C -> init_c.initIA5String | Ada -> init_a.initIA5String
-    let funcBody (p:FuncParamType) v = 
+    let funcBody (p:CallerScope) v = 
         let vl = 
             match v with
             | StringValue iv   -> 
@@ -82,7 +82,7 @@ let createOctetStringInitFunc (r:Asn1AcnAst.AstRoot) (l:ProgrammingLanguage) (t:
     let initFixSizeBitOrOctString       = match l with C -> init_c.initFixSizeBitOrOctString        | Ada -> init_a.initFixSizeBitOrOctString
     let initFixVarSizeBitOrOctString    = match l with C -> init_c.initFixVarSizeBitOrOctString     | Ada -> init_a.initFixVarSizeBitOrOctString
 
-    let funcBody (p:FuncParamType) v = 
+    let funcBody (p:CallerScope) v = 
         let bytes = 
             match v with
             | OctetStringValue iv -> iv
@@ -96,7 +96,7 @@ let createOctetStringInitFunc (r:Asn1AcnAst.AstRoot) (l:ProgrammingLanguage) (t:
 
 let createNullTypeInitFunc (r:Asn1AcnAst.AstRoot) (l:ProgrammingLanguage) (t:Asn1AcnAst.Asn1Type) (o :Asn1AcnAst.NullType    ) (typeDefinition:TypeDefinitionCommon) iv = 
     let initNull = match l with C -> init_c.initNull | Ada -> init_a.initNull
-    let funcBody (p:FuncParamType) v = initNull (p.getValue l) 
+    let funcBody (p:CallerScope) v = initNull (p.getValue l) 
     createInitFunctionCommon r l t typeDefinition funcBody iv 
 
 let createBitStringInitFunc (r:Asn1AcnAst.AstRoot) (l:ProgrammingLanguage) (t:Asn1AcnAst.Asn1Type) (o :Asn1AcnAst.BitString   ) (typeDefinition:TypeDefinitionCommon) iv = 
@@ -104,7 +104,7 @@ let createBitStringInitFunc (r:Asn1AcnAst.AstRoot) (l:ProgrammingLanguage) (t:As
     let initFixSizeBitOrOctString       = match l with C -> init_c.initFixSizeBitOrOctString        | Ada -> init_a.initFixSizeBitOrOctString
     let initFixVarSizeBitOrOctString    = match l with C -> init_c.initFixVarSizeBitOrOctString     | Ada -> init_a.initFixVarSizeBitOrOctString
 
-    let funcBody (p:FuncParamType) v = 
+    let funcBody (p:CallerScope) v = 
         let bytes = 
             match v with
             | BitStringValue iv     -> bitStringValueToByteArray (StringLoc.ByValue iv) |> Seq.toList
@@ -118,7 +118,7 @@ let createBitStringInitFunc (r:Asn1AcnAst.AstRoot) (l:ProgrammingLanguage) (t:As
 
 let createBooleanInitFunc (r:Asn1AcnAst.AstRoot) (l:ProgrammingLanguage) (t:Asn1AcnAst.Asn1Type) (o :Asn1AcnAst.Boolean     ) (typeDefinition:TypeDefinitionCommon) iv = 
     let initBoolean = match l with C -> init_c.initBoolean | Ada -> init_a.initBoolean
-    let funcBody (p:FuncParamType) v = 
+    let funcBody (p:CallerScope) v = 
         let vl = 
             match v with
             | BooleanValue iv   -> iv
@@ -128,7 +128,7 @@ let createBooleanInitFunc (r:Asn1AcnAst.AstRoot) (l:ProgrammingLanguage) (t:Asn1
 
 let createEnumeratedInitFunc (r:Asn1AcnAst.AstRoot) (l:ProgrammingLanguage) (t:Asn1AcnAst.Asn1Type) (o :Asn1AcnAst.Enumerated  ) (typeDefinition:TypeDefinitionCommon) iv = 
     let initEnumerated = match l with C -> init_c.initEnumerated | Ada -> init_a.initEnumerated
-    let funcBody (p:FuncParamType) v = 
+    let funcBody (p:CallerScope) v = 
         let vl = 
             match v with
             | EnumValue iv      -> o.items |> Seq.find(fun x -> x.Name.Value = iv)
@@ -139,7 +139,7 @@ let createEnumeratedInitFunc (r:Asn1AcnAst.AstRoot) (l:ProgrammingLanguage) (t:A
 let createSequenceOfInitFunc (r:Asn1AcnAst.AstRoot) (l:ProgrammingLanguage) (t:Asn1AcnAst.Asn1Type) (o :Asn1AcnAst.SequenceOf  ) (typeDefinition:TypeDefinitionCommon) (childType:Asn1Type) iv = 
     let initFixedSequenceOf = match l with C -> init_c.initFixedSequenceOf | Ada -> init_a.initFixedSequenceOf
     let initVarSizeSequenceOf = match l with C -> init_c.initVarSizeSequenceOf | Ada -> init_a.initVarSizeSequenceOf
-    let funcBody (p:FuncParamType) v = 
+    let funcBody (p:CallerScope) v = 
         let vl = 
             match v with
             | SeqOfValue childVals ->
@@ -163,7 +163,7 @@ let createSequenceOfInitFunc (r:Asn1AcnAst.AstRoot) (l:ProgrammingLanguage) (t:A
 let createSequenceInitFunc (r:Asn1AcnAst.AstRoot) (l:ProgrammingLanguage) (t:Asn1AcnAst.Asn1Type) (o :Asn1AcnAst.Sequence) (typeDefinition:TypeDefinitionCommon) (children:SeqChildInfo list) iv = 
     let initSequence                = match l with C -> init_c.initSequence | Ada -> init_a.initSequence
     let initSequence_optionalChild  = match l with C -> init_c.initSequence_optionalChild | Ada -> init_a.initSequence_optionalChild
-    let funcBody (p:FuncParamType) v = 
+    let funcBody (p:CallerScope) v = 
         let dummy =
             match typeDefinition.name = "MyPDU" with
             | true  -> 1
@@ -195,7 +195,7 @@ let createSequenceInitFunc (r:Asn1AcnAst.AstRoot) (l:ProgrammingLanguage) (t:Asn
 let createChoiceInitFunc (r:Asn1AcnAst.AstRoot) (l:ProgrammingLanguage) (t:Asn1AcnAst.Asn1Type) (o :Asn1AcnAst.Choice) (typeDefinition:TypeDefinitionCommon) (children:ChChildInfo list) iv =     
     //let initChoice = match l with C -> init_c.initChoice | Ada -> init_a.initChoice
 
-    let funcBody (p:FuncParamType) v = 
+    let funcBody (p:CallerScope) v = 
         let childrenOut = 
             match v with
             | ChValue iv     -> 

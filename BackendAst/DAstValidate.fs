@@ -33,7 +33,7 @@ let Lte (l:ProgrammingLanguage) eqIsInc  e1 e2 =
     | true   -> l.ExpLte e1 e2        
     | false  -> l.ExpLt  e1 e2
 
-let foldGenericCon (l:ProgrammingLanguage) valToStrFunc  (p:FuncParamType)  (c:GenericConstraint<'v>)  =
+let foldGenericCon (l:ProgrammingLanguage) valToStrFunc  (p:CallerScope)  (c:GenericConstraint<'v>)  =
     foldGenericConstraint
         (fun e1 e2 b s      -> l.ExpOr e1 e2, s)
         (fun e1 e2 s        -> l.ExpAnd e1 e2, s)
@@ -45,7 +45,7 @@ let foldGenericCon (l:ProgrammingLanguage) valToStrFunc  (p:FuncParamType)  (c:G
         c
         0 |> fst
 
-let foldRangeCon (l:ProgrammingLanguage) valToStrFunc1 valToStrFunc2 (p:FuncParamType)  (c:RangeTypeConstraint<'v1,'v2>)  =
+let foldRangeCon (l:ProgrammingLanguage) valToStrFunc1 valToStrFunc2 (p:CallerScope)  (c:RangeTypeConstraint<'v1,'v2>)  =
     foldRangeTypeConstraint        
         (fun e1 e2 b s      -> l.ExpOr e1 e2, s)
         (fun e1 e2 s        -> l.ExpAnd e1 e2, s)
@@ -147,7 +147,7 @@ let simplifytIntegerTypeConstraint handleEqual handleRangeContraint_val_MAX hand
 
 // constraint simplification ended here
 
-let foldSizeRangeTypeConstraint (l:ProgrammingLanguage)  getSizeFunc (p:FuncParamType) (c:PosIntTypeConstraint) = 
+let foldSizeRangeTypeConstraint (l:ProgrammingLanguage)  getSizeFunc (p:CallerScope) (c:PosIntTypeConstraint) = 
     foldRangeTypeConstraint        
         (fun e1 e2 b s      -> l.ExpOr e1 e2, s)
         (fun e1 e2 s        -> l.ExpAnd e1 e2, s)
@@ -164,7 +164,7 @@ let foldSizeRangeTypeConstraint (l:ProgrammingLanguage)  getSizeFunc (p:FuncPara
         0 
 
 
-let foldSizableConstraint (l:ProgrammingLanguage) compareSingValueFunc  getSizeFunc (p:FuncParamType) (c:SizableTypeConstraint<'v>) =
+let foldSizableConstraint (l:ProgrammingLanguage) compareSingValueFunc  getSizeFunc (p:CallerScope) (c:SizableTypeConstraint<'v>) =
     foldSizableTypeConstraint2
         (fun e1 e2 b s      -> l.ExpOr e1 e2, s)
         (fun e1 e2 s        -> l.ExpAnd e1 e2, s)
@@ -179,7 +179,7 @@ let foldSizableConstraint (l:ProgrammingLanguage) compareSingValueFunc  getSizeF
 
 
 
-let foldStringCon (r:Asn1AcnAst.AstRoot) (l:ProgrammingLanguage) alphaFuncName (p:FuncParamType)  (c:IA5StringConstraint)  =
+let foldStringCon (r:Asn1AcnAst.AstRoot) (l:ProgrammingLanguage) alphaFuncName (p:CallerScope)  (c:IA5StringConstraint)  =
     foldStringTypeConstraint2
         (fun e1 e2 b s      -> l.ExpOr e1 e2, s)
         (fun e1 e2 s        -> l.ExpAnd e1 e2, s)
@@ -216,13 +216,13 @@ let createPrimitiveFunction (r:Asn1AcnAst.AstRoot) (l:ProgrammingLanguage)  (t:A
         let funcName            = getFuncName r l t.id
         let errCodeName         = ToC ("ERR_" + ((t.id.AcnAbsPath |> Seq.skip 1 |> Seq.StrJoin("-")).Replace("#","elm")))
         let errCode, ns = getNextValidErrorCode us errCodeName
-        let funcExp (p:FuncParamType) = 
+        let funcExp (p:CallerScope) = 
             let allCons = allCons |> List.map (conToStrFunc p)
             match allCons with
             | []     -> raise(BugErrorException("Invalid case"))
             | c::cs  -> l.ExpAndMulti allCons 
 
-        let funcBody (p:FuncParamType) = 
+        let funcBody (p:CallerScope) = 
             let allCons = allCons |> List.map (conToStrFunc p)
             match allCons with
             | []    -> raise(BugErrorException("Invalid case"))
@@ -233,7 +233,7 @@ let createPrimitiveFunction (r:Asn1AcnAst.AstRoot) (l:ProgrammingLanguage)  (t:A
                 match funcName  with
                 | None              -> None
                 | Some funcName     -> 
-                    let p : FuncParamType = t.getParamType l Encode
+                    let p : CallerScope = t.getParamType l Encode
                     let exp = funcBody p  
                     match l with
                     |C     -> Some(isvalid_c.EmitTypeAssignment_primitive funcName  typeDefinition.name exp  (alphaFuncs |> List.map(fun x -> x.funcBody)) )
@@ -270,7 +270,7 @@ let createBitOrOctetStringFunction (r:Asn1AcnAst.AstRoot) (l:ProgrammingLanguage
         let errCode, ns = getNextValidErrorCode us errCodeName
 
 
-        let funcBody (p:FuncParamType)  = 
+        let funcBody (p:CallerScope)  = 
             let allCons = allCons |> List.map (fun c -> conToStrFunc  p c)
             match allCons with
             | []    -> raise(BugErrorException("Invalid case"))
@@ -282,7 +282,7 @@ let createBitOrOctetStringFunction (r:Asn1AcnAst.AstRoot) (l:ProgrammingLanguage
                 match funcName  with
                 | None              -> None
                 | Some funcName     -> 
-                    let p : FuncParamType = t.getParamType l Encode
+                    let p : CallerScope = t.getParamType l Encode
                     let exp = funcBody p  
                     match l with
                     |C     -> Some(isvalid_c.EmitTypeAssignment_oct_or_bit_string funcName  typeDefinition.name exp (alphaFuncs |> List.map(fun x -> x.funcBody)) )
@@ -331,7 +331,7 @@ let createIntegerFunctionByCons (r:Asn1AcnAst.AstRoot) (l:ProgrammingLanguage) i
     match allCons with
     | []        -> None
     | _         ->
-        let funcExp (p:FuncParamType) = 
+        let funcExp (p:CallerScope) = 
             let allCons = allCons |> List.map (conToStrFunc p)
             l.ExpAndMulti allCons 
         Some funcExp
@@ -390,7 +390,7 @@ let createOctetStringFunction (r:Asn1AcnAst.AstRoot) (l:ProgrammingLanguage) (t:
                             | Some tasInfo    -> ToC2(r.args.TypePrefix + tasInfo.tasName)
                             | None            -> typeDefinition.typeDefinitionBodyWithinSeq
                         Some ({AnonymousVariable.valueName = (recValue.getBackendName l); valueExpresion = (printValue None recValue.kind); typeDefinitionName = typeDefinitionName}))
-    let compareSingValueFunc (p:FuncParamType) (v:Asn1AcnAst.OctetStringValue, (id,loc)) =
+    let compareSingValueFunc (p:CallerScope) (v:Asn1AcnAst.OctetStringValue, (id,loc)) =
         let recValue = {Asn1Value.kind = OctetStringValue (v |> List.map(fun z -> z.Value)); id=id;loc=loc}
         let vstr = VALUE (recValue.getBackendName l)
             //match p.getAcces l with
@@ -402,7 +402,7 @@ let createOctetStringFunction (r:Asn1AcnAst.AstRoot) (l:ProgrammingLanguage) (t:
             | None          -> raise(BugErrorException "unexpected case")
             | Some (ret,_)      -> ret
         | EqualBodyStatementList  _     -> raise(BugErrorException "unexpected case")
-    let foldSizeCon (p:FuncParamType) c = foldSizableConstraint l (fun p v -> compareSingValueFunc p  v) (fun l p -> l.Length p.p (p.getAcces l)) p c
+    let foldSizeCon (p:CallerScope) c = foldSizableConstraint l (fun p v -> compareSingValueFunc p  v) (fun l p -> l.Length p.p (p.getAcces l)) p c
     createBitOrOctetStringFunction r l t allCons foldSizeCon typeDefinition [] anonymousVariables us
 
 
@@ -422,7 +422,7 @@ let createBitStringFunction (r:Asn1AcnAst.AstRoot) (l:ProgrammingLanguage) (t:As
                             | Some tasInfo    -> ToC2(r.args.TypePrefix + tasInfo.tasName)
                             | None            -> typeDefinition.typeDefinitionBodyWithinSeq
                         Some ({AnonymousVariable.valueName = (recValue.getBackendName l); valueExpresion = (printValue None recValue.kind); typeDefinitionName = typeDefinitionName}))
-    let compareSingValueFunc (p:FuncParamType) (v:Asn1AcnAst.BitStringValue, (id,loc)) =
+    let compareSingValueFunc (p:CallerScope) (v:Asn1AcnAst.BitStringValue, (id,loc)) =
         let recValue = {Asn1Value.kind = BitStringValue (v.Value ); id=id;loc=loc}
         let vstr = VALUE (recValue.getBackendName l)
 //        let vstr = 
@@ -446,7 +446,7 @@ let isValidSequenceChild   (l:ProgrammingLanguage) (o:Asn1AcnAst.Asn1Child) (new
     let sInnerStatement = 
         match newChild.isValidFunction with
         | Some (isValidFunction)    ->
-            Some((fun (p:FuncParamType)  ->
+            Some((fun (p:CallerScope)  ->
                     isValidFunction.funcBody (p.getSeqChild l c_name newChild.isIA5String)), isValidFunction)
         | None      -> None
     let sInnerStatement =
@@ -457,10 +457,10 @@ let isValidSequenceChild   (l:ProgrammingLanguage) (o:Asn1AcnAst.Asn1Child) (new
             | Some _    -> 
                 match l with
                 | C     -> 
-                    let newFunc = (fun (p:FuncParamType)  -> isvalid_c.Sequence_OptionalChild p.p (p.getAcces l) c_name (func p ))
+                    let newFunc = (fun (p:CallerScope)  -> isvalid_c.Sequence_OptionalChild p.p (p.getAcces l) c_name (func p ))
                     Some (newFunc, isValid)
                 | Ada   -> 
-                    let newFunc = (fun (p:FuncParamType) -> isvalid_a.Sequence_OptionalChild p.p (p.getAcces l) c_name (func p ))
+                    let newFunc = (fun (p:CallerScope) -> isvalid_a.Sequence_OptionalChild p.p (p.getAcces l) c_name (func p ))
                     Some (newFunc, isValid)
             | None      -> Some (func, isValid)
     let isAlwaysPresentStatement, finalState =
@@ -473,12 +473,12 @@ let isValidSequenceChild   (l:ProgrammingLanguage) (o:Asn1AcnAst.Asn1Child) (new
         | Some(Asn1AcnAst.AlwaysAbsent)                     -> 
             let errCodeName = ToC ("ERR_" + ((newChild.id.AcnAbsPath |> Seq.skip 1 |> Seq.StrJoin("-")).Replace("#","elm"))) + "_IS_PRESENT"
             let errCode, ns = getNextValidErrorCode us errCodeName
-            let isValidStatement = (fun (p:FuncParamType) -> child_always_present_or_absent p.p (p.getAcces l) c_name errCode.errCodeName "0")
+            let isValidStatement = (fun (p:CallerScope) -> child_always_present_or_absent p.p (p.getAcces l) c_name errCode.errCodeName "0")
             Some(isValidStatement, errCode), ns
         | Some(Asn1AcnAst.AlwaysPresent)                    -> 
             let errCodeName = ToC ("ERR_" + ((newChild.id.AcnAbsPath |> Seq.skip 1 |> Seq.StrJoin("-")).Replace("#","elm"))) + "_IS_ABSENT"
             let errCode, ns = getNextValidErrorCode us errCodeName
-            let isValidStatement = (fun (p:FuncParamType) -> child_always_present_or_absent p.p (p.getAcces l) c_name errCode.errCodeName "1")
+            let isValidStatement = (fun (p:CallerScope) -> child_always_present_or_absent p.p (p.getAcces l) c_name errCode.errCodeName "1")
             Some(isValidStatement, errCode), ns
         | _         -> None, us
 
@@ -490,7 +490,7 @@ let isValidSequenceChild   (l:ProgrammingLanguage) (o:Asn1AcnAst.Asn1Child) (new
         Some({SeqChoiceChildInfoIsValid.isValidStatement = isValid; localVars = chFunc.localVariables; alphaFuncs = chFunc.alphaFuncs; errCode = chFunc.errCodes}), finalState
     | Some(isValid1, chFunc), Some(isValid2, errCode)    -> 
         // isvalid_c.JoinTwo is language independent so it is used for both C and Ada
-        let isValid = (fun (p:FuncParamType) -> isvalid_c.JoinTwo (isValid2 p )  (isValid1 p )) 
+        let isValid = (fun (p:CallerScope) -> isvalid_c.JoinTwo (isValid2 p )  (isValid1 p )) 
         Some({SeqChoiceChildInfoIsValid.isValidStatement = isValid; localVars = chFunc.localVariables; alphaFuncs = chFunc.alphaFuncs; errCode = errCode::chFunc.errCodes}), finalState
 
 
@@ -510,7 +510,7 @@ let createSequenceFunction (r:Asn1AcnAst.AstRoot) (l:ProgrammingLanguage) (t:Asn
             let alphaFuncs = childrenConent |> List.collect(fun x -> x.alphaFuncs)
             let localVars = childrenConent |> List.collect(fun x -> x.localVars)
             let ercCodes = childrenConent |> List.collect(fun x -> x.errCode)
-            let funcBody  (p:FuncParamType) = 
+            let funcBody  (p:CallerScope) = 
                 let printChild (content:string) (sNestedContent:string option) = 
                     match sNestedContent with
                     | None  -> content
@@ -534,7 +534,7 @@ let createSequenceFunction (r:Asn1AcnAst.AstRoot) (l:ProgrammingLanguage) (t:Asn
     | None    -> None, us
     | Some(alphaFuncs, localVars, ercCodes, funcBody, finalState) ->
         let  func  = 
-            let p : FuncParamType = t.getParamType l Encode
+            let p : CallerScope = t.getParamType l Encode
             match funcName  with
             | None              -> None
             | Some funcName     -> 
@@ -578,7 +578,7 @@ let isValidChoiceChild   (l:ProgrammingLanguage) (o:Asn1AcnAst.ChChildInfo) (new
     let sInnerStatement = 
         match newChild.isValidFunction with
         | Some (isValidFunction)    ->
-             Some((fun (p:FuncParamType) ->isValidFunction.funcBody (p.getChChild l c_name newChild.isIA5String)), isValidFunction)
+             Some((fun (p:CallerScope) ->isValidFunction.funcBody (p.getChChild l c_name newChild.isIA5String)), isValidFunction)
         | None      -> None
     
 
@@ -609,7 +609,7 @@ let createChoiceFunction (r:Asn1AcnAst.AstRoot) (l:ProgrammingLanguage) (t:Asn1A
         let alphaFuncs = validatedComponenets |> List.collect(fun x -> x.alphaFuncs)
         let localVars =  validatedComponenets |> List.collect(fun x -> x.localVars)
         let ercCodes =   errCode::(validatedComponenets |> List.collect(fun x -> x.errCode))
-        let funcBody  (p:FuncParamType) = 
+        let funcBody  (p:CallerScope) = 
             let childrenContent =
                 childrenConent |> 
                 List.map(fun (cc, vc) -> 
@@ -634,7 +634,7 @@ let createChoiceFunction (r:Asn1AcnAst.AstRoot) (l:ProgrammingLanguage) (t:Asn1A
     | None    -> None, us
     | Some(alphaFuncs, localVars, ercCodes, funcBody, finalState) ->
         let  func  = 
-            let p : FuncParamType = t.getParamType l Encode
+            let p : CallerScope = t.getParamType l Encode
             match funcName  with
             | None              -> None
             | Some funcName     -> 
@@ -700,7 +700,7 @@ let createSequenceOfFunction (r:Asn1AcnAst.AstRoot) (l:ProgrammingLanguage) (t:A
                 | _     ->
                     let errCodeName         = ToC ("ERR_" + ((t.id.AcnAbsPath |> Seq.skip 1 |> Seq.StrJoin("-")).Replace("#","elm")))
                     let errCode, ns = getNextValidErrorCode us errCodeName
-                    let sIsValidSizeExpFunc (p:FuncParamType) =
+                    let sIsValidSizeExpFunc (p:CallerScope) =
                         let allCons = allSizeCons |> List.map (foldSizeCon  p )
                         l.ExpAndMulti allCons
                     Some(errCode, sIsValidSizeExpFunc, ns)
@@ -709,7 +709,7 @@ let createSequenceOfFunction (r:Asn1AcnAst.AstRoot) (l:ProgrammingLanguage) (t:A
         match childType.isValidFunction, sizeConstrData with
         | None, None     -> None
         | Some cvf, None ->
-            let funcBody (p:FuncParamType)  = 
+            let funcBody (p:CallerScope)  = 
                 //let childAccesPath = p + childAccess + l.ArrName + (l.ArrayAccess i) //"[" + i + "]"
                 let innerStatement = Some(cvf.funcBody (p.getArrayItem l i childType.isIA5String) )
                 match l with
@@ -717,11 +717,11 @@ let createSequenceOfFunction (r:Asn1AcnAst.AstRoot) (l:ProgrammingLanguage) (t:A
                 | Ada -> isvalid_a.sequenceOf p.p (p.getAcces l) i bIsFixedSize (BigInteger o.minSize) None None innerStatement
             Some(cvf.alphaFuncs, lv::cvf.localVariables , cvf.errCodes, funcBody, us)
         | None, Some(errCode, sIsValidSizeExpFunc, ns) ->
-            let funcBody (p:FuncParamType)  = 
+            let funcBody (p:CallerScope)  = 
                 makeExpressionToStatement l (sIsValidSizeExpFunc p ) errCode.errCodeName
             Some([],[], [errCode], funcBody, ns)
         | Some cvf, Some(errCode, sIsValidSizeExpFunc, ns) ->
-            let funcBody (p:FuncParamType)  = 
+            let funcBody (p:CallerScope)  = 
                 //let childAccesPath = p + childAccess + l.ArrName + (l.ArrayAccess i) //"[" + i + "]"
                 let innerStatement = Some(cvf.funcBody (p.getArrayItem l i childType.isIA5String))
                 match l with
@@ -734,7 +734,7 @@ let createSequenceOfFunction (r:Asn1AcnAst.AstRoot) (l:ProgrammingLanguage) (t:A
     | None -> None, us
     | Some(alphaFuncs, localVars, ercCodes, funcBody, newState) ->
         let  func  = 
-            let p : FuncParamType = t.getParamType l Encode
+            let p : CallerScope = t.getParamType l Encode
             match funcName  with
             | None              -> None
             | Some funcName     -> 

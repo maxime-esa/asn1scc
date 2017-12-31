@@ -70,7 +70,7 @@ type ProgrammingLanguage =
     |Ada
 
 
-type FuncParamType =
+type CallerScope =
   | VALUE       of string
   | POINTER     of string
   | FIXARRAY    of string
@@ -180,13 +180,13 @@ type InitFunction = {
     initFuncName            : string option               // the name of the function
     initFunc                : string option               // the body of the function
     initFuncDef             : string option               // function definition in header file
-    initFuncBody            : FuncParamType  -> Asn1ValueKind -> string                      // returns the statement(s) that initialize this type
+    initFuncBody            : CallerScope  -> Asn1ValueKind -> string                      // returns the statement(s) that initialize this type
 }
 
 
 type IsEqualBody =
-    | EqualBodyExpression       of (FuncParamType -> FuncParamType -> (string*(LocalVariable list)) option)
-    | EqualBodyStatementList    of (FuncParamType -> FuncParamType -> (string*(LocalVariable list)) option)
+    | EqualBodyExpression       of (CallerScope -> CallerScope -> (string*(LocalVariable list)) option)
+    | EqualBodyStatementList    of (CallerScope -> CallerScope -> (string*(LocalVariable list)) option)
 (*
 type IsEqualBody2 =
     | EqualBodyExpression2       of (string -> string -> string -> (string*(LocalVariable list)) option)
@@ -216,8 +216,8 @@ type IsValidFunction = {
     funcName            : string option               // the name of the function. Valid only for TASes)
     func                : string option               // the body of the function
     funcDef             : string option               // function definition in header file
-    funcExp             : (FuncParamType -> string) option   // return a single boolean expression
-    funcBody            : FuncParamType -> string            //returns a list of validations statements
+    funcExp             : (CallerScope -> string) option   // return a single boolean expression
+    funcBody            : CallerScope -> string            //returns a list of validations statements
     //funcBody2           : string -> string -> string  //like funBody but with two arguement p and accessOper ( i.e. '->' or '.')
     
     alphaFuncs          : AlphaFunc list  
@@ -235,8 +235,8 @@ type UPerFunction = {
     funcName            : string option               // the name of the function
     func                : string option               // the body of the function
     funcDef             : string option               // function definition in header file
-    funcBody            : FuncParamType -> (UPERFuncBodyResult option)            // returns a list of validations statements
-    funcBody_e          : ErroCode -> FuncParamType -> (UPERFuncBodyResult option)
+    funcBody            : CallerScope -> (UPERFuncBodyResult option)            // returns a list of validations statements
+    funcBody_e          : ErroCode -> CallerScope -> (UPERFuncBodyResult option)
 }
 
 type AcnFuncBodyResult = {
@@ -252,7 +252,7 @@ type AcnFunction = {
 
     // takes as input (a) any acn arguments and (b) the field where the encoding/decoding takes place
     // returns a list of acn encoding statements
-    funcBody            : ((Asn1AcnAst.RelativePath*Asn1AcnAst.AcnParameter) list) -> FuncParamType -> (AcnFuncBodyResult option)            
+    funcBody            : ((Asn1AcnAst.RelativePath*Asn1AcnAst.AcnParameter) list) -> CallerScope -> (AcnFuncBodyResult option)            
 }
 
 type EncodeDecodeTestFunc = {
@@ -470,7 +470,7 @@ type SequenceOf = {
 
 
 and SeqChoiceChildInfoIsValid = {
-    isValidStatement  : FuncParamType -> string
+    isValidStatement  : CallerScope -> string
     localVars         : LocalVariable list
     alphaFuncs        : AlphaFunc list
     errCode           : ErroCode list
@@ -497,7 +497,7 @@ and AcnChild = {
     id                          : ReferenceToType
     Type                        : Asn1AcnAst.AcnInsertedType
     typeDefinitionBodyWithinSeq : string
-    funcBody                    : CommonTypes.Codec -> ((Asn1AcnAst.RelativePath*Asn1AcnAst.AcnParameter) list) -> FuncParamType -> (AcnFuncBodyResult option)            // returns a list of validations statements
+    funcBody                    : CommonTypes.Codec -> ((Asn1AcnAst.RelativePath*Asn1AcnAst.AcnParameter) list) -> CallerScope -> (AcnFuncBodyResult option)            // returns a list of validations statements
     funcUpdateStatement         : AcnChildUpdateResult option                                    // vTarget,  pSrcRoot, return the update statement 
 }
 
@@ -510,7 +510,7 @@ and Asn1Child = {
     Name                        : StringLoc
     c_name                      : string
     ada_name                    : string                     
-    isEqualBodyStats            : FuncParamType -> FuncParamType -> (string*(LocalVariable list)) option  // 
+    isEqualBodyStats            : CallerScope -> CallerScope -> (string*(LocalVariable list)) option  // 
     isValidBodyStats            : State -> (SeqChoiceChildInfoIsValid option * State)
     Type                        : Asn1Type
     Optionality                 : Asn1AcnAst.Asn1Optionality option
@@ -558,7 +558,7 @@ and ChChildInfo = {
     chType              :Asn1Type
     
     //DAst properties
-    isEqualBodyStats    : FuncParamType -> FuncParamType  -> string*(LocalVariable list) // 
+    isEqualBodyStats    : CallerScope -> CallerScope  -> string*(LocalVariable list) // 
     isValidBodyStats    : State -> (SeqChoiceChildInfoIsValid option * State)
 }
 
@@ -608,7 +608,7 @@ and ReferenceType = {
 }
 
 and AcnChildUpdateResult = {
-    func        : FuncParamType -> FuncParamType -> string
+    func        : CallerScope -> CallerScope -> string
     errCodes    : ErroCode list
 }
 

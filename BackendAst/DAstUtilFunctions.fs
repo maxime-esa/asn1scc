@@ -91,7 +91,7 @@ type ProgrammingLanguage with
 
 
 
-type FuncParamType  with 
+type CallerScope  with 
     member this.toPointer (l:ProgrammingLanguage) =
         POINTER (this.getPointer l)
     member this.getPointer (l:ProgrammingLanguage) =
@@ -168,8 +168,8 @@ type FuncParamType  with
             sprintf "%s%skind == %s_PRESENT" this.p (this.getAcces l) childPresentName
 
 
-let getAccessFromScopeNodeList (ReferenceToType nodes)  (childTypeIsString: bool) (l:ProgrammingLanguage) (pVal : FuncParamType) =
-    let handleNode zeroBasedSeqeuenceOfLevel (pVal : FuncParamType) (n:ScopeNode) (childTypeIsString: bool) = 
+let getAccessFromScopeNodeList (ReferenceToType nodes)  (childTypeIsString: bool) (l:ProgrammingLanguage) (pVal : CallerScope) =
+    let handleNode zeroBasedSeqeuenceOfLevel (pVal : CallerScope) (n:ScopeNode) (childTypeIsString: bool) = 
         match n with
         | MD _
         | TA _
@@ -387,7 +387,7 @@ type Asn1AcnAst.Asn1Type with
                 | Asn1AcnAst.Sequence     _ -> POINTER "pVal"
                 | Asn1AcnAst.Choice       _ -> POINTER "pVal"
                 | Asn1AcnAst.ReferenceType r -> r.resolvedType.getParamType l c
-    member this.getParamValue (p:FuncParamType) (l:ProgrammingLanguage) (c:Codec) =
+    member this.getParamValue (p:CallerScope) (l:ProgrammingLanguage) (c:Codec) =
         match l with
         | Ada   -> p.p
         | C     ->
@@ -800,7 +800,7 @@ let hasAcnEncodeFunction (encFunc : AcnFunction option) acnParameters  =
     | Some fnc ->
         match acnParameters with
         | [] ->
-            let p : FuncParamType = VALUE "dummy"
+            let p : CallerScope = VALUE "dummy"
             match fnc.funcBody [] p with
             | None   -> false
             | Some _ -> true
@@ -810,7 +810,7 @@ let hasUperEncodeFunction (encFunc : UPerFunction option)  =
     match encFunc with
     | None  -> false
     | Some fnc ->
-            let p : FuncParamType = VALUE "dummy"
+            let p : CallerScope = VALUE "dummy"
             match fnc.funcBody p with
             | None   -> false
             | Some _ -> true

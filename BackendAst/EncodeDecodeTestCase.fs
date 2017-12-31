@@ -64,7 +64,7 @@ let createUperEncDecFunction (r:Asn1AcnAst.AstRoot) (l:ProgrammingLanguage) (t:A
     let printCodec_body_header = match l with C -> test_cases_c.PrintCodec_body_header   | Ada -> test_cases_a.PrintCodec_spec
     let joinItems = match l with C -> test_cases_c.JoinItems   | Ada -> test_cases_a.JoinItems
 
-    let p : FuncParamType = t.getParamType l Encode
+    let p : CallerScope = t.getParamType l Encode
     let varName = p.p
     let sStar = p.getStar l
     let sAmberDecode = getAmberDecode t
@@ -138,7 +138,7 @@ let createAcnEncDecFunction (r:Asn1AcnAst.AstRoot) (l:ProgrammingLanguage) (t:As
     let printCodec_body_header = match l with C -> test_cases_c.PrintCodec_body_header   | Ada -> test_cases_a.PrintCodec_spec
     let joinItems = match l with C -> test_cases_c.JoinItems   | Ada -> test_cases_a.JoinItems
 
-    let p : FuncParamType = t.getParamType l Encode
+    let p : CallerScope = t.getParamType l Encode
     let varName = p.p
     let sStar = p.getStar l
     let sAmberDecode = getAmberDecode t
