@@ -69,11 +69,17 @@ type ProgrammingLanguage =
     |C
     |Ada
 
-
-type CallerScope =
+    
+type FuncParamType =
   | VALUE       of string
   | POINTER     of string
   | FIXARRAY    of string
+
+type CallerScope = {
+    modName : string
+    arg     : FuncParamType
+}
+
 
 type ExpOrStatement =
     | Expression 
@@ -718,6 +724,7 @@ type ProgramUnit = {
     sortedTypeAssignments   : TypeAssignment list
     valueAssignments        : ValueAssignment list
     importedProgramUnits    : string list
+    importedTypes           : string list
 }
 
 

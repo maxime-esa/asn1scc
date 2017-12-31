@@ -209,7 +209,7 @@ let private printUnit (r:DAst.AstRoot) (l:ProgrammingLanguage) (encodings: Commo
             let arrsBoolPatterns = []
             let arrsChoiceValueAssignments = []
             let rtl = [body_a.rtlModuleName()]
-            body_a.PrintPackageBody pu.name  (rtl@pu.importedProgramUnits) arrsNegativeReals arrsBoolPatterns arrsTypeAssignments arrsChoiceValueAssignments
+            body_a.PrintPackageBody pu.name  (rtl@pu.importedProgramUnits) arrsNegativeReals arrsBoolPatterns arrsTypeAssignments arrsChoiceValueAssignments pu.importedTypes
     let fileName = Path.Combine(outDir, pu.bodyFileName)
     File.WriteAllText(fileName, eqContntent.Replace("\r",""))
 

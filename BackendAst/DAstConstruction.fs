@@ -688,7 +688,7 @@ let DoWork (r:Asn1AcnAst.AstRoot) (deps:Asn1AcnAst.AcnInsertedFieldDependencies)
         AstRoot.Files = files
         acnConstants = r.acnConstants
         args = r.args
-        programUnits = DAstProgramUnit.createProgramUnits files l
+        programUnits = DAstProgramUnit.createProgramUnits r.args files l
         lang = l
     }
 

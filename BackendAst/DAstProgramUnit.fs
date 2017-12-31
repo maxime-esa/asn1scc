@@ -74,7 +74,7 @@ let private sortTypes (typesToSort: Asn1Type list) (imports :TypeAssignmentInfo 
                     SemanticError(emptyLocation, sprintf "Cyclic Types detected:\n%s\n"  cycTasses)                    )
     sortedTypeAss
 
-let internal createProgramUnits (files: Asn1File list)  (l:ProgrammingLanguage) =
+let internal createProgramUnits (args:CommandLineSettings) (files: Asn1File list)  (l:ProgrammingLanguage) =
     match l with
     | C     -> 
         files |>
@@ -121,7 +121,7 @@ let internal createProgramUnits (files: Asn1File list)  (l:ProgrammingLanguage) 
             let tetscase_specFileName = f.FileNameWithoutExtension+"_auto_tcs."+l.SpecExtention
             let tetscase_bodyFileName = f.FileNameWithoutExtension+"_auto_tcs."+l.BodyExtention
             let tetscase_name = f.FileNameWithoutExtension+"_auto_tcs"
-            {ProgramUnit.name = f.FileNameWithoutExtension; specFileName = specFileName; bodyFileName=bodyFileName; sortedTypeAssignments = sortedTypes; valueAssignments = fileValueAssignments; importedProgramUnits = importedProgramUnits; tetscase_specFileName=tetscase_specFileName; tetscase_bodyFileName=tetscase_bodyFileName; tetscase_name=tetscase_name})
+            {ProgramUnit.name = f.FileNameWithoutExtension; specFileName = specFileName; bodyFileName=bodyFileName; sortedTypeAssignments = sortedTypes; valueAssignments = fileValueAssignments; importedProgramUnits = importedProgramUnits; tetscase_specFileName=tetscase_specFileName; tetscase_bodyFileName=tetscase_bodyFileName; tetscase_name=tetscase_name; importedTypes= []})
     | Ada   -> 
         let typesMap = 
             files |> 
@@ -135,17 +135,25 @@ let internal createProgramUnits (files: Asn1File list)  (l:ProgrammingLanguage) 
         List.map(fun (f,m) ->
             let moduTypes = m.TypeAssignments |> List.map(fun x -> x.Type)
             let valueAssignments = m.ValueAssignments
+            
             let importedTypes = 
                 m.Imports |>
                 Seq.collect(fun imp -> imp.Types |> List.map (fun impType ->{TypeAssignmentInfo.modName = imp.Name.Value; tasName = impType.Value})) |> 
                 Seq.distinct |> Seq.toList        
             let sortedTypes = sortTypes moduTypes importedTypes |> List.filter(fun z -> z.modName = m.Name.Value) |> List.map(fun ref -> typesMap.[ref]) 
+            let depTypesFromOtherModules =
+                sortedTypes |> 
+                List.collect (fun t -> getTypeDependencies2 t.Type) |>
+                List.filter (fun t -> t.modName <> m.Name.Value) 
+            let importedProgramUnits = depTypesFromOtherModules |> Seq.map(fun ti -> ToC ti.modName) |> Seq.distinct |> Seq.toList
+            let importedTypes = depTypesFromOtherModules |> Seq.map(fun ti -> (ToC ti.modName) + "." + (ToC (args.TypePrefix + ti.tasName)) ) |> Seq.distinct |> Seq.toList
+
             let specFileName = ToC (m.Name.Value.ToLower()) + "." + l.SpecExtention
             let bodyFileName = ToC (m.Name.Value.ToLower()) + "." + l.BodyExtention
             let tetscase_specFileName = ToC (m.Name.Value.ToLower()) + "_auto_tcs." + l.SpecExtention
             let tetscase_bodyFileName = ToC (m.Name.Value.ToLower()) + "_auto_tcs." + l.BodyExtention
-            let importedProgramUnits = m.Imports |> List.map (fun im -> ToC im.Name.Value)
+            //let importedProgramUnits = m.Imports |> List.map (fun im -> ToC im.Name.Value)
             let tetscase_name = ToC (m.Name.Value.ToLower()+"_auto_tcs")
-            {ProgramUnit.name = ToC m.Name.Value; specFileName = specFileName; bodyFileName=bodyFileName; sortedTypeAssignments = sortedTypes; valueAssignments = valueAssignments; importedProgramUnits = importedProgramUnits; tetscase_specFileName=tetscase_specFileName; tetscase_bodyFileName=tetscase_bodyFileName; tetscase_name=tetscase_name})
+            {ProgramUnit.name = ToC m.Name.Value; specFileName = specFileName; bodyFileName=bodyFileName; sortedTypeAssignments = sortedTypes; valueAssignments = valueAssignments; importedProgramUnits = importedProgramUnits; tetscase_specFileName=tetscase_specFileName; tetscase_bodyFileName=tetscase_bodyFileName; tetscase_name=tetscase_name; importedTypes= importedTypes})
 
 
