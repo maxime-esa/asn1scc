@@ -36,7 +36,7 @@ let rec printValue (r:DAst.AstRoot) (l:ProgrammingLanguage)  (t:Asn1Type) (paren
             match t.ActualType.Kind with
             | Enumerated enm    -> 
                 let itm = enm.baseInfo.items |> Seq.find(fun x -> x.Name.Value = v)
-                variables_c.PrintEnumValue (itm.getBackendName l)
+                variables_c.PrintEnumValue (itm.getBackendName (Some t.typeDefintionOrReference) l)
             | _         -> raise(BugErrorException "unexpected type")
         | NullValue         v -> variables_c.PrintNullValue ()
         | SeqOfValue        v -> 
@@ -77,7 +77,7 @@ let rec printValue (r:DAst.AstRoot) (l:ProgrammingLanguage)  (t:Asn1Type) (paren
             | Choice s -> 
                 s.children |>
                 List.filter(fun x -> x.Name.Value = v.name)  |>
-                List.map(fun x -> variables_c.PrintChoiceValue x.presentWhenName x.c_name (printValue r l x.chType (Some gv) v.Value.kind)) |>
+                List.map(fun x -> variables_c.PrintChoiceValue (x.presentWhenName (Some t.typeDefintionOrReference) l) x.c_name (printValue r l x.chType (Some gv) v.Value.kind)) |>
                 List.head
             | _         -> raise(BugErrorException "unexpected type")
         | RefValue ((md,vs),v)         ->
@@ -122,7 +122,7 @@ let rec printValue (r:DAst.AstRoot) (l:ProgrammingLanguage)  (t:Asn1Type) (paren
             match t.ActualType.Kind with
             | Enumerated enm    -> 
                 let itm = enm.baseInfo.items |> Seq.find(fun x -> x.Name.Value = v)
-                variables_a.PrintEnumValue (itm.getBackendName l)
+                variables_a.PrintEnumValue (itm.getBackendName (Some t.typeDefintionOrReference) l)
             | _         -> raise(BugErrorException "unexpected type")
         | NullValue         v -> variables_a.PrintNullValue ()
         | SeqOfValue        v -> 
@@ -180,7 +180,7 @@ let rec printValue (r:DAst.AstRoot) (l:ProgrammingLanguage)  (t:Asn1Type) (paren
                             if parentValue.IsSome then s.typeDefinition.typeDefinitionBodyWithinSeq else s.typeDefinition.name*)
                 s.children |>
                 List.filter(fun x -> x.Name.Value = v.name)  |>
-                List.map(fun x -> variables_a.PrintChoiceValue typeDefName x.c_name (printValue r l  x.chType (Some gv) v.Value.kind) x.presentWhenName) |>
+                List.map(fun x -> variables_a.PrintChoiceValue typeDefName x.c_name (printValue r l  x.chType (Some gv) v.Value.kind) (x.presentWhenName (Some t.typeDefintionOrReference) l) ) |>
                 List.head
             | _         -> raise(BugErrorException "unexpected type")
 
@@ -216,13 +216,13 @@ let createBooleanFunction (r:Asn1AcnAst.AstRoot) (l:ProgrammingLanguage) (t:Asn1
         | _                 -> raise(BugErrorException "unexpected value")
     printValue
 
-let createEnumeratedFunction (r:Asn1AcnAst.AstRoot) (l:ProgrammingLanguage) (t:Asn1AcnAst.Asn1Type) (o:Asn1AcnAst.Enumerated) (typeDefinition:TypeDefinitionCommon) =
+let createEnumeratedFunction (r:Asn1AcnAst.AstRoot) (l:ProgrammingLanguage) (t:Asn1AcnAst.Asn1Type) (o:Asn1AcnAst.Enumerated) (defOrRef:TypeDefintionOrReference) (typeDefinition:TypeDefinitionCommon) =
     let stgMacro = match l with C -> variables_c.PrintEnumValue | Ada -> variables_a.PrintEnumValue
     let printValue (parentValue:Asn1ValueKind option) (v:Asn1ValueKind) =
         match v with
         | EnumValue i    -> 
             let itm = o.items |> Seq.find(fun x -> x.Name.Value = i)
-            stgMacro (itm.getBackendName l)
+            stgMacro (itm.getBackendName (Some defOrRef) l)
         | RefValue ((md,vs),ov)   -> vs
         | _                 -> raise(BugErrorException "unexpected value")
     printValue
@@ -370,7 +370,7 @@ let createSequenceFunction (r:Asn1AcnAst.AstRoot) (l:ProgrammingLanguage) (t:Asn
     printValue
 
 
-let createChoiceFunction (r:Asn1AcnAst.AstRoot) (l:ProgrammingLanguage) (t:Asn1AcnAst.Asn1Type) (o:Asn1AcnAst.Choice) (typeDefinition:TypeDefinitionCommon) (children:ChChildInfo list) =
+let createChoiceFunction (r:Asn1AcnAst.AstRoot) (l:ProgrammingLanguage) (t:Asn1AcnAst.Asn1Type) (o:Asn1AcnAst.Choice) (typeDefinition:TypeDefinitionCommon) (defOrRef:TypeDefintionOrReference) (children:ChChildInfo list) =
     let printValue (parentValue:Asn1ValueKind option) (gv:Asn1ValueKind) =
         match gv with
         | ChValue chVal    -> 
@@ -379,12 +379,12 @@ let createChoiceFunction (r:Asn1AcnAst.AstRoot) (l:ProgrammingLanguage) (t:Asn1A
             | C ->
                 children |>
                 List.filter(fun x -> x.Name.Value = chVal.name)  |>
-                List.map(fun x -> variables_c.PrintChoiceValue x.presentWhenName x.c_name (x.chType.printValue (Some gv) chVal.Value.kind)) |>
+                List.map(fun x -> variables_c.PrintChoiceValue (x.presentWhenName (Some defOrRef) l) x.c_name (x.chType.printValue (Some gv) chVal.Value.kind)) |>
                 List.head
             | Ada   ->
                 children |>
                 List.filter(fun x -> x.Name.Value = chVal.name)  |>
-                List.map(fun x -> variables_a.PrintChoiceValue typeDefName x.c_name (x.chType.printValue (Some gv) chVal.Value.kind) x.presentWhenName) |>
+                List.map(fun x -> variables_a.PrintChoiceValue typeDefName x.c_name (x.chType.printValue (Some gv) chVal.Value.kind) (x.presentWhenName (Some defOrRef) l)) |>
                 List.head
         | RefValue ((md,vs),ov)   -> vs
         | _                 -> raise(BugErrorException "unexpected value")

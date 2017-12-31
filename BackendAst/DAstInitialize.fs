@@ -126,14 +126,14 @@ let createBooleanInitFunc (r:Asn1AcnAst.AstRoot) (l:ProgrammingLanguage) (t:Asn1
         initBoolean (p.arg.getValue l) vl
     createInitFunctionCommon r l t typeDefinition funcBody iv 
 
-let createEnumeratedInitFunc (r:Asn1AcnAst.AstRoot) (l:ProgrammingLanguage) (t:Asn1AcnAst.Asn1Type) (o :Asn1AcnAst.Enumerated  ) (typeDefinition:TypeDefinitionCommon) iv = 
+let createEnumeratedInitFunc (r:Asn1AcnAst.AstRoot) (l:ProgrammingLanguage) (t:Asn1AcnAst.Asn1Type) (o :Asn1AcnAst.Enumerated  ) (defOrRef:TypeDefintionOrReference) (typeDefinition:TypeDefinitionCommon) iv = 
     let initEnumerated = match l with C -> init_c.initEnumerated | Ada -> init_a.initEnumerated
     let funcBody (p:CallerScope) v = 
         let vl = 
             match v with
             | EnumValue iv      -> o.items |> Seq.find(fun x -> x.Name.Value = iv)
             | _                 -> raise(BugErrorException "UnexpectedValue")
-        initEnumerated (p.arg.getValue l) (vl.getBackendName l)
+        initEnumerated (p.arg.getValue l) (vl.getBackendName (Some defOrRef) l)
     createInitFunctionCommon r l t typeDefinition funcBody iv 
 
 let createSequenceOfInitFunc (r:Asn1AcnAst.AstRoot) (l:ProgrammingLanguage) (t:Asn1AcnAst.Asn1Type) (o :Asn1AcnAst.SequenceOf  ) (typeDefinition:TypeDefinitionCommon) (childType:Asn1Type) iv = 
@@ -192,7 +192,7 @@ let createSequenceInitFunc (r:Asn1AcnAst.AstRoot) (l:ProgrammingLanguage) (t:Asn
         initSequence childrenRet
     createInitFunctionCommon r l t typeDefinition funcBody iv 
 
-let createChoiceInitFunc (r:Asn1AcnAst.AstRoot) (l:ProgrammingLanguage) (t:Asn1AcnAst.Asn1Type) (o :Asn1AcnAst.Choice) (typeDefinition:TypeDefinitionCommon) (children:ChChildInfo list) iv =     
+let createChoiceInitFunc (r:Asn1AcnAst.AstRoot) (l:ProgrammingLanguage) (t:Asn1AcnAst.Asn1Type) (o :Asn1AcnAst.Choice) (typeDefinition:TypeDefinitionCommon) (defOrRef:TypeDefintionOrReference) (children:ChChildInfo list) iv =     
     //let initChoice = match l with C -> init_c.initChoice | Ada -> init_a.initChoice
 
     let funcBody (p:CallerScope) v = 
@@ -207,7 +207,7 @@ let createChoiceInitFunc (r:Asn1AcnAst.AstRoot) (l:ProgrammingLanguage) (t:Asn1A
                         match l with
                         | C ->
                             let chContent = chChild.chType.initFunction.initFuncBody ({p with arg = p.arg.getChChild l chChild.c_name chChild.chType.isIA5String}) iv.Value.kind
-                            Some (init_c.initChoice p.arg.p (p.arg.getAcces l) chContent chChild.presentWhenName) 
+                            Some (init_c.initChoice p.arg.p (p.arg.getAcces l) chContent (chChild.presentWhenName (Some defOrRef) l)) 
                         | Ada ->
                             let sChildTypeName = 
                                 match chChild.chType.inheritInfo with
@@ -227,7 +227,7 @@ let createChoiceInitFunc (r:Asn1AcnAst.AstRoot) (l:ProgrammingLanguage) (t:Asn1A
                                     | _                 -> typeDefinition.typeDefinitionBodyWithinSeq
                             let sChildName = chChild.c_name
                             let chContent = chChild.chType.initFunction.initFuncBody ({CallerScope.modName = t.id.ModName; arg = VALUE sChildTempVarName}) iv.Value.kind
-                            Some (init_a.initChoice p.arg.p (p.arg.getAcces l) chContent chChild.presentWhenName sChildTempVarName sChildTypeName sChoiceTypeName sChildName) 
+                            Some (init_a.initChoice p.arg.p (p.arg.getAcces l) chContent (chChild.presentWhenName (Some defOrRef) l) sChildTempVarName sChildTypeName sChoiceTypeName sChildName) 
                         ) 
 
             | _               -> raise(BugErrorException "UnexpectedValue")

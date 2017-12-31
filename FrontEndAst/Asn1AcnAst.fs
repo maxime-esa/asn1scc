@@ -661,15 +661,19 @@ type AstRoot = {
 
 
 
-    
+type ReferenceToEnumerated = {
+    modName : string
+    tasName : string
+    enm     : Enumerated
+}
 
 type AcnDependencyKind = 
     | AcnDepIA5StringSizeDeterminant                  // The asn1Type has a size dependency a SEQUENCE OF, BIT STRINT, OCTET STRING etc
     | AcnDepSizeDeterminant                  // The asn1Type has a size dependency a SEQUENCE OF, BIT STRINT, OCTET STRING etc
-    | AcnDepRefTypeArgument of AcnParameter        // string is the param name
+    | AcnDepRefTypeArgument       of AcnParameter        // string is the param name
     | AcnDepPresenceBool                     // points to a SEQEUNCE or Choice child
-    | AcnDepPresence        of (RelativePath*Choice)
-    | AcnDepChoiceDeteterminant   of (Enumerated*Choice)           // points to Enumerated type acting as CHOICE determinant.
+    | AcnDepPresence              of (RelativePath*Choice)
+    | AcnDepChoiceDeteterminant   of (ReferenceToEnumerated*Choice)           // points to Enumerated type acting as CHOICE determinant.
 
 type Determinant =
     | AcnChildDeterminant       of AcnChild

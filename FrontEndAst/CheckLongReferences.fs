@@ -208,14 +208,14 @@ let choiceEnumReference (r:AstRoot) (curState:AcnInsertedFieldDependencies) (par
                 match actType.Kind with
                 | Enumerated enm  -> 
                     checkEnumNamesConsistency ts.Location enm.items
-                    AcnDepChoiceDeteterminant (enm,ch)
+                    AcnDepChoiceDeteterminant ({ReferenceToEnumerated.modName = md.Value; tasName = ts.Value; enm = enm} ,ch)
                 | _              -> raise(SemanticError(loc, (sprintf "Invalid argument type. Expecting ENUMERATED got %s "  (p.asn1Type.ToString()))))
             | _              -> raise(SemanticError(loc, (sprintf "Invalid argument type. Expecting ENUMERATED got %s "  (p.asn1Type.ToString()))))
         let checkAcnType (c:AcnChild) =
             match c.Type with
             | AcnReferenceToEnumerated    enm -> 
                 checkEnumNamesConsistency c.Name.Location enm.enumerated.items
-                AcnDepChoiceDeteterminant (enm.enumerated,ch)
+                AcnDepChoiceDeteterminant ({ReferenceToEnumerated.modName = enm.modName.Value; tasName = enm.tasName.Value; enm = enm.enumerated},ch)
             | _              -> raise(SemanticError(loc, (sprintf "Invalid argument type. Expecting ENUMERATED got %s "  (c.Type.AsString))))
         checkRelativePath curState parents t visibleParameters   (RelativePath path) checkParameter checkAcnType
 

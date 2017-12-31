@@ -239,7 +239,7 @@ let createIntegerFunction (r:Asn1AcnAst.AstRoot) (l:ProgrammingLanguage) (codec:
     createAcnFunction r l codec t typeDefinition isValidFunc  (fun e acnArgs p -> funcBody e acnArgs p) soSparkAnnotations  us
 
 
-let createEnumComn (r:Asn1AcnAst.AstRoot) (l:ProgrammingLanguage) (codec:CommonTypes.Codec) (typeId : ReferenceToType) (o:Asn1AcnAst.Enumerated) (typeDefinitionName:string)  =
+let createEnumComn (r:Asn1AcnAst.AstRoot) (l:ProgrammingLanguage) (codec:CommonTypes.Codec) (typeId : ReferenceToType) (o:Asn1AcnAst.Enumerated) (defOrRef:TypeDefintionOrReference ) (typeDefinitionName:string)  =
     let EnumeratedEncValues                 = match l with C -> acn_c.EnumeratedEncValues             | Ada -> acn_a.EnumeratedEncValues
     let Enumerated_item                     = match l with C -> acn_c.Enumerated_item                 | Ada -> acn_a.Enumerated_item
     //let IntFullyConstraint                  = match l with C -> uper_c.IntFullyConstraint       | Ada -> uper_a.IntFullyConstraint
@@ -247,7 +247,7 @@ let createEnumComn (r:Asn1AcnAst.AstRoot) (l:ProgrammingLanguage) (codec:CommonT
     let min = o.items |> List.map(fun x -> x.acnEncodeValue) |> Seq.min
     let max = o.items |> List.map(fun x -> x.acnEncodeValue) |> Seq.max
     let intVal = "intVal"
-    let sFirstItemName = o.items.Head.getBackendName l
+    let sFirstItemName = o.items.Head.getBackendName (Some defOrRef) l
     let localVar =
         match min >= 0I with
         | true -> Asn1UIntLocalVariable (intVal,None)
@@ -264,25 +264,25 @@ let createEnumComn (r:Asn1AcnAst.AstRoot) (l:ProgrammingLanguage) (codec:CommonT
             match intFuncBody errCode acnArgs pVal with
             | None      -> None
             | Some(intAcnFuncBdResult) ->
-                let arrItems = o.items |> List.map(fun it -> Enumerated_item (p.arg.getValue l) (it.getBackendName l) it.acnEncodeValue codec)
+                let arrItems = o.items |> List.map(fun it -> Enumerated_item (p.arg.getValue l) (it.getBackendName (Some defOrRef) l) it.acnEncodeValue codec)
                 Some (EnumeratedEncValues p.arg.p typeDefinitionName arrItems intAcnFuncBdResult.funcBody errCode.errCodeName sFirstItemName codec, intAcnFuncBdResult.errCodes, localVar::intAcnFuncBdResult.localVariables)
         match funcBodyContent with
         | None -> None
         | Some (funcBodyContent,errCodes, localVariables) -> Some ({AcnFuncBodyResult.funcBody = funcBodyContent; errCodes = errCodes; localVariables = localVariables})
     funcBody
 
-let createEnumeratedFunction (r:Asn1AcnAst.AstRoot) (l:ProgrammingLanguage) (codec:CommonTypes.Codec) (t:Asn1AcnAst.Asn1Type) (o:Asn1AcnAst.Enumerated) (typeDefinition:TypeDefinitionCommon)  (defOrRed:TypeDefintionOrReference) (isValidFunc: IsValidFunction option) (uperFunc: UPerFunction) (us:State)  =
-    let typeDefinitionName = defOrRed.longTypedefName l //getTypeDefinitionName t.id.tasInfo typeDefinition
-    let funcBody = createEnumComn r l codec t.id o typeDefinitionName
+let createEnumeratedFunction (r:Asn1AcnAst.AstRoot) (l:ProgrammingLanguage) (codec:CommonTypes.Codec) (t:Asn1AcnAst.Asn1Type) (o:Asn1AcnAst.Enumerated) (defOrRef:TypeDefintionOrReference) (typeDefinition:TypeDefinitionCommon)   (isValidFunc: IsValidFunction option) (uperFunc: UPerFunction) (us:State)  =
+    let typeDefinitionName = defOrRef.longTypedefName l //getTypeDefinitionName t.id.tasInfo typeDefinition
+    let funcBody = createEnumComn r l codec t.id o defOrRef typeDefinitionName
     let soSparkAnnotations = None
     createAcnFunction r l codec t typeDefinition  isValidFunc  funcBody soSparkAnnotations  us
 
 
-let createAcnEnumeratedFunction (r:Asn1AcnAst.AstRoot) (l:ProgrammingLanguage) (codec:CommonTypes.Codec) (typeId : ReferenceToType) (t:Asn1AcnAst.AcnReferenceToEnumerated)  (us:State)  =
+let createAcnEnumeratedFunction (r:Asn1AcnAst.AstRoot) (l:ProgrammingLanguage) (codec:CommonTypes.Codec) (typeId : ReferenceToType) (t:Asn1AcnAst.AcnReferenceToEnumerated)  (defOrRef:TypeDefintionOrReference) (us:State)  =
     let errCodeName         = ToC ("ERR_ACN" + (codec.suffix.ToUpper()) + "_" + ((typeId.AcnAbsPath |> Seq.skip 1 |> Seq.StrJoin("-")).Replace("#","elm")))
     let errCode, ns = getNextValidErrorCode us errCodeName
     let typeDefinitionName = ToC2(r.args.TypePrefix + t.tasName.Value)
-    let funcBody = createEnumComn r l codec typeId t.enumerated typeDefinitionName
+    let funcBody = createEnumComn r l codec typeId t.enumerated defOrRef typeDefinitionName
     (funcBody errCode), ns
 
 
@@ -729,11 +729,16 @@ let rec handleSingleUpdateDependency (r:Asn1AcnAst.AstRoot) (deps:Asn1AcnAst.Acn
         let updateFunc (vTarget : CallerScope) (pSrcRoot : CallerScope)  = 
             let v = vTarget.arg.getValue l
             let choicePath, checkPath = getAccessFromScopeNodeList d.asn1Type false l pSrcRoot
+            let defOrRef (a:Asn1AcnAst.ReferenceToEnumerated) =
+                match m.Name.Value = a.modName with
+                | true  -> ReferenceToExistingDefinition {ReferenceToExistingDefinition.programUnit = None; typedefName = ToC (r.args.TypePrefix + a.tasName)}
+                | false -> ReferenceToExistingDefinition {ReferenceToExistingDefinition.programUnit = Some (ToC a.modName); typedefName = ToC (r.args.TypePrefix + a.tasName)}
+            
             let arrsChildUpdates = 
                 chc.children |> 
                 List.map(fun ch -> 
-                    let enmItem = enm.items |> List.find(fun itm -> itm.Name.Value = ch.Name.Value)
-                    choiceDependencyEnum_Item v ch.presentWhenName (enmItem.getBackendName l) )
+                    let enmItem = enm.enm.items |> List.find(fun itm -> itm.Name.Value = ch.Name.Value)
+                    choiceDependencyEnum_Item v ch.presentWhenName (enmItem.getBackendName (Some (defOrRef enm))  l) )
             let updateStatement = choiceDependencyEnum choicePath.arg.p (choicePath.arg.getAcces l) arrsChildUpdates
             match checkPath with
             | []    -> updateStatement
@@ -977,7 +982,7 @@ let createSequenceFunction (r:Asn1AcnAst.AstRoot) (deps:Asn1AcnAst.AcnInsertedFi
 
 type private AcnChoiceEncClass =
     | CEC_uper
-    | CEC_enum          of Asn1AcnAst.Enumerated
+    | CEC_enum          of Asn1AcnAst.ReferenceToEnumerated
     | CEC_presWhen
 
 let createChoiceFunction (r:Asn1AcnAst.AstRoot) (deps:Asn1AcnAst.AcnInsertedFieldDependencies) (l:ProgrammingLanguage) (codec:CommonTypes.Codec) (t:Asn1AcnAst.Asn1Type) (o:Asn1AcnAst.Choice) (typeDefinition:TypeDefinitionCommon) (defOrRef:TypeDefintionOrReference) (isValidFunc: IsValidFunction option) (children:ChChildInfo list) (acnPrms:AcnParameter list)  (us:State)  =
@@ -1040,10 +1045,16 @@ let createChoiceFunction (r:Asn1AcnAst.AstRoot) (deps:Asn1AcnAst.AcnInsertedFiel
                         let sChoiceTypeName = typeDefinitionName
                         match ec with
                         | CEC_uper  -> 
-                            Some (choiceChild p.arg.p (p.arg.getAcces l) child.presentWhenName (BigInteger idx) nIndexSizeInBits nMax childContent.funcBody sChildName sChildTypeDef sChoiceTypeName codec)
+                            Some (choiceChild p.arg.p (p.arg.getAcces l) (child.presentWhenName (Some defOrRef) l) (BigInteger idx) nIndexSizeInBits nMax childContent.funcBody sChildName sChildTypeDef sChoiceTypeName codec)
                         | CEC_enum enm -> 
-                            let enmItem = enm.items |> List.find(fun itm -> itm.Name.Value = child.Name.Value)
-                            Some (choiceChild_Enum p.arg.p (p.arg.getAcces l) (enmItem.getBackendName l) child.presentWhenName childContent.funcBody sChildName sChildTypeDef sChoiceTypeName codec)
+                            let getDefOrRef (a:Asn1AcnAst.ReferenceToEnumerated) =
+                                match p.modName = a.modName with
+                                | true  -> ReferenceToExistingDefinition {ReferenceToExistingDefinition.programUnit = None; typedefName = ToC (r.args.TypePrefix + a.tasName)}
+                                | false -> ReferenceToExistingDefinition {ReferenceToExistingDefinition.programUnit = Some (ToC a.modName); typedefName = ToC (r.args.TypePrefix + a.tasName)}
+
+
+                            let enmItem = enm.enm.items |> List.find(fun itm -> itm.Name.Value = child.Name.Value)
+                            Some (choiceChild_Enum p.arg.p (p.arg.getAcces l) (enmItem.getBackendName (Some (getDefOrRef enm)) l) (child.presentWhenName (Some defOrRef) l) childContent.funcBody sChildName sChildTypeDef sChoiceTypeName codec)
                         | CEC_presWhen  ->
                             let handPresenseCond (cond:Asn1AcnAst.AcnPresentWhenConditionChoiceChild) =
                                 match cond with
@@ -1054,7 +1065,7 @@ let createChoiceFunction (r:Asn1AcnAst.AstRoot) (deps:Asn1AcnAst.AcnInsertedFiel
                                     let extField = getExternaFieldChoizePresentWhen r deps t.id relPath
                                     choiceChild_preWhen_str_condition extField strVal.Value
                             let conds = child.acnPresentWhenConditions |>List.map handPresenseCond
-                            Some (choiceChild_preWhen p.arg.p (p.arg.getAcces l) child.presentWhenName childContent.funcBody conds (idx=0) sChildName sChildTypeDef sChoiceTypeName codec)
+                            Some (choiceChild_preWhen p.arg.p (p.arg.getAcces l) (child.presentWhenName (Some defOrRef) l) childContent.funcBody conds (idx=0) sChildName sChildTypeDef sChoiceTypeName codec)
                     yield (childBody, childContent.localVariables, childContent.errCodes)
             } |> Seq.toList
 

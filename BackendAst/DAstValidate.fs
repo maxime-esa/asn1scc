@@ -41,7 +41,7 @@ let foldGenericCon (l:ProgrammingLanguage) valToStrFunc  (p:CallerScope)  (c:Gen
         (fun e1 e2 s        -> l.ExpAnd e1 (l.ExpNot e2), s)
         (fun e s            -> e, s)
         (fun e1 e2 s        -> l.ExpOr e1 e2, s)
-        (fun v  s           -> l.ExpEqual p.arg.p (valToStrFunc v) ,s)
+        (fun v  s           -> l.ExpEqual p.arg.p (valToStrFunc p v) ,s)
         c
         0 |> fst
 
@@ -363,12 +363,26 @@ let createStringFunction (r:Asn1AcnAst.AstRoot) (l:ProgrammingLanguage) (t:Asn1A
     createPrimitiveFunction r l t o.AllCons (foldStringCon r l alphafuncName) typeDefinition alphaFuncs us
 
 let createBoolFunction (r:Asn1AcnAst.AstRoot) (l:ProgrammingLanguage) (t:Asn1AcnAst.Asn1Type) (o:Asn1AcnAst.Boolean) (typeDefinition:TypeDefinitionCommon) (us:State)  =
-    createPrimitiveFunction r l t (o.cons@o.withcons) (foldGenericCon l  (fun v -> v.ToString().ToLower())) typeDefinition [] us
+    createPrimitiveFunction r l t (o.cons@o.withcons) (foldGenericCon l  (fun p v -> v.ToString().ToLower())) typeDefinition [] us
 
-let createEnumeratedFunction (r:Asn1AcnAst.AstRoot) (l:ProgrammingLanguage) (t:Asn1AcnAst.Asn1Type) (o:Asn1AcnAst.Enumerated) (typeDefinition:TypeDefinitionCommon) (us:State)  =
-    let printNamedItem (v:string) =
+let createEnumeratedFunction (r:Asn1AcnAst.AstRoot) (l:ProgrammingLanguage) (t:Asn1AcnAst.Asn1Type) (o:Asn1AcnAst.Enumerated) (typeDefinition:TypeDefinitionCommon) (defOrDer:TypeDefintionOrReference) (us:State)  =
+    let printNamedItem (p:CallerScope) (v:string) =
         let itm = o.items |> Seq.find (fun x -> x.Name.Value = v)
-        itm.getBackendName l
+        let ret = itm.getBackendName (Some defOrDer) l
+        ret
+//        let dummy = typeDefinition
+//        let dummy2 = defOrDer
+//        if ret = "voltage_1" then
+//            printfn "ret"
+//        match l with
+//        | C     ->  ret
+//        | Ada   ->
+//            match t.inheritInfo with
+//            | None  -> ret
+//            | Some inhInfo -> 
+//                match inhInfo.modName = p.modName with
+//                | true  -> ret
+//                | false -> (ToC inhInfo.modName) + "." + ret
     createPrimitiveFunction r l t o.AllCons (foldGenericCon l  printNamedItem) typeDefinition [] us
 
 
@@ -591,7 +605,7 @@ let isValidChoiceChild   (l:ProgrammingLanguage) (o:Asn1AcnAst.ChChildInfo) (new
     | Some(isValid, chFunc)                      -> 
         Some({SeqChoiceChildInfoIsValid.isValidStatement = isValid; localVars = chFunc.localVariables; alphaFuncs = chFunc.alphaFuncs; errCode = chFunc.errCodes}), us
 
-let createChoiceFunction (r:Asn1AcnAst.AstRoot) (l:ProgrammingLanguage) (t:Asn1AcnAst.Asn1Type) (o:Asn1AcnAst.Choice) (typeDefinition:TypeDefinitionCommon) (children:ChChildInfo list) (baseTypeValFunc : IsValidFunction option) (us:State)  =
+let createChoiceFunction (r:Asn1AcnAst.AstRoot) (l:ProgrammingLanguage) (t:Asn1AcnAst.Asn1Type) (o:Asn1AcnAst.Choice) (typeDefinition:TypeDefinitionCommon) (defOrRef:TypeDefintionOrReference) (children:ChChildInfo list) (baseTypeValFunc : IsValidFunction option) (us:State)  =
     let funcName            = getFuncName r l t.id
 
     let body =
@@ -623,13 +637,14 @@ let createChoiceFunction (r:Asn1AcnAst.AstRoot) (l:ProgrammingLanguage) (t:Asn1A
                         match vc with
                         | Some vc -> vc.isValidStatement p
                         | None    -> isvalid_c.always_true_statement ()
-                    isvalid_c.choice_child cc.presentWhenName chBody
+                    isvalid_c.choice_child (cc.presentWhenName (Some defOrRef) l) chBody
                 |Ada   -> 
                     let chBody = 
                         match vc with
                         | Some vc -> vc.isValidStatement p 
                         | None    -> isvalid_a.always_true_statement ()
-                    isvalid_a.choice_child cc.presentWhenName chBody)
+
+                    isvalid_a.choice_child (cc.presentWhenName (Some defOrRef) l) chBody)
             match l with
             | C    -> isvalid_c.choice p.arg.p (p.arg.getAcces l) childrenContent errCode.errCodeName
             |Ada   -> isvalid_a.choice p.arg.p (p.arg.getAcces l) childrenContent errCode.errCodeName

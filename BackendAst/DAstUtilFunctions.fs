@@ -255,10 +255,13 @@ type TypeDefintionOrReference with
 
 
 type Asn1AcnAst.NamedItem with
-    member this.getBackendName l = 
+    member this.getBackendName (defOrRef:TypeDefintionOrReference option) l = 
         match l with
         | C         -> ToC this.c_name
-        | Ada       -> ToC this.ada_name
+        | Ada       -> 
+            match defOrRef with
+            | Some (ReferenceToExistingDefinition r) when r.programUnit.IsSome -> r.programUnit.Value + "." + this.ada_name
+            | _       -> ToC this.ada_name
 
 type Integer with
     member this.Cons     = this.baseInfo.cons
@@ -325,7 +328,13 @@ type Asn1AcnAst.ChChildInfo with
     member this.presentWhenName = (ToC this.present_when_name) + "_PRESENT"
 
 type ChChildInfo with
-    member this.presentWhenName = (ToC this._present_when_name_private) + "_PRESENT"
+    member this.presentWhenName (defOrRef:TypeDefintionOrReference option) l = 
+        match l with
+        | C     -> (ToC this._present_when_name_private) + "_PRESENT"
+        | Ada   ->
+            match defOrRef with
+            | Some (ReferenceToExistingDefinition r) when r.programUnit.IsSome -> r.programUnit.Value + "." + ((ToC this._present_when_name_private) + "_PRESENT")
+            | _       -> (ToC this._present_when_name_private) + "_PRESENT"
 
 type SeqChildInfo with
     member this.acnInsertetField =

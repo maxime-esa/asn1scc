@@ -270,14 +270,14 @@ let createEnumerated (r:Asn1AcnAst.AstRoot) (l:ProgrammingLanguage) (pi : Asn1Fo
         | C                      -> 
             let items = 
                 match o.userDefinedValues with
-                | true  -> o.items |> List.map( fun i -> header_c.PrintNamedItem (i.getBackendName l) i.definitionValue)
-                | false -> o.items |> List.map( fun i -> i.getBackendName l)
+                | true  -> o.items |> List.map( fun i -> header_c.PrintNamedItem (i.getBackendName None l) i.definitionValue)
+                | false -> o.items |> List.map( fun i -> i.getBackendName None l)
             let typeDefinitionBody = header_c.Declare_Enumerated items
             header_c.Define_Type typeDefinitionBody typeDefinitionName None []
         | Ada                    -> 
             let orderedItems = o.items |> List.sortBy(fun i -> i.definitionValue)
-            let arrsEnumNames = orderedItems |> List.map( fun i -> i.getBackendName l)
-            let arrsEnumNamesAndValues = orderedItems |> List.map( fun i -> header_a.ENUMERATED_tas_decl_item (i.getBackendName l) i.definitionValue)
+            let arrsEnumNames = orderedItems |> List.map( fun i -> i.getBackendName None l)
+            let arrsEnumNamesAndValues = orderedItems |> List.map( fun i -> header_a.ENUMERATED_tas_decl_item (i.getBackendName None l) i.definitionValue)
             let nIndexMax = BigInteger ((Seq.length o.items)-1)
             header_a.ENUMERATED_tas_decl typeDefinitionName arrsEnumNames arrsEnumNamesAndValues nIndexMax
     createTypeGeneric r l pi t (DefineNewTypeAux {DefineNewTypeAux.getCompleteDefintion = getCompleteDefinition})
@@ -327,16 +327,16 @@ let createChoice (r:Asn1AcnAst.AstRoot) (l:ProgrammingLanguage) (pi : Asn1Fold.P
         match l with
         | C                      ->
             let handleChild (o:ChChildInfo) = header_c.PrintSeq_ChoiceChild (o.chType.typeDefintionOrReference.longTypedefName l) o.c_name ""
-            let chEnms = children |> List.map(fun c -> c.presentWhenName)
+            let chEnms = children |> List.map(fun c -> c.presentWhenName None l)
             let childrenBodies = children |> List.map handleChild
             let typeDefinitionBody = header_c.Declare_Choice (choiceIDForNone t.id) chEnms childrenBodies 
             header_c.Define_Type typeDefinitionBody typeDefinitionName None childldrenCompleteDefintions
         | Ada                    -> 
-            let handleChild (o:ChChildInfo) = header_a.CHOICE_tas_decl_child o.c_name  (o.chType.typeDefintionOrReference.longTypedefName l) o.presentWhenName
-            let chEnms = children |> List.map(fun c -> c.presentWhenName)
+            let handleChild (o:ChChildInfo) = header_a.CHOICE_tas_decl_child o.c_name  (o.chType.typeDefintionOrReference.longTypedefName l) (o.presentWhenName None l)
+            let chEnms = children |> List.map(fun c -> c.presentWhenName None l)
             let childrenBodies = children |> List.map handleChild
             let nIndexMax = BigInteger ((Seq.length children)-1)
-            header_a.CHOICE_tas_decl typeDefinitionName children.Head.presentWhenName childrenBodies chEnms nIndexMax childldrenCompleteDefintions
+            header_a.CHOICE_tas_decl typeDefinitionName (children.Head.presentWhenName None l) childrenBodies chEnms nIndexMax childldrenCompleteDefintions
     createTypeGeneric r l pi t (DefineNewTypeAux {DefineNewTypeAux.getCompleteDefintion = getCompleteDefinition})
 
 let createReferenceType (r:Asn1AcnAst.AstRoot) (l:ProgrammingLanguage) (t:Asn1AcnAst.Asn1Type) (o:Asn1AcnAst.ReferenceType)  (baseType:Asn1Type ) (us:State) =

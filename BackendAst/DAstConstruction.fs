@@ -28,12 +28,16 @@ let private mapAcnParameter (r:Asn1AcnAst.AstRoot) (deps:Asn1AcnAst.AcnInsertedF
     }, ns1
 
 let private createAcnChild (r:Asn1AcnAst.AstRoot) (deps:Asn1AcnAst.AcnInsertedFieldDependencies) (l:ProgrammingLanguage) (m:Asn1AcnAst.Asn1Module) (ch:Asn1AcnAst.AcnChild) (us:State) =
+    let defOrRef (a:Asn1AcnAst.AcnReferenceToEnumerated) =
+        match m.Name.Value = a.modName.Value with
+        | true  -> ReferenceToExistingDefinition {ReferenceToExistingDefinition.programUnit = None; typedefName = ToC (r.args.TypePrefix + a.tasName.Value)}
+        | false -> ReferenceToExistingDefinition {ReferenceToExistingDefinition.programUnit = Some (ToC a.modName.Value); typedefName = ToC (r.args.TypePrefix + a.tasName.Value)}
     let funcBodyEncode, ns1 = 
         match ch.Type with
         | Asn1AcnAst.AcnInteger  a -> DAstACN.createAcnIntegerFunction r l Codec.Encode ch.id a us
         | Asn1AcnAst.AcnBoolean  a -> DAstACN.createAcnBooleanFunction r l Codec.Encode ch.id a us
         | Asn1AcnAst.AcnNullType a -> DAstACN.createAcnNullTypeFunction r l Codec.Encode ch.id a us
-        | Asn1AcnAst.AcnReferenceToEnumerated a -> DAstACN.createAcnEnumeratedFunction r l Codec.Encode ch.id a us
+        | Asn1AcnAst.AcnReferenceToEnumerated a -> DAstACN.createAcnEnumeratedFunction r l Codec.Encode ch.id a (defOrRef a) us
         | Asn1AcnAst.AcnReferenceToIA5String a -> DAstACN.createAcnStringFunction r deps l Codec.Encode ch.id a us
         
     let funcBodyDecode, ns2 = 
@@ -41,7 +45,7 @@ let private createAcnChild (r:Asn1AcnAst.AstRoot) (deps:Asn1AcnAst.AcnInsertedFi
         | Asn1AcnAst.AcnInteger  a -> DAstACN.createAcnIntegerFunction r l Codec.Decode ch.id a ns1
         | Asn1AcnAst.AcnBoolean  a -> DAstACN.createAcnBooleanFunction r l Codec.Decode ch.id a ns1
         | Asn1AcnAst.AcnNullType a -> DAstACN.createAcnNullTypeFunction r l Codec.Decode ch.id a ns1
-        | Asn1AcnAst.AcnReferenceToEnumerated a -> DAstACN.createAcnEnumeratedFunction r l Codec.Decode ch.id a ns1
+        | Asn1AcnAst.AcnReferenceToEnumerated a -> DAstACN.createAcnEnumeratedFunction r l Codec.Decode ch.id a (defOrRef a) ns1
         | Asn1AcnAst.AcnReferenceToIA5String a -> DAstACN.createAcnStringFunction r deps l Codec.Decode ch.id a ns1
         
     let funcUpdateStatement, ns3 = DAstACN.getUpdateFunctionUsedInEncoding r deps l m ch.id ns2
@@ -334,16 +338,16 @@ let private createEnumerated (r:Asn1AcnAst.AstRoot) (l:ProgrammingLanguage) (m:A
     let equalFunction       = DAstEqual.createEnumeratedEqualFunction r l t o typeDefinition 
     let items = 
         match o.userDefinedValues with
-        | true  -> o.items |> List.map( fun i -> header_c.PrintNamedItem (i.getBackendName l) i.definitionValue)
-        | false ->o.items |> List.map( fun i -> i.getBackendName l)
+        | true  -> o.items |> List.map( fun i -> header_c.PrintNamedItem (i.getBackendName (Some defOrRef) l) i.definitionValue)
+        | false ->o.items |> List.map( fun i -> i.getBackendName (Some defOrRef) l)
     let initialValue  =o.items.Head.Name.Value
-    let initFunction        = DAstInitialize.createEnumeratedInitFunc r l t o typeDefinition (EnumValue initialValue)
-    let isValidFunction, s1     = DAstValidate.createEnumeratedFunction r l t o typeDefinition us
-    let uperEncFunction, s2     = DAstUPer.createEnumeratedFunction r l Codec.Encode t o typeDefinition None isValidFunction s1
-    let uperDecFunction, s3     = DAstUPer.createEnumeratedFunction r l Codec.Decode t o typeDefinition None isValidFunction s2
+    let initFunction        = DAstInitialize.createEnumeratedInitFunc r l t o defOrRef typeDefinition (EnumValue initialValue)
+    let isValidFunction, s1     = DAstValidate.createEnumeratedFunction r l t o typeDefinition defOrRef us
+    let uperEncFunction, s2     = DAstUPer.createEnumeratedFunction r l Codec.Encode t o typeDefinition defOrRef None isValidFunction s1
+    let uperDecFunction, s3     = DAstUPer.createEnumeratedFunction r l Codec.Decode t o typeDefinition defOrRef None isValidFunction s2
 
-    let acnEncFunction, s4      = DAstACN.createEnumeratedFunction r l Codec.Encode t o typeDefinition defOrRef isValidFunction uperEncFunction s3
-    let acnDecFunction, s5      = DAstACN.createEnumeratedFunction r l Codec.Decode t o typeDefinition defOrRef isValidFunction uperDecFunction s4
+    let acnEncFunction, s4      = DAstACN.createEnumeratedFunction r l Codec.Encode t o defOrRef typeDefinition isValidFunction uperEncFunction s3
+    let acnDecFunction, s5      = DAstACN.createEnumeratedFunction r l Codec.Decode t o defOrRef typeDefinition isValidFunction uperDecFunction s4
 
     let uperEncDecTestFunc,s6         = EncodeDecodeTestCase.createUperEncDecFunction r l t typeDefinition equalFunction isValidFunction (Some uperEncFunction) (Some uperDecFunction) s5
     let acnEncDecTestFunc ,s7         = EncodeDecodeTestCase.createAcnEncDecFunction r l t typeDefinition equalFunction isValidFunction (Some acnEncFunction) (Some acnDecFunction) s6
@@ -354,7 +358,7 @@ let private createEnumerated (r:Asn1AcnAst.AstRoot) (l:ProgrammingLanguage) (m:A
             Enumerated.baseInfo = o
             typeDefinition      = typeDefinition
             definitionOrRef     = defOrRef
-            printValue          = DAstVariables.createEnumeratedFunction r l t o typeDefinition 
+            printValue          = DAstVariables.createEnumeratedFunction r l t o defOrRef typeDefinition 
             initialValue        = initialValue
             initFunction        = initFunction
             equalFunction       = equalFunction
@@ -475,10 +479,10 @@ let private createChoice (r:Asn1AcnAst.AstRoot) (deps:Asn1AcnAst.AcnInsertedFiel
     let equalFunction       = DAstEqual.createChoiceEqualFunction r l t o typeDefinition children
     let initialValue =
         children |> Seq.map(fun o -> {NamedValue.name = o.Name.Value; Value={Asn1Value.kind=o.chType.initialValue;id=ReferenceToValue([],[]);loc=emptyLocation}}) |> Seq.head
-    let initFunction        = DAstInitialize.createChoiceInitFunc r l t o typeDefinition children (ChValue initialValue)
-    let isValidFunction, s1     = DAstValidate.createChoiceFunction r l t o typeDefinition children None us
-    let uperEncFunction, s2     = DAstUPer.createChoiceFunction r l Codec.Encode t o typeDefinition None isValidFunction children s1
-    let uperDecFunction, s3     = DAstUPer.createChoiceFunction r l Codec.Decode t o typeDefinition None isValidFunction children s2
+    let initFunction        = DAstInitialize.createChoiceInitFunc r l t o typeDefinition defOrRef children (ChValue initialValue)
+    let isValidFunction, s1     = DAstValidate.createChoiceFunction r l t o typeDefinition defOrRef children None us
+    let uperEncFunction, s2     = DAstUPer.createChoiceFunction r l Codec.Encode t o typeDefinition defOrRef None isValidFunction children s1
+    let uperDecFunction, s3     = DAstUPer.createChoiceFunction r l Codec.Decode t o typeDefinition defOrRef None isValidFunction children s2
     let acnEncFunction, s4      = DAstACN.createChoiceFunction r deps l Codec.Encode t o typeDefinition defOrRef isValidFunction children newPrms  s3
     let acnDecFunction, s5      = DAstACN.createChoiceFunction r deps l Codec.Decode t o typeDefinition defOrRef isValidFunction children newPrms  s4
     let uperEncDecTestFunc,s6         = EncodeDecodeTestCase.createUperEncDecFunction r l t typeDefinition equalFunction isValidFunction (Some uperEncFunction) (Some uperDecFunction) s5
@@ -489,7 +493,7 @@ let private createChoice (r:Asn1AcnAst.AstRoot) (deps:Asn1AcnAst.AcnInsertedFiel
             Choice.baseInfo     = o
             children            = children
             definitionOrRef     = defOrRef
-            printValue          = DAstVariables.createChoiceFunction r l t o typeDefinition  children
+            printValue          = DAstVariables.createChoiceFunction r l t o typeDefinition defOrRef children
             typeDefinition      = typeDefinition
             initialValue        = initialValue
             initFunction        = initFunction
