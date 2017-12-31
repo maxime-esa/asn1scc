@@ -216,9 +216,10 @@ type IsValidFunction = {
     funcName            : string option               // the name of the function. Valid only for TASes)
     func                : string option               // the body of the function
     funcDef             : string option               // function definition in header file
-    funcExp             : (string -> string) option   // return a single boolean expression
-    funcBody            : string -> string            //returns a list of validations statements
-    funcBody2           : string -> string -> string  //like funBody but with two arguement p and accessOper ( i.e. '->' or '.')
+    funcExp             : (FuncParamType -> string) option   // return a single boolean expression
+    funcBody            : FuncParamType -> string            //returns a list of validations statements
+    //funcBody2           : string -> string -> string  //like funBody but with two arguement p and accessOper ( i.e. '->' or '.')
+    
     alphaFuncs          : AlphaFunc list  
     localVariables      : LocalVariable list
     anonymousVariables  : AnonymousVariable  list      //list with the anonymous asn1 values used in constraints and which must be declared.
@@ -469,7 +470,7 @@ type SequenceOf = {
 
 
 and SeqChoiceChildInfoIsValid = {
-    isValidStatement  : string -> string -> string
+    isValidStatement  : FuncParamType -> string
     localVars         : LocalVariable list
     alphaFuncs        : AlphaFunc list
     errCode           : ErroCode list

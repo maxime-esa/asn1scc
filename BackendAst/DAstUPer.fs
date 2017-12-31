@@ -89,7 +89,7 @@ let getIntfuncBodyByCons (r:Asn1AcnAst.AstRoot) (l:ProgrammingLanguage) (codec:C
     let checkExp = 
         match (DAstValidate.createIntegerFunctionByCons r l isUnsigned allCons) with
         | None  ->  None
-        | Some expFunc -> Some (expFunc (p.getValue l))
+        | Some expFunc -> Some (expFunc p)
 
     let IntBod uperRange extCon =
         match uperRange with
@@ -112,11 +112,11 @@ let getIntfuncBodyByCons (r:Asn1AcnAst.AstRoot) (l:ProgrammingLanguage) (codec:C
         | []                            -> IntBod uperRange false
         | (RangeRootConstraint a)::rest      -> 
             let uperR    = uPER.getIntTypeConstraintUperRange [a]  errLoc
-            let cc = DAstValidate.foldRangeCon l (fun v -> v.ToString()) (fun v -> v.ToString()) (p.getValue l) a
+            let cc = DAstValidate.foldRangeCon l (fun v -> v.ToString()) (fun v -> v.ToString()) p a
             IntRootExt pp (getValueByConstraint uperR) cc (IntBod uperR true) errCode.errCodeName codec
         | (RangeRootConstraint2(a,_))::rest  -> 
             let uperR    = uPER.getIntTypeConstraintUperRange [a]  errLoc
-            let cc = DAstValidate.foldRangeCon l (fun v -> v.ToString()) (fun v -> v.ToString()) (p.getValue l) a
+            let cc = DAstValidate.foldRangeCon l (fun v -> v.ToString()) (fun v -> v.ToString()) p a
             IntRootExt2 pp (getValueByConstraint uperR) cc (IntBod uperR true) errCode.errCodeName codec 
         | _                             -> raise(BugErrorException "")
     {UPERFuncBodyResult.funcBody = funcBodyContent; errCodes = [errCode]; localVariables = []}    

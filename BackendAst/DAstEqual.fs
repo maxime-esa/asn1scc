@@ -345,6 +345,7 @@ let createReferenceTypeEqualFunction (r:Asn1AcnAst.AstRoot) (l:ProgrammingLangua
     | Integer _
     | Real _
     | Boolean _
+    | Enumerated _
     | NullType _
     | IA5String _       -> baseType.equalFunction
     | OctetString _
@@ -364,7 +365,6 @@ let createReferenceTypeEqualFunction (r:Asn1AcnAst.AstRoot) (l:ProgrammingLangua
             isEqualFunc                    = None
             isEqualFuncDef                 = None
         }    
-    | Enumerated _
     | SequenceOf _
     | Sequence _
     | Choice   _      ->
