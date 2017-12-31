@@ -185,19 +185,19 @@ type InitFunction = {
 
 
 type IsEqualBody =
-    | EqualBodyExpression       of (string -> string -> (string*(LocalVariable list)) option)
-    | EqualBodyStatementList    of (string -> string -> (string*(LocalVariable list)) option)
-
+    | EqualBodyExpression       of (FuncParamType -> FuncParamType -> (string*(LocalVariable list)) option)
+    | EqualBodyStatementList    of (FuncParamType -> FuncParamType -> (string*(LocalVariable list)) option)
+(*
 type IsEqualBody2 =
     | EqualBodyExpression2       of (string -> string -> string -> (string*(LocalVariable list)) option)
     | EqualBodyStatementList2    of (string -> string -> string -> (string*(LocalVariable list)) option)
-
+    *)
 type EqualFunction = {
     isEqualFuncName     : string option               // the name of the equal function. 
     isEqualFunc         : string option               // the body of the equal function
     isEqualFuncDef      : string option
     isEqualBody         : IsEqualBody                 // a function that  returns an expression or a statement list
-    isEqualBody2        : IsEqualBody2
+    //isEqualBody2        : IsEqualBody2
 }
 
 type AlphaFunc   = {
@@ -510,7 +510,7 @@ and Asn1Child = {
     Name                        : StringLoc
     c_name                      : string
     ada_name                    : string                     
-    isEqualBodyStats            : string -> string  -> string -> (string*(LocalVariable list)) option  // 
+    isEqualBodyStats            : FuncParamType -> FuncParamType -> (string*(LocalVariable list)) option  // 
     isValidBodyStats            : State -> (SeqChoiceChildInfoIsValid option * State)
     Type                        : Asn1Type
     Optionality                 : Asn1AcnAst.Asn1Optionality option
@@ -558,7 +558,7 @@ and ChChildInfo = {
     chType              :Asn1Type
     
     //DAst properties
-    isEqualBodyStats    : string -> string -> string -> string*(LocalVariable list) // 
+    isEqualBodyStats    : FuncParamType -> FuncParamType  -> string*(LocalVariable list) // 
     isValidBodyStats    : State -> (SeqChoiceChildInfoIsValid option * State)
 }
 

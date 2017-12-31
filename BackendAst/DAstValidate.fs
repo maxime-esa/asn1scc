@@ -392,16 +392,16 @@ let createOctetStringFunction (r:Asn1AcnAst.AstRoot) (l:ProgrammingLanguage) (t:
                         Some ({AnonymousVariable.valueName = (recValue.getBackendName l); valueExpresion = (printValue None recValue.kind); typeDefinitionName = typeDefinitionName}))
     let compareSingValueFunc (p:FuncParamType) (v:Asn1AcnAst.OctetStringValue, (id,loc)) =
         let recValue = {Asn1Value.kind = OctetStringValue (v |> List.map(fun z -> z.Value)); id=id;loc=loc}
-        let vstr = 
-            match p.getAcces l with
-            | "->"  -> getAddres l (recValue.getBackendName l)
-            | _     -> (recValue.getBackendName l)
-        match equalFunc.isEqualBody2 with
-        | EqualBodyExpression2 eqFunc    ->
-            match eqFunc p.p vstr (p.getAcces l) with
+        let vstr = VALUE (recValue.getBackendName l)
+            //match p.getAcces l with
+            //| "->"  -> getAddres l (recValue.getBackendName l)
+            //| _     -> (recValue.getBackendName l)
+        match equalFunc.isEqualBody with
+        | EqualBodyExpression eqFunc    ->
+            match eqFunc p vstr with
             | None          -> raise(BugErrorException "unexpected case")
             | Some (ret,_)      -> ret
-        | EqualBodyStatementList2  _     -> raise(BugErrorException "unexpected case")
+        | EqualBodyStatementList  _     -> raise(BugErrorException "unexpected case")
     let foldSizeCon (p:FuncParamType) c = foldSizableConstraint l (fun p v -> compareSingValueFunc p  v) (fun l p -> l.Length p.p (p.getAcces l)) p c
     createBitOrOctetStringFunction r l t allCons foldSizeCon typeDefinition [] anonymousVariables us
 
@@ -424,16 +424,17 @@ let createBitStringFunction (r:Asn1AcnAst.AstRoot) (l:ProgrammingLanguage) (t:As
                         Some ({AnonymousVariable.valueName = (recValue.getBackendName l); valueExpresion = (printValue None recValue.kind); typeDefinitionName = typeDefinitionName}))
     let compareSingValueFunc (p:FuncParamType) (v:Asn1AcnAst.BitStringValue, (id,loc)) =
         let recValue = {Asn1Value.kind = BitStringValue (v.Value ); id=id;loc=loc}
-        let vstr = 
-            match p.getAcces l with
-            | "->"  -> getAddres l (recValue.getBackendName l)
-            | _     -> recValue.getBackendName l
-        match equalFunc.isEqualBody2 with
-        | EqualBodyExpression2 eqFunc    ->
-            match eqFunc p.p vstr (p.getAcces l) with
+        let vstr = VALUE (recValue.getBackendName l)
+//        let vstr = 
+//            match p.getAcces l with
+//            | "->"  -> getAddres l (recValue.getBackendName l)
+//            | _     -> recValue.getBackendName l
+        match equalFunc.isEqualBody with
+        | EqualBodyExpression eqFunc    ->
+            match eqFunc p vstr  with
             | None          -> raise(BugErrorException "unexpected case")
             | Some (ret,_)      -> ret
-        | EqualBodyStatementList2  _     -> raise(BugErrorException "unexpected case")
+        | EqualBodyStatementList  _     -> raise(BugErrorException "unexpected case")
     let foldSizeCon p c = foldSizableConstraint l (fun p v -> compareSingValueFunc p  v) (fun l p -> l.Length p.p (p.getAcces l)) p c
     createBitOrOctetStringFunction r l t allCons foldSizeCon typeDefinition []  anonymousVariables us
 
