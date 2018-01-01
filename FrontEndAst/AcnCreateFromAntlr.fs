@@ -1258,7 +1258,7 @@ let rec private mergeType (asn1:Asn1Ast.AstRoot) (acn:AcnAst) (m:Asn1Ast.Asn1Mod
             let hasAdditionalConstraints = restCons.Length > 0
             let inheritanceInfo = (Some {InheritanceInfo.modName = rf.modName.Value; tasName = rf.tasName.Value; hasAdditionalConstraints=hasAdditionalConstraints})
             let resolvedType     = mergeType asn1 acn m oldBaseType curPath mergedAcnEncSpec restCons withCompCons acnArgs baseTypeAcnParams inheritanceInfo typeAssignmentInfo
-            let newRef       = {ReferenceType.modName = rf.modName; tasName = rf.tasName; tabularized = rf.tabularized; acnArguments = acnArguments; resolvedType=resolvedType}
+            let newRef       = {ReferenceType.modName = rf.modName; tasName = rf.tasName; tabularized = rf.tabularized; acnArguments = acnArguments; resolvedType=resolvedType; hasConstraints = hasAdditionalConstraints}
             ReferenceType newRef
     //let dummy = sprintf "%A" typeAssignmentInfo
     //let dummy2 = dummy

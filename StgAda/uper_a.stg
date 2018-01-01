@@ -25,11 +25,13 @@ TYPE <sTypeDefName>_uPER_Stream IS RECORD
 end RECORD;
 
 procedure <sFuncName>(val:in <sTypeDefName>; Stream : OUT <sTypeDefName>_uPER_Stream; result : OUT <rtlModuleName()>.ASN1_RESULT);
+procedure <sFuncName>_aux(<sVarName>:in <sTypeDefName>; S : in out <rtlModuleName()>.BitArray; K : in out Natural; result : OUT <rtlModuleName()>.ASN1_RESULT);
 >>
 
 EmitTypeAssignment_def_decode(sVarName, sStar, sFuncName, sTypeDefName, arrsErrcodes, bEmptyEncodingSpace, nMaxBytesInPER, nMaxBitsInPER) ::= <<
 <arrsErrcodes; separator="\n">
 procedure <sFuncName>(<sVarName>:in out <sTypeDefName>; Stream : IN <sTypeDefName>_uPER_Stream; result : OUT <rtlModuleName()>.ASN1_RESULT);
+procedure <sFuncName>_aux(<sVarName>:in out <sTypeDefName>; S : in <rtlModuleName()>.BitArray; K : in out <rtlModuleName()>.DECODE_PARAMS; result : OUT <rtlModuleName()>.ASN1_RESULT);
 >>
 
 TasEncodeMain(sVarName, sFuncName, sTypeDefName) ::= /*nogen*/<<

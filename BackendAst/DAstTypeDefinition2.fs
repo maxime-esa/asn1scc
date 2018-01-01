@@ -129,12 +129,14 @@ let private createTypeGeneric (r:Asn1AcnAst.AstRoot)  l (pi : Asn1Fold.ParentInf
             match inheritInfo with
             | None      -> rtlModuleName, subAux.getRtlTypeName()
             | Some inhInfo  ->
+                let aaa = inhInfo.hasAdditionalConstraints
                 match l with
                 | C     ->  None, (ToC2(r.args.TypePrefix + inhInfo.tasName))
                 | Ada   ->
                     match ToC(inhInfo.modName) = programUnit with
                     | true  -> None, (ToC2(r.args.TypePrefix + inhInfo.tasName))
                     | false -> Some (ToC inhInfo.modName), (ToC2(r.args.TypePrefix + inhInfo.tasName))
+        
         let soNewRange = subAux.getNewRange soInheritParentTypePackage sInheritParentType
         match soNewRange with
         | None when  innerType    -> (*If there is no new range and is an inner type, then just make a reference to existing type*)
@@ -142,7 +144,8 @@ let private createTypeGeneric (r:Asn1AcnAst.AstRoot)  l (pi : Asn1Fold.ParentInf
         | _     -> (*Otherwise, create a new type which is a subtype of the existing type*)
             let completeDefintion = defineSubType l typedefName soInheritParentTypePackage sInheritParentType soNewRange
             TypeDefinition {TypeDefinition.typedefName = typedefName; typedefBody = (fun () -> completeDefintion)}
-    
+    if t.id.AsString = "Onboard-Monitoring.Transition-Report.value.type-1-0" then
+        printfn "%s" t.id.AsString
     match t.typeAssignmentInfo with
     | Some (TypeAssignmentInfo tasInfo)      ->  (*I am a type assignmet ==> Always define a new type*)
         let typedefName = (ToC2(r.args.TypePrefix + tasInfo.tasName))
@@ -340,4 +343,19 @@ let createChoice (r:Asn1AcnAst.AstRoot) (l:ProgrammingLanguage) (pi : Asn1Fold.P
     createTypeGeneric r l pi t (DefineNewTypeAux {DefineNewTypeAux.getCompleteDefintion = getCompleteDefinition})
 
 let createReferenceType (r:Asn1AcnAst.AstRoot) (l:ProgrammingLanguage) (t:Asn1AcnAst.Asn1Type) (o:Asn1AcnAst.ReferenceType)  (baseType:Asn1Type ) (us:State) =
-    baseType.typeDefintionOrReference
+    let programUnit = ToC t.id.ModName
+    match t.typeAssignmentInfo with
+    | Some _    -> baseType.typeDefintionOrReference
+    | None      ->
+        match o.hasConstraints with
+        | true  -> baseType.typeDefintionOrReference
+        | false -> 
+
+            let soInheritParentTypePackage, sInheritParentType = 
+                match l with
+                | C     ->  None, (ToC2(r.args.TypePrefix + o.tasName.Value))
+                | Ada   ->
+                    match ToC(o.modName.Value) = programUnit with
+                    | true  -> None, (ToC2(r.args.TypePrefix + o.tasName.Value))
+                    | false -> Some (ToC o.modName.Value), (ToC2(r.args.TypePrefix + o.tasName.Value))
+            ReferenceToExistingDefinition {ReferenceToExistingDefinition.programUnit = soInheritParentTypePackage; typedefName=sInheritParentType}

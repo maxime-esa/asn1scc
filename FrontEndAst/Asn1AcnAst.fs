@@ -617,6 +617,7 @@ and ReferenceType = {
     tabularized : bool
     acnArguments: RelativePath list
     resolvedType: Asn1Type
+    hasConstraints : bool
 }
 
 

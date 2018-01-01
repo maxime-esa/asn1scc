@@ -31,7 +31,7 @@ let private getTypeDependencies (t:Asn1Type) : (TypeAssignmentInfo list )
         (fun o sq (children,_) -> (children |> List.collect id)@prms)
         (fun _ _ ch newChild -> newChild@prms, ())
         (fun o ch (children, _) -> (children|> List.collect id)@prms)
-        (fun o ref baseType -> ref.AsTypeAssignmentInfo::prms)
+        (fun o ref baseType -> ref.AsTypeAssignmentInfo::prms@baseType)
         (fun o newKind  -> newKind@prms)
 
 
@@ -143,7 +143,7 @@ let internal createProgramUnits (args:CommandLineSettings) (files: Asn1File list
             let sortedTypes = sortTypes moduTypes importedTypes |> List.filter(fun z -> z.modName = m.Name.Value) |> List.map(fun ref -> typesMap.[ref]) 
             let depTypesFromOtherModules =
                 sortedTypes |> 
-                List.collect (fun t -> getTypeDependencies2 t.Type) |>
+                List.collect (fun t -> getTypeDependencies t.Type) |>
                 List.filter (fun t -> t.modName <> m.Name.Value) 
             let importedProgramUnits = depTypesFromOtherModules |> Seq.map(fun ti -> ToC ti.modName) |> Seq.distinct |> Seq.toList
             let importedTypes = depTypesFromOtherModules |> Seq.map(fun ti -> (ToC ti.modName) + "." + (ToC (args.TypePrefix + ti.tasName)) ) |> Seq.distinct |> Seq.toList
