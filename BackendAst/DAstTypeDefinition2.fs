@@ -144,8 +144,8 @@ let private createTypeGeneric (r:Asn1AcnAst.AstRoot)  l (pi : Asn1Fold.ParentInf
         | _     -> (*Otherwise, create a new type which is a subtype of the existing type*)
             let completeDefintion = defineSubType l typedefName soInheritParentTypePackage sInheritParentType soNewRange
             TypeDefinition {TypeDefinition.typedefName = typedefName; typedefBody = (fun () -> completeDefintion)}
-    if t.id.AsString = "Onboard-Monitoring.Transition-Report.value.type-1-0" then
-        printfn "%s" t.id.AsString
+    //if t.id.AsString = "Onboard-Monitoring.Transition-Report.value.type-1-0" then
+    //    printfn "%s" t.id.AsString
     match t.typeAssignmentInfo with
     | Some (TypeAssignmentInfo tasInfo)      ->  (*I am a type assignmet ==> Always define a new type*)
         let typedefName = (ToC2(r.args.TypePrefix + tasInfo.tasName))

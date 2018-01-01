@@ -1041,11 +1041,11 @@ let createChoiceFunction (r:Asn1AcnAst.AstRoot) (deps:Asn1AcnAst.AcnInsertedFiel
                 | Some childContent ->
                     let childBody = 
                         let sChildName = child.c_name
-                        let bbb = child.chType.typeDefintionOrReference
+                        //let bbb = child.chType.typeDefintionOrReference
                         let sChildTypeDef = child.chType.typeDefintionOrReference.longTypedefName l //child.chType.typeDefinition.typeDefinitionBodyWithinSeq
-                        let aaa = child.chType.inheritInfo
-                        if t.id.AsString = "Onboard-Monitoring.Transition-Report.value" then
-                            printfn "%s" t.id.AsString
+                        //let aaa = child.chType.inheritInfo
+                        //if t.id.AsString = "Onboard-Monitoring.Transition-Report.value" then
+                        //    printfn "%s" t.id.AsString
                         let sChoiceTypeName = typeDefinitionName
                         match ec with
                         | CEC_uper  -> 
