@@ -16,7 +16,8 @@ type State = {
 }
 
 type ParentInfoData = {
-    typedefName : string
+    program_unit_name : string
+    typedefName       : string
 }
 
 
@@ -644,7 +645,7 @@ and Asn1Type = {
     typeAssignmentInfo  : AssignmentInfo option
 
     Kind            : Asn1TypeKind
-    newTypeDefName  : string
+    //newTypeDefName  : string
 }
 
 

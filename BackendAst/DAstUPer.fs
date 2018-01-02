@@ -58,7 +58,7 @@ let internal createUperFunction (r:Asn1AcnAst.AstRoot) (l:ProgrammingLanguage) (
                 
                     let errCodes = bodyResult.errCodes
                     let errCodStr = errCodes |> List.map(fun x -> (EmitTypeAssignment_def_err_code x.errCodeName) (BigInteger x.errCodeValue))
-                    let funcDef = Some(EmitTypeAssignment_primitive_def varName sStar funcName  typeDefinition.name errCodStr (t.uperMaxSizeInBits = 0) (BigInteger (ceil ((double t.uperMaxSizeInBits)/8.0))) (BigInteger t.uperMaxSizeInBits) codec)
+                    let funcDef = Some(EmitTypeAssignment_primitive_def varName sStar funcName  typeDefinition.name errCodStr (t.uperMaxSizeInBits = 0) (BigInteger (ceil ((double t.uperMaxSizeInBits)/8.0))) (BigInteger t.uperMaxSizeInBits) soSparkAnnotations codec)
                     func, funcDef
 
 
@@ -527,7 +527,7 @@ let createChoiceFunction (r:Asn1AcnAst.AstRoot) (l:ProgrammingLanguage) (codec:C
                     | None              -> "/*no encoding/decoding is required*/",[],[]
                     | Some childContent ->  
                         let sChildName = child.c_name
-                        let sChildTypeDef = child.chType.typeDefinition.typeDefinitionBodyWithinSeq
+                        let sChildTypeDef = child.chType.typeDefintionOrReference.longTypedefName l //child.chType.typeDefinition.typeDefinitionBodyWithinSeq
                         let sChoiceTypeName = typeDefinitionName
                         choice_child p.arg.p (p.arg.getAcces l) (child.presentWhenName (Some defOrRef) l) (BigInteger i) nIndexSizeInBits (BigInteger (children.Length - 1)) childContent.funcBody sChildName sChildTypeDef sChoiceTypeName codec, childContent.localVariables, childContent.errCodes )
             let childrenContent = childrenContent3 |> List.map(fun (s,_,_) -> s)

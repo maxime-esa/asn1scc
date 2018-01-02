@@ -86,7 +86,7 @@ EmitTypeAssignment_def_err_code(sErrCode, nErrValue) ::= <<
 >>
 
 
-EmitTypeAssignment_primitive_def_encode(sVarName, sStar, sFuncName, sTypeDefName, arrsErrcodes, bEmptyEncodingSpace, nMaxBytesInPER, nMaxBitsInPER) ::= <<
+EmitTypeAssignment_primitive_def_encode(sVarName, sStar, sFuncName, sTypeDefName, arrsErrcodes, bEmptyEncodingSpace, nMaxBytesInPER, nMaxBitsInPER, soSparkAnnotations) ::= <<
 <arrsErrcodes; separator="\n">
 #define <sTypeDefName>_REQUIRED_BYTES_FOR_ENCODING       <nMaxBytesInPER> 
 #define <sTypeDefName>_REQUIRED_BITS_FOR_ENCODING        <nMaxBitsInPER>
@@ -116,7 +116,7 @@ flag <sFuncName>(const <sTypeDefName><sStar> <sVarName>, BitStream* pBitStrm, in
 }
 >>
 
-EmitTypeAssignment_primitive_def_decode(sVarName, sStar, sFuncName, sTypeDefName, arrsErrcodes, bEmptyEncodingSpace, nMaxBytesInPER, nMaxBitsInPER) ::= <<
+EmitTypeAssignment_primitive_def_decode(sVarName, sStar, sFuncName, sTypeDefName, arrsErrcodes, bEmptyEncodingSpace, nMaxBytesInPER, nMaxBitsInPER, soSparkAnnotations) ::= <<
 <arrsErrcodes; separator="\n">
 flag <sFuncName>(<sTypeDefName><sStar> <sVarName>, BitStream* pBitStrm, int* pErrCode);
 >>

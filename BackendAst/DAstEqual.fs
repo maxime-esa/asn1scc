@@ -334,21 +334,12 @@ let createChoiceEqualFunction (r:Asn1AcnAst.AstRoot) (l:ProgrammingLanguage) (t:
     let isEqualBody         = isEqualBodyChoice typeDefinition l children
     createCompositeEqualFunction r l  t typeDefinition isEqualBody (stgMacroCompDefFunc l) 
 
-let createReferenceTypeEqualFunction (r:Asn1AcnAst.AstRoot) (l:ProgrammingLanguage) (t:Asn1AcnAst.Asn1Type) (o:Asn1AcnAst.ReferenceType)  (baseType:Asn1Type) =
-    let typeDefinitionName = 
-        //match t.tasInfo with
-        //| Some tasInfo    -> ToC2(r.args.TypePrefix + tasInfo.tasName)
-        //| None            -> ToC2(r.args.TypePrefix + o.tasName.Value)
-        ToC2(r.args.TypePrefix + o.tasName.Value)
+let createReferenceTypeEqualFunction (r:Asn1AcnAst.AstRoot) (l:ProgrammingLanguage) (t:Asn1AcnAst.Asn1Type) (o:Asn1AcnAst.ReferenceType)  (defOrRef:TypeDefintionOrReference) (baseType:Asn1Type) =
+    let isEqualFuncName     = getEqualFuncName r l t.id
+    let typeDefinitionName = defOrRef.longTypedefName l
+    let baseTypeDefName = ToC2(r.args.TypePrefix + o.tasName.Value)
 
-    let baseEqName = //typeDefinitionName + "_Equal"
-        match l with
-        | C     -> typeDefinitionName + "_Equal"
-        | Ada   -> 
-            match t.id.ModName = o.modName.Value with
-            | true  -> typeDefinitionName + "_Equal"
-            | false -> (ToC o.modName.Value) + "." + typeDefinitionName + "_Equal"
-
+    
     match baseType.Kind with
     | Integer _
     | Real _
@@ -357,44 +348,67 @@ let createReferenceTypeEqualFunction (r:Asn1AcnAst.AstRoot) (l:ProgrammingLangua
     | NullType _
     | IA5String _       -> baseType.equalFunction
     | OctetString _
-    | BitString  _      ->
-        let    isEqualBody                   = 
-            match baseType.equalFunction.isEqualFuncName with
-            | None  -> (fun b c -> None)
-            | Some _    ->
-                let eqBody (p1:CallerScope) (p2:CallerScope) : (string*(LocalVariable list)) option = 
-                    //let exp = callBaseTypeFunc l (getAddres l p1) (getAddres l p2) baseEqName
-                    let exp = callBaseTypeFunc l (p1.arg.getPointer l) (p2.arg.getPointer l) baseEqName
-                    Some(makeExpressionToStatement l exp, [])
-                eqBody
-        {
-            EqualFunction.isEqualFuncName  = None
-            isEqualBody                    = EqualBodyStatementList (isEqualBody )
-            //isEqualBody2                   = EqualBodyStatementList2(fun p1 p2 acc ->  isEqualBody acc p1 p2)
-            isEqualFunc                    = None
-            isEqualFuncDef                 = None
-        }    
+    | BitString  _      
+//        let    isEqualBody                   = 
+//            match baseType.equalFunction.isEqualFuncName with
+//            | None  -> (fun b c -> None)
+//            | Some _    ->
+//                let eqBody (p1:CallerScope) (p2:CallerScope) : (string*(LocalVariable list)) option = 
+//                    let exp = callBaseTypeFunc l (p1.arg.getPointer l) (p2.arg.getPointer l) baseEqName
+//                    Some(makeExpressionToStatement l exp, [])
+//                eqBody
+//        let val1, val2 =  
+//            match l with 
+//            | C     -> {CallerScope.modName = t.id.ModName; arg = POINTER "pVal1"}, {CallerScope.modName = t.id.ModName; arg = POINTER "pVal2"}
+//            | Ada   -> {CallerScope.modName = t.id.ModName; arg = VALUE "val1"}, {CallerScope.modName = t.id.ModName; arg = VALUE "val2"}
+//
+//        {
+//            EqualFunction.isEqualFuncName  = isEqualFuncName
+//            isEqualBody                    = EqualBodyStatementList (isEqualBody )
+//            isEqualFunc                    = None
+//            isEqualFuncDef                 = None
+//        }    
     | SequenceOf _
     | Sequence _
     | Choice   _      ->
+        let baseEqName = //typeDefinitionName + "_Equal"
+            match l with
+            | C     -> baseTypeDefName + "_Equal"
+            | Ada   -> 
+                match t.id.ModName = o.modName.Value with
+                | true  -> baseTypeDefName + "_Equal"
+                | false -> (ToC o.modName.Value) + "." + baseTypeDefName + "_Equal"
+
         let    isEqualBody                   = 
                 match baseType.equalFunction.isEqualFuncName with
                 | None  -> (fun b c -> None)
                 | Some _    ->
                     let eqBody (p1:CallerScope) (p2:CallerScope) = 
-                        //let exp = callBaseTypeFunc l (getAddres l p1) (getAddres l p2) baseEqName
                         let exp = callBaseTypeFunc l (p1.arg.getPointer l) (p2.arg.getPointer l) baseEqName
                         Some(makeExpressionToStatement l exp, [])
                     eqBody
+        let val1, val2 =  
+            match l with 
+            | C     -> {CallerScope.modName = t.id.ModName; arg = POINTER "pVal1"}, {CallerScope.modName = t.id.ModName; arg = POINTER "pVal2"}
+            | Ada   -> {CallerScope.modName = t.id.ModName; arg = VALUE "val1"}, {CallerScope.modName = t.id.ModName; arg = VALUE "val2"}
+        let stgMacroDefFunc = (stgMacroCompDefFunc l)
 
+        let    isEqualFunc, isEqualFuncDef                   = 
+                match isEqualFuncName with
+                | None  -> None, None
+                | Some funcName ->
+                    match isEqualBody val1 val2 with
+                    | Some (funcBody,lvars) -> 
+                        let lvars = lvars |> List.map(fun (lv:LocalVariable) -> lv.GetDeclaration l) |> Seq.distinct
+                        match l with
+                        | C    -> Some (equal_c.PrintEqualComposite funcName typeDefinitionName funcBody lvars), Some (stgMacroDefFunc funcName typeDefinitionName)
+                        | Ada  -> Some (equal_a.PrintEqualComposite funcName typeDefinitionName funcBody lvars), Some (stgMacroDefFunc funcName typeDefinitionName)
+                    | None     -> None, None
         {
-            EqualFunction.isEqualFuncName  = None
+            EqualFunction.isEqualFuncName  = isEqualFuncName
             isEqualBody                    = EqualBodyStatementList (isEqualBody )
-            //isEqualBody2                   = EqualBodyStatementList2(fun p1 p2 acc ->  isEqualBody acc p1 p2)
-            isEqualFunc                    = None
-            isEqualFuncDef                 = None
+            isEqualFunc                    = isEqualFunc
+            isEqualFuncDef                 = isEqualFuncDef
         }    
     | ReferenceType rf ->
              baseType.equalFunction
-    //| ReferenceType ref     ->
-    //    ref.baseType.equalFunction

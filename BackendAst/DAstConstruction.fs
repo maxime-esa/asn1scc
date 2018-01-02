@@ -532,7 +532,7 @@ let private createReferenceType (r:Asn1AcnAst.AstRoot) (deps:Asn1AcnAst.AcnInser
     let newPrms, us0 = t.acnParameters |> foldMap(fun ns p -> mapAcnParameter r deps l m t p ns) us
     let defOrRef            =  DAstTypeDefinition2.createReferenceType r l t o  newResolvedType us
     let typeDefinition = DAstTypeDefinition.createReferenceType r l t o newResolvedType us
-    let equalFunction       = DAstEqual.createReferenceTypeEqualFunction r l t o newResolvedType
+    let equalFunction       = DAstEqual.createReferenceTypeEqualFunction r l t o defOrRef newResolvedType
     let initialValue        = {Asn1Value.kind=newResolvedType.initialValue;id=ReferenceToValue([],[]);loc=emptyLocation}
     let initFunction        = DAstInitialize.createReferenceType r l t o newResolvedType
     let isValidFunction, s1     = DAstValidate.createReferenceTypeFunction r l t o typeDefinition newResolvedType us
@@ -565,6 +565,17 @@ let private createReferenceType (r:Asn1AcnAst.AstRoot) (deps:Asn1AcnAst.AcnInser
         }
     ((ReferenceType ret),newPrms), s7
 
+let private createType (r:Asn1AcnAst.AstRoot) pi (t:Asn1AcnAst.Asn1Type) ((newKind, newPrms),us) =
+    {
+        Asn1Type.Kind = newKind
+        id            = t.id
+        acnAligment   = t.acnAligment
+        acnParameters = newPrms 
+        Location      = t.Location
+        inheritInfo = t.inheritInfo
+        typeAssignmentInfo = t.typeAssignmentInfo
+        //newTypeDefName = DAstTypeDefinition2.getTypedefName r pi t
+    }, us
 
 let private mapType (r:Asn1AcnAst.AstRoot) (deps:Asn1AcnAst.AcnInsertedFieldDependencies) (l:ProgrammingLanguage) (m:Asn1AcnAst.Asn1Module) (t:Asn1AcnAst.Asn1Type, us:State) =
     Asn1Fold.foldType2
@@ -595,21 +606,11 @@ let private mapType (r:Asn1AcnAst.AstRoot) (deps:Asn1AcnAst.AcnInsertedFieldDepe
 
         (fun pi t ti newBaseType -> createReferenceType r deps l m pi t ti newBaseType)
 
-        (fun pi t ((newKind, newPrms),us)        -> 
-            {
-                Asn1Type.Kind = newKind
-                id            = t.id
-                acnAligment   = t.acnAligment
-                acnParameters = newPrms 
-                Location      = t.Location
-                inheritInfo = t.inheritInfo
-                typeAssignmentInfo = t.typeAssignmentInfo
-                newTypeDefName = DAstTypeDefinition2.getTypedefName r pi t
-            }, us)
+        (fun pi t ((newKind, newPrms),us)        -> createType r pi t ((newKind, newPrms),us))
 
-        (fun pi t ti -> {ParentInfoData.typedefName = DAstTypeDefinition2.getTypedefName r pi t})
-        (fun pi t ti -> {ParentInfoData.typedefName = DAstTypeDefinition2.getTypedefName r pi t})
-        (fun pi t ti -> {ParentInfoData.typedefName = DAstTypeDefinition2.getTypedefName r pi t})
+        (fun pi t ti -> DAstTypeDefinition2.getParentInfoData r pi t)
+        (fun pi t ti -> DAstTypeDefinition2.getParentInfoData r pi t)
+        (fun pi t ti -> DAstTypeDefinition2.getParentInfoData r pi t)
 
 
         None
@@ -628,15 +629,22 @@ let private mapTas (r:Asn1AcnAst.AstRoot) (deps:Asn1AcnAst.AcnInsertedFieldDepen
     },ns
 
 
-let private mapVas (r:Asn1AcnAst.AstRoot) (allNewTypeAssignments : TypeAssignment list) (deps:Asn1AcnAst.AcnInsertedFieldDependencies)  (l:ProgrammingLanguage) (m:Asn1AcnAst.Asn1Module) (vas:Asn1AcnAst.ValueAssignment) (us:State)=
+let private mapVas (r:Asn1AcnAst.AstRoot) (allNewTypeAssignments : (Asn1Module*TypeAssignment) list) (deps:Asn1AcnAst.AcnInsertedFieldDependencies)  (l:ProgrammingLanguage) (m:Asn1AcnAst.Asn1Module) (vas:Asn1AcnAst.ValueAssignment) (us:State)=
+    if (vas.Name.Value = "apid") then
+        let dummy = 0
+        ()
     let newType, ns = 
         match vas.Type.Kind with
         | Asn1AcnAst.ReferenceType ref ->
-            match allNewTypeAssignments |> Seq.tryFind(fun ts -> ts.Name.Value = ref.tasName.Value && ref.modName.Value = m.Name.Value) with
+            //let aaa = allNewTypeAssignments |> Seq.map(fun tz -> sprintf "%s.%s")
+            match allNewTypeAssignments |> Seq.tryFind(fun (tm, ts) -> ts.Name.Value = ref.tasName.Value && ref.modName.Value = tm.Name.Value) with
             | None          -> 
                 let oldType = Asn1AcnAstUtilFunctions.GetActualTypeByName r ref.modName ref.tasName
                 mapType r deps l m (oldType, us)
-            | Some newTas   -> newTas.Type, us
+            | Some (mt, newTas)   -> 
+                let (newKind, newPrms),ns = createReferenceType r deps l m None vas.Type ref (newTas.Type, us) 
+                createType r None vas.Type ((newKind, newPrms),us)
+                //newTas.Type, us
         | _     ->  mapType r deps l m (vas.Type, us)
     {
         ValueAssignment.Name = vas.Name
@@ -658,7 +666,7 @@ let private mapModule (r:Asn1AcnAst.AstRoot) (deps:Asn1AcnAst.AcnInsertedFieldDe
     }, ns1
 
 let private reMapModule (r:Asn1AcnAst.AstRoot) (files0:Asn1File list) (deps:Asn1AcnAst.AcnInsertedFieldDependencies) (l:ProgrammingLanguage) (m:Asn1Module) (us:State) =
-    let allNewTasses = files0 |> List.collect(fun f -> f.Modules) |> List.collect(fun m -> m.TypeAssignments)
+    let allNewTasses = files0 |> List.collect(fun f -> f.Modules) |> List.collect(fun m -> m.TypeAssignments |> List.map(fun ts -> (m,ts)))
     let oldModule = r.Files |> List.collect(fun f -> f.Modules) |> List.find(fun oldM -> oldM.Name.Value = m.Name.Value)
     let newVases, ns1 = oldModule.ValueAssignments |> foldMap (fun ns nt -> mapVas r allNewTasses deps l oldModule nt ns) us
     { m with ValueAssignments = newVases}, ns1

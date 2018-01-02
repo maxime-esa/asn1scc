@@ -113,7 +113,8 @@ let private exportType (r:AstRoot) (t:Asn1Type) =
                         XAttribute(xname "id", t.id.AsString),
                         XAttribute(xname "typeDefinition.name", ti.typeDefinition.name),
                         XAttribute(xname "typeDefinition.typeDefinitionBodyWithinSeq", ti.typeDefinition.typeDefinitionBodyWithinSeq),
-                        XAttribute(xname "newTypedefName", (t.typeDefintionOrReference.longTypedefName Ada))
+                        XAttribute(xname "newTypedefName", (t.typeDefintionOrReference.longTypedefName Ada)),
+                        child
                         //(exportElement "CompleteDefinition" ti.typeDefinition.completeDefinition),
                         //(exportOptionalElement "CompleteDefinitionWithinSeq" ti.typeDefinition.completeDefinitionWithinSeq)
                         ), us )

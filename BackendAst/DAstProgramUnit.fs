@@ -145,7 +145,18 @@ let internal createProgramUnits (args:CommandLineSettings) (files: Asn1File list
                 sortedTypes |> 
                 List.collect (fun t -> getTypeDependencies t.Type) |>
                 List.filter (fun t -> t.modName <> m.Name.Value) 
-            let importedProgramUnits = depTypesFromOtherModules |> Seq.map(fun ti -> ToC ti.modName) |> Seq.distinct |> Seq.toList
+            let importedProgramUnitsFromVases = 
+                valueAssignments |> 
+                List.choose(fun z -> 
+                    match z.Type.Kind with
+                    |ReferenceType ref -> 
+                        match ref.baseInfo.modName.Value = m.Name.Value with
+                        | true -> None
+                        | false -> Some (ToC ref.baseInfo.modName.Value)
+                    | _                -> None)
+            let importedProgramUnitsFromTasses = 
+                depTypesFromOtherModules |> Seq.map(fun ti -> ToC ti.modName) |> Seq.distinct |> Seq.toList
+            let importedProgramUnits = importedProgramUnitsFromTasses@importedProgramUnitsFromVases |> Seq.distinct |> Seq.toList
             let importedTypes = depTypesFromOtherModules |> Seq.map(fun ti -> (ToC ti.modName) + "." + (ToC (args.TypePrefix + ti.tasName)) ) |> Seq.distinct |> Seq.toList
 
             let specFileName = ToC (m.Name.Value.ToLower()) + "." + l.SpecExtention

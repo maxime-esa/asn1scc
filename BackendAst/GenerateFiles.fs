@@ -9,7 +9,7 @@ open DAst
 open DAstUtilFunctions
 
 
-let getTypeDecl (r:DAst.AstRoot) (vas:ValueAssignment) =
+let getTypeDecl (r:DAst.AstRoot) (vasPU_name:string) (l:ProgrammingLanguage) (vas:ValueAssignment) =
     let t = vas.Type
     match t.Kind with
     | Integer _
@@ -19,20 +19,26 @@ let getTypeDecl (r:DAst.AstRoot) (vas:ValueAssignment) =
         | Some tasInfo    -> ToC2(r.args.TypePrefix + tasInfo.tasName) 
         | None            -> t.typeDefinition.typeDefinitionBodyWithinSeq
     | ReferenceType ref ->
-        ToC2(r.args.TypePrefix + ref.baseInfo.tasName.Value) 
+        let tasName = ToC2(r.args.TypePrefix + ref.baseInfo.tasName.Value) 
+        match l with
+        | C     -> tasName
+        | Ada ->
+            match vasPU_name = ref.baseInfo.modName.Value with
+            | true  -> tasName
+            |false  -> (ToC ref.baseInfo.modName.Value) + "." + tasName
+
+        
     | _             -> 
         match t.tasInfo with
         | Some tasInfo    -> ToC2(r.args.TypePrefix + tasInfo.tasName) 
         | None            -> t.typeDefinition.name
 
-let printValueAssignment (r:DAst.AstRoot) (l:ProgrammingLanguage)  (vas:ValueAssignment) =
+let printValueAssignment (r:DAst.AstRoot) (vasPU_name:string) (l:ProgrammingLanguage)  (vas:ValueAssignment) =
     let sName = vas.c_name
     let t = vas.Type
-    let sTypeDecl= getTypeDecl r vas
+    let sTypeDecl= getTypeDecl r vasPU_name l vas
 
-
-
-    let sVal = DAstVariables.printValue r l  vas.Type None vas.Value.kind
+    let sVal = DAstVariables.printValue r  l  vas.Type None vas.Value.kind
     match l with
     | C     -> variables_c.PrintValueAssignment sTypeDecl sName sVal
     | Ada   -> header_a.PrintValueAssignment sName sTypeDecl sVal
@@ -125,12 +131,18 @@ let private printUnit (r:DAst.AstRoot) (l:ProgrammingLanguage) (encodings: Commo
                     let typeDefinitionName = match t.tasInfo with| Some tasInfo    -> ToC2(r.args.TypePrefix + tasInfo.tasName) | None    -> t.typeDefinition.typeDefinitionBodyWithinSeq
                     header_c.PrintValueAssignment (typeDefinitionName) gv.c_name
                 | ReferenceType ref ->
-                    let typeDefinitionName = ToC2(r.args.TypePrefix + ref.baseInfo.tasName.Value) 
+                    let typeDefinitionName = ToC2(r.args.TypePrefix + ref.baseInfo.tasName.Value)
+//                        match l with
+//                        | C     ->  
+//                        | Ada   ->
+//                            match ToC ref.baseInfo.modName.Value = pu.name with
+//                            | true  -> ToC2(r.args.TypePrefix + ref.baseInfo.tasName.Value) 
+//                            | false -> (ToC ref.baseInfo.modName.Value) + "." + ToC2(r.args.TypePrefix + ref.baseInfo.tasName.Value) 
                     header_c.PrintValueAssignment (typeDefinitionName) gv.c_name
                 | _             -> 
                     let typeDefinitionName = match t.tasInfo with| Some tasInfo    -> ToC2(r.args.TypePrefix + tasInfo.tasName) | None    -> t.typeDefinition.name
                     header_c.PrintValueAssignment (typeDefinitionName) gv.c_name
-            | Ada   -> printValueAssignment r l gv)
+            | Ada   -> printValueAssignment r pu.name l gv)
     let arrsHeaderAnonymousValues =
         arrsAnonymousValues |>
         List.map(fun av -> 
@@ -199,7 +211,7 @@ let private printUnit (r:DAst.AstRoot) (l:ProgrammingLanguage) (encodings: Commo
         match l with
         | C     ->
             let arrsUnnamedVariables = []
-            let arrsValueAssignments = vases |> List.map (printValueAssignment r l )
+            let arrsValueAssignments = vases |> List.map (printValueAssignment r pu.name l )
             let arrsSourceAnonymousValues = 
                 arrsAnonymousValues |>
                 List.map (fun av -> variables_c.PrintValueAssignment av.typeDefinitionName av.valueName av.valueExpresion)
@@ -345,10 +357,13 @@ let CreateTestSuiteFile (r:AstRoot) (l:ProgrammingLanguage) outDir vasName =
         seq {
             for m in r.Files |> List.collect(fun f -> f.Modules) do
                 for v in m.ValueAssignments do
+                        if v.Name.Value = "apid" then
+                            ()
                         if vasName = "ALL" || v.Name.Value = vasName then
                             idx <- idx + 1
                             let initFuncName = v.Type.initFunction.initFuncName
-                            yield PrintTestCase v m (getTypeDecl r v )  idx initFuncName v.Type.uperEncDecTestFunc v.Type.acnEncDecTestFunc
+                            let aaa = PrintTestCase v m (getTypeDecl r (ToC m.Name.Value) l v )  idx initFuncName v.Type.uperEncDecTestFunc v.Type.acnEncDecTestFunc
+                            yield aaa
                 if vasName = "ALL" then
                     for t in m.TypeAssignments do
                         let hasEncodeFunc = hasAcnEncodeFunction t.Type.acnEncFunction t.Type.acnParameters 

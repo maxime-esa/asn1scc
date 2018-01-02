@@ -13,7 +13,7 @@ open DAstUtilFunctions
 
 let getDefaultValueByType  (t:Asn1Type)  =  t.initialValue
 
-let rec printValue (r:DAst.AstRoot) (l:ProgrammingLanguage)  (t:Asn1Type) (parentValue:Asn1ValueKind option) (gv:Asn1ValueKind) =
+let rec printValue (r:DAst.AstRoot)  (l:ProgrammingLanguage)  (t:Asn1Type) (parentValue:Asn1ValueKind option) (gv:Asn1ValueKind) =
     match l with
     | C ->
         match gv with
@@ -122,6 +122,7 @@ let rec printValue (r:DAst.AstRoot) (l:ProgrammingLanguage)  (t:Asn1Type) (paren
             match t.ActualType.Kind with
             | Enumerated enm    -> 
                 let itm = enm.baseInfo.items |> Seq.find(fun x -> x.Name.Value = v)
+                let dd = t.typeDefintionOrReference
                 variables_a.PrintEnumValue (itm.getBackendName (Some t.typeDefintionOrReference) l)
             | _         -> raise(BugErrorException "unexpected type")
         | NullValue         v -> variables_a.PrintNullValue ()

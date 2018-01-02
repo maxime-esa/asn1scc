@@ -10,7 +10,7 @@ EmitTypeAssignment_def_err_code(sErrCode, nErrValue) ::= <<
 <sErrCode>:CONSTANT INTEGER := <nErrValue>; 
 >>
 
-EmitTypeAssignment_def_encode(sVarName, sStar, sFuncName, sTypeDefName, arrsErrcodes, bEmptyEncodingSpace, nMaxBytesInPER, nMaxBitsInPER) ::= <<
+EmitTypeAssignment_def_encode(sVarName, sStar, sFuncName, sTypeDefName, arrsErrcodes, bEmptyEncodingSpace, nMaxBytesInPER, nMaxBitsInPER, soSparkAnnotations) ::= <<
 <arrsErrcodes; separator="\n">
 <sTypeDefName>_REQUIRED_BYTES_FOR_ENCODING:CONSTANT INTEGER := <nMaxBytesInPER>;
 <sTypeDefName>_REQUIRED_BITS_FOR_ENCODING:CONSTANT INTEGER := <nMaxBitsInPER>;
@@ -25,13 +25,15 @@ TYPE <sTypeDefName>_uPER_Stream IS RECORD
 end RECORD;
 
 procedure <sFuncName>(val:in <sTypeDefName>; Stream : OUT <sTypeDefName>_uPER_Stream; result : OUT <rtlModuleName()>.ASN1_RESULT);
-procedure <sFuncName>_aux(<sVarName>:in <sTypeDefName>; S : in out <rtlModuleName()>.BitArray; K : in out Natural; result : OUT <rtlModuleName()>.ASN1_RESULT);
+procedure <sFuncName>_aux(<sVarName>:in <sTypeDefName>; S : in out <rtlModuleName()>.BitArray; K : in out Natural; result : OUT <rtlModuleName()>.ASN1_RESULT)
+<soSparkAnnotations>;
 >>
 
-EmitTypeAssignment_def_decode(sVarName, sStar, sFuncName, sTypeDefName, arrsErrcodes, bEmptyEncodingSpace, nMaxBytesInPER, nMaxBitsInPER) ::= <<
+EmitTypeAssignment_def_decode(sVarName, sStar, sFuncName, sTypeDefName, arrsErrcodes, bEmptyEncodingSpace, nMaxBytesInPER, nMaxBitsInPER, soSparkAnnotations) ::= <<
 <arrsErrcodes; separator="\n">
 procedure <sFuncName>(<sVarName>:in out <sTypeDefName>; Stream : IN <sTypeDefName>_uPER_Stream; result : OUT <rtlModuleName()>.ASN1_RESULT);
-procedure <sFuncName>_aux(<sVarName>:in out <sTypeDefName>; S : in <rtlModuleName()>.BitArray; K : in out <rtlModuleName()>.DECODE_PARAMS; result : OUT <rtlModuleName()>.ASN1_RESULT);
+procedure <sFuncName>_aux(<sVarName>:in out <sTypeDefName>; S : in <rtlModuleName()>.BitArray; K : in out <rtlModuleName()>.DECODE_PARAMS; result : OUT <rtlModuleName()>.ASN1_RESULT)
+<soSparkAnnotations>;
 >>
 
 TasEncodeMain(sVarName, sFuncName, sTypeDefName) ::= /*nogen*/<<
@@ -45,7 +47,6 @@ end <sFuncName>;
 
 EmitTypeAssignment_encode(sVarName, sStar, sFuncName, soIValidFuncName, sTypeDefName, arrsLocalVariables, sContent, soSparkAnnotations, sInitilialExp) ::= <<
 procedure <sFuncName>_aux(<sVarName>:in <sTypeDefName>; S : in out <rtlModuleName()>.BitArray; K : in out Natural; result : OUT <rtlModuleName()>.ASN1_RESULT)
-<soSparkAnnotations>
 IS
     <arrsLocalVariables; separator="\n">
 begin
@@ -77,7 +78,6 @@ end <sFuncName>;
 EmitTypeAssignment_decode(sVarName, sStar, sFuncName, soIValidFuncName, sTypeDefName, arrsLocalVariables, sContent, soSparkAnnotations, sInitilialExp) ::= <<
 pragma Warnings (Off, "unused initial value of ""val""");
 procedure <sFuncName>_aux(<sVarName>:in out <sTypeDefName>; S : in <rtlModuleName()>.BitArray; K : in out <rtlModuleName()>.DECODE_PARAMS; result : OUT <rtlModuleName()>.ASN1_RESULT)
-<soSparkAnnotations>
 IS
     <arrsLocalVariables; separator="\n">
 begin
