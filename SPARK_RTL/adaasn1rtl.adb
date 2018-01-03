@@ -139,7 +139,7 @@ PACKAGE BODY adaasn1rtl with SPARK_Mode IS
                              2**(nBits-1)>=1 AND
                              2**(nBits-1)<=4611686018427387904 AND 2**nBits-1>=1 AND 2**nBits-1<=9223372036854775807);
       --#  ;
-          IF IntVal > Asn1UInt(2)**(nBits-1) THEN
+          IF IntVal >= Asn1UInt(2)**(nBits-1) THEN
               c := NOT (Asn1UInt(2)**nBits-1);
               ret := To_Int(IntVal OR c);
           ELSE
@@ -334,6 +334,18 @@ PACKAGE BODY adaasn1rtl with SPARK_Mode IS
         result := P.DataLen-P.K>=0;
     END BitStream_Decode_Non_Negative_Integer;
 
+    FUNCTION To_UInt(IntVal: Asn1Int) return Asn1Uint
+    IS
+        ret:Asn1Uint;
+    Begin
+        IF IntVal < 0 THEN
+            ret:=Asn1UInt(-(IntVal+1));
+            ret := NOT ret;
+        ELSE
+            ret:= Asn1UInt(IntVal);
+        END IF;
+      return ret;
+    End To_UInt;
 
 
     FUNCTION Sub (A : IN     Asn1Int; B : IN     Asn1Int)    RETURN Asn1UInt
@@ -341,17 +353,32 @@ PACKAGE BODY adaasn1rtl with SPARK_Mode IS
     --# return Asn1Uint(A-B);
     IS
 --                pragma SPARK_Mode(Off);
-        ret:Asn1UInt ;
-        diff:Asn1Int;
-    BEGIN
-        diff := A-B;
-        if (diff >= 0) then
-            ret := Asn1UInt(diff);
-        else
-            ret := Asn1UInt(-diff);
-            ret := NOT ret;
-            ret := ret + 1;
-        end if;
+      ret:Asn1UInt ;
+      au:Asn1UInt;
+      bu:Asn1UInt;
+--      diff:Asn1Int;
+   BEGIN
+
+      --diff := A-B;
+      --  if (diff >= 0) then
+      --      ret := Asn1UInt(diff);
+      --  else
+      --      ret := Asn1UInt(-diff);
+      --      ret := NOT ret;
+      --      ret := ret + 1;
+      --end if;
+      au := To_UInt(a);
+      bu := To_UInt(b);
+
+      if au >= bu then
+         ret := au - bu;
+      else
+         ret := bu - au;
+         ret := NOT ret;
+         ret := ret + 1;
+      end if;
+
+
         RETURN ret;
     END Sub;
 
@@ -451,18 +478,6 @@ PACKAGE BODY adaasn1rtl with SPARK_Mode IS
         RETURN Ret;
     END GetLengthInBytesOfSInt;
 
-    FUNCTION To_UInt(IntVal: Asn1Int) return Asn1Uint
-    IS
-        ret:Asn1Uint;
-    Begin
-        IF IntVal < 0 THEN
-            ret:=Asn1UInt(-(IntVal+1));
-            ret := NOT ret;
-        ELSE
-            ret:= Asn1UInt(IntVal);
-        END IF;
-      return ret;
-    End To_UInt;
 
 
     FUNCTION Int32_UInt32(IntVal: Interfaces.Integer_32) return Interfaces.Unsigned_32
@@ -2601,7 +2616,7 @@ PACKAGE BODY adaasn1rtl with SPARK_Mode IS
 
     END Acn_Enc_String_Ascii_External_Field_Determinant;
 
-    PROCEDURE Acn_Dec_String_Ascii_External_Field_Determinant(S : in BitArray; K : in out DECODE_PARAMS; extSizeDeterminatFld : IN Asn1UInt; strVal : in out String; Result:OUT ASN1_RESULT)
+    PROCEDURE Acn_Dec_String_Ascii_External_Field_Determinant(S : in BitArray; K : in out DECODE_PARAMS; extSizeDeterminatFld : IN Asn1Int; strVal : in out String; Result:OUT ASN1_RESULT)
     IS
          I:Integer:=strVal'First;
          charIndex:Integer;
@@ -2681,7 +2696,7 @@ PACKAGE BODY adaasn1rtl with SPARK_Mode IS
 
     END Acn_Enc_String_CharIndex_External_Field_Determinant;
 
-    PROCEDURE Acn_Dec_String_CharIndex_External_Field_Determinant(S : in BitArray; K : in out DECODE_PARAMS; charSet : String; nCharSize:Integer; extSizeDeterminatFld : IN Asn1UInt; strVal : in out String; Result:OUT ASN1_RESULT)
+    PROCEDURE Acn_Dec_String_CharIndex_External_Field_Determinant(S : in BitArray; K : in out DECODE_PARAMS; charSet : String; nCharSize:Integer; extSizeDeterminatFld : IN Asn1Int; strVal : in out String; Result:OUT ASN1_RESULT)
     IS
          I:Integer:=strVal'First;
          charIndex:Integer;

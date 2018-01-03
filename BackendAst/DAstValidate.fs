@@ -423,7 +423,7 @@ let createOctetStringFunction (r:Asn1AcnAst.AstRoot) (l:ProgrammingLanguage) (t:
     createBitOrOctetStringFunction r l t allCons foldSizeCon typeDefinition [] anonymousVariables us
 
 
-let createBitStringFunction (r:Asn1AcnAst.AstRoot) (l:ProgrammingLanguage) (t:Asn1AcnAst.Asn1Type) (o:Asn1AcnAst.BitString) (typeDefinition:TypeDefinitionCommon) (equalFunc:EqualFunction) (printValue  : (Asn1ValueKind option) -> (Asn1ValueKind) -> string) (us:State)  =
+let createBitStringFunction (r:Asn1AcnAst.AstRoot) (l:ProgrammingLanguage) (t:Asn1AcnAst.Asn1Type) (o:Asn1AcnAst.BitString) (typeDefinition:TypeDefinitionCommon) (defOrRef:TypeDefintionOrReference) (equalFunc:EqualFunction) (printValue  : (Asn1ValueKind option) -> (Asn1ValueKind) -> string) (us:State)  =
     let allCons = exlcudeSizeConstraintIfFixedSize o.minSize o.maxSize o.AllCons
     let anonymousVariables =
         allCons |> 
@@ -434,10 +434,10 @@ let createBitStringFunction (r:Asn1AcnAst.AstRoot) (l:ProgrammingLanguage) (t:As
                     match id with
                     | ReferenceToValue (typePath,(VA2 vasName)::[]) -> None
                     | ReferenceToValue(ts,vs)                       ->
-                        let typeDefinitionName = 
-                            match t.tasInfo with
-                            | Some tasInfo    -> ToC2(r.args.TypePrefix + tasInfo.tasName)
-                            | None            -> typeDefinition.typeDefinitionBodyWithinSeq
+                        let typeDefinitionName = defOrRef.longTypedefName l
+                            //match t.tasInfo with
+                            //| Some tasInfo    -> ToC2(r.args.TypePrefix + tasInfo.tasName)
+                            //| None            -> typeDefinition.typeDefinitionBodyWithinSeq
                         Some ({AnonymousVariable.valueName = (recValue.getBackendName l); valueExpresion = (printValue None recValue.kind); typeDefinitionName = typeDefinitionName}))
     let compareSingValueFunc (p:CallerScope) (v:Asn1AcnAst.BitStringValue, (id,loc)) =
         let recValue = {Asn1Value.kind = BitStringValue (v.Value ); id=id;loc=loc}

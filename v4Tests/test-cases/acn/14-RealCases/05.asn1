@@ -36,7 +36,7 @@ TEST-CASE DEFINITIONS AUTOMATIC TAGS ::= BEGIN
 				field-type (option-telecommand), 
 				field-data-field-header-flag (option-present), 
 				field-application-process-id ((31))}), 
-				field-packet-sequence-control (WITH COMPONENTS {..., 
+			field-packet-sequence-control (WITH COMPONENTS {..., 
 					field-sequence-flags (('11'B))})}) 
    }
 

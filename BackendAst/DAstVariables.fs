@@ -276,7 +276,7 @@ let createOctetStringFunction (r:Asn1AcnAst.AstRoot) (l:ProgrammingLanguage) (t:
     printValue
 
 
-let createBitStringFunction (r:Asn1AcnAst.AstRoot) (l:ProgrammingLanguage) (t:Asn1AcnAst.Asn1Type) (o:Asn1AcnAst.BitString) (typeDefinition:TypeDefinitionCommon) =
+let createBitStringFunction (r:Asn1AcnAst.AstRoot) (l:ProgrammingLanguage) (t:Asn1AcnAst.Asn1Type) (o:Asn1AcnAst.BitString) (defOrRef:TypeDefintionOrReference) =
     let printValue (parentValue:Asn1ValueKind option) (v:Asn1ValueKind) =
         match v with
         | BitStringValue    v -> 
@@ -285,7 +285,7 @@ let createBitStringFunction (r:Asn1AcnAst.AstRoot) (l:ProgrammingLanguage) (t:As
             | C ->  
                 variables_c.PrintBitOrOctetStringValue (o.minSize = o.maxSize) bytes (BigInteger bytes.Length)
             | Ada -> 
-                let typeDefName  = if parentValue.IsSome then typeDefinition.typeDefinitionBodyWithinSeq else typeDefinition.name
+                let typeDefName  = defOrRef.longTypedefName l//if parentValue.IsSome then typeDefinition.typeDefinitionBodyWithinSeq else typeDefinition.name
                 let arBits = v.ToCharArray() |> Array.map(fun x -> x.ToString())
                 variables_a.PrintBitStringValue typeDefName (o.minSize = o.maxSize) arBits (BigInteger arBits.Length)
 
@@ -293,7 +293,7 @@ let createBitStringFunction (r:Asn1AcnAst.AstRoot) (l:ProgrammingLanguage) (t:As
             match l with 
             | C ->  variables_c.PrintBitOrOctetStringValue (o.minSize = o.maxSize) v (BigInteger v.Length)
             | Ada -> 
-                let typeDefName  = if parentValue.IsSome then typeDefinition.typeDefinitionBodyWithinSeq else typeDefinition.name
+                let typeDefName  = defOrRef.longTypedefName l //if parentValue.IsSome then typeDefinition.typeDefinitionBodyWithinSeq else typeDefinition.name
                 variables_a.PrintOctetStringValue typeDefName (o.minSize = o.maxSize) v (BigInteger v.Length)
         | RefValue ((md,vs),ov)   -> vs
         | _                 -> raise(BugErrorException "unexpected value")
