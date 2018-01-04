@@ -9,7 +9,9 @@
 *  For more informations see License.txt file
 */
 
-group spark_automatic_test_cases:spark_spec;
+group spark_automatic_test_cases;
+
+rtlModuleName() ::= "adaasn1rtl"
 
 
 PrintCodecsFile_spec(sModName, arrsIncludedModules, arrsTestFunctions) ::= <<
