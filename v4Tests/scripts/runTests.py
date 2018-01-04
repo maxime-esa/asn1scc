@@ -150,16 +150,17 @@ def RunTestCase(asn1, acn, behavior, expErrMsg):
                     itertools.dropwhile(
                         hunt_signature, open("covlog.txt", 'r').readlines()))
                 lines = list(itertools.dropwhile(hunt_signature, lines[1:]))
-                excLine = [
-                    l
-                    for l in list(lines)
-                    if "executed" in l][0]
-                if "executed:100.00" not in excLine:
-                    PrintFailed("coverage error (less than 100%): {}"
-                                .format('\n'.join(lines)))
-                    #sys.exit(-1)
+                excecLines = [l for l in list(lines) if "executed" in l]
+                #print (excecLines)
+                if excecLines:
+                    excLine = excecLines[0]
+                    if "executed:100.00" not in excLine:
+                        PrintFailed("coverage error (less than 100%): {}".format('\n'.join(lines)))
+                        #sys.exit(-1)
+                    else:
+                        PrintSucceededAsExpected(excLine)
                 else:
-                    PrintSucceededAsExpected(excLine)
+                    PrintFailed("No line executed !!!: {}".format('\n'.join(lines)))
         else:
             print(res, behavior)
             PrintWarning(
