@@ -6,7 +6,7 @@ PrintAsn1File(arrsModules) ::= <<
 
 
 PrintModule(sName, arrsTas) ::= <<
-<sName> DEFINITIONS AUTOMATIC TAGS ::= BEGIN
+<sName> DEFINITIONS ::= BEGIN /*nogen*/
 
 <arrsTas: {tas|<tas>}; separator="\n\n">
 
@@ -34,7 +34,7 @@ PrintTypeChild(sName, arrsArgs, sImplMode, sType) ::= <<
 >>
 
 PrintType(arrsProps, arrsChildren) ::= <<
-[<arrsProps; separator=" ">] <if(arrsChildren)> { 
+[<arrsProps; separator=", ">] <if(arrsChildren)> { 
     <arrsChildren; separator=",\n">
 }
 <endif>

@@ -6,7 +6,7 @@ PrintAsn1File(arrsModules) ::= <<
 
 
 PrintModule(sName, arrsTas, arrsVas, sExports, arrsImportsFromModule) ::= <<
-<sName> DEFINITIONS AUTOMATIC TAGS ::= BEGIN
+<sName> DEFINITIONS AUTOMATIC TAGS ::= BEGIN 
 
     EXPORTS
         <sExports>
@@ -44,7 +44,7 @@ PrintValueAssigment(sName, sType, sValue) ::= "<sName> <sType> ::= <sValue>"
 PrintType(sTypeSpecific) ::= "<sTypeSpecific>"
 
 
-Print_Integer(sUPER, arrsConstraints) ::= "INTEGER <sUPER> <arrsConstraints>"
+Print_Integer(sUPER, arrsConstraints) ::= "INTEGER /*<sUPER>*/ <arrsConstraints>"
 Print_Real(arrsConstraints) ::= "REAL <arrsConstraints>"
 Print_IA5String(arrsConstraints) ::= "IA5String <arrsConstraints>"
 Print_IA5String2(sSizeUper, sAlphaUper, arrsConstraints) ::= "IA5String [Size <sSizeUper>] [FROM <sAlphaUper>] <arrsConstraints>"

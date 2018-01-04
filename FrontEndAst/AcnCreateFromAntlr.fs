@@ -25,12 +25,12 @@ open FsUtils
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 
-type private GenericAcnPresentWhenCondition =
+type  GenericAcnPresentWhenCondition =
     | GP_PresenceBool  of Asn1AcnAst.RelativePath                         
     | GP_PresenceInt   of Asn1AcnAst.RelativePath*IntLoc
     | GP_PresenceStr   of Asn1AcnAst.RelativePath*StringLoc          
     
-type private GenAcnEncodingProp =
+type  GenAcnEncodingProp =
     | GP_PosInt
     | GP_TwosComplement
     | GP_Ascii
@@ -38,14 +38,14 @@ type private GenAcnEncodingProp =
     | GP_IEEE754_32
     | GP_IEEE754_64
 
-type private GenSizeProperty = 
+type  GenSizeProperty = 
     | GP_Fixed                 of IntLoc
     | GP_NullTerminated        
     | GP_SizeDeterminant       of Asn1AcnAst.RelativePath
 
 
 
-type private GenericAcnProperty = 
+type  GenericAcnProperty = 
     | ENCODING          of GenAcnEncodingProp
     | SIZE              of GenSizeProperty
     | ALIGNTONEXT       of Asn1AcnAst.AcnAligment
@@ -62,20 +62,20 @@ type private GenericAcnProperty =
 
 
 
-type private AcnTypeEncodingSpec = {
+type  AcnTypeEncodingSpec = {
     acnProperties   : GenericAcnProperty list
     children        : ChildSpec list
     loc             : SrcLoc
 }
 
-and private ChildSpec = {
+and  ChildSpec = {
     name            : StringLoc
     childEncodingSpec : AcnTypeEncodingSpec
     asn1Type        : Asn1AcnAst.AcnParamType option    // if present then it indicates an ACN inserted type
     argumentList    : Asn1AcnAst.RelativePath list
 }
 
-type private AcnTypeAssignment = {
+type  AcnTypeAssignment = {
     name            : StringLoc
     acnParameters   : Asn1AcnAst.AcnParameter list
     typeEncodingSpec: AcnTypeEncodingSpec

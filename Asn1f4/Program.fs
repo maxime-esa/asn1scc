@@ -16,7 +16,7 @@ type CliArguments =
     | [<AltCommandLine("-typePrefix")>]Type_Prefix of prefix:string
     | [<AltCommandLine("-x")>] Xml_Ast of xmlFilename:string
     | [<AltCommandLine("-renamePolicy")>] Rename_Policy of int
-
+    | [<AltCommandLine("-gtc")>] Generate_Test_Grammar 
     | [<MainCommand; ExactlyOnce; Last>] Files of files:string list
 with
     interface IArgParserTemplate with
@@ -33,7 +33,7 @@ with
             | Equal_Func       -> "generate functions for testing type equality."
             | Xml_Ast _        -> "dump internal AST in an xml file"
             | Rename_Policy _  -> "Specify rename policy for enums 0 no rename (Ada default), 1 rename only conflicting enumerants (C default), 2 rename all enumerants of an enum with at lest one conflicting enumerant"
-
+            | Generate_Test_Grammar -> "generate a sample grammar for testing purposes"
 
 
 let checkArguement arg =
@@ -44,6 +44,7 @@ let checkArguement arg =
     | ACN_enc          -> ()
     | Auto_test_cases  -> ()
     | Equal_Func       -> ()
+    | Generate_Test_Grammar -> ()
     | Xml_Ast xmlFileName   -> 
         match xmlFileName.ToLower().EndsWith ".xml" with
         | true  -> ()
@@ -104,11 +105,7 @@ let exportRTL outDir  (l:DAst.ProgrammingLanguage) =
                 writeTextFile (Path.Combine(outDir, "runSpark.sh"))    (rm.GetString("run",null)) 
                 writeTextFile (Path.Combine(outDir, "GPS_project.gpr"))    (rm.GetString("GPS_project",null)) 
 
-
-
-[<EntryPoint>]
-let main argv = 
-
+let main0 argv =
     let parser = ArgumentParser.Create<CliArguments>(programName = "Asn1f4.exe")
     try
         let parserResults = parser.Parse argv
@@ -131,8 +128,8 @@ let main argv =
             cliArgs |> 
             List.choose (fun a -> 
                 match a with
-                | C_lang        -> Some (DAstConstruction.DoWork frontEntAst acnDeps CommonTypes.ProgrammingLanguage.C args.encodings)
-                | Ada_Lang      -> Some (DAstConstruction.DoWork frontEntAst acnDeps CommonTypes.ProgrammingLanguage.Ada args.encodings)
+                | C_lang                -> Some (DAstConstruction.DoWork frontEntAst acnDeps CommonTypes.ProgrammingLanguage.C args.encodings)
+                | Ada_Lang              -> Some (DAstConstruction.DoWork frontEntAst acnDeps CommonTypes.ProgrammingLanguage.Ada args.encodings)
                 | _             -> None)
 
         //generate code
@@ -144,9 +141,14 @@ let main argv =
                 match args.AstXmlAbsFileName with
                 | ""    -> ()
                 | _     -> DAstExportToXml.exportFile r acnDeps ("backend_" + args.AstXmlAbsFileName)
-                
                 )
-
+        
+        cliArgs |> 
+            List.filter (fun a -> 
+                match a with
+                | Generate_Test_Grammar    -> true
+                | _                        -> false) |>
+            Seq.iter(fun _ -> GrammarGenerator.generateGrammars outDir)
 
         0
     with
@@ -167,4 +169,9 @@ let main argv =
             Console.Error.WriteLine(ex.StackTrace)
             4
 
+    
+
+[<EntryPoint>]
+let main argv = 
+    main0 argv
     
