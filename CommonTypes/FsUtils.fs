@@ -359,7 +359,7 @@ let byteArrayToBitStringValue (bytes: byte seq)  =
 //                (independentNodes: PrimitiveWithLocation<string> list) 
 //                (dependentNodes: (PrimitiveWithLocation<string> * PrimitiveWithLocation<string> list) list)  
 //                comparer excToThrow =
-let rec DoTopologicalSort2 
+let rec DoTopologicalSort2b 
                 (independentNodes: 'a list) 
                 (dependentNodes: ('a * 'b list) list)  
                 comparer excToThrow =
@@ -372,10 +372,40 @@ let rec DoTopologicalSort2
         let newDependentNodes = dependentNodes2 |> List.filter(fun (_,list) -> not(List.isEmpty list))
         let independentNodes2 = dependentNodes2 |> List.filter(fun (_,list) -> List.isEmpty list) |> List.map fst
         let newIndependentNodes = independentNodes2 @ tail
-        head::(DoTopologicalSort2 newIndependentNodes newDependentNodes comparer excToThrow) 
+        head::(DoTopologicalSort2b newIndependentNodes newDependentNodes comparer excToThrow) 
 
+let DoTopologicalSort2 
+                    (independentNodes: 'a list) 
+                    (dependentNodes: ('a * 'b list) list)  
+                    comparer excToThrow =
+    let rec DoTopologicalSort3_aux 
+                    (independentNodes: 'a list) 
+                    (dependentNodes: ('a * 'b list) list)  
+                    comparer excToThrow ret=
+        match independentNodes with
+        | []          ->  ret |> List.rev, dependentNodes
+        | head::tail  ->
+            let dependentNodes2   = dependentNodes  |> List.map(fun (n,list) -> (n, list |>List.filter(fun x -> (not (comparer x head)))  ) ) 
+            let newDependentNodes = dependentNodes2 |> List.filter(fun (_,list) -> not(List.isEmpty list))
+            let independentNodes2 = dependentNodes2 |> List.filter(fun (_,list) -> List.isEmpty list) |> List.map fst
+            let newIndependentNodes = independentNodes2 @ tail
+            let newRet = head::ret
+            DoTopologicalSort3_aux newIndependentNodes newDependentNodes comparer excToThrow newRet
+    let sorted, unsorted = DoTopologicalSort3_aux independentNodes dependentNodes  comparer excToThrow [] 
+    match unsorted with
+    | []    -> sorted
+    | _     -> raise(excToThrow unsorted) 
+
+let ind = ["A";"B";"C"]
+let dep = [("E",["D";"C"]); ("D",["A";"B"])]
+//DoTopologicalSort ind dep (fun x -> System.Exception "sdfds")
 let rec DoTopologicalSort independentNodes dependentNodes  excToThrow =
-    DoTopologicalSort2 independentNodes dependentNodes  (=) excToThrow
+    DoTopologicalSort2 independentNodes dependentNodes  (=) excToThrow 
+    
+
+
+//let rec DoTopologicalSort independentNodes dependentNodes  excToThrow =
+//    DoTopologicalSort2 independentNodes dependentNodes  (=) excToThrow 
 
 //let a1 = ["a";"d";"e"]
 //let a2 = [("b",["c"]); ("c",["b"])]

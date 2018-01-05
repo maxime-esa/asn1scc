@@ -34,7 +34,6 @@ let genrateAcnIntProps (c:ParameterizedAsn1Ast.Asn1Constraint Option)  =
     seq {
         yield []
         for encoding in [GP_PosInt; GP_TwosComplement; GP_Ascii; GP_BCD] do
-            yield [ENCODING encoding]
             for sizeProp in [GP_Fixed (IntLoc.ByValue 64I); GP_NullTerminated ] do
                 yield [ENCODING encoding; SIZE sizeProp]
                 for endianess in [Asn1AcnAst.LittleEndianness; Asn1AcnAst.BigEndianness] do

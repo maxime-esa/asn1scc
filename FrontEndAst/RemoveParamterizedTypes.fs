@@ -19,14 +19,23 @@ open FsUtils
 open ParameterizedAsn1Ast
 
 
-let rec foldMap func state lst =
-    match lst with
-    | []        -> [],state
-    | h::tail   -> 
-        let procItem, newState = func state h
-        let restList, finalState = tail |> foldMap func newState
-        procItem::restList, finalState
-
+//let rec foldMap func state lst =
+//    match lst with
+//    | []        -> [],state
+//    | h::tail   -> 
+//        let procItem, newState = func state h
+//        let restList, finalState = tail |> foldMap func newState
+//        procItem::restList, finalState
+let foldMap func state lst =
+    let rec loop acc func state lst =
+        match lst with
+        | []        -> acc |> List.rev , state
+        | h::tail   -> 
+            let procItem, newState = func state h
+            //let restList, finalState = tail |> loop func newState
+            //procItem::restList, finalState
+            loop (procItem::acc) func newState tail
+    loop [] func state lst
 
 
 let rec CloneType  (r:AstRoot)  (curModule:Asn1Module) (oldModName:string) (namedArgs:list<StringLoc*TemplateArgument>) (old:Asn1Type) (implicitImports : List<string*string>) : (Asn1Type * List<string*string>) =
