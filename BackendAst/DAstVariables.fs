@@ -190,7 +190,7 @@ let rec printValue (r:DAst.AstRoot)  (l:ProgrammingLanguage)  (t:Asn1Type) (pare
             vas.ada_name
 
 
-let createIntegerFunction (r:Asn1AcnAst.AstRoot) (l:ProgrammingLanguage) (t:Asn1AcnAst.Asn1Type) (o:Asn1AcnAst.Integer) (typeDefinition:TypeDefinitionCommon) =
+let createIntegerFunction (r:Asn1AcnAst.AstRoot) (l:ProgrammingLanguage) (t:Asn1AcnAst.Asn1Type) (o:Asn1AcnAst.Integer)  =
     let stgMacro = match l with C -> variables_c.PrintIntValue | Ada -> variables_a.PrintIntValue
     let printValue (parentValue:Asn1ValueKind option) (v:Asn1ValueKind) =
         match v with
@@ -199,7 +199,7 @@ let createIntegerFunction (r:Asn1AcnAst.AstRoot) (l:ProgrammingLanguage) (t:Asn1
         | _                 -> raise(BugErrorException "unexpected value")
     printValue
 
-let createRealFunction (r:Asn1AcnAst.AstRoot) (l:ProgrammingLanguage) (t:Asn1AcnAst.Asn1Type) (o:Asn1AcnAst.Real) (typeDefinition:TypeDefinitionCommon) =
+let createRealFunction (r:Asn1AcnAst.AstRoot) (l:ProgrammingLanguage) (t:Asn1AcnAst.Asn1Type) (o:Asn1AcnAst.Real)  =
     let stgMacro = match l with C -> variables_c.PrintRealValue | Ada -> variables_a.PrintRealValue
     let printValue (parentValue:Asn1ValueKind option) (v:Asn1ValueKind) =
         match v with
@@ -208,7 +208,7 @@ let createRealFunction (r:Asn1AcnAst.AstRoot) (l:ProgrammingLanguage) (t:Asn1Acn
         | _                 -> raise(BugErrorException "unexpected value")
     printValue
 
-let createBooleanFunction (r:Asn1AcnAst.AstRoot) (l:ProgrammingLanguage) (t:Asn1AcnAst.Asn1Type) (o:Asn1AcnAst.Boolean) (typeDefinition:TypeDefinitionCommon) =
+let createBooleanFunction (r:Asn1AcnAst.AstRoot) (l:ProgrammingLanguage) (t:Asn1AcnAst.Asn1Type) (o:Asn1AcnAst.Boolean)  =
     let stgMacro = match l with C -> variables_c.PrintBooleanValue | Ada -> variables_a.PrintBooleanValue
     let printValue (parentValue:Asn1ValueKind option) (v:Asn1ValueKind) =
         match v with
@@ -217,7 +217,7 @@ let createBooleanFunction (r:Asn1AcnAst.AstRoot) (l:ProgrammingLanguage) (t:Asn1
         | _                 -> raise(BugErrorException "unexpected value")
     printValue
 
-let createEnumeratedFunction (r:Asn1AcnAst.AstRoot) (l:ProgrammingLanguage) (t:Asn1AcnAst.Asn1Type) (o:Asn1AcnAst.Enumerated) (defOrRef:TypeDefintionOrReference) (typeDefinition:TypeDefinitionCommon) =
+let createEnumeratedFunction (r:Asn1AcnAst.AstRoot) (l:ProgrammingLanguage) (t:Asn1AcnAst.Asn1Type) (o:Asn1AcnAst.Enumerated) (defOrRef:TypeDefintionOrReference)  =
     let stgMacro = match l with C -> variables_c.PrintEnumValue | Ada -> variables_a.PrintEnumValue
     let printValue (parentValue:Asn1ValueKind option) (v:Asn1ValueKind) =
         match v with
@@ -229,7 +229,7 @@ let createEnumeratedFunction (r:Asn1AcnAst.AstRoot) (l:ProgrammingLanguage) (t:A
     printValue
 
 
-let createNullTypeFunction (r:Asn1AcnAst.AstRoot) (l:ProgrammingLanguage) (t:Asn1AcnAst.Asn1Type) (o:Asn1AcnAst.NullType) (typeDefinition:TypeDefinitionCommon) =
+let createNullTypeFunction (r:Asn1AcnAst.AstRoot) (l:ProgrammingLanguage) (t:Asn1AcnAst.Asn1Type) (o:Asn1AcnAst.NullType)  =
     let stgMacro = match l with C -> variables_c.PrintNullValue | Ada -> variables_a.PrintNullValue
     let printValue (parentValue:Asn1ValueKind option) (v:Asn1ValueKind) =
         match v with
@@ -239,7 +239,7 @@ let createNullTypeFunction (r:Asn1AcnAst.AstRoot) (l:ProgrammingLanguage) (t:Asn
     printValue
 
 
-let createStringFunction (r:Asn1AcnAst.AstRoot) (l:ProgrammingLanguage) (t:Asn1AcnAst.Asn1Type) (o:Asn1AcnAst.StringType) (typeDefinition:TypeDefinitionCommon) =
+let createStringFunction (r:Asn1AcnAst.AstRoot) (l:ProgrammingLanguage) (t:Asn1AcnAst.Asn1Type) (o:Asn1AcnAst.StringType)  =
     let printValue (parentValue:Asn1ValueKind option) (v:Asn1ValueKind) =
         match v with
         | StringValue v    -> 
@@ -254,14 +254,14 @@ let createStringFunction (r:Asn1AcnAst.AstRoot) (l:ProgrammingLanguage) (t:Asn1A
 
     printValue
 
-let createOctetStringFunction (r:Asn1AcnAst.AstRoot) (l:ProgrammingLanguage) (t:Asn1AcnAst.Asn1Type) (o:Asn1AcnAst.OctetString) (typeDefinition:TypeDefinitionCommon) =
+let createOctetStringFunction (r:Asn1AcnAst.AstRoot) (l:ProgrammingLanguage) (t:Asn1AcnAst.Asn1Type) (o:Asn1AcnAst.OctetString) (defOrRef:TypeDefintionOrReference) =
     let printValue (parentValue:Asn1ValueKind option) (v:Asn1ValueKind) =
         match v with
         | OctetStringValue  v -> 
             match l with 
             | C ->  variables_c.PrintBitOrOctetStringValue (o.minSize = o.maxSize) v (BigInteger v.Length)
             | Ada -> 
-                let typeDefName  = if parentValue.IsSome then typeDefinition.typeDefinitionBodyWithinSeq else typeDefinition.name
+                let typeDefName  = defOrRef.longTypedefName l//if parentValue.IsSome then typeDefinition.typeDefinitionBodyWithinSeq else typeDefinition.name
                 variables_a.PrintOctetStringValue typeDefName (o.minSize = o.maxSize) v (BigInteger v.Length)
         | BitStringValue    v -> 
             let bytes = bitStringValueToByteArray (StringLoc.ByValue v)
@@ -269,7 +269,7 @@ let createOctetStringFunction (r:Asn1AcnAst.AstRoot) (l:ProgrammingLanguage) (t:
             | C ->  
                 variables_c.PrintBitOrOctetStringValue (o.minSize = o.maxSize) bytes (BigInteger bytes.Length)
             | Ada -> 
-                let typeDefName  = if parentValue.IsSome then typeDefinition.typeDefinitionBodyWithinSeq else typeDefinition.name
+                let typeDefName  = defOrRef.longTypedefName l//if parentValue.IsSome then typeDefinition.typeDefinitionBodyWithinSeq else typeDefinition.name
                 variables_a.PrintOctetStringValue typeDefName (o.minSize = o.maxSize) bytes (BigInteger bytes.Length)
         | RefValue ((md,vs),ov)   -> vs
         | _                 -> raise(BugErrorException "unexpected value")
@@ -300,7 +300,7 @@ let createBitStringFunction (r:Asn1AcnAst.AstRoot) (l:ProgrammingLanguage) (t:As
     printValue
 
 
-let createSequenceOfFunction (r:Asn1AcnAst.AstRoot) (l:ProgrammingLanguage) (t:Asn1AcnAst.Asn1Type) (o:Asn1AcnAst.SequenceOf) (typeDefinition:TypeDefinitionCommon) (childType:Asn1Type) =
+let createSequenceOfFunction (r:Asn1AcnAst.AstRoot) (l:ProgrammingLanguage) (t:Asn1AcnAst.Asn1Type) (o:Asn1AcnAst.SequenceOf) (defOrRef:TypeDefintionOrReference) (childType:Asn1Type) =
     let stgMacro = match l with C -> variables_c.PrintBooleanValue | Ada -> variables_a.PrintBooleanValue
     let printValue (parentValue:Asn1ValueKind option) (gv:Asn1ValueKind) =
         match gv with
@@ -309,7 +309,7 @@ let createSequenceOfFunction (r:Asn1AcnAst.AstRoot) (l:ProgrammingLanguage) (t:A
             match l with 
             | C ->   variables_c.PrintSequenceOfValue (o.minSize = o.maxSize)childVals
             | Ada ->
-                let typeDefName  = if parentValue.IsSome then typeDefinition.typeDefinitionBodyWithinSeq else typeDefinition.name
+                let typeDefName  = defOrRef.longTypedefName l//if parentValue.IsSome then typeDefinition.typeDefinitionBodyWithinSeq else typeDefinition.name
                 let sDefValue =  childType.printValue None childType.initialValue 
                 variables_a.PrintSequenceOfValue typeDefName (o.minSize = o.maxSize) (BigInteger chVals.Length) childVals sDefValue
         | RefValue ((md,vs),ov)   -> vs
@@ -317,7 +317,7 @@ let createSequenceOfFunction (r:Asn1AcnAst.AstRoot) (l:ProgrammingLanguage) (t:A
     printValue
 
 
-let createSequenceFunction (r:Asn1AcnAst.AstRoot) (l:ProgrammingLanguage) (t:Asn1AcnAst.Asn1Type) (o:Asn1AcnAst.Sequence) (typeDefinition:TypeDefinitionCommon) (children:SeqChildInfo list) =
+let createSequenceFunction (r:Asn1AcnAst.AstRoot) (l:ProgrammingLanguage) (t:Asn1AcnAst.Asn1Type) (o:Asn1AcnAst.Sequence) (defOrRef:TypeDefintionOrReference) (children:SeqChildInfo list) =
     let PrintSequenceValue_child_exists = match l with C -> variables_c.PrintSequenceValue_child_exists | Ada -> variables_a.PrintSequenceValue_child_exists
     let PrintSequenceValueChild = match l with C -> variables_c.PrintSequenceValueChild | Ada -> variables_a.PrintSequenceValueChild
     
@@ -329,7 +329,7 @@ let createSequenceFunction (r:Asn1AcnAst.AstRoot) (l:ProgrammingLanguage) (t:Asn
     let printValue (parentValue:Asn1ValueKind option) (gv:Asn1ValueKind) =
         match gv with
         | SeqValue  v -> 
-                let typeDefName  = if parentValue.IsSome then typeDefinition.typeDefinitionBodyWithinSeq else typeDefinition.name
+                let typeDefName  = defOrRef.longTypedefName l//if parentValue.IsSome then typeDefinition.typeDefinitionBodyWithinSeq else typeDefinition.name
                 let optChildren = 
                     optChildren |>
                     List.map(fun x ->
@@ -371,11 +371,11 @@ let createSequenceFunction (r:Asn1AcnAst.AstRoot) (l:ProgrammingLanguage) (t:Asn
     printValue
 
 
-let createChoiceFunction (r:Asn1AcnAst.AstRoot) (l:ProgrammingLanguage) (t:Asn1AcnAst.Asn1Type) (o:Asn1AcnAst.Choice) (typeDefinition:TypeDefinitionCommon) (defOrRef:TypeDefintionOrReference) (children:ChChildInfo list) =
+let createChoiceFunction (r:Asn1AcnAst.AstRoot) (l:ProgrammingLanguage) (t:Asn1AcnAst.Asn1Type) (o:Asn1AcnAst.Choice) (defOrRef:TypeDefintionOrReference) (children:ChChildInfo list) =
     let printValue (parentValue:Asn1ValueKind option) (gv:Asn1ValueKind) =
         match gv with
         | ChValue chVal    -> 
-            let typeDefName  = if parentValue.IsSome then typeDefinition.typeDefinitionBodyWithinSeq else typeDefinition.name
+            let typeDefName  = defOrRef.longTypedefName l//if parentValue.IsSome then typeDefinition.typeDefinitionBodyWithinSeq else typeDefinition.name
             match l with
             | C ->
                 children |>

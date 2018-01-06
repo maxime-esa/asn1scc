@@ -149,7 +149,7 @@ let isEqualBodyChoiceChild  (choiceTypeDefName:string) (l:ProgrammingLanguage) (
     | Ada       ->
         equal_a.isEqual_Choice_Child o.presentWhenName sInnerStatement, lvars
 
-let isEqualBodyChoice  (typeDefinitionCmn:TypeDefinitionCommon) (l:ProgrammingLanguage) (children:ChChildInfo list) (v1:CallerScope) (v2:CallerScope)  = 
+let isEqualBodyChoice  (typeDefinition:TypeDefintionOrReference) (l:ProgrammingLanguage) (children:ChChildInfo list) (v1:CallerScope) (v2:CallerScope)  = 
     let childrenConent,lvars =   
         children |> 
         List.map(fun c -> 
@@ -163,7 +163,7 @@ let isEqualBodyChoice  (typeDefinitionCmn:TypeDefinitionCommon) (l:ProgrammingLa
     let lvars = lvars |> List.collect id
     match l with
     |C   -> Some(equal_c.isEqual_Choice v1.arg.p v2.arg.p (v1.arg.getAcces l) childrenConent, lvars)
-    |Ada -> Some(equal_a.isEqual_Choice v1.arg.p v2.arg.p typeDefinitionCmn.name childrenConent, lvars)
+    |Ada -> Some(equal_a.isEqual_Choice v1.arg.p v2.arg.p (typeDefinition.longTypedefName l) childrenConent, lvars)
 
 
 let getEqualFuncName (r:Asn1AcnAst.AstRoot) (l:ProgrammingLanguage) (id : ReferenceToType) =
@@ -178,7 +178,7 @@ let createNullTypeEqualFunction (r:Asn1AcnAst.AstRoot) (l:ProgrammingLanguage) (
         isEqualFuncDef                 = None
     }    
 
-let createEqualFunction_primitive (r:Asn1AcnAst.AstRoot) (l:ProgrammingLanguage) (t:Asn1AcnAst.Asn1Type) (typeDefinition:TypeDefinitionCommon) isEqualBody stgMacroFunc stgMacroDefFunc  =
+let createEqualFunction_primitive (r:Asn1AcnAst.AstRoot) (l:ProgrammingLanguage) (t:Asn1AcnAst.Asn1Type) (typeDefinition:TypeDefintionOrReference) isEqualBody stgMacroFunc stgMacroDefFunc  =
     let isEqualFuncName     = getEqualFuncName r l t.id
     let bodyFunc = match isEqualBody with EqualBodyExpression f -> f | EqualBodyStatementList f -> f
 
@@ -190,7 +190,7 @@ let createEqualFunction_primitive (r:Asn1AcnAst.AstRoot) (l:ProgrammingLanguage)
             | Some funcName     -> 
                 match bodyFunc p1 p2 with
                 | Some (funcBody,_) -> 
-                    Some (stgMacroFunc funcName typeDefinition.name funcBody), Some (stgMacroDefFunc funcName typeDefinition.name)
+                    Some (stgMacroFunc funcName (typeDefinition.longTypedefName l) funcBody), Some (stgMacroDefFunc funcName (typeDefinition.longTypedefName l))
                 | None     -> None, None
 
     {
@@ -217,28 +217,28 @@ let stgMacroCompDefFunc = function
     | C    -> equal_c.PrintEqualDefintionComposite
     | Ada  -> equal_a.PrintEqualDefintion
 
-let createIntegerEqualFunction (r:Asn1AcnAst.AstRoot) (l:ProgrammingLanguage) (t:Asn1AcnAst.Asn1Type) (o:Asn1AcnAst.Integer) (typeDefinition:TypeDefinitionCommon) =
+let createIntegerEqualFunction (r:Asn1AcnAst.AstRoot) (l:ProgrammingLanguage) (t:Asn1AcnAst.Asn1Type) (o:Asn1AcnAst.Integer) (typeDefinition:TypeDefintionOrReference) =
     let isEqualBody         = EqualBodyExpression (isEqualBodyPrimitive l)
     createEqualFunction_primitive r l t typeDefinition isEqualBody (stgPrintEqualPrimitive l) (stgMacroPrimDefFunc l) 
 
-let createRealEqualFunction (r:Asn1AcnAst.AstRoot) (l:ProgrammingLanguage) (t:Asn1AcnAst.Asn1Type) (o:Asn1AcnAst.Real) (typeDefinition:TypeDefinitionCommon) =
+let createRealEqualFunction (r:Asn1AcnAst.AstRoot) (l:ProgrammingLanguage) (t:Asn1AcnAst.Asn1Type) (o:Asn1AcnAst.Real) (typeDefinition:TypeDefintionOrReference) =
     let isEqualBody         = EqualBodyExpression (isEqualBodyPrimitive l)
     createEqualFunction_primitive r l t typeDefinition isEqualBody (stgPrintEqualPrimitive l) (stgMacroPrimDefFunc l) 
 
-let createBooleanEqualFunction (r:Asn1AcnAst.AstRoot) (l:ProgrammingLanguage) (t:Asn1AcnAst.Asn1Type) (o:Asn1AcnAst.Boolean) (typeDefinition:TypeDefinitionCommon)  =
+let createBooleanEqualFunction (r:Asn1AcnAst.AstRoot) (l:ProgrammingLanguage) (t:Asn1AcnAst.Asn1Type) (o:Asn1AcnAst.Boolean) (typeDefinition:TypeDefintionOrReference)  =
     let isEqualBody         = EqualBodyExpression (isEqualBodyPrimitive l)
     createEqualFunction_primitive r l t typeDefinition isEqualBody (stgPrintEqualPrimitive l) (stgMacroPrimDefFunc l) 
 
-let createEnumeratedEqualFunction (r:Asn1AcnAst.AstRoot) (l:ProgrammingLanguage) (t:Asn1AcnAst.Asn1Type) (o:Asn1AcnAst.Enumerated) (typeDefinition:TypeDefinitionCommon)  =
+let createEnumeratedEqualFunction (r:Asn1AcnAst.AstRoot) (l:ProgrammingLanguage) (t:Asn1AcnAst.Asn1Type) (o:Asn1AcnAst.Enumerated) (typeDefinition:TypeDefintionOrReference)  =
     let isEqualBody         = EqualBodyExpression (isEqualBodyPrimitive l)
     createEqualFunction_primitive r l t typeDefinition isEqualBody (stgPrintEqualPrimitive l) (stgMacroPrimDefFunc l) 
 
-let createStringEqualFunction (r:Asn1AcnAst.AstRoot) (l:ProgrammingLanguage) (t:Asn1AcnAst.Asn1Type) (o:Asn1AcnAst.StringType) (typeDefinition:TypeDefinitionCommon)  =
+let createStringEqualFunction (r:Asn1AcnAst.AstRoot) (l:ProgrammingLanguage) (t:Asn1AcnAst.Asn1Type) (o:Asn1AcnAst.StringType) (typeDefinition:TypeDefintionOrReference)  =
     let isEqualBody = EqualBodyExpression (isEqualBodyString l)
     createEqualFunction_primitive r l t typeDefinition isEqualBody (stgPrintEqualPrimitive l) (stgMacroPrimDefFunc l) 
 
 
-let createOctetOrBitStringEqualFunction (r:Asn1AcnAst.AstRoot) (l:ProgrammingLanguage) (t:Asn1AcnAst.Asn1Type) (typeDefinition:TypeDefinitionCommon) isEqualBody stgMacroDefFunc  =
+let createOctetOrBitStringEqualFunction (r:Asn1AcnAst.AstRoot) (l:ProgrammingLanguage) (t:Asn1AcnAst.Asn1Type) (typeDefinition:TypeDefintionOrReference) isEqualBody stgMacroDefFunc  =
     let val1, val2 =  
         match l with 
         | C     -> {CallerScope.modName = t.id.ModName; arg = POINTER "pVal1"}, {CallerScope.modName = t.id.ModName; arg = POINTER "pVal2"}
@@ -248,15 +248,15 @@ let createOctetOrBitStringEqualFunction (r:Asn1AcnAst.AstRoot) (l:ProgrammingLan
     let    isEqualFuncName, isEqualFunc, isEqualFuncDef, isEqualBody                   = 
             //match baseTypeEqFunc with
             //| None     -> 
-                let funcName     = typeDefinition.name + "_Equal" //getEqualFuncName r l tasInfo
+                let funcName     = (typeDefinition.longTypedefName l) + "_Equal" //getEqualFuncName r l tasInfo
                 match isEqualBody val1 val2 with
                 | Some (funcBody,_) -> 
                     let eqBody p1 p2 = 
                         //Some(callBaseTypeFunc l (getAddres l p1) (getAddres l p2) funcName, [])
                         isEqualBody  p1 p2
                     match l with
-                    | C    -> Some funcName, Some (equal_c.PrintEqualOctBit funcName typeDefinition.name funcBody), Some (stgMacroDefFunc funcName typeDefinition.name),eqBody
-                    | Ada  -> Some funcName, Some (equal_a.PrintEqualPrimitive funcName typeDefinition.name funcBody), Some (stgMacroDefFunc funcName typeDefinition.name),eqBody
+                    | C    -> Some funcName, Some (equal_c.PrintEqualOctBit funcName (typeDefinition.longTypedefName l) funcBody), Some (stgMacroDefFunc funcName (typeDefinition.longTypedefName l)),eqBody
+                    | Ada  -> Some funcName, Some (equal_a.PrintEqualPrimitive funcName (typeDefinition.longTypedefName l) funcBody), Some (stgMacroDefFunc funcName (typeDefinition.longTypedefName l)),eqBody
                 | None     -> None, None, None, isEqualBody
 (*            | Some baseEqFunc              -> 
                 match baseEqFunc.isEqualFuncName with
@@ -273,25 +273,25 @@ let createOctetOrBitStringEqualFunction (r:Asn1AcnAst.AstRoot) (l:ProgrammingLan
         isEqualFuncDef                 = isEqualFuncDef
     }    
 
-let createOctetStringEqualFunction (r:Asn1AcnAst.AstRoot) (l:ProgrammingLanguage) (t:Asn1AcnAst.Asn1Type) (o:Asn1AcnAst.OctetString) (typeDefinition:TypeDefinitionCommon)  =
+let createOctetStringEqualFunction (r:Asn1AcnAst.AstRoot) (l:ProgrammingLanguage) (t:Asn1AcnAst.Asn1Type) (o:Asn1AcnAst.OctetString) (typeDefinition:TypeDefintionOrReference)  =
     let isEqualBody = isEqualBodyOctetString l (BigInteger o.minSize) (BigInteger o.maxSize)
     createOctetOrBitStringEqualFunction r l  t typeDefinition isEqualBody (stgMacroCompDefFunc l) 
 
-let createBitStringEqualFunction (r:Asn1AcnAst.AstRoot) (l:ProgrammingLanguage) (t:Asn1AcnAst.Asn1Type) (o:Asn1AcnAst.BitString) (typeDefinition:TypeDefinitionCommon)  =
+let createBitStringEqualFunction (r:Asn1AcnAst.AstRoot) (l:ProgrammingLanguage) (t:Asn1AcnAst.Asn1Type) (o:Asn1AcnAst.BitString) (typeDefinition:TypeDefintionOrReference)  =
     let isEqualBody = isEqualBodyBitString l (BigInteger o.minSize) (BigInteger o.maxSize)
     createOctetOrBitStringEqualFunction r l t typeDefinition isEqualBody (stgMacroCompDefFunc l) 
 
 
-let createCompositeEqualFunction (r:Asn1AcnAst.AstRoot) (l:ProgrammingLanguage) (t:Asn1AcnAst.Asn1Type) (typeDefinition:TypeDefinitionCommon) isEqualBody stgMacroDefFunc  =
+let createCompositeEqualFunction (r:Asn1AcnAst.AstRoot) (l:ProgrammingLanguage) (t:Asn1AcnAst.Asn1Type) (typeDefinition:TypeDefintionOrReference) isEqualBody stgMacroDefFunc  =
     let val1, val2 =  
         match l with 
         | C     -> {CallerScope.modName = t.id.ModName; arg = POINTER "pVal1"}, {CallerScope.modName = t.id.ModName; arg = POINTER "pVal2"}
         | Ada   -> {CallerScope.modName = t.id.ModName; arg = VALUE "val1"}, {CallerScope.modName = t.id.ModName; arg = VALUE "val2"}
-
+    let typeDefinition_name = typeDefinition.longTypedefName l
     let    isEqualFuncName, isEqualFunc, isEqualFuncDef, isEqualBody                   = 
             //match baseTypeEqFunc with
             //| None     -> 
-                let funcName     = typeDefinition.name + "_Equal" //getEqualFuncName r l tasInfo
+                let funcName     = typeDefinition_name + "_Equal" //getEqualFuncName r l tasInfo
                 match isEqualBody val1 val2 with
                 | Some (funcBody,lvars) -> 
                     let eqBody (p1:CallerScope) (p2:CallerScope) = 
@@ -301,8 +301,8 @@ let createCompositeEqualFunction (r:Asn1AcnAst.AstRoot) (l:ProgrammingLanguage) 
                         Some(makeExpressionToStatement l exp, [])
                     let lvars = lvars |> List.map(fun (lv:LocalVariable) -> lv.GetDeclaration l) |> Seq.distinct
                     match l with
-                    | C    -> Some funcName, Some (equal_c.PrintEqualComposite funcName typeDefinition.name funcBody lvars), Some (stgMacroDefFunc funcName typeDefinition.name),eqBody
-                    | Ada  -> Some funcName, Some (equal_a.PrintEqualComposite funcName typeDefinition.name funcBody lvars), Some (stgMacroDefFunc funcName typeDefinition.name),eqBody
+                    | C    -> Some funcName, Some (equal_c.PrintEqualComposite funcName typeDefinition_name funcBody lvars), Some (stgMacroDefFunc funcName typeDefinition_name),eqBody
+                    | Ada  -> Some funcName, Some (equal_a.PrintEqualComposite funcName typeDefinition_name funcBody lvars), Some (stgMacroDefFunc funcName typeDefinition_name),eqBody
                 | None     -> None, None, None, isEqualBody
           (*  | Some baseEqFunc              -> 
                 match baseEqFunc.isEqualFuncName with
@@ -322,15 +322,15 @@ let createCompositeEqualFunction (r:Asn1AcnAst.AstRoot) (l:ProgrammingLanguage) 
         isEqualFuncDef                 = isEqualFuncDef
     }    
 
-let createSequenceOfEqualFunction (r:Asn1AcnAst.AstRoot) (l:ProgrammingLanguage) (t:Asn1AcnAst.Asn1Type) (o:Asn1AcnAst.SequenceOf) (typeDefinition:TypeDefinitionCommon) (childType:Asn1Type) =
+let createSequenceOfEqualFunction (r:Asn1AcnAst.AstRoot) (l:ProgrammingLanguage) (t:Asn1AcnAst.Asn1Type) (o:Asn1AcnAst.SequenceOf) (typeDefinition:TypeDefintionOrReference) (childType:Asn1Type) =
     let isEqualBody         = isEqualBodySequenceOf childType t o l
     createCompositeEqualFunction r l  t typeDefinition isEqualBody (stgMacroCompDefFunc l) 
 
-let createSequenceEqualFunction (r:Asn1AcnAst.AstRoot) (l:ProgrammingLanguage) (t:Asn1AcnAst.Asn1Type) (o:Asn1AcnAst.Sequence) (typeDefinition:TypeDefinitionCommon) (children:SeqChildInfo list)  =
+let createSequenceEqualFunction (r:Asn1AcnAst.AstRoot) (l:ProgrammingLanguage) (t:Asn1AcnAst.Asn1Type) (o:Asn1AcnAst.Sequence) (typeDefinition:TypeDefintionOrReference) (children:SeqChildInfo list)  =
     let isEqualBody         = isEqualBodySequence l children
     createCompositeEqualFunction r l  t typeDefinition isEqualBody (stgMacroCompDefFunc l) 
 
-let createChoiceEqualFunction (r:Asn1AcnAst.AstRoot) (l:ProgrammingLanguage) (t:Asn1AcnAst.Asn1Type) (o:Asn1AcnAst.Choice) (typeDefinition:TypeDefinitionCommon) (children:ChChildInfo list)  =
+let createChoiceEqualFunction (r:Asn1AcnAst.AstRoot) (l:ProgrammingLanguage) (t:Asn1AcnAst.Asn1Type) (o:Asn1AcnAst.Choice) (typeDefinition:TypeDefintionOrReference) (children:ChChildInfo list)  =
     let isEqualBody         = isEqualBodyChoice typeDefinition l children
     createCompositeEqualFunction r l  t typeDefinition isEqualBody (stgMacroCompDefFunc l) 
 
