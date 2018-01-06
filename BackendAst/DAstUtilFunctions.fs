@@ -442,20 +442,20 @@ with
         | Sequence     _ -> this
         | Choice       _ -> this
         
-    member this.typeDefinition =
-        match this.Kind with
-        | Integer      t -> t.typeDefinition
-        | Real         t -> t.typeDefinition
-        | IA5String    t -> t.typeDefinition
-        | OctetString  t -> t.typeDefinition
-        | NullType     t -> t.typeDefinition
-        | BitString    t -> t.typeDefinition
-        | Boolean      t -> t.typeDefinition
-        | Enumerated   t -> t.typeDefinition
-        | SequenceOf   t -> t.typeDefinition
-        | Sequence     t -> t.typeDefinition
-        | Choice       t -> t.typeDefinition
-        | ReferenceType t-> t.typeDefinition
+//    member this.typeDefinition =
+//        match this.Kind with
+//        | Integer      t -> t.typeDefinition
+//        | Real         t -> t.typeDefinition
+//        | IA5String    t -> t.typeDefinition
+//        | OctetString  t -> t.typeDefinition
+//        | NullType     t -> t.typeDefinition
+//        | BitString    t -> t.typeDefinition
+//        | Boolean      t -> t.typeDefinition
+//        | Enumerated   t -> t.typeDefinition
+//        | SequenceOf   t -> t.typeDefinition
+//        | Sequence     t -> t.typeDefinition
+//        | Choice       t -> t.typeDefinition
+//        | ReferenceType t-> t.typeDefinition
 
     member this.printValue =
         match this.Kind with

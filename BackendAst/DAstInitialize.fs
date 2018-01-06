@@ -209,15 +209,15 @@ let createChoiceInitFunc (r:Asn1AcnAst.AstRoot) (l:ProgrammingLanguage) (t:Asn1A
                             let chContent = chChild.chType.initFunction.initFuncBody ({p with arg = p.arg.getChChild l chChild.c_name chChild.chType.isIA5String}) iv.Value.kind
                             Some (init_c.initChoice p.arg.p (p.arg.getAcces l) chContent (chChild.presentWhenName (Some typeDefinition) l)) 
                         | Ada ->
-                            let sChildTypeName = 
-                                match chChild.chType.inheritInfo with
-                                | Some tasInfo  -> ToC2(r.args.TypePrefix + tasInfo.tasName)
-                                | None          ->
-                                    match chChild.chType.Kind with
-                                    | ReferenceType ref ->     ToC2(r.args.TypePrefix + ref.baseInfo.tasName.Value)
-                                    | _                 ->
-                                        chChild.chType.typeDefinition.typeDefinitionBodyWithinSeq
-                            let sChildTempVarName = chChild.chType.typeDefinition.name.L1 + "_tmp"
+                            let sChildTypeName = chChild.chType.typeDefintionOrReference.longTypedefName l
+//                                match chChild.chType.inheritInfo with
+//                                | Some tasInfo  -> ToC2(r.args.TypePrefix + tasInfo.tasName)
+//                                | None          ->
+//                                    match chChild.chType.Kind with
+//                                    | ReferenceType ref ->     ToC2(r.args.TypePrefix + ref.baseInfo.tasName.Value)
+//                                    | _                 ->
+//                                        chChild.chType.typeDefinition.typeDefinitionBodyWithinSeq
+                            let sChildTempVarName = (ToC chChild.chType.id.AsString) + "_tmp"
                             let sChoiceTypeName = typeDefinition.longTypedefName l
 //                                match t.tasInfo with
 //                                | Some tasInfo  -> ToC2(r.args.TypePrefix + tasInfo.tasName)

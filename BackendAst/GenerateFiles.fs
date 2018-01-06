@@ -14,10 +14,10 @@ let getTypeDecl (r:DAst.AstRoot) (vasPU_name:string) (l:ProgrammingLanguage) (va
     match t.Kind with
     | Integer _
     | Real _
-    | Boolean _     -> 
-        match t.tasInfo with
-        | Some tasInfo    -> ToC2(r.args.TypePrefix + tasInfo.tasName) 
-        | None            -> t.typeDefinition.typeDefinitionBodyWithinSeq
+    | Boolean _     -> t.typeDefintionOrReference.longTypedefName l
+//        match t.tasInfo with
+//        | Some tasInfo    -> ToC2(r.args.TypePrefix + tasInfo.tasName) 
+//        | None            -> t.typeDefinition.typeDefinitionBodyWithinSeq
     | ReferenceType ref ->
         let tasName = ToC2(r.args.TypePrefix + ref.baseInfo.tasName.Value) 
         match l with
@@ -31,7 +31,7 @@ let getTypeDecl (r:DAst.AstRoot) (vasPU_name:string) (l:ProgrammingLanguage) (va
     | _             -> 
         match t.tasInfo with
         | Some tasInfo    -> ToC2(r.args.TypePrefix + tasInfo.tasName) 
-        | None            -> t.typeDefinition.name
+        | None            -> t.typeDefintionOrReference.longTypedefName l //t.typeDefinition.name
 
 let printValueAssignment (r:DAst.AstRoot) (vasPU_name:string) (l:ProgrammingLanguage)  (vas:ValueAssignment) =
     let sName = vas.c_name
@@ -128,7 +128,7 @@ let private printUnit (r:DAst.AstRoot) (l:ProgrammingLanguage) (encodings: Commo
                 | Integer _
                 | Real _
                 | Boolean _     -> 
-                    let typeDefinitionName = match t.tasInfo with| Some tasInfo    -> ToC2(r.args.TypePrefix + tasInfo.tasName) | None    -> t.typeDefinition.typeDefinitionBodyWithinSeq
+                    let typeDefinitionName = match t.tasInfo with| Some tasInfo    -> ToC2(r.args.TypePrefix + tasInfo.tasName) | None    -> t.typeDefintionOrReference.longTypedefName l //t.typeDefinition.typeDefinitionBodyWithinSeq
                     header_c.PrintValueAssignment (typeDefinitionName) gv.c_name
                 | ReferenceType ref ->
                     let typeDefinitionName = ToC2(r.args.TypePrefix + ref.baseInfo.tasName.Value)
@@ -140,7 +140,7 @@ let private printUnit (r:DAst.AstRoot) (l:ProgrammingLanguage) (encodings: Commo
 //                            | false -> (ToC ref.baseInfo.modName.Value) + "." + ToC2(r.args.TypePrefix + ref.baseInfo.tasName.Value) 
                     header_c.PrintValueAssignment (typeDefinitionName) gv.c_name
                 | _             -> 
-                    let typeDefinitionName = match t.tasInfo with| Some tasInfo    -> ToC2(r.args.TypePrefix + tasInfo.tasName) | None    -> t.typeDefinition.name
+                    let typeDefinitionName = match t.tasInfo with| Some tasInfo    -> ToC2(r.args.TypePrefix + tasInfo.tasName) | None    -> t.typeDefintionOrReference.longTypedefName l//t.typeDefinition.name
                     header_c.PrintValueAssignment (typeDefinitionName) gv.c_name
             | Ada   -> printValueAssignment r pu.name l gv)
     let arrsHeaderAnonymousValues =

@@ -55,7 +55,7 @@ let rec getAmberDecode (t:Asn1AcnAst.Asn1Type) =
     | Asn1AcnAst.ReferenceType z -> getAmberDecode z.resolvedType
     | _                          -> "&"
 
-let createUperEncDecFunction (r:Asn1AcnAst.AstRoot) (l:ProgrammingLanguage) (t:Asn1AcnAst.Asn1Type) (typeDefinition:TypeDefinitionCommon) (eqFunc:EqualFunction) (isValidFunc: IsValidFunction option) (encFunc : UPerFunction option) (decFunc : UPerFunction option)   (us:State)  =
+let createUperEncDecFunction (r:Asn1AcnAst.AstRoot) (l:ProgrammingLanguage) (t:Asn1AcnAst.Asn1Type) (typeDefinition:TypeDefintionOrReference) (eqFunc:EqualFunction) (isValidFunc: IsValidFunction option) (encFunc : UPerFunction option) (decFunc : UPerFunction option)   (us:State)  =
     let sEnc = match l with C -> "" | Ada -> "UPER_"
     let funcName            = getFuncName r l sEnc t.id
     let modName = ToC t.id.AcnAbsPath.Head
@@ -89,7 +89,7 @@ let createUperEncDecFunction (r:Asn1AcnAst.AstRoot) (l:ProgrammingLanguage) (t:A
                 |Decode_output          -> option {
                                                 let! decF = decFunc
                                                 let! decFunName = decF.funcName
-                                                return decode modName decFunName typeDefinition.name sEnc sAmberDecode 
+                                                return decode modName decFunName (typeDefinition.longTypedefName l) sEnc sAmberDecode 
                                            }
                     
                 |Validate_output        -> 
@@ -117,8 +117,8 @@ let createUperEncDecFunction (r:Asn1AcnAst.AstRoot) (l:ProgrammingLanguage) (t:A
                         | Some childrenCont    -> Some (printStatement x  (Some childrenCont))
                 printStatements [Encode_input; Decode_output; Validate_output; Compare_input_output]
 
-            let func = printCodec_body modName funcName typeDefinition.name sStar varName sEnc (sNestedStatements.orElse "")
-            let funcDef = printCodec_body_header funcName  modName typeDefinition.name sStar varName
+            let func = printCodec_body modName funcName (typeDefinition.longTypedefName l) sStar varName sEnc (sNestedStatements.orElse "")
+            let funcDef = printCodec_body_header funcName  modName (typeDefinition.longTypedefName l) sStar varName
             let ret = 
                 {
                     EncodeDecodeTestFunc.funcName   = funcName
@@ -128,7 +128,7 @@ let createUperEncDecFunction (r:Asn1AcnAst.AstRoot) (l:ProgrammingLanguage) (t:A
             Some ret, us
         | false -> None, us
 
-let createAcnEncDecFunction (r:Asn1AcnAst.AstRoot) (l:ProgrammingLanguage) (t:Asn1AcnAst.Asn1Type) (typeDefinition:TypeDefinitionCommon) (eqFunc:EqualFunction) (isValidFunc: IsValidFunction option) (encFunc : AcnFunction option) (decFunc : AcnFunction option)   (us:State)  =
+let createAcnEncDecFunction (r:Asn1AcnAst.AstRoot) (l:ProgrammingLanguage) (t:Asn1AcnAst.Asn1Type) (typeDefinition:TypeDefintionOrReference) (eqFunc:EqualFunction) (isValidFunc: IsValidFunction option) (encFunc : AcnFunction option) (decFunc : AcnFunction option)   (us:State)  =
     let sEnc = "ACN_"
 
     let funcName            = getFuncName r l sEnc t.id
@@ -165,7 +165,7 @@ let createAcnEncDecFunction (r:Asn1AcnAst.AstRoot) (l:ProgrammingLanguage) (t:As
                     |Decode_output          -> option {
                                                     let! decF = decFunc
                                                     let! decFunName = decF.funcName
-                                                    return decode modName decFunName typeDefinition.name sEnc sAmberDecode 
+                                                    return decode modName decFunName (typeDefinition.longTypedefName l) sEnc sAmberDecode 
                                                }
                     
                     |Validate_output        -> 
@@ -194,8 +194,8 @@ let createAcnEncDecFunction (r:Asn1AcnAst.AstRoot) (l:ProgrammingLanguage) (t:As
 
                     printStatements [Encode_input; Decode_output; Validate_output; Compare_input_output]
 
-                let func = printCodec_body modName funcName typeDefinition.name sStar varName sEnc (sNestedStatements.orElse "")
-                let funcDef = printCodec_body_header funcName modName typeDefinition.name sStar varName
+                let func = printCodec_body modName funcName (typeDefinition.longTypedefName l) sStar varName sEnc (sNestedStatements.orElse "")
+                let funcDef = printCodec_body_header funcName modName (typeDefinition.longTypedefName l) sStar varName
         
                 let ret = 
                     {

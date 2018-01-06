@@ -31,8 +31,8 @@ let private exportType (r:AstRoot) (t:Asn1Type) =
         (fun t ti us -> 
                     XElement(xname "INTEGER",
                         XAttribute(xname "id", t.id.AsString),
-                        XAttribute(xname "typeDefinition.name", ti.typeDefinition.name),
-                        XAttribute(xname "typeDefinition.typeDefinitionBodyWithinSeq", ti.typeDefinition.typeDefinitionBodyWithinSeq),
+//                        XAttribute(xname "typeDefinition.name", ti.typeDefinition.name),
+//                        XAttribute(xname "typeDefinition.typeDefinitionBodyWithinSeq", ti.typeDefinition.typeDefinitionBodyWithinSeq),
                         XAttribute(xname "newTypedefName", (t.typeDefintionOrReference.longTypedefName Ada))
 //                        (exportElement "CompleteDefinition" ti.typeDefinition.completeDefinition),
 //                        (exportOptionalElement "CompleteDefinitionWithinSeq" ti.typeDefinition.completeDefinitionWithinSeq)
@@ -41,8 +41,8 @@ let private exportType (r:AstRoot) (t:Asn1Type) =
         (fun t ti us -> 
                     XElement(xname "REAL",
                         XAttribute(xname "id", t.id.AsString),
-                        XAttribute(xname "typeDefinition.name", ti.typeDefinition.name),
-                        XAttribute(xname "typeDefinition.typeDefinitionBodyWithinSeq", ti.typeDefinition.typeDefinitionBodyWithinSeq),
+//                        XAttribute(xname "typeDefinition.name", ti.typeDefinition.name),
+//                        XAttribute(xname "typeDefinition.typeDefinitionBodyWithinSeq", ti.typeDefinition.typeDefinitionBodyWithinSeq),
                         XAttribute(xname "newTypedefName", (t.typeDefintionOrReference.longTypedefName Ada))
 //                        (exportElement "CompleteDefinition" ti.typeDefinition.completeDefinition),
 //                        (exportOptionalElement "CompleteDefinitionWithinSeq" ti.typeDefinition.completeDefinitionWithinSeq)
@@ -51,8 +51,8 @@ let private exportType (r:AstRoot) (t:Asn1Type) =
         (fun t ti us -> 
                     XElement(xname "IA5STRING",
                         XAttribute(xname "id", t.id.AsString),
-                        XAttribute(xname "typeDefinition.name", ti.typeDefinition.name),
-                        XAttribute(xname "typeDefinition.typeDefinitionBodyWithinSeq", ti.typeDefinition.typeDefinitionBodyWithinSeq),
+//                        XAttribute(xname "typeDefinition.name", ti.typeDefinition.name),
+//                        XAttribute(xname "typeDefinition.typeDefinitionBodyWithinSeq", ti.typeDefinition.typeDefinitionBodyWithinSeq),
                         XAttribute(xname "newTypedefName", (t.typeDefintionOrReference.longTypedefName Ada))
 //                        (exportElement "CompleteDefinition" ti.typeDefinition.completeDefinition),
 //                        (exportOptionalElement "CompleteDefinitionWithinSeq" ti.typeDefinition.completeDefinitionWithinSeq)
@@ -61,8 +61,8 @@ let private exportType (r:AstRoot) (t:Asn1Type) =
         (fun t ti us -> 
                     XElement(xname "OctetString",
                         XAttribute(xname "id", t.id.AsString),
-                        XAttribute(xname "typeDefinition.name", ti.typeDefinition.name),
-                        XAttribute(xname "typeDefinition.typeDefinitionBodyWithinSeq", ti.typeDefinition.typeDefinitionBodyWithinSeq),
+//                        XAttribute(xname "typeDefinition.name", ti.typeDefinition.name),
+//                        XAttribute(xname "typeDefinition.typeDefinitionBodyWithinSeq", ti.typeDefinition.typeDefinitionBodyWithinSeq),
                         XAttribute(xname "newTypedefName", (t.typeDefintionOrReference.longTypedefName Ada))
   //                      (exportElement "CompleteDefinition" ti.typeDefinition.completeDefinition),
   //                      (exportOptionalElement "CompleteDefinitionWithinSeq" ti.typeDefinition.completeDefinitionWithinSeq)
@@ -71,8 +71,8 @@ let private exportType (r:AstRoot) (t:Asn1Type) =
         (fun t ti us -> 
                     XElement(xname "Null",
                         XAttribute(xname "id", t.id.AsString),
-                        XAttribute(xname "typeDefinition.name", ti.typeDefinition.name),
-                        XAttribute(xname "typeDefinition.typeDefinitionBodyWithinSeq", ti.typeDefinition.typeDefinitionBodyWithinSeq),
+//                        XAttribute(xname "typeDefinition.name", ti.typeDefinition.name),
+//                        XAttribute(xname "typeDefinition.typeDefinitionBodyWithinSeq", ti.typeDefinition.typeDefinitionBodyWithinSeq),
                         XAttribute(xname "newTypedefName", (t.typeDefintionOrReference.longTypedefName Ada))
 //                        (exportElement "CompleteDefinition" ti.typeDefinition.completeDefinition),
 //                        (exportOptionalElement "CompleteDefinitionWithinSeq" ti.typeDefinition.completeDefinitionWithinSeq)
@@ -81,8 +81,8 @@ let private exportType (r:AstRoot) (t:Asn1Type) =
         (fun t ti us -> 
                     XElement(xname "BitString",
                         XAttribute(xname "id", t.id.AsString),
-                        XAttribute(xname "typeDefinition.name", ti.typeDefinition.name),
-                        XAttribute(xname "typeDefinition.typeDefinitionBodyWithinSeq", ti.typeDefinition.typeDefinitionBodyWithinSeq),
+//                        XAttribute(xname "typeDefinition.name", ti.typeDefinition.name),
+//                        XAttribute(xname "typeDefinition.typeDefinitionBodyWithinSeq", ti.typeDefinition.typeDefinitionBodyWithinSeq),
                         XAttribute(xname "newTypedefName", (t.typeDefintionOrReference.longTypedefName Ada))
 //                        (exportElement "CompleteDefinition" ti.typeDefinition.completeDefinition),
 //                        (exportOptionalElement "CompleteDefinitionWithinSeq" ti.typeDefinition.completeDefinitionWithinSeq)
@@ -91,8 +91,8 @@ let private exportType (r:AstRoot) (t:Asn1Type) =
         (fun t ti us -> 
                     XElement(xname "Boolean",
                         XAttribute(xname "id", t.id.AsString),
-                        XAttribute(xname "typeDefinition.name", ti.typeDefinition.name),
-                        XAttribute(xname "typeDefinition.typeDefinitionBodyWithinSeq", ti.typeDefinition.typeDefinitionBodyWithinSeq),
+//                        XAttribute(xname "typeDefinition.name", ti.typeDefinition.name),
+//                        XAttribute(xname "typeDefinition.typeDefinitionBodyWithinSeq", ti.typeDefinition.typeDefinitionBodyWithinSeq),
                         XAttribute(xname "newTypedefName", (t.typeDefintionOrReference.longTypedefName Ada))
 //                        (exportElement "CompleteDefinition" ti.typeDefinition.completeDefinition),
 //                        (exportOptionalElement "CompleteDefinitionWithinSeq" ti.typeDefinition.completeDefinitionWithinSeq)
@@ -101,8 +101,8 @@ let private exportType (r:AstRoot) (t:Asn1Type) =
         (fun t ti us -> 
                     XElement(xname "Enumerated",
                         XAttribute(xname "id", t.id.AsString),
-                        XAttribute(xname "typeDefinition.name", ti.typeDefinition.name),
-                        XAttribute(xname "typeDefinition.typeDefinitionBodyWithinSeq", ti.typeDefinition.typeDefinitionBodyWithinSeq),
+//                        XAttribute(xname "typeDefinition.name", ti.typeDefinition.name),
+//                        XAttribute(xname "typeDefinition.typeDefinitionBodyWithinSeq", ti.typeDefinition.typeDefinitionBodyWithinSeq),
                         XAttribute(xname "newTypedefName", (t.typeDefintionOrReference.longTypedefName Ada))
 //                        (exportElement "CompleteDefinition" ti.typeDefinition.completeDefinition),
 //                        (exportOptionalElement "CompleteDefinitionWithinSeq" ti.typeDefinition.completeDefinitionWithinSeq)
@@ -111,8 +111,8 @@ let private exportType (r:AstRoot) (t:Asn1Type) =
         (fun t ti (child,us) ->                     
                      XElement(xname "SEQUENCEOF",
                         XAttribute(xname "id", t.id.AsString),
-                        XAttribute(xname "typeDefinition.name", ti.typeDefinition.name),
-                        XAttribute(xname "typeDefinition.typeDefinitionBodyWithinSeq", ti.typeDefinition.typeDefinitionBodyWithinSeq),
+//                        XAttribute(xname "typeDefinition.name", ti.typeDefinition.name),
+//                        XAttribute(xname "typeDefinition.typeDefinitionBodyWithinSeq", ti.typeDefinition.typeDefinitionBodyWithinSeq),
                         XAttribute(xname "newTypedefName", (t.typeDefintionOrReference.longTypedefName Ada)),
                         child
                         //(exportElement "CompleteDefinition" ti.typeDefinition.completeDefinition),
@@ -131,8 +131,8 @@ let private exportType (r:AstRoot) (t:Asn1Type) =
         (fun t ti (children,us) -> 
                     XElement(xname "SEQUENCE",
                         XAttribute(xname "id", t.id.AsString),
-                        XAttribute(xname "typeDefinition.name", ti.typeDefinition.name),
-                        XAttribute(xname "typeDefinition.typeDefinitionBodyWithinSeq", ti.typeDefinition.typeDefinitionBodyWithinSeq),
+//                        XAttribute(xname "typeDefinition.name", ti.typeDefinition.name),
+//                        XAttribute(xname "typeDefinition.typeDefinitionBodyWithinSeq", ti.typeDefinition.typeDefinitionBodyWithinSeq),
                         XAttribute(xname "newTypedefName", (t.typeDefintionOrReference.longTypedefName Ada)),
                         //(exportElement "CompleteDefinition" ti.typeDefinition.completeDefinition),
                         //(exportOptionalElement "CompleteDefinitionWithinSeq" ti.typeDefinition.completeDefinitionWithinSeq),
@@ -150,8 +150,8 @@ let private exportType (r:AstRoot) (t:Asn1Type) =
         (fun t ti (children, us) -> 
                     XElement(xname "CHOICE",
                         XAttribute(xname "id", t.id.AsString),
-                        XAttribute(xname "typeDefinition.name", ti.typeDefinition.name),
-                        XAttribute(xname "typeDefinition.typeDefinitionBodyWithinSeq", ti.typeDefinition.typeDefinitionBodyWithinSeq),
+//                        XAttribute(xname "typeDefinition.name", ti.typeDefinition.name),
+//                        XAttribute(xname "typeDefinition.typeDefinitionBodyWithinSeq", ti.typeDefinition.typeDefinitionBodyWithinSeq),
                         XAttribute(xname "newTypedefName", (t.typeDefintionOrReference.longTypedefName Ada)),
                         //(exportElement "CompleteDefinition" ti.typeDefinition.completeDefinition),
                         //(exportOptionalElement "CompleteDefinitionWithinSeq" ti.typeDefinition.completeDefinitionWithinSeq),
@@ -161,8 +161,8 @@ let private exportType (r:AstRoot) (t:Asn1Type) =
         (fun t ti (baseType,us) -> 
                     XElement(xname "REFERENCE_TYPE",
                         XAttribute(xname "id", t.id.AsString),
-                        XAttribute(xname "typeDefinition.name", ti.typeDefinition.name),
-                        XAttribute(xname "typeDefinition.typeDefinitionBodyWithinSeq", ti.typeDefinition.typeDefinitionBodyWithinSeq),
+//                        XAttribute(xname "typeDefinition.name", ti.typeDefinition.name),
+//                        XAttribute(xname "typeDefinition.typeDefinitionBodyWithinSeq", ti.typeDefinition.typeDefinitionBodyWithinSeq),
                         XAttribute(xname "newTypedefName", (t.typeDefintionOrReference.longTypedefName Ada)),
                         XAttribute(xname "Module", ti.baseInfo.modName.Value),
                         XAttribute(xname "TypeAssignment", ti.baseInfo.tasName.Value),
