@@ -60,11 +60,11 @@ END <sFuncName>_aux;
 
 EmitTypeAssignment_primitive_def_decode(sVarName, sStar, sFuncName, sTypeDefName, arrsErrcodes, bEmptyEncodingSpace, nMaxBytesInACN, nMaxBitsInACN, arrsAcnPrms) ::= <<
 <arrsErrcodes; separator="\n">
-procedure <sFuncName>(<sVarName>: in out <sTypeDefName>; Stream : IN <sTypeDefName>_ACN_Stream; result : OUT <rtlModuleName()>.ASN1_RESULT<if(arrsAcnPrms)>; <arrsAcnPrms; separator="; "><endif>);
+procedure <sFuncName>(<sVarName>: out <sTypeDefName>; Stream : IN <sTypeDefName>_ACN_Stream; result : OUT <rtlModuleName()>.ASN1_RESULT<if(arrsAcnPrms)>; <arrsAcnPrms; separator="; "><endif>);
 >>
 
 EmitTypeAssignment_primitive_decodeMain(sVarName, sStar, sFuncName, soIValidFuncName, sTypeDefName, arrsLocalVariables, sContent, soSparkAnnotations, sInitilialExp, arrsAcnPrms, arrsAcnParamNames) ::= /*nogen*/<<
-PROCEDURE <sFuncName>(<sVarName>: in out <sTypeDefName>; Stream : IN <sTypeDefName>_ACN_Stream; result : OUT <rtlModuleName()>.ASN1_RESULT<if(arrsAcnPrms)>; <arrsAcnPrms; separator="; "><endif>)
+PROCEDURE <sFuncName>(<sVarName>: out <sTypeDefName>; Stream : IN <sTypeDefName>_ACN_Stream; result : OUT <rtlModuleName()>.ASN1_RESULT<if(arrsAcnPrms)>; <arrsAcnPrms; separator="; "><endif>)
 IS
     iter:<rtlModuleName()>.DECODE_PARAMS;
 BEGIN
@@ -76,7 +76,7 @@ END <sFuncName>;
 
 EmitTypeAssignment_primitive_decode(sVarName, sStar, sFuncName, soIValidFuncName, sTypeDefName, arrsLocalVariables, sContent, soSparkAnnotations, sInitilialExp, arrsAcnPrms, arrsAcnParamNames) ::= <<
 pragma Warnings (Off, "unused initial value of ""<sVarName>""");
-PROCEDURE <sFuncName>_aux(<sVarName>:in out <sTypeDefName>; S : in <rtlModuleName()>.BitArray; K : in out <rtlModuleName()>.DECODE_PARAMS; result : OUT <rtlModuleName()>.ASN1_RESULT<if(arrsAcnPrms)>; <arrsAcnPrms; separator="; "><endif>)
+PROCEDURE <sFuncName>_aux(<sVarName>:out <sTypeDefName>; S : in <rtlModuleName()>.BitArray; K : in out <rtlModuleName()>.DECODE_PARAMS; result : OUT <rtlModuleName()>.ASN1_RESULT<if(arrsAcnPrms)>; <arrsAcnPrms; separator="; "><endif>)
 <soSparkAnnotations>
 IS
     <arrsLocalVariables; separator="\n">
