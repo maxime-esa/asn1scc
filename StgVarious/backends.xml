@@ -19,5 +19,11 @@
 	<lang>XML</lang>
   </run>  
   
+  <run mode="single">
+    <input>generic.stg</input>
+    <output>generic.gen.fs</output>
+    <modName>gen</modName>
+	<lang>generic</lang>
+  </run>
 
 </Settings>

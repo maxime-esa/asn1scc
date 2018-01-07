@@ -125,22 +125,22 @@ let createAst files =
 
 
 
+let rec printValue (v:Asn1Value) : string =
+    match v.Kind with
+    |   IntegerValue        v       -> stg_asn1.Print_IntegerValue v.Value
+    |   RealValue           v       -> stg_asn1.Print_RealValue v.Value
+    |   StringValue         v       -> stg_asn1.Print_StringValue v.Value
+    |   BooleanValue        v       -> stg_asn1.Print_BooleanValue v.Value
+    |   BitStringValue      v       -> stg_asn1.Print_BitStringValue v.Value
+    |   OctetStringValue    v       -> stg_asn1.Print_OctetStringValue (v |> List.map (fun b -> b.Value))
+    |   RefValue            (md,ts) -> stg_asn1.Print_RefValue  ts.Value
+    |   SeqOfValue          vals    -> stg_asn1.Print_SeqOfValue (vals |> List.map printValue)
+    |   SeqValue            vals    -> stg_asn1.Print_SeqValue (vals |> List.map (fun (nm, v) -> stg_asn1.Print_SeqValue_Child nm.Value (printValue v)))
+    |   ChValue             (nm,v)  -> stg_asn1.Print_ChValue nm.Value (printValue v)
+    |   NullValue                   -> stg_asn1.Print_NullValue ()
+    |   EmptyList                   -> sprintf "{}"
 
 let generatedAsn1Grammar (outDir:string) (ast:GenFile list) =
-    let rec printValue (v:Asn1Value) : string =
-        match v.Kind with
-        |   IntegerValue        v       -> stg_asn1.Print_IntegerValue v.Value
-        |   RealValue           v       -> stg_asn1.Print_RealValue v.Value
-        |   StringValue         v       -> stg_asn1.Print_StringValue v.Value
-        |   BooleanValue        v       -> stg_asn1.Print_BooleanValue v.Value
-        |   BitStringValue      v       -> stg_asn1.Print_BitStringValue v.Value
-        |   OctetStringValue    v       -> stg_asn1.Print_OctetStringValue (v |> List.map (fun b -> b.Value))
-        |   RefValue            (md,ts) -> stg_asn1.Print_RefValue  ts.Value
-        |   SeqOfValue          vals    -> stg_asn1.Print_SeqOfValue (vals |> List.map printValue)
-        |   SeqValue            vals    -> stg_asn1.Print_SeqValue (vals |> List.map (fun (nm, v) -> stg_asn1.Print_SeqValue_Child nm.Value (printValue v)))
-        |   ChValue             (nm,v)  -> stg_asn1.Print_ChValue nm.Value (printValue v)
-        |   NullValue                   -> stg_asn1.Print_NullValue ()
-        |   EmptyList                   -> sprintf "{}"
 
     let rec printConstraint (c:Asn1Constraint) : string = 
         match c with

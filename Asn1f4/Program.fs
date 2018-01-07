@@ -17,6 +17,8 @@ type CliArguments =
     | [<AltCommandLine("-x")>] Xml_Ast of xmlFilename:string
     | [<AltCommandLine("-renamePolicy")>] Rename_Policy of int
     | [<AltCommandLine("-gtc")>] Generate_Test_Grammar 
+    | [<AltCommandLine("-customStg")>] Custom_Stg  of custom_stg_colon_outfilename:string
+    | [<AltCommandLine("-customStgAstVersion")>] Custom_Stg_Ast_Version  of astver:int
     | [<MainCommand; ExactlyOnce; Last>] Files of files:string list
 with
     interface IArgParserTemplate with
@@ -34,6 +36,23 @@ with
             | Xml_Ast _        -> "dump internal AST in an xml file"
             | Rename_Policy _  -> "Specify rename policy for enums 0 no rename (Ada default), 1 rename only conflicting enumerants (C default), 2 rename all enumerants of an enum with at lest one conflicting enumerant"
             | Generate_Test_Grammar -> "generate a sample grammar for testing purposes"
+            | Custom_Stg _   -> "custom_stg_colon_outfilename is expected as stgFile.stg:outputFile where stgFile.stg is an existing custom stg file, while outputFile is the name of the generated file. Invokes the custom stg file 'stgFile.stg' and produces the output file 'outputFile'"
+            | Custom_Stg_Ast_Version _ -> "depricated option. Used only for backwards compatibility"
+
+
+
+let getCustmStgFileNames (compositeFile:string) =
+    let files = compositeFile.Split ':' |> Seq.toList
+    match files  with
+    | stg::out::[]  -> Some(stg,out)
+    | _             ->
+        let files = compositeFile.Split([|"::"|], StringSplitOptions.RemoveEmptyEntries) |> Seq.toList
+        match files with
+        | stg::out::[]  -> Some(stg,out)
+        | _             -> None
+     
+    
+
 
 
 let checkArguement arg =
@@ -59,7 +78,18 @@ let checkArguement arg =
         files |> Seq.iter(fun f -> match File.Exists f with true -> () | false -> raise (UserException (sprintf "File '%s' does not exist." f)))
     | Type_Prefix _    -> ()
     | Rename_Policy _   -> ()
-
+    | Custom_Stg comFile  -> 
+        match getCustmStgFileNames comFile with
+        | Some(stgFile, outFile)  -> 
+            match System.IO.File.Exists stgFile with
+            | true  -> ()
+            | false -> 
+                let msg = sprintf "Custom stg file '%s' not found"  stgFile
+                raise (UserException msg)
+        | None -> 
+            let msg = sprintf "Invalid argument for '-customStg' option. Expected format is  stgFile.stg:outputFile.\nEg -customStg python.stg:generated.py\nUnder windows, you may user double :: to separate the stg file with output fileE.g. -customStg c:\\mystg.stg::c:\\output.txt" 
+            raise (UserException msg)
+    | Custom_Stg_Ast_Version _ -> ()
 
 
 let constructCommandLineSettings args (parserResults: ParseResults<CliArguments>)=
@@ -143,11 +173,18 @@ let main0 argv =
                 | _     -> DAstExportToXml.exportFile r acnDeps ("backend_" + args.AstXmlAbsFileName)
                 )
         
+        //custom stgs code generation
         cliArgs |> 
-            List.filter (fun a -> 
-                match a with
-                | Generate_Test_Grammar    -> true
-                | _                        -> false) |>
+            List.choose (fun a -> match a with | Custom_Stg compFile   -> Some compFile | _ -> None) |>
+            Seq.iter(fun comFile -> 
+                match getCustmStgFileNames comFile with
+                | Some(stgFile, outFile)  -> 
+                    let r = DAstConstruction.DoWork frontEntAst acnDeps CommonTypes.ProgrammingLanguage.C args.encodings
+                    CustomStgExport.exportFile r acnDeps stgFile outFile
+                | None  -> ())
+
+        cliArgs |> 
+            List.filter (fun a -> match a with | Generate_Test_Grammar    -> true | _  -> false) |>
             Seq.iter(fun _ -> GrammarGenerator.generateGrammars outDir)
 
         0

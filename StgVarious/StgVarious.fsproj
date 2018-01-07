@@ -59,6 +59,8 @@
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
     <Compile Include="xml_outputs.stg.fs" />
+    <Compile Include="generic.gen.fs" />
+    <None Include="generic.stg" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\CommonTypes\CommonTypes.fsproj">

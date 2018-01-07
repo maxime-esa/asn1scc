@@ -78,6 +78,7 @@
     <None Include="Script.fsx" />
     <Compile Include="DAstExportToXml.fs" />
     <Compile Include="GrammarGenerator.fs" />
+    <Compile Include="CustomStgExport.fs" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\CommonTypes\CommonTypes.fsproj">

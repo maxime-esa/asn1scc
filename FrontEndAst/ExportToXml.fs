@@ -45,6 +45,8 @@ and private printRefValue ((md:StringLoc,ts:StringLoc), v:Asn1Value) =
         XElement(xname "ReferenceValue", 
             XAttribute(xname "Module", md.Value),
             XAttribute(xname "Name", ts.Value),
+            XAttribute(xname "Line", ts.Location.srcLine),
+            XAttribute(xname "CharPositionInLine", ts.Location.charPos),
             (PrintAsn1GenericValue v))
 and private PrintAsn1GenericValue (v:Asn1Value) = 
     match v.kind with
@@ -266,7 +268,13 @@ let private exportType (t:Asn1Type) =
                         (exportAcnEndianness ti.acnProperties.endiannessProp),
                         (exportAcnIntSizeProperty ti.acnProperties.sizeProp),
                         (exportAcnIntEncoding ti.acnProperties.encodingProp),
-                        XElement(xname "Items", ti.items |> List.map(fun c ->  XElement(xname "Item", XAttribute(xname "name", c.Name.Value), XAttribute(xname "value", c.definitionValue))   )),
+                        XElement(xname "Items", ti.items |> List.map(fun c ->  
+                                                                XElement(xname "Item", 
+                                                                    XAttribute(xname "name", c.Name.Value), 
+                                                                    XAttribute(xname "value", c.definitionValue),   
+                                                                    XAttribute(xname "Line", c.Name.Location.srcLine),
+                                                                    XAttribute(xname "CharPositionInLine", c.Name.Location.charPos)
+                                                                ))),
                         XElement(xname "CONS", ti.cons |> List.map(printGenericConstraint printEnumVal )),
                         XElement(xname "WITH_CONS", ti.withcons |> List.map(printGenericConstraint printEnumVal ))
                         ), us )
@@ -282,6 +290,8 @@ let private exportType (t:Asn1Type) =
                                 ), us )
         (fun ch nt us -> XElement(xname "SEQUENCE_COMPONENT",
                             XAttribute(xname "name", ch.Name.Value),
+                            XAttribute(xname "Line", ch.Name.Location.srcLine),
+                            XAttribute(xname "CharPositionInLine", ch.Name.Location.charPos),
                             (exportOptionality ch.Optionality ),
                             nt), us )
         (fun ch us -> 
@@ -339,6 +349,8 @@ let private exportType (t:Asn1Type) =
                                 ), us )
         (fun ch nt us -> XElement(xname "CHOICE_ALTERNATIVE",
                             XAttribute(xname "name", ch.Name.Value),
+                            XAttribute(xname "Line", ch.Name.Location.srcLine),
+                            XAttribute(xname "CharPositionInLine", ch.Name.Location.charPos),
                             XAttribute(xname "present_when_name", ch.present_when_name),
                             XAttribute(xname "ada_name", ch.ada_name),
                             XAttribute(xname "c_name", ch.c_name),
@@ -353,6 +365,8 @@ let private exportType (t:Asn1Type) =
                             nt), us )
         (fun t nk us -> XElement(xname "Asn1Type",
                             XAttribute(xname "id", t.id.AsString),
+                            XAttribute(xname "Line", t.Location.srcLine),
+                            XAttribute(xname "CharPositionInLine", t.Location.charPos),
                             (match t.inheritInfo with
                              |Some ts -> XAttribute(xname "tasInfoModule",ts.modName)
                              |None     -> null
@@ -374,12 +388,16 @@ let private exportType (t:Asn1Type) =
 let private exportTas (tas:TypeAssignment) =
     XElement(xname "TypeAssignment",
         XAttribute(xname "Name", tas.Name.Value),
+        XAttribute(xname "Line", tas.Name.Location.srcLine),
+        XAttribute(xname "CharPositionInLine", tas.Name.Location.charPos),
         (exportType tas.Type)
     )
 
 let private exportVas (vas:ValueAssignment) =
     XElement(xname "ValueAssignment",
         XAttribute(xname "Name", vas.Name.Value),
+        XAttribute(xname "Line", vas.Name.Location.srcLine),
+        XAttribute(xname "CharPositionInLine", vas.Name.Location.charPos),
         (exportType vas.Type),
         (PrintAsn1GenericValue vas.Value)
     )
@@ -387,6 +405,8 @@ let private exportVas (vas:ValueAssignment) =
 let private exportModule (m:Asn1Module) =
     XElement(xname "Module",
         XAttribute(xname "Name", m.Name.Value),
+        XAttribute(xname "Line", m.Name.Location.srcLine),
+        XAttribute(xname "CharPositionInLine", m.Name.Location.charPos),
         XElement(xname "TypeAssigments", m.TypeAssignments |> List.map  exportTas),
         XElement(xname "ValueAssigments",m.ValueAssignments |> List.map  exportVas)
     )

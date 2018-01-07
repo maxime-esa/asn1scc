@@ -750,6 +750,22 @@ with
 //let getValueType (r:AstRoot) (v:Asn1GenericValue) =
 //    r.typesMap.[v.refToType]
 
+type Asn1Module with
+    member this.ExportedTypes =
+        match this.Exports with
+        | Asn1Ast.All   -> 
+            let importedTypes = this.Imports |> List.collect(fun imp -> imp.Types) |> List.map(fun x -> x.Value)
+            (this.TypeAssignments |> List.map(fun x -> x.Name.Value))@importedTypes
+        | Asn1Ast.OnlySome(typesAndVars)    ->
+            typesAndVars |> List.filter(fun x -> System.Char.IsUpper (x.Chars 0))
+    member this.ExportedVars =
+        match this.Exports with
+        | Asn1Ast.All   -> this.ValueAssignments |> List.map(fun x -> x.Name.Value)
+        | Asn1Ast.OnlySome(typesAndVars)    ->
+            typesAndVars |> List.filter(fun x -> not (System.Char.IsUpper (x.Chars 0)))
+
+
+
 type AstRoot with
     member this.getValueAssignmentByName (modName:String) (vasName:string) =
         match this.Files |> Seq.collect(fun f -> f.Modules) |> Seq.tryFind(fun m -> m.Name.Value = modName) with
