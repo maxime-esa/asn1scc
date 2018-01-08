@@ -114,6 +114,11 @@
       <Project>{83f15fa6-7da0-4e47-9512-39ae3fdd28cf}</Project>
       <Private>True</Private>
     </ProjectReference>
+    <ProjectReference Include="..\parseStg2\parseStg2.csproj">
+      <Name>parseStg2</Name>
+      <Project>{4112e7c9-0e9c-41db-88c3-d5911c1d89d5}</Project>
+      <Private>True</Private>
+    </ProjectReference>
     <ProjectReference Include="..\ST\ST.fsproj">
       <Name>ST</Name>
       <Project>{94495d92-b615-4745-b26b-a5ec73a6a462}</Project>
