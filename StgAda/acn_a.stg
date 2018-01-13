@@ -935,6 +935,17 @@ if result.Success AND <sChoiceIndexName> \>= 0 AND  <sChoiceIndexName> \<= <nLas
 end if;
 >>
 
+ChoiceChildAlwaysAbsent_encode(p, sAcc, sChildID, nChildIndex, sErrorCodeName) ::= <<
+when <sChildID> =>
+    result := <rtlModuleName()>.ASN1_RESULT'(Success => false, ErrorCode => <sErrorCodeName>);
+>>
+
+ChoiceChildAlwaysAbsent_decode(p, sAcc, sChildID, nChildIndex, sErrorCodeName) ::= <<
+when <nChildIndex> =>
+    result := <rtlModuleName()>.ASN1_RESULT'(Success => false, ErrorCode => <sErrorCodeName>);
+>>
+
+
 ChoiceChild_encode(p, sAcc, sChildID, nChildIndex, nIndexSizeInBits, nLastItemIndex, sChildContent, sChildName, sChildTypeDef, sChoiceTypeName) ::= <<
 when <sChildID> =>
     <rtlModuleName()>.UPER_Enc_ConstraintWholeNumber(S, K, <nChildIndex>, 0, <nIndexSizeInBits>);

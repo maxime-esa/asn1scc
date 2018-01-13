@@ -525,6 +525,7 @@ let private createChoiceChild (r:Asn1AcnAst.AstRoot) (l:ProgrammingLanguage) (m:
             Comments            = ch.Comments
             isEqualBodyStats    = DAstEqual.isEqualBodyChoiceChild typeDefinitionName l ch newChildType
             isValidBodyStats    = DAstValidate.isValidChoiceChild l ch newChildType
+            Optionality         = ch.Optionality
         }
     ret, us
 

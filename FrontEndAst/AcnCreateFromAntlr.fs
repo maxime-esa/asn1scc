@@ -1198,6 +1198,33 @@ let rec private mergeType (asn1:Asn1Ast.AstRoot) (acn:AcnAst) (m:Asn1Ast.Asn1Mod
             let mergeChild (cc:ChildSpec option) (c:Asn1Ast.ChildInfo)  =
                 let childNamedConstraints = childrenNameConstraints |> List.filter(fun x -> x.Name = c.Name)
                 let childWithCons = childNamedConstraints |> List.choose(fun nc -> nc.Contraint)
+                let asn1OptionalityFromWithComponents = 
+                    childNamedConstraints |> 
+                    List.choose(fun nc -> 
+                        match nc.Mark with
+                        | Asn1Ast.NoMark            -> None
+                        | Asn1Ast.MarkPresent       -> Some ChoiceAlwaysPresent
+                        | Asn1Ast.MarkAbsent        -> Some ChoiceAlwaysAbsent
+                        | Asn1Ast.MarkOptional      -> None ) |>
+                    Seq.distinct |> Seq.toList 
+                let newOptionality =
+                    match c.Optionality with
+                    | None  
+                    | Some (Asn1Ast.Optional _)                  ->
+                        match asn1OptionalityFromWithComponents with
+                        | []          -> None
+                        | newOpt::_   -> Some newOpt
+                    | Some Asn1Ast.AlwaysAbsent  ->
+                        match asn1OptionalityFromWithComponents with
+                        | []          -> Some ChoiceAlwaysAbsent
+                        | newOpt::_   -> Some newOpt
+                    | Some Asn1Ast.AlwaysPresent  ->
+                        match asn1OptionalityFromWithComponents with
+                        | []          -> Some ChoiceAlwaysPresent
+                        | newOpt::_   -> Some newOpt
+
+
+
                 let acnPresentWhenConditions = 
                     match cc with
                     | None      -> []
@@ -1211,13 +1238,14 @@ let rec private mergeType (asn1:Asn1Ast.AstRoot) (acn:AcnAst) (m:Asn1Ast.Asn1Mod
                                 | GP_PresenceInt (p,v) -> Some (PresenceInt (p,v)) 
                                 | GP_PresenceStr (p,v) -> Some (PresenceStr (p,v)) 
                                 | _ -> None)
+
                 match cc with
                 | None      ->  
                     let newChild = mergeType asn1 acn m c.Type (curPath@[CH_CHILD (c.Name.Value, c.present_when_name)]) None [] childWithCons [] [] None  None
-                    {ChChildInfo.Name = c.Name; c_name = c.c_name; ada_name = c.ada_name; Type  = newChild; acnPresentWhenConditions = acnPresentWhenConditions; Comments = c.Comments;present_when_name = c.present_when_name}
+                    {ChChildInfo.Name = c.Name; c_name = c.c_name; ada_name = c.ada_name; Type  = newChild; acnPresentWhenConditions = acnPresentWhenConditions; Comments = c.Comments;present_when_name = c.present_when_name; Optionality = newOptionality}
                 | Some cc   ->
                     let newChild = mergeType asn1 acn m c.Type (curPath@[CH_CHILD (c.Name.Value, c.present_when_name)]) (Some cc.childEncodingSpec) [] childWithCons cc.argumentList [] None  None
-                    {ChChildInfo.Name = c.Name; c_name = c.c_name; ada_name = c.ada_name; Type  = newChild; acnPresentWhenConditions = acnPresentWhenConditions; Comments = c.Comments; present_when_name = c.present_when_name}
+                    {ChChildInfo.Name = c.Name; c_name = c.c_name; ada_name = c.ada_name; Type  = newChild; acnPresentWhenConditions = acnPresentWhenConditions; Comments = c.Comments; present_when_name = c.present_when_name; Optionality = newOptionality}
             let mergedChildren = 
                 match acnType with
                 | None            -> children |> List.map (mergeChild None)
@@ -1226,11 +1254,28 @@ let rec private mergeType (asn1:Asn1Ast.AstRoot) (acn:AcnAst) (m:Asn1Ast.Asn1Mod
                     | []            -> children |> List.map (mergeChild None)
                     | acnChildren   ->
                         // MAKE SURE ACN CHILDREN ARE THE SAME OF ASN1 CHILDREN !!!!!
-                        acnChildren |>
-                        List.map(fun acnChild ->
-                            match children |> Seq.tryFind (fun a -> a.Name = acnChild.name) with
-                            | Some x -> mergeChild (Some acnChild) x
-                            | None   -> raise(SemanticError(acnChild.name.Location, (sprintf "invalid name %s" acnChild.name.Value))))
+                        let invalidAcnChildren =
+                            acnChildren |> List.filter(fun acnChild -> not (children |> List.exists (fun asn1Child -> acnChild.name.Value = asn1Child.Name.Value)) )
+                        match invalidAcnChildren with
+                        | []    -> ()
+                        | acnChild::_     -> raise(SemanticError(acnChild.name.Location, (sprintf "unexpected child name '%s'" acnChild.name.Value)))
+
+                        children |>
+                        List.map(fun asn1Child ->
+                            match acnChildren |> Seq.tryFind(fun a -> a.name.Value = asn1Child.Name.Value) with
+                            | Some acnChild -> mergeChild (Some acnChild) asn1Child
+                            | None          -> mergeChild None asn1Child)
+//                        acnChildren |>
+//                        List.map(fun acnChild ->
+//                            match children |> Seq.tryFind (fun a -> a.Name = acnChild.name) with
+//                            | Some x -> mergeChild (Some acnChild) x
+//                            | None   -> raise(SemanticError(acnChild.name.Location, (sprintf "invalid name %s" acnChild.name.Value))))
+            let alwaysPresentChildren = mergedChildren |> List.filter(fun x -> x.Optionality = Some (ChoiceAlwaysPresent))
+            match alwaysPresentChildren with
+            | []        -> ()
+            | x1::[]    -> ()
+            | _         -> raise(SemanticError(t.Location,"Only one alternative can be marked as ALWAYS PRESENT"))
+                
             let acnProperties = 
                 {ChoiceAcnProperties.enumDeterminant = tryGetProp combinedProperties (fun x -> match x with CHOICE_DETERMINANT e -> Some e | _ -> None)}
             let acnLoc = acnType |> Option.map (fun z -> z.loc)

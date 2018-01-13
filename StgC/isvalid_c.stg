@@ -23,6 +23,11 @@ always_true_statement ()::= <<
 ret = TRUE;
 >>
 
+always_false_statement(sErrorCodeName)::= <<
+ret = FALSE;
+*pErrCode = <sErrorCodeName>;
+>>
+
 
 
 /*

@@ -760,6 +760,18 @@ if (<p><sAcc>exist.<sChName>) {
 
 
 /* Choice like uper*/
+ChoiceChildAlwaysAbsent_encode(p, sAcc, sChildID, nChildIndex, sErrorCodeName) ::= <<
+case <sChildID>:
+    ret = FALSE;
+    *pErrCode = <sErrorCodeName>;
+>>
+
+ChoiceChildAlwaysAbsent_decode(p, sAcc, sChildID, nChildIndex, sErrorCodeName) ::= <<
+case <nChildIndex>:
+    ret = FALSE;
+    *pErrCode = <sErrorCodeName>;
+	break;
+>>
 
 ChoiceChild_encode(p, sAcc, sChildID, nChildIndex, nIndexSizeInBits, nLastItemIndex, sChildContent, sChildName, sChildTypeDef, sChoiceTypeName) ::= <<
 case <sChildID>:

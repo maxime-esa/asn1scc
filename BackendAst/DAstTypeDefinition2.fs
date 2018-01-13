@@ -120,13 +120,11 @@ let getParentInfoData (r:Asn1AcnAst.AstRoot) (pi : Asn1Fold.ParentInfo<ParentInf
                 
 
 
-let private createTypeGeneric (r:Asn1AcnAst.AstRoot)  l (pi : Asn1Fold.ParentInfo<ParentInfoData> option) (t:Asn1AcnAst.Asn1Type) (defineNewType:DefineTypeAux)   =
+let private createTypeGeneric (r:Asn1AcnAst.AstRoot)  l (pi : Asn1Fold.ParentInfo<ParentInfoData> option) (t:Asn1AcnAst.Asn1Type) getExtraSubtypes (defineNewType:DefineTypeAux)   =
     let programUnit = ToC t.id.ModName
     let rtlModuleName  = match l with C -> None                                          | Ada -> Some (header_a.rtlModuleName())
     let defineSubType l = match l with C -> header_c.Define_SubType | Ada -> header_a.Define_SubType
-    if (t.id.AsString = "Service-Reports.Service-Report.event-action-1.foo") then
-        let dummy = 0
-        ()
+
     let defineSubTypeAux (parent_pu_name:string option) (programUnit:string) (typedefName:string) (inheritInfo : InheritanceInfo option) (subAux:DefineSubTypeAux) (innerType:bool) =
         let soInheritParentTypePackage, sInheritParentType = 
             match inheritInfo with
@@ -147,24 +145,31 @@ let private createTypeGeneric (r:Asn1AcnAst.AstRoot)  l (pi : Asn1Fold.ParentInf
         | _     -> (*Otherwise, create a new type which is a subtype of the existing type*)
             match parent_pu_name with 
             | None  ->
-                let completeDefintion = defineSubType l typedefName soInheritParentTypePackage sInheritParentType soNewRange
+                let completeDefintion = defineSubType l typedefName soInheritParentTypePackage sInheritParentType soNewRange None
                 TypeDefinition {TypeDefinition.typedefName = typedefName; typedefBody = (fun () -> completeDefintion)}
             | Some parent_pu_name  when programUnit =   parent_pu_name -> 
-                let completeDefintion = defineSubType l typedefName soInheritParentTypePackage sInheritParentType soNewRange
+                let completeDefintion = defineSubType l typedefName soInheritParentTypePackage sInheritParentType soNewRange None
                 TypeDefinition {TypeDefinition.typedefName = typedefName; typedefBody = (fun () -> completeDefintion)}
             | Some parent_pu_name   ->
                 ReferenceToExistingDefinition {ReferenceToExistingDefinition.programUnit = Some parent_pu_name; typedefName= typedefName}
     //if t.id.AsString = "Onboard-Monitoring.Transition-Report.value.type-1-0" then
     //    printfn "%s" t.id.AsString
+
     match t.typeAssignmentInfo with
     | Some (TypeAssignmentInfo tasInfo)      ->  (*I am a type assignmet ==> Always define a new type*)
         let typedefName = (ToC2(r.args.TypePrefix + tasInfo.tasName))
         match t.inheritInfo with
-        | Some inheritInfo  when not inheritInfo.hasAdditionalConstraints -> 
-            let otherOptherProgrmaUnit = if  inheritInfo.modName = tasInfo.modName then None else Some (ToC inheritInfo.modName)
-            let typedefBody = defineSubType l typedefName otherOptherProgrmaUnit (ToC2(r.args.TypePrefix + inheritInfo.tasName)) None
+        | Some inheritInfo  (*when  not inheritInfo.hasAdditionalConstraints *)-> 
+            let otherProgramUnit = if  inheritInfo.modName = tasInfo.modName then None else Some (ToC inheritInfo.modName)
+            let baseTypeTypedefName = ToC2(r.args.TypePrefix + inheritInfo.tasName)
+            let soNewRange = 
+                match defineNewType with
+                | DefineSubTypeAux subAux -> subAux.getNewRange otherProgramUnit baseTypeTypedefName
+                | DefineNewTypeAux _      -> None
+            let extraDefs = getExtraSubtypes typedefName otherProgramUnit baseTypeTypedefName
+            let typedefBody = defineSubType l typedefName otherProgramUnit baseTypeTypedefName soNewRange extraDefs
             TypeDefinition {TypeDefinition.typedefName=typedefName; typedefBody = (fun () -> typedefBody)}
-        | _             -> 
+        | None             -> 
             match defineNewType with
             | DefineSubTypeAux subAux -> 
                 defineSubTypeAux None programUnit typedefName t.inheritInfo subAux false
@@ -220,6 +225,7 @@ Primitive types with base definition in RTL which can be used as is generated co
 
 These types are defined as sub types.
 *)
+
     
 let createInteger (r:Asn1AcnAst.AstRoot) (l:ProgrammingLanguage) (pi : Asn1Fold.ParentInfo<ParentInfoData> option) (t:Asn1AcnAst.Asn1Type)  (o:Asn1AcnAst.Integer)   (us:State) =
     let declare_IntegerNoRTL            = match l with C -> header_c.Declare_Integer                    | Ada -> header_a.Declare_IntegerNoRTL
@@ -234,19 +240,19 @@ let createInteger (r:Asn1AcnAst.AstRoot) (l:ProgrammingLanguage) (pi : Asn1Fold.
         | PosInf (a)                  ->  Some (define_SubType_int_range soInheritParentTypePackage sInheritParentType (Some a) None)
         | Full                        ->  None
     let getRtlTypeName () = if o.isUnsigned then declare_PosIntegerNoRTL() else declare_IntegerNoRTL()
-    createTypeGeneric r l pi t (DefineSubTypeAux {DefineSubTypeAux.getNewRange = getNewRange; getRtlTypeName = getRtlTypeName})
+    createTypeGeneric r l pi t (fun _ _ _ -> None) (DefineSubTypeAux {DefineSubTypeAux.getNewRange = getNewRange; getRtlTypeName = getRtlTypeName})
 
 let createBoolean (r:Asn1AcnAst.AstRoot) (l:ProgrammingLanguage) (pi : Asn1Fold.ParentInfo<ParentInfoData> option) (t:Asn1AcnAst.Asn1Type)  (o:Asn1AcnAst.Boolean)   (us:State) =
     let getRtlTypeName  = match l with C -> header_c.Declare_Boolean  | Ada -> header_a.Declare_BOOLEANNoRTL 
-    createTypeGeneric r l pi t (DefineSubTypeAux {DefineSubTypeAux.getNewRange = (fun _ _ -> None); getRtlTypeName = getRtlTypeName})
+    createTypeGeneric r l pi t (fun _ _ _ -> None) (DefineSubTypeAux {DefineSubTypeAux.getNewRange = (fun _ _ -> None); getRtlTypeName = getRtlTypeName})
 
 let createReal (r:Asn1AcnAst.AstRoot) (l:ProgrammingLanguage) (pi : Asn1Fold.ParentInfo<ParentInfoData> option) (t:Asn1AcnAst.Asn1Type)  (o:Asn1AcnAst.Real)   (us:State) =
     let getRtlTypeName  = match l with C -> header_c.Declare_Real  | Ada -> header_a.Declare_REALNoRTL 
-    createTypeGeneric r l pi t (DefineSubTypeAux {DefineSubTypeAux.getNewRange = (fun _ _ -> None); getRtlTypeName = getRtlTypeName})
+    createTypeGeneric r l pi t (fun _ _ _ -> None) (DefineSubTypeAux {DefineSubTypeAux.getNewRange = (fun _ _ -> None); getRtlTypeName = getRtlTypeName})
 
 let createNull (r:Asn1AcnAst.AstRoot) (l:ProgrammingLanguage) (pi : Asn1Fold.ParentInfo<ParentInfoData> option) (t:Asn1AcnAst.Asn1Type)  (o:Asn1AcnAst.NullType)   (us:State) =
     let getRtlTypeName  = match l with C -> header_c.Declare_NullType  | Ada -> header_a.Declare_NULLNoRTL 
-    createTypeGeneric r l pi t (DefineSubTypeAux {DefineSubTypeAux.getNewRange = (fun _ _ -> None); getRtlTypeName = getRtlTypeName})
+    createTypeGeneric r l pi t (fun _ _ _ -> None) (DefineSubTypeAux {DefineSubTypeAux.getNewRange = (fun _ _ -> None); getRtlTypeName = getRtlTypeName})
 
 (*
 Primitive types with NO base definition in RTL (IA5String, OCTET STRING, BIT STRING, ENUMERATED)
@@ -255,14 +261,19 @@ Primitive types with NO base definition in RTL (IA5String, OCTET STRING, BIT STR
 
 
 let createString (r:Asn1AcnAst.AstRoot) (l:ProgrammingLanguage) (pi : Asn1Fold.ParentInfo<ParentInfoData> option) (t:Asn1AcnAst.Asn1Type) (o:Asn1AcnAst.StringType)  (us:State) =
+    let arrnAlphaChars = (o.uperCharSet |> Array.map(fun c -> (BigInteger (int c))))
     let getCompleteDefinition (programUnit:string) (typeDefinitionName:string) =
         match l with
         | C                      -> 
             let typeDefinitionBody =header_c.Declare_IA5String ()
             header_c.Define_Type typeDefinitionBody typeDefinitionName (Some (BigInteger (o.maxSize+1))) []
         | Ada                    -> 
-            header_a.IA5STRING_OF_tas_decl typeDefinitionName (BigInteger o.minSize) (BigInteger o.maxSize) (BigInteger (o.maxSize + 1)) (o.uperCharSet |> Array.map(fun c -> (BigInteger (int c))))
-    createTypeGeneric r l pi t (DefineNewTypeAux {DefineNewTypeAux.getCompleteDefintion = getCompleteDefinition})
+            header_a.IA5STRING_OF_tas_decl typeDefinitionName (BigInteger o.minSize) (BigInteger o.maxSize) (BigInteger (o.maxSize + 1)) arrnAlphaChars
+    let getExtraSubTypes sTypeDefinitionName soParentTypePackage sParentType =
+        match l with
+        | C     -> None
+        | Ada   -> Some (header_a.Define_SubType_ia5string sTypeDefinitionName soParentTypePackage sParentType arrnAlphaChars)
+    createTypeGeneric r l pi t getExtraSubTypes (DefineNewTypeAux {DefineNewTypeAux.getCompleteDefintion = getCompleteDefinition})
 
 let createOctet (r:Asn1AcnAst.AstRoot) (l:ProgrammingLanguage) (pi : Asn1Fold.ParentInfo<ParentInfoData> option) (t:Asn1AcnAst.Asn1Type) (o:Asn1AcnAst.OctetString)  (us:State) =
     let getCompleteDefinition (programUnit:string) (typeDefinitionName:string) =
@@ -272,7 +283,11 @@ let createOctet (r:Asn1AcnAst.AstRoot) (l:ProgrammingLanguage) (pi : Asn1Fold.Pa
             header_c.Define_Type typeDefinitionBody typeDefinitionName None []
         | Ada                    -> 
             header_a.OCTET_STRING_tas_decl typeDefinitionName (BigInteger o.minSize) (BigInteger o.maxSize) (o.maxSize=o.minSize)
-    createTypeGeneric r l pi t (DefineNewTypeAux {DefineNewTypeAux.getCompleteDefintion = getCompleteDefinition})
+    let getExtraSubTypes sTypeDefinitionName soParentTypePackage sParentType =
+        match l with
+        | C     -> None
+        | Ada   -> Some (header_a.Define_SubType_sizeable sTypeDefinitionName soParentTypePackage sParentType)
+    createTypeGeneric r l pi t getExtraSubTypes (DefineNewTypeAux {DefineNewTypeAux.getCompleteDefintion = getCompleteDefinition})
 
 let createBitString (r:Asn1AcnAst.AstRoot) (l:ProgrammingLanguage) (pi : Asn1Fold.ParentInfo<ParentInfoData> option) (t:Asn1AcnAst.Asn1Type) (o:Asn1AcnAst.BitString)   (us:State) =
     let getCompleteDefinition (programUnit:string) (typeDefinitionName:string) =
@@ -282,7 +297,11 @@ let createBitString (r:Asn1AcnAst.AstRoot) (l:ProgrammingLanguage) (pi : Asn1Fol
             header_c.Define_Type typeDefinitionBody typeDefinitionName None []
         | Ada                    -> 
             header_a.BIT_STRING_tas_decl typeDefinitionName (BigInteger o.minSize) (BigInteger o.maxSize) (o.maxSize=o.minSize)
-    createTypeGeneric r l pi t (DefineNewTypeAux {DefineNewTypeAux.getCompleteDefintion = getCompleteDefinition})
+    let getExtraSubTypes sTypeDefinitionName soParentTypePackage sParentType =
+        match l with
+        | C     -> None
+        | Ada   -> Some (header_a.Define_SubType_sizeable sTypeDefinitionName soParentTypePackage sParentType)
+    createTypeGeneric r l pi t getExtraSubTypes (DefineNewTypeAux {DefineNewTypeAux.getCompleteDefintion = getCompleteDefinition})
 
 let createEnumerated (r:Asn1AcnAst.AstRoot) (l:ProgrammingLanguage) (pi : Asn1Fold.ParentInfo<ParentInfoData> option)  (t:Asn1AcnAst.Asn1Type) (o:Asn1AcnAst.Enumerated)  (us:State) =
     let getCompleteDefinition (programUnit:string) (typeDefinitionName:string) =
@@ -300,7 +319,11 @@ let createEnumerated (r:Asn1AcnAst.AstRoot) (l:ProgrammingLanguage) (pi : Asn1Fo
             let arrsEnumNamesAndValues = orderedItems |> List.map( fun i -> header_a.ENUMERATED_tas_decl_item (i.getBackendName None l) i.definitionValue)
             let nIndexMax = BigInteger ((Seq.length o.items)-1)
             header_a.ENUMERATED_tas_decl typeDefinitionName arrsEnumNames arrsEnumNamesAndValues nIndexMax
-    createTypeGeneric r l pi t (DefineNewTypeAux {DefineNewTypeAux.getCompleteDefintion = getCompleteDefinition})
+    let getExtraSubTypes sTypeDefinitionName soParentTypePackage sParentType =
+        match l with
+        | C     -> None
+        | Ada   -> Some (header_a.Define_SubType_enumerated sTypeDefinitionName soParentTypePackage sParentType)
+    createTypeGeneric r l pi t getExtraSubTypes (DefineNewTypeAux {DefineNewTypeAux.getCompleteDefintion = getCompleteDefinition})
 
 (*
 COMPOSITE TYPES (SEQUENCE OF, SEQUENCE, CHOICE)
@@ -320,26 +343,35 @@ let createSequenceOf (r:Asn1AcnAst.AstRoot) (l:ProgrammingLanguage) (pi : Asn1Fo
             header_c.Define_Type typeDefinitionBody typeDefinitionName None (getChildDefinition childDefinition)
         | Ada                    -> 
             header_a.SEQUENCE_OF_tas_decl typeDefinitionName (BigInteger o.minSize) (BigInteger o.maxSize) (o.minSize = o.maxSize) (childDefinition.longTypedefName l) (getChildDefinition childDefinition)
-    createTypeGeneric r l pi t (DefineNewTypeAux {DefineNewTypeAux.getCompleteDefintion = getCompleteDefinition})
+    let getExtraSubTypes sTypeDefinitionName soParentTypePackage sParentType =
+        match l with
+        | C     -> None
+        | Ada   -> Some (header_a.Define_SubType_sizeable sTypeDefinitionName soParentTypePackage sParentType)
+    createTypeGeneric r l pi t getExtraSubTypes (DefineNewTypeAux {DefineNewTypeAux.getCompleteDefintion = getCompleteDefinition})
 
 
 let createSequence (r:Asn1AcnAst.AstRoot) (l:ProgrammingLanguage) (pi : Asn1Fold.ParentInfo<ParentInfoData> option) (t:Asn1AcnAst.Asn1Type) (o:Asn1AcnAst.Sequence)  (children:SeqChildInfo list) (us:State) =
     let children = children |> List.choose (fun c -> match c with Asn1Child z -> Some z | _ -> None)
+    let optionalChildren = children |> List.choose(fun c -> match c.Optionality with Some _ -> Some c | None -> None)
+    let optChildNames  = optionalChildren |> List.map(fun c -> c.Name.Value)
     let childldrenCompleteDefintions = children |> List.collect (fun c -> getChildDefinition c.Type.typeDefintionOrReference)
     let getCompleteDefinition (programUnit:string) (typeDefinitionName:string) =
         match l with
         | C                      ->
             let handleChild (o:Asn1Child) = header_c.PrintSeq_ChoiceChild (o.Type.typeDefintionOrReference.longTypedefName l ) o.c_name ""
             let childrenBodies = children |> List.map handleChild
-            let optChildNames  = children |> List.choose(fun c -> match c.Optionality with Some _ -> Some c.Name.Value | None -> None)
             let typeDefinitionBody = header_c.Declare_Sequence childrenBodies optChildNames
             header_c.Define_Type typeDefinitionBody typeDefinitionName None childldrenCompleteDefintions
         | Ada                    -> 
             let handleChild (o:Asn1Child) = header_a.SEQUENCE_tas_decl_child o.c_name (o.Type.typeDefintionOrReference.longTypedefName l)
             let childrenBodies = children |> List.map handleChild
-            let optChildren  = children |> List.choose(fun c -> match c.Optionality with Some _ -> Some(header_a.SEQUENCE_tas_decl_child_bit c.Name.Value) | None -> None)
+            let optChildren  = optionalChildren |> List.map(fun c -> header_a.SEQUENCE_tas_decl_child_bit c.Name.Value)
             header_a.SEQUENCE_tas_decl typeDefinitionName childrenBodies optChildren childldrenCompleteDefintions
-    createTypeGeneric r l pi t (DefineNewTypeAux {DefineNewTypeAux.getCompleteDefintion = getCompleteDefinition})
+    let getExtraSubTypes sTypeDefinitionName soParentTypePackage sParentType =
+        match l with
+        | C     -> None
+        | Ada   -> Some (header_a.Define_SubType_sequence sTypeDefinitionName soParentTypePackage sParentType optChildNames)
+    createTypeGeneric r l pi t getExtraSubTypes (DefineNewTypeAux {DefineNewTypeAux.getCompleteDefintion = getCompleteDefinition})
 
 let createChoice (r:Asn1AcnAst.AstRoot) (l:ProgrammingLanguage) (pi : Asn1Fold.ParentInfo<ParentInfoData> option) (t:Asn1AcnAst.Asn1Type) (o:Asn1AcnAst.Choice)  (children:ChChildInfo list) (us:State) =
     let childldrenCompleteDefintions = children |> List.collect (fun c -> getChildDefinition c.chType.typeDefintionOrReference)
@@ -357,7 +389,11 @@ let createChoice (r:Asn1AcnAst.AstRoot) (l:ProgrammingLanguage) (pi : Asn1Fold.P
             let childrenBodies = children |> List.map handleChild
             let nIndexMax = BigInteger ((Seq.length children)-1)
             header_a.CHOICE_tas_decl typeDefinitionName (children.Head.presentWhenName None l) childrenBodies chEnms nIndexMax childldrenCompleteDefintions
-    createTypeGeneric r l pi t (DefineNewTypeAux {DefineNewTypeAux.getCompleteDefintion = getCompleteDefinition})
+    let getExtraSubTypes sTypeDefinitionName soParentTypePackage sParentType =
+        match l with
+        | C     -> None
+        | Ada   -> Some (header_a.Define_SubType_choice sTypeDefinitionName soParentTypePackage sParentType )
+    createTypeGeneric r l pi t getExtraSubTypes (DefineNewTypeAux {DefineNewTypeAux.getCompleteDefintion = getCompleteDefinition})
 
 let createReferenceType (r:Asn1AcnAst.AstRoot) (l:ProgrammingLanguage) (t:Asn1AcnAst.Asn1Type) (o:Asn1AcnAst.ReferenceType)  (baseType:Asn1Type ) (us:State) =
     let programUnit = ToC t.id.ModName

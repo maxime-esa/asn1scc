@@ -1013,6 +1013,7 @@ type private AcnChoiceEncClass =
 
 let createChoiceFunction (r:Asn1AcnAst.AstRoot) (deps:Asn1AcnAst.AcnInsertedFieldDependencies) (l:ProgrammingLanguage) (codec:CommonTypes.Codec) (t:Asn1AcnAst.Asn1Type) (o:Asn1AcnAst.Choice) (typeDefinition:TypeDefintionOrReference) (defOrRef:TypeDefintionOrReference) (isValidFunc: IsValidFunction option) (children:ChChildInfo list) (acnPrms:AcnParameter list)  (us:State)  =
     let choice_uper          =  match l with C -> acn_c.Choice                | Ada -> acn_a.Choice  
+    let choiceChildAlwaysAbsent          =  match l with C -> acn_c.ChoiceChildAlwaysAbsent                | Ada -> acn_a.ChoiceChildAlwaysAbsent
     let choiceChild          =  match l with C -> acn_c.ChoiceChild           | Ada -> acn_a.ChoiceChild
     let choice_Enum          =  match l with C -> acn_c.Choice_Enum           | Ada -> acn_a.Choice_Enum
     let choiceChild_Enum     =  match l with C -> acn_c.ChoiceChild_Enum      | Ada -> acn_a.ChoiceChild_Enum
@@ -1020,6 +1021,7 @@ let createChoiceFunction (r:Asn1AcnAst.AstRoot) (deps:Asn1AcnAst.AcnInsertedFiel
     let choiceChild_preWhen  =  match l with C -> acn_c.ChoiceChild_preWhen   | Ada -> acn_a.ChoiceChild_preWhen
     let choiceChild_preWhen_int_condition  =  match l with C -> acn_c.ChoiceChild_preWhen_int_condition   | Ada -> acn_a.ChoiceChild_preWhen_int_condition
     let choiceChild_preWhen_str_condition  =  match l with C -> acn_c.ChoiceChild_preWhen_str_condition   | Ada -> acn_a.ChoiceChild_preWhen_str_condition
+    let always_false_statement  = match l with C -> isvalid_c.always_false_statement | Ada -> isvalid_a.always_false_statement
 
 
     let nMin = 0I
@@ -1054,48 +1056,53 @@ let createChoiceFunction (r:Asn1AcnAst.AstRoot) (deps:Asn1AcnAst.AcnInsertedFiel
             seq {
                 let chFunc = child.chType.getAcnFunction codec
                 let childContentResult = 
-                    match chFunc with
-                    | Some chFunc   -> 
-                        match l with
-                        | C   ->  chFunc.funcBody [] ({p with arg = p.arg.getChChild l child.c_name child.chType.isIA5String})
-                        | Ada when codec = CommonTypes.Decode  ->  chFunc.funcBody [] ({CallerScope.modName = p.modName; arg = VALUE (child.c_name + "_tmp")})
-                        | Ada   ->  chFunc.funcBody [] ({p with arg = p.arg.getChChild l child.c_name child.chType.isIA5String})
-                    | None          -> None
+                    //match child.Optionality with
+                    //| Some (ChoiceAlwaysAbsent) -> None//Some (always_false_statement errCode.errCodeName)
+                    //| Some (ChoiceAlwaysPresent)
+                    //| None  ->
+                        match chFunc with
+                        | Some chFunc   -> 
+                            match l with
+                            | C   ->  chFunc.funcBody [] ({p with arg = p.arg.getChChild l child.c_name child.chType.isIA5String})
+                            | Ada when codec = CommonTypes.Decode  ->  chFunc.funcBody [] ({CallerScope.modName = p.modName; arg = VALUE (child.c_name + "_tmp")})
+                            | Ada   ->  chFunc.funcBody [] ({p with arg = p.arg.getChChild l child.c_name child.chType.isIA5String})
+                        | None          -> None
 
                 match childContentResult with
                 | None              -> ()
                 | Some childContent ->
                     let childBody = 
                         let sChildName = child.c_name
-                        //let bbb = child.chType.typeDefintionOrReference
                         let sChildTypeDef = child.chType.typeDefintionOrReference.longTypedefName l //child.chType.typeDefinition.typeDefinitionBodyWithinSeq
-                        //let aaa = child.chType.inheritInfo
-                        //if t.id.AsString = "Onboard-Monitoring.Transition-Report.value" then
-                        //    printfn "%s" t.id.AsString
+
                         let sChoiceTypeName = typeDefinitionName
-                        match ec with
-                        | CEC_uper  -> 
-                            Some (choiceChild p.arg.p (p.arg.getAcces l) (child.presentWhenName (Some defOrRef) l) (BigInteger idx) nIndexSizeInBits nMax childContent.funcBody sChildName sChildTypeDef sChoiceTypeName codec)
-                        | CEC_enum enm -> 
-                            let getDefOrRef (a:Asn1AcnAst.ReferenceToEnumerated) =
-                                match p.modName = a.modName with
-                                | true  -> ReferenceToExistingDefinition {ReferenceToExistingDefinition.programUnit = None; typedefName = ToC (r.args.TypePrefix + a.tasName)}
-                                | false -> ReferenceToExistingDefinition {ReferenceToExistingDefinition.programUnit = Some (ToC a.modName); typedefName = ToC (r.args.TypePrefix + a.tasName)}
+                        match child.Optionality with
+                        | Some (ChoiceAlwaysAbsent) -> Some (choiceChildAlwaysAbsent p.arg.p (p.arg.getAcces l) (child.presentWhenName (Some defOrRef) l) (BigInteger idx) errCode.errCodeName codec)
+                        | Some (ChoiceAlwaysPresent)
+                        | None  ->
+                            match ec with
+                            | CEC_uper  -> 
+                                Some (choiceChild p.arg.p (p.arg.getAcces l) (child.presentWhenName (Some defOrRef) l) (BigInteger idx) nIndexSizeInBits nMax childContent.funcBody sChildName sChildTypeDef sChoiceTypeName codec)
+                            | CEC_enum enm -> 
+                                let getDefOrRef (a:Asn1AcnAst.ReferenceToEnumerated) =
+                                    match p.modName = a.modName with
+                                    | true  -> ReferenceToExistingDefinition {ReferenceToExistingDefinition.programUnit = None; typedefName = ToC (r.args.TypePrefix + a.tasName)}
+                                    | false -> ReferenceToExistingDefinition {ReferenceToExistingDefinition.programUnit = Some (ToC a.modName); typedefName = ToC (r.args.TypePrefix + a.tasName)}
 
 
-                            let enmItem = enm.enm.items |> List.find(fun itm -> itm.Name.Value = child.Name.Value)
-                            Some (choiceChild_Enum p.arg.p (p.arg.getAcces l) (enmItem.getBackendName (Some (getDefOrRef enm)) l) (child.presentWhenName (Some defOrRef) l) childContent.funcBody sChildName sChildTypeDef sChoiceTypeName codec)
-                        | CEC_presWhen  ->
-                            let handPresenseCond (cond:Asn1AcnAst.AcnPresentWhenConditionChoiceChild) =
-                                match cond with
-                                | PresenceInt  (relPath, intLoc)   -> 
-                                    let extField = getExternaFieldChoizePresentWhen r deps t.id relPath
-                                    choiceChild_preWhen_int_condition extField intLoc.Value
-                                | PresenceStr  (relPath, strVal)   -> 
-                                    let extField = getExternaFieldChoizePresentWhen r deps t.id relPath
-                                    choiceChild_preWhen_str_condition extField strVal.Value
-                            let conds = child.acnPresentWhenConditions |>List.map handPresenseCond
-                            Some (choiceChild_preWhen p.arg.p (p.arg.getAcces l) (child.presentWhenName (Some defOrRef) l) childContent.funcBody conds (idx=0) sChildName sChildTypeDef sChoiceTypeName codec)
+                                let enmItem = enm.enm.items |> List.find(fun itm -> itm.Name.Value = child.Name.Value)
+                                Some (choiceChild_Enum p.arg.p (p.arg.getAcces l) (enmItem.getBackendName (Some (getDefOrRef enm)) l) (child.presentWhenName (Some defOrRef) l) childContent.funcBody sChildName sChildTypeDef sChoiceTypeName codec)
+                            | CEC_presWhen  ->
+                                let handPresenseCond (cond:Asn1AcnAst.AcnPresentWhenConditionChoiceChild) =
+                                    match cond with
+                                    | PresenceInt  (relPath, intLoc)   -> 
+                                        let extField = getExternaFieldChoizePresentWhen r deps t.id relPath
+                                        choiceChild_preWhen_int_condition extField intLoc.Value
+                                    | PresenceStr  (relPath, strVal)   -> 
+                                        let extField = getExternaFieldChoizePresentWhen r deps t.id relPath
+                                        choiceChild_preWhen_str_condition extField strVal.Value
+                                let conds = child.acnPresentWhenConditions |>List.map handPresenseCond
+                                Some (choiceChild_preWhen p.arg.p (p.arg.getAcces l) (child.presentWhenName (Some defOrRef) l) childContent.funcBody conds (idx=0) sChildName sChildTypeDef sChoiceTypeName codec)
                     yield (childBody, childContent.localVariables, childContent.errCodes)
             } |> Seq.toList
 

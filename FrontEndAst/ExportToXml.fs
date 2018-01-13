@@ -127,6 +127,11 @@ let private printAlphaConstraint printValue (c:IA5StringConstraint)  =
         c 
         0 |> fst
 
+let exportChoiceOptionality (opt:Asn1ChoiceOptionality option) =
+    match opt with
+    | None  -> []
+    | Some ChoiceAlwaysAbsent  -> [XAttribute(xname "ALWAYS-ABSENT", "TRUE" ) :> Object]
+    | Some ChoiceAlwaysPresent -> [XAttribute(xname "ALWAYS-PRESENT", "TRUE" )]
 
 let exportOptionality (opt:Asn1Optionality option) =
     match opt with
@@ -354,6 +359,7 @@ let private exportType (t:Asn1Type) =
                             XAttribute(xname "present_when_name", ch.present_when_name),
                             XAttribute(xname "ada_name", ch.ada_name),
                             XAttribute(xname "c_name", ch.c_name),
+                            (exportChoiceOptionality ch.Optionality ),
                             (ch.acnPresentWhenConditions |> List.map exportChoiceChildPresentWhenCondition),
                             nt), us )
         (fun ref nt us -> XElement(xname "REFERENCE_TYPE",

@@ -608,6 +608,10 @@ let isValidChoiceChild   (l:ProgrammingLanguage) (o:Asn1AcnAst.ChChildInfo) (new
 
 let createChoiceFunction (r:Asn1AcnAst.AstRoot) (l:ProgrammingLanguage) (t:Asn1AcnAst.Asn1Type) (o:Asn1AcnAst.Choice) (typeDefinition:TypeDefintionOrReference) (defOrRef:TypeDefintionOrReference) (children:ChChildInfo list) (baseTypeValFunc : IsValidFunction option) (us:State)  =
     let funcName            = getFuncName r l t.id
+    let choice                  = match l with C    -> isvalid_c.choice              |Ada   -> isvalid_a.choice 
+    let choice_child            = match l with C -> isvalid_c.choice_child           | Ada -> isvalid_a.choice_child
+    let always_true_statement   = match l with C -> isvalid_c.always_true_statement  | Ada -> isvalid_a.always_true_statement
+    let always_false_statement  = match l with C -> isvalid_c.always_false_statement | Ada -> isvalid_a.always_false_statement
 
     let body =
         let errCodeName         = ToC ("ERR_" + ((t.id.AcnAbsPath |> Seq.skip 1 |> Seq.StrJoin("-")).Replace("#","elm")))
@@ -632,23 +636,18 @@ let createChoiceFunction (r:Asn1AcnAst.AstRoot) (l:ProgrammingLanguage) (t:Asn1A
             let childrenContent =
                 childrenConent |> 
                 List.map(fun (cc, vc) -> 
-                match l with
-                | C    -> 
                     let chBody =  
-                        match vc with
-                        | Some vc -> vc.isValidStatement p
-                        | None    -> isvalid_c.always_true_statement ()
-                    isvalid_c.choice_child (cc.presentWhenName (Some defOrRef) l) chBody
-                |Ada   -> 
-                    let chBody = 
-                        match vc with
-                        | Some vc -> vc.isValidStatement p 
-                        | None    -> isvalid_a.always_true_statement ()
+                        match cc.Optionality with
+                        | None  
+                        | Some (Asn1AcnAst.ChoiceAlwaysPresent) ->
+                            match vc with
+                            | Some vc -> vc.isValidStatement p
+                            | None    -> always_true_statement ()
+                        | Some (Asn1AcnAst.ChoiceAlwaysAbsent)  ->
+                            always_false_statement errCode.errCodeName
+                    choice_child (cc.presentWhenName (Some defOrRef) l) chBody )
 
-                    isvalid_a.choice_child (cc.presentWhenName (Some defOrRef) l) chBody)
-            match l with
-            | C    -> isvalid_c.choice p.arg.p (p.arg.getAcces l) childrenContent errCode.errCodeName
-            |Ada   -> isvalid_a.choice p.arg.p (p.arg.getAcces l) childrenContent errCode.errCodeName
+            choice p.arg.p (p.arg.getAcces l) childrenContent errCode.errCodeName
         Some(alphaFuncs, localVars, ercCodes, funcBody, finalState)
     match body with
     | None    -> None, us

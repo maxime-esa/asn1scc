@@ -47,8 +47,9 @@ typedef <sTypeDefinitionBody> <sTypeDefinitionName><if(noArrLength)>[<noArrLengt
 >>
 
 
-Define_SubType(sTypeDefinitionName, soParentTypePackage, sParentType, soNewRange) ::= <<
+Define_SubType(sTypeDefinitionName, soParentTypePackage, sParentType, soNewRange, soExtraDefs) ::= <<
 typedef <sParentType> <sTypeDefinitionName>;
+<soExtraDefs>
 >>
 
 

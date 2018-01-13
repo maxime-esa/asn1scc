@@ -563,6 +563,7 @@ and ChChildInfo = {
     Comments                    : string array
 
     chType              :Asn1Type
+    Optionality                 : Asn1AcnAst.Asn1ChoiceOptionality option
     
     //DAst properties
     isEqualBodyStats    : CallerScope -> CallerScope  -> string*(LocalVariable list) // 

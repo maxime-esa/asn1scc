@@ -944,3 +944,9 @@ xml
 /v4Tests/c_log.txt
 /v4Tests/tmp.err_Ada
 /v4Tests/tmp.err_c
+v2out
+/mantis/0000733/v4out - Copy
+/mantis/0000733/v2out
+/mantis/0000733/v4out
+/mantis/0000733/backend_ast.xml
+/mantis/0000733/ast.xml

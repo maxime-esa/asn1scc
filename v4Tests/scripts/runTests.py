@@ -28,13 +28,13 @@ def CreateACNFile(content):
 
 
 def mysystem(cmd, bCanFail):
-    f = open("log.txt", 'a')
+    f = open(language+"_log.txt", 'a')
     f.write(cmd + "\n")
     f.close()
     ret = subprocess.call(cmd, shell=True)
     if ret != 0 and not bCanFail:
         PrintFailed(cmd)
-        mysystem("cat tmp.err", True)
+        mysystem("cat tmp.err"+"_"+language, True)
         sys.exit(1)
     return ret
 
@@ -75,8 +75,8 @@ def RunTestCase(asn1, acn, behavior, expErrMsg):
         " -" + language + " -uPER -ACN -typePrefix gmamais_ " +
         "-renamePolicy 2 " + "-equal -atc -o '" + resolvedir(targetDir) +
         "' '" + resolvedir(asn1File) + "' '" + resolvedir(acnFile) +
-        "' >tmp.err 2>&1", True)
-    ferr = open("tmp.err", 'r')
+        "' >tmp.err"+"_"+language+" 2>&1", True)
+    ferr = open("tmp.err"+"_"+language, 'r')
     err_msg = ferr.read().replace("\r\n", "").replace("\n", "")
     ferr.close()
     if behavior == 0 or behavior == 2:
@@ -155,12 +155,12 @@ def RunTestCase(asn1, acn, behavior, expErrMsg):
                 if excecLines:
                     excLine = excecLines[0]
                     if "executed:100.00" not in excLine:
-                        PrintFailed("coverage error (less than 100%): {}".format('\n'.join(lines)))
+                        PrintWarning("coverage error (less than 100%): {}".format('\n'.join(lines)))
                         #sys.exit(-1)
                     else:
                         PrintSucceededAsExpected(excLine)
                 else:
-                    PrintFailed("No line executed !!!: {}".format('\n'.join(lines)))
+                    PrintWarning("No line executed !!!: {}".format('\n'.join(lines)))
         else:
             print(res, behavior)
             PrintWarning(
@@ -299,11 +299,12 @@ def submain(lang, encoding, testCaseSet):
     global language, targetDir
 
     language = lang
-    targetDir = rootDir + os.sep + "tmp"
+    tmpDir = "tmp_" + lang
+    targetDir = rootDir + os.sep + tmpDir
 
-    if os.path.exists("tmp"):
-        shutil.rmtree("tmp")
-    os.mkdir("tmp")
+    if os.path.exists(tmpDir):
+        shutil.rmtree(tmpDir)
+    os.mkdir(tmpDir)
 
     if testCaseSet == "":
         testCaseSet = rootDir + os.sep + "test-cases" + os.sep + "acn"
@@ -367,7 +368,7 @@ def main():
         elif opt in ("-t", "--testCase"):
             testCaseSet = arg
     if bAll:
-        f = open("log.txt", 'a')
+        f = open(language+"_log.txt", 'a')
         f.write("==========================================\n")
         f.close()
         submain("c", "ACN", "")
@@ -383,9 +384,9 @@ def main():
         if lang.lower() == "c":
             os.putenv("PATH", "/usr/bin:" + os.getenv("PATH"))
 
-        f = open("log.txt", 'a')
-        f.write("==========================================\n")
-        f.close()
+        #f = open(language+"_log.txt", 'a')
+        #f.write("==========================================\n")
+        #f.close()
         submain(lang, "ACN", testCaseSet)
     print("Test run ended succesfully. Number of test cases run :", nTests)
 

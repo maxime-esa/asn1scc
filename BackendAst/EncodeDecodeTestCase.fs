@@ -429,5 +429,7 @@ let ChoiceAutomaticTestCaseValues (r:Asn1AcnAst.AstRoot)  (t:Asn1AcnAst.Asn1Type
     seq {
         for ch in children do
             for v in ch.chType.automaticTestCasesValues do
-                yield {NamedValue.name = ch.Name.Value; Value = v}
+                match ch.Optionality with
+                | Some(ChoiceAlwaysAbsent) -> ()
+                | _ ->                yield {NamedValue.name = ch.Name.Value; Value = v}
     } |> Seq.toList
