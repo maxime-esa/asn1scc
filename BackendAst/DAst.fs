@@ -646,6 +646,7 @@ and Asn1Type = {
     typeAssignmentInfo  : AssignmentInfo option
 
     Kind            : Asn1TypeKind
+    parInfoData : Asn1Fold.ParentInfo<ParentInfoData> option
     //newTypeDefName  : string
 }
 

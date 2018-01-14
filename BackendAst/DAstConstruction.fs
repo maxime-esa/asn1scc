@@ -575,6 +575,7 @@ let private createType (r:Asn1AcnAst.AstRoot) pi (t:Asn1AcnAst.Asn1Type) ((newKi
         Location      = t.Location
         inheritInfo = t.inheritInfo
         typeAssignmentInfo = t.typeAssignmentInfo
+        parInfoData = pi
         //newTypeDefName = DAstTypeDefinition2.getTypedefName r pi t
     }, us
 
@@ -605,7 +606,8 @@ let private mapType (r:Asn1AcnAst.AstRoot) (deps:Asn1AcnAst.AcnInsertedFieldDepe
         (fun pi t ti newChildren -> createChoice r deps l m pi t ti newChildren)
         (fun ch newChild -> createChoiceChild r l m ch newChild)
 
-        (fun pi t ti newBaseType -> createReferenceType r deps l m pi t ti newBaseType)
+        (fun pi t ti newBaseType -> 
+            createReferenceType r deps l m pi t ti newBaseType)
 
         (fun pi t ((newKind, newPrms),us)        -> createType r pi t ((newKind, newPrms),us))
 

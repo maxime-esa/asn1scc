@@ -104,7 +104,11 @@ type typeDefitionKindFunc =
 /// Called before visiting a choice or sequence or sequence of children
 let getParentInfoData (r:Asn1AcnAst.AstRoot) (pi : Asn1Fold.ParentInfo<ParentInfoData> option) (t:Asn1AcnAst.Asn1Type)   =
     match t.typeAssignmentInfo with
-    | Some (TypeAssignmentInfo tasInfo)       ->  {ParentInfoData.program_unit_name = ToC t.id.ModName;  typedefName = ToC2(r.args.TypePrefix + tasInfo.tasName)} // I am a type assignment
+    | Some (TypeAssignmentInfo tasInfo)       ->  
+        match t.inheritInfo with
+        | Some inhInfo      -> (*I am a reference type*) {ParentInfoData.program_unit_name = ToC inhInfo.modName ;typedefName = ToC2(r.args.TypePrefix + inhInfo.tasName)}
+        | None              -> 
+            {ParentInfoData.program_unit_name = ToC t.id.ModName;  typedefName = ToC2(r.args.TypePrefix + tasInfo.tasName)} // I am a type assignment
     | Some (ValueAssignmentInfo vasInfo)      ->  {ParentInfoData.program_unit_name = ToC t.id.ModName;  typedefName = ToC2(r.args.TypePrefix + vasInfo.vasName)} // I am a type assignment
     | None              ->  // I am an inner type
         match t.inheritInfo with
@@ -124,6 +128,9 @@ let private createTypeGeneric (r:Asn1AcnAst.AstRoot)  l (pi : Asn1Fold.ParentInf
     let programUnit = ToC t.id.ModName
     let rtlModuleName  = match l with C -> None                                          | Ada -> Some (header_a.rtlModuleName())
     let defineSubType l = match l with C -> header_c.Define_SubType | Ada -> header_a.Define_SubType
+    if t.id.AsString = "" then
+        let dummy = 0
+        ()
 
     let defineSubTypeAux (parent_pu_name:string option) (programUnit:string) (typedefName:string) (inheritInfo : InheritanceInfo option) (subAux:DefineSubTypeAux) (innerType:bool) =
         let soInheritParentTypePackage, sInheritParentType = 

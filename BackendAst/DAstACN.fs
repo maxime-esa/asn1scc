@@ -641,7 +641,8 @@ let createSequenceOfFunction (r:Asn1AcnAst.AstRoot) (deps:Asn1AcnAst.AcnInserted
                 let nStringLength =
                     match o.minSize = o.maxSize,  l, codec with
                     | true , _,_    -> []
-                    | false, Ada, _ -> [IntegerLocalVariable ("nStringLength", None)]
+                    | false, Ada, Encode -> []
+                    | false, Ada, Decode -> [IntegerLocalVariable ("nStringLength", None)]
                     | false, C, Encode -> []
                     | false, C, Decode -> [Asn1SIntLocalVariable ("nCount", None)]
 (*

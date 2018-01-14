@@ -374,7 +374,7 @@ let rec isConstraintValid (t:Asn1Type) (c:Asn1Constraint) ast =
         | Sequence(children) | Choice(children)                                -> Some(children)
         | ReferenceType(_)                                                     -> CanHaveWithComponentsConstraint (GetActualType t ast)
     match c with
-    | SingleValueContraint(v1)          -> CheckValueType t v1 ast
+    | SingleValueContraint(v1)          ->  CheckValueType t v1 ast
     | RangeContraint(v1,v2,_,_)             -> 
         if not(CanHaveRangeContraint t) then
             raise(SemanticError(t.Location, "Type does not support range constraints"))
@@ -419,7 +419,9 @@ let rec isConstraintValid (t:Asn1Type) (c:Asn1Constraint) ast =
                 | None          -> raise (SemanticError(loc, sprintf "Invalid id: %s" conName))
                 | Some(child)   -> 
                     let isChoice = match (GetActualType t ast).Kind with Choice(_) -> true | _ -> false
-                    match nc.Contraint with Some(newC)    -> isConstraintValid child.Type newC ast | _   -> ()
+                    match nc.Contraint with 
+                    | Some(newC)    -> isConstraintValid child.Type newC ast 
+                    | _   -> ()
                     match child.Optionality, nc.Mark, isChoice with
                     | Some(Optional opt), MarkAbsent,false  when opt.defaultValue.IsSome-> raise(SemanticError (loc, sprintf "Component %s has default value and therefore it cannot be constraint to ABSENT" conName))
                     | None, MarkAbsent,false  
