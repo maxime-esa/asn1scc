@@ -335,26 +335,54 @@ PACKAGE BODY adaasn1rtl with SPARK_Mode IS
 
 
 
+
+    FUNCTION To_UInt(IntVal: Asn1Int) return Asn1Uint
+    IS
+        ret:Asn1Uint;
+    Begin
+        IF IntVal < 0 THEN
+            ret:=Asn1UInt(-(IntVal+1));
+            ret := NOT ret;
+        ELSE
+            ret:= Asn1UInt(IntVal);
+        END IF;
+      return ret;
+    End To_UInt;
+
+
     FUNCTION Sub (A : IN     Asn1Int; B : IN     Asn1Int)    RETURN Asn1UInt
     --# pre A >= B;
     --# return Asn1Uint(A-B);
     IS
 --                pragma SPARK_Mode(Off);
-        ret:Asn1UInt ;
-        diff:Asn1Int;
-    BEGIN
-        diff := A-B;
-        if (diff >= 0) then
-            ret := Asn1UInt(diff);
-        else
-            ret := Asn1UInt(-diff);
-            ret := NOT ret;
-            ret := ret + 1;
-        end if;
+      ret:Asn1UInt ;
+      au:Asn1UInt;
+      bu:Asn1UInt;
+--      diff:Asn1Int;
+   BEGIN
+
+      --diff := A-B;
+      --  if (diff >= 0) then
+      --      ret := Asn1UInt(diff);
+      --  else
+      --      ret := Asn1UInt(-diff);
+      --      ret := NOT ret;
+      --      ret := ret + 1;
+      --end if;
+      au := To_UInt(a);
+      bu := To_UInt(b);
+
+      if au >= bu then
+         ret := au - bu;
+      else
+         ret := bu - au;
+         ret := NOT ret;
+         ret := ret + 1;
+      end if;
+
+
         RETURN ret;
     END Sub;
-
-
 
 
     FUNCTION GetBytes (V : Asn1Uint)   RETURN Integer
@@ -450,18 +478,6 @@ PACKAGE BODY adaasn1rtl with SPARK_Mode IS
         RETURN Ret;
     END GetLengthInBytesOfSInt;
 
-    FUNCTION To_UInt(IntVal: Asn1Int) return Asn1Uint
-    IS
-        ret:Asn1Uint;
-    Begin
-        IF IntVal < 0 THEN
-            ret:=Asn1UInt(-(IntVal+1));
-            ret := NOT ret;
-        ELSE
-            ret:= Asn1UInt(IntVal);
-        END IF;
-      return ret;
-    End To_UInt;
 
     FUNCTION To_UInt32(IntVal: Asn1Int) return Interfaces.Unsigned_32
     --# pre IntVal >= 0 and IntVal <= Interfaces.Unsigned_32'Last;
