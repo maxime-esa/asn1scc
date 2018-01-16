@@ -507,7 +507,7 @@ let private createChoice (r:Asn1AcnAst.AstRoot) (deps:Asn1AcnAst.AcnInsertedFiel
             acnEncDecTestFunc   = acnEncDecTestFunc
             automaticTestCasesValues = automaticTestCasesValues
         }
-    ((Choice ret),[]), s7
+    ((Choice ret),newPrms), s7
 
 let private createChoiceChild (r:Asn1AcnAst.AstRoot) (l:ProgrammingLanguage) (m:Asn1AcnAst.Asn1Module) (ch:Asn1AcnAst.ChChildInfo) (newChildType : Asn1Type, us:State) =
     let typeDefinitionName = 
