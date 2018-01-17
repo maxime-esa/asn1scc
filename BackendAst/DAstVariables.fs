@@ -81,8 +81,13 @@ let rec printValue (r:DAst.AstRoot)  (l:ProgrammingLanguage)  (t:Asn1Type) (pare
                 List.head
             | _         -> raise(BugErrorException "unexpected type")
         | RefValue ((md,vs),v)         ->
-            let vas = r.getValueAssignmentByName md vs
-            vas.c_name
+            match t.ActualType.Kind with
+            | Integer _
+            | Real  _   ->
+                printValue r  l  t parentValue v.kind
+            | _         ->
+                let vas = r.getValueAssignmentByName md vs
+                vas.c_name
     | Ada ->
         match gv with
         | IntegerValue      v -> variables_a.PrintIntValue v
@@ -186,8 +191,14 @@ let rec printValue (r:DAst.AstRoot)  (l:ProgrammingLanguage)  (t:Asn1Type) (pare
             | _         -> raise(BugErrorException "unexpected type")
 
         | RefValue ((md,vs),v)         ->
-            let vas = r.getValueAssignmentByName md vs
-            vas.ada_name
+            match t.ActualType.Kind with
+            | Integer _
+            | Real  _   ->
+                printValue r  l  t parentValue v.kind
+            | _         ->
+            
+                let vas = r.getValueAssignmentByName md vs
+                vas.ada_name
 
 
 let createIntegerFunction (r:Asn1AcnAst.AstRoot) (l:ProgrammingLanguage) (t:Asn1AcnAst.Asn1Type) (o:Asn1AcnAst.Integer)  =
