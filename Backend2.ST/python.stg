@@ -234,7 +234,7 @@ Print_FalseValue() ::= "False"
 Print_BitStringValue(v) ::= <<"$v$">>
 Print_OctetStringValue(arruOctets) ::= <<'$arruOctets; format="X2"$'>>
 Print_RefValue(sName) ::= <<"$sName$">>
-Print_SeqOfValue(arrsValues) ::= <<{$arrsValues; separator=", "$}>>
+Print_SeqOfValue(arrsValues) ::= <<($arrsValues; separator=", "$)>>
 Print_SeqValue_Child(sName, sChildValue) ::= <<"$sName$": $sChildValue$>>
 Print_SeqValue(arrsValues) ::= <<{$arrsValues; separator=", "$}>>
 Print_ChValue(sAltName, sAltValue) ::= <<
