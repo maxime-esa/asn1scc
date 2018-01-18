@@ -245,7 +245,7 @@ namespace Asn1f2
              */
             CheckAsn1.CheckFiles(asn1Ast0, 0);
 
-            if (astXmlFile != "")
+            if (astXmlFile != "" && !cmdArgs.HasArgument("icdAcn"))
             {
                 var renamePolicy = getRenamePolicy(cmdArgs, ParameterizedAsn1Ast.EnumRenamePolicy.SelectiveEnumerants);
                 var uniqueEnums = EnsureUniqueEnumNames.DoWork(asn1Ast0, renamePolicy);
@@ -474,7 +474,7 @@ namespace Asn1f2
             }
 
             var customStg = cmdArgs.GetOptionalArgument("customStg", "");
-            if (customStg != "")
+            if (customStg != "" && !cmdArgs.HasArgument("icdAcn"))
             {
                 var astForCustomBackend = asn1Ast0;
                 if (customStgAstVer == "1")
@@ -524,6 +524,19 @@ namespace Asn1f2
 
                 spark_body.DoWork(astForBackend, acnAst3, outDir);
 
+                if (customStg != "")
+                {
+                    exportCustomStg(cmdArgs, customStg, "customStg", (stgFileName, outFileName) =>
+                    {
+                        genericBackend.DoWork(astForBackend, stgFileName, outFileName);
+                    });
+                }
+                if (astXmlFile != "" )
+                {
+                    genericBackend.DoWork(astForBackend, "xml.stg", astForBackend.AstXmlAbsFileName);
+                }
+
+
                 if (bGenTestCases)
                 {
                     var vas = "ALL";
@@ -562,6 +575,17 @@ namespace Asn1f2
                 CheckAsn1.checkDuplicateValueAssigments(refTypesWithNoConstraints, Ast.ProgrammingLanguage.C);
                 var astForBackend = EnsureUniqueEnumNames.DoWork(refTypesWithNoConstraints, renamePolicy);
                 c_body.DoWork(astForBackend, acnAst3, outDir);
+                if (customStg != "")
+                {
+                    exportCustomStg(cmdArgs, customStg, "customStg", (stgFileName, outFileName) =>
+                    {
+                        genericBackend.DoWork(astForBackend, stgFileName, outFileName);
+                    });
+                }
+                if (astXmlFile != "")
+                {
+                    genericBackend.DoWork(astForBackend, "xml.stg", astForBackend.AstXmlAbsFileName);
+                }
 
                 if (bGenTestCases)
                 {
