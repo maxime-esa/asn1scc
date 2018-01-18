@@ -62,8 +62,9 @@ variables["$sName$"] = {
 }
 
 >>
-TypeGeneric(nLine, nPos, sSubType) ::= <<
-"Line": $nLine$, "CharPositionInLine": $nPos$, $sSubType$
+
+TypeGeneric(nLine, nPos, sAsnFile, sSubType) ::= <<
+"Line": $nLine$, "CharPositionInLine": $nPos$, "Asn1File":"$sAsnFile$", $sSubType$
 >>
 
 

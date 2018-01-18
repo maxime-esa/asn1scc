@@ -94,7 +94,7 @@ let PrintContract (tas:TypeAssignment) (r:AstRoot) (stgFileName:string) =
     gen.Contract pattern (if String.length(expression) > 0 then expression else null) stgFileName
 
 
-let rec PrintType (r:AstRoot) (stgFileName:string) modName (t:Asn1Type)    =
+let rec PrintType (r:AstRoot) (f:Asn1File) (stgFileName:string) modName (t:Asn1Type)    =
     let rec printAsn1Value (v:Asn1AcnAst.Asn1Value) = 
         match v.kind with
         | Asn1AcnAst.IntegerValue        v       -> stg_asn1.Print_IntegerValue v.Value
@@ -121,7 +121,7 @@ let rec PrintType (r:AstRoot) (stgFileName:string) modName (t:Asn1Type)    =
         | NullType          i    -> gen.NullType () stgFileName
         | Choice(chInfo)      ->
             let emitChild (c:ChChildInfo) =
-                gen.ChoiceChild c.Name.Value (ToC c.Name.Value) (BigInteger c.Name.Location.srcLine) (BigInteger c.Name.Location.charPos) (PrintType r stgFileName modName  c.chType ) (c.presentWhenName (Some c.chType.typeDefintionOrReference) C) stgFileName
+                gen.ChoiceChild c.Name.Value (ToC c.Name.Value) (BigInteger c.Name.Location.srcLine) (BigInteger c.Name.Location.charPos) (PrintType r f stgFileName modName  c.chType ) (c.presentWhenName (Some c.chType.typeDefintionOrReference) C) stgFileName
             gen.ChoiceType (chInfo.children |> Seq.map emitChild) stgFileName
         | Sequence(seqInfo)    ->
             let emitChild (c:SeqChildInfo) =
@@ -129,8 +129,8 @@ let rec PrintType (r:AstRoot) (stgFileName:string) modName (t:Asn1Type)    =
                 | Asn1Child c -> 
                     match c.Optionality with
                     | Some(Asn1AcnAst.Optional(optVal)) when optVal.defaultValue.IsSome -> 
-                           gen.SequenceChild c.Name.Value (ToC c.Name.Value) true (printAsn1Value optVal.defaultValue.Value) (BigInteger c.Name.Location.srcLine) (BigInteger c.Name.Location.charPos) (PrintType r stgFileName modName c.Type  ) stgFileName
-                    | _ -> gen.SequenceChild c.Name.Value (ToC c.Name.Value) c.Optionality.IsSome null (BigInteger c.Name.Location.srcLine) (BigInteger c.Name.Location.charPos) (PrintType r stgFileName modName c.Type  ) stgFileName
+                           gen.SequenceChild c.Name.Value (ToC c.Name.Value) true (printAsn1Value optVal.defaultValue.Value) (BigInteger c.Name.Location.srcLine) (BigInteger c.Name.Location.charPos) (PrintType r f stgFileName modName c.Type  ) stgFileName
+                    | _ -> gen.SequenceChild c.Name.Value (ToC c.Name.Value) c.Optionality.IsSome null (BigInteger c.Name.Location.srcLine) (BigInteger c.Name.Location.charPos) (PrintType r f stgFileName modName c.Type  ) stgFileName
                 | AcnChild  c -> null
             gen.SequenceType (seqInfo.children |> Seq.map emitChild) stgFileName
         | Enumerated(enmInfo)     ->
@@ -139,7 +139,7 @@ let rec PrintType (r:AstRoot) (stgFileName:string) modName (t:Asn1Type)    =
             gen.EnumType (enmInfo.baseInfo.items |> Seq.map emitItem) stgFileName
         | SequenceOf info     ->
             let sMin, sMax = info.baseInfo.minSize.ToString(), info.baseInfo.maxSize.ToString()
-            gen.SequenceOfType sMin sMax  (PrintType r stgFileName modName  info.childType ) stgFileName
+            gen.SequenceOfType sMin sMax  (PrintType r f stgFileName modName  info.childType ) stgFileName
         | ReferenceType info ->
             let uperRange = 
                 match (t.ActualType).Kind with
@@ -156,24 +156,24 @@ let rec PrintType (r:AstRoot) (stgFileName:string) modName (t:Asn1Type)    =
             | Some(sMin, sMax)  -> gen.RefTypeMinMax sMin sMax info.baseInfo.tasName.Value sModName (ToC info.baseInfo.tasName.Value) sCModName stgFileName
             | None              -> gen.RefType info.baseInfo.tasName.Value sModName (ToC info.baseInfo.tasName.Value) sCModName stgFileName
 
-    gen.TypeGeneric (BigInteger t.Location.srcLine) (BigInteger t.Location.charPos) (PrintTypeAux t) stgFileName
+    gen.TypeGeneric (BigInteger t.Location.srcLine) (BigInteger t.Location.charPos) f.FileName (PrintTypeAux t) stgFileName
 
 let exportFile (r:AstRoot) (deps:Asn1AcnAst.AcnInsertedFieldDependencies) (stgFileName:string) (outFileName:string) =
     let AssigOp (t: Asn1Type) =
         match t.Kind with
         | Sequence(_) -> gen.AssigOpSpecialType () stgFileName
         | _           -> gen.AssigOpNormalType () stgFileName
-    let PrintVas (vas: ValueAssignment) modName =
-        gen.VasXml vas.Name.Value (BigInteger vas.Name.Location.srcLine) (BigInteger vas.Name.Location.charPos) (PrintType r stgFileName modName  vas.Type ) (PrintCustomAsn1Value vas stgFileName) (ToC vas.c_name)  stgFileName
-    let PrintTas (tas:TypeAssignment) modName =
-        gen.TasXml tas.Name.Value (BigInteger tas.Name.Location.srcLine) (BigInteger tas.Name.Location.charPos) (PrintType r stgFileName modName tas.Type ) (ToC tas.Name.Value) (AssigOp tas.Type) (PrintContract tas r stgFileName) stgFileName
-    let PrintModule (m:Asn1Module) =
+    let PrintVas (f:Asn1File) (vas: ValueAssignment) modName =
+        gen.VasXml vas.Name.Value (BigInteger vas.Name.Location.srcLine) (BigInteger vas.Name.Location.charPos) (PrintType r f stgFileName modName  vas.Type ) (PrintCustomAsn1Value vas stgFileName) (ToC vas.c_name)  stgFileName
+    let PrintTas (f:Asn1File) (tas:TypeAssignment) modName =
+        gen.TasXml tas.Name.Value (BigInteger tas.Name.Location.srcLine) (BigInteger tas.Name.Location.charPos) (PrintType r f stgFileName modName tas.Type ) (ToC tas.Name.Value) (AssigOp tas.Type) (PrintContract tas r stgFileName) stgFileName
+    let PrintModule (f:Asn1File) (m:Asn1Module) =
         let PrintImpModule (im:Asn1Ast.ImportedModule) =
             gen.ImportedMod im.Name.Value (ToC im.Name.Value) (im.Types |> Seq.map(fun x -> x.Value)) (im.Values |> Seq.map(fun x -> x.Value)) stgFileName
-        gen.ModuleXml m.Name.Value (ToC m.Name.Value) (m.Imports |> Seq.map PrintImpModule) m.ExportedTypes m.ExportedVars (m.TypeAssignments |> Seq.map (fun t -> PrintTas t m.Name.Value)) (m.ValueAssignments |> Seq.map (fun t -> PrintVas t m.Name.Value)) stgFileName
+        gen.ModuleXml m.Name.Value (ToC m.Name.Value) (m.Imports |> Seq.map PrintImpModule) m.ExportedTypes m.ExportedVars (m.TypeAssignments |> Seq.map (fun t -> PrintTas f t m.Name.Value)) (m.ValueAssignments |> Seq.map (fun t -> PrintVas f t m.Name.Value)) stgFileName
 
     let PrintFile (f:Asn1File) =
-        gen.FileXml f.FileName (f.Modules |> Seq.map PrintModule) stgFileName
+        gen.FileXml f.FileName (f.Modules |> Seq.map (PrintModule f)) stgFileName
 
     let content = gen.RootXml (r.Files |> Seq.map PrintFile) stgFileName
     File.WriteAllText(outFileName, content.Replace("\r",""))
