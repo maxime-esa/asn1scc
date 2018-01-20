@@ -8,6 +8,7 @@ open System.Resources
 type CliArguments =
     | [<AltCommandLine("-c")>]C_lang 
     | [<AltCommandLine("-Ada")>]Ada_Lang
+    | [<AltCommandLine("-py")>]Py_Lang
     | [<AltCommandLine("-uPER")>]UPER_enc
     | [<AltCommandLine("-ACN")>]ACN_enc
     | [<AltCommandLine("-atc")>]Auto_test_cases
@@ -24,6 +25,7 @@ with
             match this with
             | C_lang           -> "generate code for the C/C++ programming language"
             | Ada_Lang         -> "generate code for the Ada/SPARK programming language"
+            | Py_Lang          -> "generate code for the Python 3.6 programming language"
             | UPER_enc         -> "generates encoding and decoding functions for unaligned Packed Encoding Rules (uPER)"
             | ACN_enc          -> "generates encoding and decoding functions using the ASSERT ASN.1 encoding Control Notation"
             | Auto_test_cases  -> "create automatic test cases."
@@ -40,6 +42,7 @@ let checkArguement arg =
     match arg with
     | C_lang           -> ()
     | Ada_Lang         -> ()
+    | Py_Lang          -> ()
     | UPER_enc         -> ()
     | ACN_enc          -> ()
     | Auto_test_cases  -> ()
@@ -103,6 +106,11 @@ let exportRTL outDir  (l:DAst.ProgrammingLanguage) =
                 writeTextFile (Path.Combine(outDir, "gnat.cfg"))    (rm.GetString("gnat",null)) 
                 writeTextFile (Path.Combine(outDir, "runSpark.sh"))    (rm.GetString("run",null)) 
                 writeTextFile (Path.Combine(outDir, "GPS_project.gpr"))    (rm.GetString("GPS_project",null)) 
+    | DAst.ProgrammingLanguage.Python ->
+                writeTextFile (Path.Combine(outDir, "asn1.py")) (rm.GetString("asn1py",null)) 
+                if not <| System.IO.Directory.Exists(Path.Combine(outDir, "tests")) then
+                        System.IO.Directory.CreateDirectory(Path.Combine(outDir, "tests")) |> ignore
+                writeTextFile (Path.Combine(outDir, "tests", "BitStreamTest.py")) (rm.GetString("py_bitstream_test",null)) 
 
 
 
@@ -133,6 +141,7 @@ let main argv =
                 match a with
                 | C_lang        -> Some (DAstConstruction.DoWork frontEntAst acnDeps CommonTypes.ProgrammingLanguage.C args.encodings)
                 | Ada_Lang      -> Some (DAstConstruction.DoWork frontEntAst acnDeps CommonTypes.ProgrammingLanguage.Ada args.encodings)
+                | Py_Lang       -> Some (DAstConstruction.DoWork frontEntAst acnDeps CommonTypes.ProgrammingLanguage.Python args.encodings)
                 | _             -> None)
 
         //generate code
@@ -168,5 +177,3 @@ let main argv =
             Console.Error.WriteLine(ex.StackTrace)
             4
             *)
-
-    

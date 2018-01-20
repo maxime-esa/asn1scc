@@ -171,6 +171,9 @@ namespace parseStg2
                 case "HTML":
                     lng = "ST.lang <- CommonTypes.ProgrammingLanguage.Html";
                     break;
+                case "PYTHON":
+                    lng = "ST.lang <- CommonTypes.ProgrammingLanguage.Python";
+                    break;
                 default:
                     lng = "ST.lang <- CommonTypes.ProgrammingLanguage.Unknown";
                     break;

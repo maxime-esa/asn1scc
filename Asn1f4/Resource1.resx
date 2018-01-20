@@ -157,4 +157,10 @@
   <data name="adaasn1rtl_ads" type="System.Resources.ResXFileRef, System.Windows.Forms">
     <value>Resources\adaasn1rtl.ads;System.String, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089;windows-1253</value>
   </data>
+  <data name="asn1py" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\asn1py\asn1.py;System.String, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="py_bitstream_test" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\asn1py\tests\BitStreamTest.py;System.String, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
 </root>
