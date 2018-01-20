@@ -61,6 +61,14 @@
     <Compile Include="xml_outputs.stg.fs" />
     <Compile Include="generic.gen.fs" />
     <None Include="generic.stg" />
+    <Compile Include="icdtemplate_acn.gen.fs" />
+    <None Include="icdtemplate_acn.stg">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <Compile Include="icdtemplate_uper.gen.fs" />
+    <None Include="icdtemplate_uper.stg">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\CommonTypes\CommonTypes.fsproj">

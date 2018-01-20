@@ -25,5 +25,19 @@
     <modName>gen</modName>
 	<lang>generic</lang>
   </run>
+  
+  
+  <run mode="single">
+    <input>icdtemplate_acn.stg</input>
+    <output>icdtemplate_acn.gen.fs</output>
+    <modName>icd_acn</modName>
+	<lang>icdtemplate_acn</lang>
+  </run>  
 
+  <run mode="single">
+    <input>icdtemplate_uper.stg</input>
+    <output>icdtemplate_uper.gen.fs</output>
+    <modName>icd_uper</modName>
+	<lang>icdtemplate_uper</lang>
+  </run>  
 </Settings>

@@ -386,6 +386,7 @@ type StringType = {
     acnMaxSizeInBits    : int
     acnMinSizeInBits    : int
     acnEncodingClass    : StringAcnEncodingClass
+    isNumeric           : bool
 }
 
 

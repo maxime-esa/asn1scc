@@ -79,8 +79,15 @@
     <Compile Include="DAstExportToXml.fs" />
     <Compile Include="GrammarGenerator.fs" />
     <Compile Include="CustomStgExport.fs" />
+    <Compile Include="GenerateUperIcd.fs" />
+    <Compile Include="GenerateAcnIcd.fs" />
   </ItemGroup>
   <ItemGroup>
+    <ProjectReference Include="..\Antlr\Antlr.csproj">
+      <Name>Antlr</Name>
+      <Project>{a1882f1d-5185-407c-8227-1e2b69baade9}</Project>
+      <Private>True</Private>
+    </ProjectReference>
     <ProjectReference Include="..\CommonTypes\CommonTypes.fsproj">
       <Name>CommonTypes</Name>
       <Project>{83f15fa6-7da0-4e47-9512-39ae3fdd28cf}</Project>

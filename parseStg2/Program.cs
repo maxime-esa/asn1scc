@@ -229,7 +229,7 @@ namespace parseStg2
                                 txt.WriteLine("    {0}", lng);
                                 txt.WriteLine("    ST.call {0} \"{1}\" [{2}]", "fileName", func.name, prms);
                             }
-                            else if (inpFileNoExt == "icd_uper" || inpFileNoExt == "icd_acn")
+                            else if (inpFileNoExt == "icd_uper" || inpFileNoExt == "icd_acn" || inpFileNoExt == "icdtemplate_acn" || inpFileNoExt == "icdtemplate_uper")
                             {
                                 txt.WriteLine("let {0} (fileName:string) {1}  =", func.name, paramerters);
                                 txt.WriteLine("    {0}", lng);

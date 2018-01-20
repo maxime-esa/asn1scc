@@ -19,6 +19,13 @@ type CliArguments =
     | [<AltCommandLine("-gtc")>] Generate_Test_Grammar 
     | [<AltCommandLine("-customStg")>] Custom_Stg  of custom_stg_colon_outfilename:string
     | [<AltCommandLine("-customStgAstVersion")>] Custom_Stg_Ast_Version  of astver:int
+
+    | [<AltCommandLine("-icdUper")>] IcdUper  of uper_icd_output_file:string
+    | [<AltCommandLine("-customIcdUper")>] CustomIcdUper  of custom_stg_colon_out_filename:string
+    | [<AltCommandLine("-icdAcn")>] IcdAcn  of acn_icd_output_file:string
+    | [<AltCommandLine("-customIcdAcn")>] CustomIcdAcn  of custom_stg_colon_out_filename:string
+
+
     | [<MainCommand; ExactlyOnce; Last>] Files of files:string list
 with
     interface IArgParserTemplate with
@@ -38,7 +45,11 @@ with
             | Generate_Test_Grammar -> "generate a sample grammar for testing purposes"
             | Custom_Stg _   -> "custom_stg_colon_outfilename is expected as stgFile.stg:outputFile where stgFile.stg is an existing custom stg file, while outputFile is the name of the generated file. Invokes the custom stg file 'stgFile.stg' and produces the output file 'outputFile'"
             | Custom_Stg_Ast_Version _ -> "depricated option. Used only for backwards compatibility"
-
+            | IcdUper  _        -> "Produces an Interface Control Document for the input ASN.1 grammar for uPER encoding"    
+            | CustomIcdUper  _  -> "Invokes the custom stg file 'stgFile.stg' using the icdUper backend and produces the output file 'outputFile'"
+            | IcdAcn  _         -> "Produces an Interface Control Document for the input ASN.1 and ACN grammars for ACN encoding"
+            | CustomIcdAcn  _   -> "Invokes the custom stg file 'stgFile.stg' using the icdAcn backend and produces the output file 'outputFile'"
+            
 
 
 let getCustmStgFileNames (compositeFile:string) =
@@ -51,8 +62,25 @@ let getCustmStgFileNames (compositeFile:string) =
         | stg::out::[]  -> Some(stg,out)
         | _             -> None
      
-    
 
+let checkOutFileName (fileName:string) extension cmdoption =    
+    match fileName.ToLower().EndsWith extension with
+    | true  -> ()
+    | false -> 
+        let msg = sprintf "Invalid output filename '%s' in option %s \nGenerated file must have an .%s extension." fileName cmdoption extension
+        raise (UserException msg)
+
+let checkCompositeFile comFile cmdoption extention=
+    match getCustmStgFileNames comFile with
+    | Some(stgFile, outFile)  -> 
+        match System.IO.File.Exists stgFile with
+        | true  -> ()
+        | false -> 
+            let msg = sprintf "Custom stg file '%s' not found"  stgFile
+            raise (UserException msg)
+    | None -> 
+        let msg = sprintf "Invalid argument for '%s' option. Expected format is  stgFile.stg:outputFile.\nEg -%s custom.stg:generated.%s\nUnder windows, you may user double :: to separate the stg file with output fileE.g. %s c:\\custom.stg::c:\\generated.%s" cmdoption cmdoption extention cmdoption extention
+        raise (UserException msg)
 
 
 let checkArguement arg =
@@ -64,12 +92,7 @@ let checkArguement arg =
     | Auto_test_cases  -> ()
     | Equal_Func       -> ()
     | Generate_Test_Grammar -> ()
-    | Xml_Ast xmlFileName   -> 
-        match xmlFileName.ToLower().EndsWith ".xml" with
-        | true  -> ()
-        | false -> 
-            let msg = sprintf "Invalid output filename '%s'\nGenerated ast xml files must have an .xml extension." xmlFileName
-            raise (UserException msg)
+    | Xml_Ast xmlFileName   -> checkOutFileName xmlFileName ".xml" "-x"
     | Out outDir       -> 
         match System.IO.Directory.Exists outDir with
         | true  -> ()
@@ -78,18 +101,12 @@ let checkArguement arg =
         files |> Seq.iter(fun f -> match File.Exists f with true -> () | false -> raise (UserException (sprintf "File '%s' does not exist." f)))
     | Type_Prefix _    -> ()
     | Rename_Policy _   -> ()
-    | Custom_Stg comFile  -> 
-        match getCustmStgFileNames comFile with
-        | Some(stgFile, outFile)  -> 
-            match System.IO.File.Exists stgFile with
-            | true  -> ()
-            | false -> 
-                let msg = sprintf "Custom stg file '%s' not found"  stgFile
-                raise (UserException msg)
-        | None -> 
-            let msg = sprintf "Invalid argument for '-customStg' option. Expected format is  stgFile.stg:outputFile.\nEg -customStg python.stg:generated.py\nUnder windows, you may user double :: to separate the stg file with output fileE.g. -customStg c:\\mystg.stg::c:\\output.txt" 
-            raise (UserException msg)
+    | Custom_Stg comFile  -> checkCompositeFile comFile "-customStg" "txt"
     | Custom_Stg_Ast_Version _ -> ()
+    | IcdUper  outHtmlFile      -> checkOutFileName outHtmlFile ".html" "-icdUper"
+    | CustomIcdUper  comFile    -> checkCompositeFile comFile "-customIcdUper" ".html"
+    | IcdAcn  outHtmlFile       -> checkOutFileName outHtmlFile ".html" "-icdAcn"
+    | CustomIcdAcn  comFile     -> checkCompositeFile comFile "-customIcdAcn" ".html"
 
 
 let constructCommandLineSettings args (parserResults: ParseResults<CliArguments>)=
@@ -174,14 +191,27 @@ let main0 argv =
                 )
         
         //custom stgs code generation
+        let r = DAstConstruction.DoWork frontEntAst acnDeps CommonTypes.ProgrammingLanguage.C args.encodings
+
         cliArgs |> 
-            List.choose (fun a -> match a with | Custom_Stg compFile   -> Some compFile | _ -> None) |>
-            Seq.iter(fun comFile -> 
-                match getCustmStgFileNames comFile with
-                | Some(stgFile, outFile)  -> 
-                    let r = DAstConstruction.DoWork frontEntAst acnDeps CommonTypes.ProgrammingLanguage.C args.encodings
-                    CustomStgExport.exportFile r acnDeps stgFile outFile
-                | None  -> ())
+            //List.choose (fun a -> match a with | Custom_Stg compFile   -> Some compFile | _ -> None) |>
+            Seq.iter(fun arg -> 
+                match arg with
+                | Custom_Stg comFile ->
+                    match getCustmStgFileNames comFile with
+                    | Some(stgFile, outFile)  -> CustomStgExport.exportFile r acnDeps stgFile outFile
+                    | None  -> ()
+                | IcdUper outFile       -> GenerateUperIcd.DoWork r "icdtemplate_uper.stg" outFile
+                | CustomIcdUper comFile ->
+                    match getCustmStgFileNames comFile with
+                    | Some(stgFile, outFile)  -> GenerateUperIcd.DoWork r stgFile outFile
+                    | None  -> ()
+                | IcdAcn outFile       -> GenerateAcnIcd.DoWork r  acnDeps "icdtemplate_acn.stg" outFile
+                | CustomIcdAcn comFile ->
+                    match getCustmStgFileNames comFile with
+                    | Some(stgFile, outFile)  -> GenerateAcnIcd.DoWork r  acnDeps stgFile outFile
+                    | None  -> ()
+                | _ -> ())
 
         cliArgs |> 
             List.filter (fun a -> match a with | Generate_Test_Grammar    -> true | _  -> false) |>

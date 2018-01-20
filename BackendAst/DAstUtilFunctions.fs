@@ -785,6 +785,7 @@ type AstRoot with
 
 type Asn1File with
     member this.FileNameWithoutExtension = System.IO.Path.GetFileNameWithoutExtension this.FileName
+    member this.TypeAssignments = this.Modules |> List.collect(fun m -> m.TypeAssignments)
 
 let getValueByUperRange (r:uperRange<'T>) (z:'T) = 
     match r with
@@ -839,3 +840,4 @@ let hasUperEncodeFunction (encFunc : UPerFunction option)  =
             match fnc.funcBody p with
             | None   -> false
             | Some _ -> true
+
