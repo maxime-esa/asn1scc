@@ -26,7 +26,13 @@ open DAstUtilFunctions
 
 
 let getFuncName (r:Asn1AcnAst.AstRoot) (l:ProgrammingLanguage) (typeId:ReferenceToType) =
-    typeId.tasInfo |> Option.map (fun x -> ToC2(r.args.TypePrefix + x.tasName + "_IsConstraintValid"))
+    match l with
+    | C
+    | Ada       -> typeId.tasInfo |> Option.map (fun x -> ToC2(r.args.TypePrefix + x.tasName + "_IsConstraintValid"))
+    | Python    -> 
+        match typeId.tasInfo with
+        | None      -> Some "check_constraints"
+        | _         -> typeId.tasInfo |> Option.map (fun x -> ToCPy(r.args.TypePrefix + x.tasName + ".check_constraints"))
 
 let Lte (l:ProgrammingLanguage) eqIsInc  e1 e2 =
     match eqIsInc with
@@ -201,10 +207,10 @@ let hasValidationFunc allCons =
     | []      -> false
     | _       -> true
 
-let makeExpressionToStatement l = match l with C -> isvalid_c.makeExpressionToStatement | Ada -> isvalid_a.makeExpressionToStatement
-let callBaseTypeFunc l = match l with C -> isvalid_c.call_base_type_func | Ada -> isvalid_a.call_base_type_func
-let callBaseTypeFuncExp l = match l with C -> isvalid_c.call_base_type_func_exp | Ada -> isvalid_a.call_base_type_func_exp
-let joinTwoIfFirstOk l = match l with C -> isvalid_c.JoinTwoIfFirstOk | Ada -> isvalid_a.JoinTwoIfFirstOk
+let makeExpressionToStatement l = match l with C -> isvalid_c.makeExpressionToStatement | Ada -> isvalid_a.makeExpressionToStatement    | Python -> isvalid_p.makeExpressionToStatement
+let callBaseTypeFunc l          = match l with C -> isvalid_c.call_base_type_func       | Ada -> isvalid_a.call_base_type_func          | Python -> isvalid_p.call_base_type_func
+let callBaseTypeFuncExp l       = match l with C -> isvalid_c.call_base_type_func_exp   | Ada -> isvalid_a.call_base_type_func_exp      | Python -> isvalid_p.call_base_type_func_exp
+let joinTwoIfFirstOk l          = match l with C -> isvalid_c.JoinTwoIfFirstOk          | Ada -> isvalid_a.JoinTwoIfFirstOk             | Python -> (fun _ _ -> "")
 
 let getAddres = DAstEqual.getAddres
 
@@ -233,11 +239,12 @@ let createPrimitiveFunction (r:Asn1AcnAst.AstRoot) (l:ProgrammingLanguage)  (typ
                 match funcName  with
                 | None              -> None
                 | Some funcName     -> 
-                    let p = "val"
+                    let p = match l with C | Ada -> "val" | Python -> "value"
                     let exp = funcBody p  
                     match l with
                     |C     -> Some(isvalid_c.EmitTypeAssignment_primitive funcName  typeDefinition.name exp  (alphaFuncs |> List.map(fun x -> x.funcBody)) )
                     |Ada   -> Some(isvalid_a.EmitTypeAssignment_primitive funcName  typeDefinition.name exp  (alphaFuncs |> List.map(fun x -> x.funcBody)) )
+                    |Python-> Some(isvalid_p.EmitTypeAssignment_primitive funcName  typeDefinition.name exp  (alphaFuncs |> List.map(fun x -> x.funcBody)) )
         let  funcDef  = 
                 match funcName with
                 | None              -> None
@@ -245,6 +252,7 @@ let createPrimitiveFunction (r:Asn1AcnAst.AstRoot) (l:ProgrammingLanguage)  (typ
                     match l with
                     |C     ->  Some(isvalid_c.EmitTypeAssignment_primitive_def funcName  typeDefinition.name errCode.errCodeName (BigInteger errCode.errCodeValue))
                     |Ada   ->  Some(isvalid_a.EmitTypeAssignment_primitive_def funcName  typeDefinition.name errCode.errCodeName (BigInteger errCode.errCodeValue))
+                    |Python->  Some(isvalid_p.EmitTypeAssignment_primitive_def funcName  typeDefinition.name errCode.errCodeName (BigInteger errCode.errCodeValue))
         
         let ret = 
             {
@@ -282,11 +290,12 @@ let createBitOrOctetStringFunction (r:Asn1AcnAst.AstRoot) (l:ProgrammingLanguage
                 match funcName  with
                 | None              -> None
                 | Some funcName     -> 
-                    let topLevAcc, p =  match l with | C -> "->", "pVal" | Ada -> ".", "val"
+                    let topLevAcc, p =  match l with | C -> "->", "pVal" | Ada -> ".", "val" | Python -> ".", "value"
                     let exp = funcBody p  topLevAcc
                     match l with
                     |C     -> Some(isvalid_c.EmitTypeAssignment_oct_or_bit_string funcName  typeDefinition.name exp (alphaFuncs |> List.map(fun x -> x.funcBody)) )
                     |Ada   -> Some(isvalid_a.EmitTypeAssignment_primitive funcName  typeDefinition.name exp (alphaFuncs |> List.map(fun x -> x.funcBody)) )
+                    |Python-> Some(isvalid_p.EmitTypeAssignment_primitive funcName  typeDefinition.name exp (alphaFuncs |> List.map(fun x -> x.funcBody)) )
         let  funcDef  = 
                 match funcName with
                 | None              -> None
@@ -294,6 +303,7 @@ let createBitOrOctetStringFunction (r:Asn1AcnAst.AstRoot) (l:ProgrammingLanguage
                     match l with
                     |C     ->  Some(isvalid_c.EmitTypeAssignment_oct_or_bit_string_def funcName  typeDefinition.name errCode.errCodeName (BigInteger errCode.errCodeValue))
                     |Ada   ->  Some(isvalid_a.EmitTypeAssignment_primitive_def funcName  typeDefinition.name errCode.errCodeName (BigInteger errCode.errCodeValue))
+                    |Python->  Some(isvalid_c.EmitTypeAssignment_primitive_def funcName  typeDefinition.name errCode.errCodeName (BigInteger errCode.errCodeValue))
         
         let ret = 
             {
@@ -323,6 +333,7 @@ let integerToString (l:ProgrammingLanguage) isUnsigned (i:BigInteger) =
         match isUnsigned with
         | true   -> sprintf "%sUL" (i.ToString())
         | false  -> sprintf "%sLL" (i.ToString())
+    | Python-> i.ToString()
 
 
 let createIntegerFunctionByCons (r:Asn1AcnAst.AstRoot) (l:ProgrammingLanguage) isUnsigned (allCons  : IntegerTypeConstraint list) =
@@ -344,9 +355,10 @@ let createRealFunction (r:Asn1AcnAst.AstRoot) (l:ProgrammingLanguage) (t:Asn1Acn
     createPrimitiveFunction r l t.id o.AllCons (foldRangeCon l (fun v -> v.ToString("E20", NumberFormatInfo.InvariantInfo)) (fun v -> v.ToString("E20", NumberFormatInfo.InvariantInfo))) typeDefinition [] us
 
 let createStringFunction (r:Asn1AcnAst.AstRoot) (l:ProgrammingLanguage) (t:Asn1AcnAst.Asn1Type) (o:Asn1AcnAst.StringType) (typeDefinition:TypeDefinitionCommon) (us:State)  =
-    let alphafuncName = ToC (((t.id.AcnAbsPath |> Seq.skip 1 |> Seq.StrJoin("-")).Replace("#","elm")) + "_CharsAreValid")
+    let alphafuncName = match l with C | Ada -> ToC (((t.id.AcnAbsPath |> Seq.skip 1 |> Seq.StrJoin("-")).Replace("#","elm")) + "_CharsAreValid") | Python -> "self._check_alphabet"
     let foldAlpha = (foldRangeCon l (fun v -> v.ToString().ISQ) (fun v -> v.ToString().ISQ))
-    let alpaCons = o.AllCons |> List.choose(fun x -> match x with AlphabetContraint al-> Some al | _ -> None) |> List.map (foldAlpha (sprintf "str%s" (l.ArrayAccess "i")))
+    let accessChar = match l with C | Ada -> sprintf "str%s" (l.ArrayAccess "i") | Python -> "char"
+    let alpaCons = o.AllCons |> List.choose(fun x -> match x with AlphabetContraint al-> Some al | _ -> None) |> List.map (foldAlpha (accessChar))
     let alphaFuncs = 
         match alpaCons with
         | []    -> []
@@ -355,6 +367,7 @@ let createStringFunction (r:Asn1AcnAst.AstRoot) (l:ProgrammingLanguage) (t:Asn1A
                 match l with
                 | C    -> isvalid_c.Print_AlphabetCheckFunc alphafuncName alpaCons
                 | Ada  -> isvalid_a.Print_AlphabetCheckFunc alphafuncName alpaCons
+                | Python-> isvalid_p.Print_AlphabetCheckFunc alphafuncName alpaCons
             let alphFunc = {AlphaFunc.funcName = alphafuncName; funcBody = funcBody }
             [alphFunc]
     createPrimitiveFunction r l t.id o.AllCons (foldStringCon r l alphafuncName) typeDefinition alphaFuncs us
@@ -366,7 +379,8 @@ let createEnumeratedFunction (r:Asn1AcnAst.AstRoot) (l:ProgrammingLanguage) (t:A
     let printNamedItem (v:string) =
         let itm = o.items |> Seq.find (fun x -> x.Name.Value = v)
         itm.getBackendName l
-    createPrimitiveFunction r l t.id o.AllCons (foldGenericCon l  printNamedItem) typeDefinition [] us
+    let cons = match l with C  | Ada -> o.AllCons | Python -> []
+    createPrimitiveFunction r l t.id cons (foldGenericCon l  printNamedItem) typeDefinition [] us
 
 
 let exlcudeSizeConstraintIfFixedSize minSize maxSize allCons = 
@@ -375,7 +389,7 @@ let exlcudeSizeConstraintIfFixedSize minSize maxSize allCons =
     | true  -> allCons |> List.filter(fun x -> match x with SizeContraint al-> false | _ -> true)
 
 let createOctetStringFunction (r:Asn1AcnAst.AstRoot) (l:ProgrammingLanguage) (t:Asn1AcnAst.Asn1Type) (o:Asn1AcnAst.OctetString) (typeDefinition:TypeDefinitionCommon) (equalFunc:EqualFunction) (printValue  : (Asn1ValueKind option) -> (Asn1ValueKind) -> string) (us:State)  =
-    let allCons = exlcudeSizeConstraintIfFixedSize o.minSize o.maxSize o.AllCons
+    let allCons = match l with C | Ada -> exlcudeSizeConstraintIfFixedSize o.minSize o.maxSize o.AllCons | Python -> o.AllCons
     let anonymousVariables =
         allCons |> 
         List.map DastFold.getValueFromSizeableConstraint 
@@ -407,7 +421,7 @@ let createOctetStringFunction (r:Asn1AcnAst.AstRoot) (l:ProgrammingLanguage) (t:
 
 
 let createBitStringFunction (r:Asn1AcnAst.AstRoot) (l:ProgrammingLanguage) (t:Asn1AcnAst.Asn1Type) (o:Asn1AcnAst.BitString) (typeDefinition:TypeDefinitionCommon) (equalFunc:EqualFunction) (printValue  : (Asn1ValueKind option) -> (Asn1ValueKind) -> string) (us:State)  =
-    let allCons = exlcudeSizeConstraintIfFixedSize o.minSize o.maxSize o.AllCons
+    let allCons = match l with C | Ada -> exlcudeSizeConstraintIfFixedSize o.minSize o.maxSize o.AllCons | Python -> o.AllCons
     let anonymousVariables =
         allCons |> 
         List.map DastFold.getValueFromSizeableConstraint 
@@ -461,9 +475,16 @@ let isValidSequenceChild   (l:ProgrammingLanguage) (o:Asn1AcnAst.Asn1Child) (new
                 | Ada   -> 
                     let newFunc = (fun p childAccess -> isvalid_a.Sequence_OptionalChild p childAccess c_name (func p childAccess))
                     Some (newFunc, isValid)
+                | Python     -> 
+                    let newFunc = (fun p childAccess -> "")
+                    Some (newFunc, isValid)
             | None      -> Some (func, isValid)
     let isAlwaysPresentStatement, finalState =
-        let child_always_present_or_absent = match l with C -> isvalid_c.Sequence_optional_child_always_present_or_absent | Ada -> isvalid_a.Sequence_optional_child_always_present_or_absent
+        let child_always_present_or_absent = 
+            match l with 
+            | C         -> isvalid_c.Sequence_optional_child_always_present_or_absent 
+            | Ada       -> isvalid_a.Sequence_optional_child_always_present_or_absent 
+            | Python    -> isvalid_c.Sequence_optional_child_always_present_or_absent // Don't need
             
         match o.Optionality with
         | Some(Asn1AcnAst.AlwaysAbsent)                     -> 
@@ -491,46 +512,50 @@ let isValidSequenceChild   (l:ProgrammingLanguage) (o:Asn1AcnAst.Asn1Child) (new
 
 
 let createSequenceFunction (r:Asn1AcnAst.AstRoot) (l:ProgrammingLanguage) (t:Asn1AcnAst.Asn1Type) (o:Asn1AcnAst.Sequence) (typeDefinition:TypeDefinitionCommon) (children:SeqChildInfo list)  (us:State)  =
-
     let funcName     = getFuncName r l t.id
     let asn1Children = children |> List.choose(fun c -> match c with Asn1Child x -> Some x | AcnChild _ -> None)
-    let body =
-        let childrenConent, finalState =   
-            asn1Children |>
-            Asn1Fold.foldMap (fun errCode cc -> cc.isValidBodyStats errCode) us
-        let childrenConent = childrenConent |> List.choose id
+    let body = 
+        match l with 
+        | C  
+        | Ada ->
+            let childrenConent, finalState =   
+                asn1Children |>
+                Asn1Fold.foldMap (fun errCode cc -> cc.isValidBodyStats errCode) us
+            let childrenConent =  childrenConent |> List.choose id
 
-        match childrenConent with
-        | []    -> None
-        | x::xs ->
-            let alphaFuncs = childrenConent |> List.collect(fun x -> x.alphaFuncs)
-            let localVars = childrenConent |> List.collect(fun x -> x.localVars)
-            let ercCodes = childrenConent |> List.collect(fun x -> x.errCode)
-            let funcBody  (p:string)  (childAccess:string) = 
-                let printChild (content:string) (sNestedContent:string option) = 
-                    match sNestedContent with
-                    | None  -> content
-                    | Some c-> 
-                        match l with
-                        | C        -> equal_c.JoinItems content sNestedContent
-                        | Ada      -> isvalid_a.JoinItems content sNestedContent
-                let rec printChildren children : string option = 
-                    match children with
-                    |[]     -> None
-                    |x::xs  -> 
-                        match printChildren xs with
-                        | None                 -> Some (printChild x  None)
-                        | Some childrenCont    -> Some (printChild x  (Some childrenCont))
+            match childrenConent with
+            | []    -> None
+            | x::xs ->
+                let alphaFuncs = childrenConent |> List.collect(fun x -> x.alphaFuncs)
+                let localVars = childrenConent |> List.collect(fun x -> x.localVars)
+                let ercCodes = childrenConent |> List.collect(fun x -> x.errCode)
+                let funcBody  (p:string)  (childAccess:string) = 
+                    let printChild (content:string) (sNestedContent:string option) = 
+                        match sNestedContent with
+                        | None  -> content
+                        | Some c-> 
+                            match l with
+                            | C        -> equal_c.JoinItems content sNestedContent
+                            | Ada      -> isvalid_a.JoinItems content sNestedContent
+                            | Python   -> ""
+                    let rec printChildren children : string option = 
+                        match children with
+                        |[]     -> None
+                        |x::xs  -> 
+                            match printChildren xs with
+                            | None                 -> Some (printChild x  None)
+                            | Some childrenCont    -> Some (printChild x  (Some childrenCont))
 
-                let isValidStatementX = x.isValidStatement p childAccess 
-                let isValidStatementXS = xs |> List.map(fun x -> x.isValidStatement  p childAccess)
-                printChild isValidStatementX (printChildren isValidStatementXS)
-            Some(alphaFuncs, localVars, ercCodes, funcBody, finalState)
+                    let isValidStatementX = x.isValidStatement p childAccess 
+                    let isValidStatementXS = xs |> List.map(fun x -> x.isValidStatement  p childAccess)
+                    printChild isValidStatementX (printChildren isValidStatementXS)
+                Some(alphaFuncs, localVars, ercCodes, funcBody, finalState)
+        | Python -> None // Don't need valid function for sequence
     match body with
     | None    -> None, us
     | Some(alphaFuncs, localVars, ercCodes, funcBody, finalState) ->
         let  func  = 
-            let topLevAcc, p =  match l with | C -> "->", "pVal" | Ada -> ".", "val"
+            let topLevAcc, p = match l with | C -> "->", "pVal" | Ada -> ".", "val" | Python -> ".", "value"
             match funcName  with
             | None              -> None
             | Some funcName     -> 
@@ -539,6 +564,7 @@ let createSequenceFunction (r:Asn1AcnAst.AstRoot) (l:ProgrammingLanguage) (t:Asn
                 match l with
                 |C     -> Some(isvalid_c.EmitTypeAssignment_composite funcName  typeDefinition.name exp (alphaFuncs |> List.map(fun x -> x.funcBody)) lvars)
                 |Ada   -> Some(isvalid_a.EmitTypeAssignment_composite funcName  typeDefinition.name exp (alphaFuncs |> List.map(fun x -> x.funcBody)) lvars)
+                |Python-> None
         let  funcDef  = 
                 match funcName with
                 | None              -> None
@@ -550,7 +576,9 @@ let createSequenceFunction (r:Asn1AcnAst.AstRoot) (l:ProgrammingLanguage) (t:Asn
                     |Ada   -> 
                         let arrsErrcodes = ercCodes |> List.map(fun s -> isvalid_a.EmitTypeAssignment_composite_def_err_code s.errCodeName (BigInteger s.errCodeValue))
                         Some(isvalid_a.EmitTypeAssignment_composite_def funcName  typeDefinition.name arrsErrcodes)
-        
+                    |Python     -> 
+                        None
+
         let ret = 
             {
                 IsValidFunction.funcName    = funcName
@@ -586,51 +614,57 @@ let isValidChoiceChild   (l:ProgrammingLanguage) (o:Asn1AcnAst.ChChildInfo) (new
 let createChoiceFunction (r:Asn1AcnAst.AstRoot) (l:ProgrammingLanguage) (t:Asn1AcnAst.Asn1Type) (o:Asn1AcnAst.Choice) (typeDefinition:TypeDefinitionCommon) (children:ChChildInfo list) (baseTypeValFunc : IsValidFunction option) (us:State)  =
     let funcName            = getFuncName r l t.id
 
-    let body =
-        let errCodeName         = ToC ("ERR_" + ((t.id.AcnAbsPath |> Seq.skip 1 |> Seq.StrJoin("-")).Replace("#","elm")))
-        //let errCodeValue        = us.currErrCode
-        //let errCode             = {ErroCode.errCodeName = errCodeName; errCodeValue = errCodeValue}
-
-        let errCode, ns = getNextValidErrorCode us errCodeName
-
-
-        let childrenConent, finalState =   
-            children |> 
-            Asn1Fold.foldMap (fun errCode cc -> 
-                let (vc,erc) = cc.isValidBodyStats errCode
-                ((cc,vc),erc)) ns
-        //let deltaErrCode = finalErrCode - us.currErrCode
-
-        let validatedComponenets = childrenConent |> List.map snd |> List.choose id
-        let alphaFuncs = validatedComponenets |> List.collect(fun x -> x.alphaFuncs)
-        let localVars =  validatedComponenets |> List.collect(fun x -> x.localVars)
-        let ercCodes =   errCode::(validatedComponenets |> List.collect(fun x -> x.errCode))
-        let funcBody  (p:string)  (childAccess:string) = 
-            let childrenContent =
-                childrenConent |> 
-                List.map(fun (cc, vc) -> 
+    let body = 
+        match l with 
+        | C  
+        | Ada ->
+            let errCodeName         = ToC ("ERR_" + ((t.id.AcnAbsPath |> Seq.skip 1 |> Seq.StrJoin("-")).Replace("#","elm")))
+            //let errCodeValue        = us.currErrCode
+            //let errCode             = {ErroCode.errCodeName = errCodeName; errCodeValue = errCodeValue}
+    
+            let errCode, ns = getNextValidErrorCode us errCodeName
+    
+    
+            let childrenConent, finalState =   
+                children |> 
+                Asn1Fold.foldMap (fun errCode cc -> 
+                    let (vc,erc) = cc.isValidBodyStats errCode
+                    ((cc,vc),erc)) ns
+            //let deltaErrCode = finalErrCode - us.currErrCode
+    
+            let validatedComponenets = childrenConent |> List.map snd |> List.choose id
+            let alphaFuncs = validatedComponenets |> List.collect(fun x -> x.alphaFuncs)
+            let localVars =  validatedComponenets |> List.collect(fun x -> x.localVars)
+            let ercCodes =   errCode::(validatedComponenets |> List.collect(fun x -> x.errCode))
+            let funcBody  (p:string)  (childAccess:string) = 
+                let childrenContent =
+                    childrenConent |> 
+                    List.map(fun (cc, vc) -> 
+                    match l with
+                    | C    -> 
+                        let chBody =  
+                            match vc with
+                            | Some vc -> vc.isValidStatement (p+childAccess+"u")  "." 
+                            | None    -> isvalid_c.always_true_statement ()
+                        isvalid_c.choice_child cc.presentWhenName chBody
+                    |Ada   -> 
+                        let chBody = 
+                            match vc with
+                            | Some vc -> vc.isValidStatement p "."
+                            | None    -> isvalid_a.always_true_statement ()
+                        isvalid_a.choice_child cc.presentWhenName chBody
+                    |Python-> "")
                 match l with
-                | C    -> 
-                    let chBody =  
-                        match vc with
-                        | Some vc -> vc.isValidStatement (p+childAccess+"u")  "." 
-                        | None    -> isvalid_c.always_true_statement ()
-                    isvalid_c.choice_child cc.presentWhenName chBody
-                |Ada   -> 
-                    let chBody = 
-                        match vc with
-                        | Some vc -> vc.isValidStatement p "."
-                        | None    -> isvalid_a.always_true_statement ()
-                    isvalid_a.choice_child cc.presentWhenName chBody)
-            match l with
-            | C    -> isvalid_c.choice p childAccess childrenContent errCode.errCodeName
-            |Ada   -> isvalid_a.choice p childAccess childrenContent errCode.errCodeName
-        Some(alphaFuncs, localVars, ercCodes, funcBody, finalState)
+                | C    -> isvalid_c.choice p childAccess childrenContent errCode.errCodeName
+                |Ada   -> isvalid_a.choice p childAccess childrenContent errCode.errCodeName
+                |Python-> ""
+            Some(alphaFuncs, localVars, ercCodes, funcBody, finalState)
+        | Python -> None // Don't need valid function for Choice
     match body with
     | None    -> None, us
     | Some(alphaFuncs, localVars, ercCodes, funcBody, finalState) ->
         let  func  = 
-            let topLevAcc, p =  match l with | C -> "->", "pVal" | Ada -> ".", "val"
+            let topLevAcc, p =  match l with | C -> "->", "pVal" | Ada -> ".", "val"  | Python -> ".", "value"
             match funcName  with
             | None              -> None
             | Some funcName     -> 
@@ -639,6 +673,7 @@ let createChoiceFunction (r:Asn1AcnAst.AstRoot) (l:ProgrammingLanguage) (t:Asn1A
                 match l with
                 |C     -> Some(isvalid_c.EmitTypeAssignment_composite funcName  typeDefinition.name exp (alphaFuncs |> List.map(fun x -> x.funcBody)) lvars)
                 |Ada   -> Some(isvalid_a.EmitTypeAssignment_composite funcName  typeDefinition.name exp (alphaFuncs |> List.map(fun x -> x.funcBody)) lvars)
+                |Python-> None
         let  funcDef  = 
                 match funcName with
                 | None              -> None
@@ -650,6 +685,8 @@ let createChoiceFunction (r:Asn1AcnAst.AstRoot) (l:ProgrammingLanguage) (t:Asn1A
                     |Ada   ->  
                         let arrsErrcodes = ercCodes |> List.map(fun s -> isvalid_a.EmitTypeAssignment_composite_def_err_code s.errCodeName (BigInteger s.errCodeValue))
                         Some(isvalid_a.EmitTypeAssignment_composite_def funcName  typeDefinition.name arrsErrcodes)
+                    |Python     ->  
+                        None
         
         let ret = 
             {
@@ -674,8 +711,9 @@ let createSequenceOfFunction (r:Asn1AcnAst.AstRoot) (l:ProgrammingLanguage) (t:A
     let bIsFixedSize = o.minSize = o.maxSize
     let hasValidationFunc = 
         match bIsFixedSize with
-        | false     -> true
-        | true      ->
+        | true when l = Python  -> true
+        | false                 -> true
+        | true                  ->
             match childType.isValidFunction with
             | Some _  -> true
             | None    -> false
@@ -703,14 +741,19 @@ let createSequenceOfFunction (r:Asn1AcnAst.AstRoot) (l:ProgrammingLanguage) (t:A
         let i = sprintf "i%d" (t.id.SeqeuenceOfLevel + 1)
         let lv = SequenceOfIndex (t.id.SeqeuenceOfLevel + 1, None)
         match childType.isValidFunction, sizeConstrData with
+        | None, None when l = Python    -> 
+            let funcBody (p:String) (childAccess:string)  = 
+                isvalid_p.sequenceOf p childAccess i bIsFixedSize (BigInteger o.minSize) None None None
+            Some([],[], [], funcBody, us)
         | None, None     -> None
         | Some cvf, None ->
             let funcBody (p:String) (childAccess:string)  = 
                 let childAccesPath = p + childAccess + l.ArrName + (l.ArrayAccess i) //"[" + i + "]"
                 let innerStatement = Some(cvf.funcBody childAccesPath )
                 match l with
-                | C   -> isvalid_c.sequenceOf p childAccess i bIsFixedSize (BigInteger o.minSize) None None innerStatement
-                | Ada -> isvalid_a.sequenceOf p childAccess i bIsFixedSize (BigInteger o.minSize) None None innerStatement
+                | C         -> isvalid_c.sequenceOf p childAccess i bIsFixedSize (BigInteger o.minSize) None None innerStatement
+                | Ada       -> isvalid_a.sequenceOf p childAccess i bIsFixedSize (BigInteger o.minSize) None None innerStatement
+                | Python    -> isvalid_p.sequenceOf p childAccess i bIsFixedSize (BigInteger o.minSize) None None innerStatement
             Some(cvf.alphaFuncs, lv::cvf.localVariables , cvf.errCodes, funcBody, us)
         | None, Some(errCode, sIsValidSizeExpFunc, ns) ->
             let funcBody (p:String) (childAccess:string)  = 
@@ -721,8 +764,9 @@ let createSequenceOfFunction (r:Asn1AcnAst.AstRoot) (l:ProgrammingLanguage) (t:A
                 let childAccesPath = p + childAccess + l.ArrName + (l.ArrayAccess i) //"[" + i + "]"
                 let innerStatement = Some(cvf.funcBody childAccesPath )
                 match l with
-                | C   -> isvalid_c.sequenceOf p childAccess i bIsFixedSize (BigInteger o.minSize) (Some (sIsValidSizeExpFunc p childAccess)) (Some errCode.errCodeName) innerStatement
-                | Ada -> isvalid_a.sequenceOf p childAccess i bIsFixedSize (BigInteger o.minSize) (Some (sIsValidSizeExpFunc p childAccess)) (Some errCode.errCodeName) innerStatement
+                | C     -> isvalid_c.sequenceOf p childAccess i bIsFixedSize (BigInteger o.minSize) (Some (sIsValidSizeExpFunc p childAccess)) (Some errCode.errCodeName) innerStatement
+                | Ada   -> isvalid_a.sequenceOf p childAccess i bIsFixedSize (BigInteger o.minSize) (Some (sIsValidSizeExpFunc p childAccess)) (Some errCode.errCodeName) innerStatement
+                | Python-> isvalid_p.sequenceOf p childAccess i bIsFixedSize (BigInteger o.minSize) (Some (sIsValidSizeExpFunc p childAccess)) (Some errCode.errCodeName) innerStatement
             Some(cvf.alphaFuncs, lv::cvf.localVariables , cvf.errCodes@[errCode], funcBody, ns)
 
 
@@ -730,15 +774,16 @@ let createSequenceOfFunction (r:Asn1AcnAst.AstRoot) (l:ProgrammingLanguage) (t:A
     | None -> None, us
     | Some(alphaFuncs, localVars, ercCodes, funcBody, newState) ->
         let  func  = 
-            let topLevAcc, p =  match l with | C -> "->", "pVal" | Ada -> ".", "val"
+            let topLevAcc, p =  match l with | C -> "->", "pVal" | Ada -> ".", "val" | Python -> ".", "value"
             match funcName  with
             | None              -> None
             | Some funcName     -> 
                 let exp = funcBody p topLevAcc
                 let lvars = localVars |> List.map(fun (lv:LocalVariable) -> lv.GetDeclaration l) |> Seq.distinct
                 match l with
-                |C     -> Some(isvalid_c.EmitTypeAssignment_composite funcName  typeDefinition.name exp (alphaFuncs |> List.map(fun x -> x.funcBody)) lvars)
-                |Ada   -> Some(isvalid_a.EmitTypeAssignment_composite funcName  typeDefinition.name exp (alphaFuncs |> List.map(fun x -> x.funcBody)) lvars)
+                |C      -> Some(isvalid_c.EmitTypeAssignment_composite funcName  typeDefinition.name exp (alphaFuncs |> List.map(fun x -> x.funcBody)) lvars)
+                |Ada    -> Some(isvalid_a.EmitTypeAssignment_composite funcName  typeDefinition.name exp (alphaFuncs |> List.map(fun x -> x.funcBody)) lvars)
+                |Python -> Some(isvalid_p.EmitTypeAssignment_primitive funcName  typeDefinition.name exp (alphaFuncs |> List.map(fun x -> x.funcBody)))
         let  funcDef  = 
                 match funcName with
                 | None              -> None
@@ -750,6 +795,8 @@ let createSequenceOfFunction (r:Asn1AcnAst.AstRoot) (l:ProgrammingLanguage) (t:A
                     |Ada   ->  
                         let arrsErrcodes = ercCodes |> List.map(fun s -> isvalid_a.EmitTypeAssignment_composite_def_err_code s.errCodeName (BigInteger s.errCodeValue))
                         Some(isvalid_a.EmitTypeAssignment_composite_def funcName  typeDefinition.name arrsErrcodes)
+                    |Python     ->  
+                        Some(isvalid_p.EmitTypeAssignment_primitive_def funcName  typeDefinition.name "" (BigInteger 0))
 
         
         let ret = 

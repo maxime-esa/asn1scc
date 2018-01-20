@@ -16,11 +16,18 @@ let createInnerTypes (l:ProgrammingLanguage) =
     match l with
     | Ada  -> false
     | C    -> true
+    | Python-> false
 
 
 let getTypeDefinitionName (r:Asn1AcnAst.AstRoot) (l:ProgrammingLanguage) (id : ReferenceToType) =
-    let longName = id.AcnAbsPath.Tail |> Seq.StrJoin "_"
-    ToC2(r.args.TypePrefix + longName.Replace("#","elem"))
+    match l with
+    | C
+    | Ada           ->
+        let longName = id.AcnAbsPath.Tail |> Seq.StrJoin "_"
+        ToC2(r.args.TypePrefix + longName.Replace("#","elem"))
+    | Python        ->
+        let longName = id.AcnAbsPath.Tail |> Seq.StrJoin "."
+        ToCPy (r.args.TypePrefix + longName)    
 
 let getCompleteDefinition l (typeOrSubsType:TypeOrSubsType) typeDefinitionBody typeDefinitionName (arraySize: int option) (childldrenCompleteDefintions:string list) =
     match l with
@@ -29,6 +36,9 @@ let getCompleteDefinition l (typeOrSubsType:TypeOrSubsType) typeDefinitionBody t
     | Ada   ->
         let typeOrSubsType = sprintf "%A" typeOrSubsType 
         header_a.Define_Type typeOrSubsType typeDefinitionName typeDefinitionBody  childldrenCompleteDefintions
+    | Python ->  
+        types_p.Define_Type typeDefinitionBody typeDefinitionName (arraySize |> Option.map(fun x -> BigInteger x)) childldrenCompleteDefintions
+
 (*
 let hasSingleValueConstraint (c:SizableTypeConstraint<'v>) =
     foldSizableTypeConstraint2
@@ -73,6 +83,12 @@ let createInteger (r:Asn1AcnAst.AstRoot) (l:ProgrammingLanguage) (t:Asn1AcnAst.A
                 completeDefintion, typeDefinitionBody, None
             | _     ->
                 completeDefintion, typeDefinitionName, (Some completeDefintion) 
+        | Python                   -> 
+            let typeDefinitionBody = 
+                match o.isUnsigned with
+                    | true  -> types_p.Declare_PosInteger ()
+                    | false -> types_p.Declare_Integer ()
+            getCompleteDefinition l SUBTYPE typeDefinitionBody typeDefinitionName None [], typeDefinitionBody, None
 
     {
         TypeDefinitionCommon.name                = typeDefinitionName
@@ -86,12 +102,12 @@ let createInteger (r:Asn1AcnAst.AstRoot) (l:ProgrammingLanguage) (t:Asn1AcnAst.A
 
 
 let createPrmAcnInteger (r:Asn1AcnAst.AstRoot) (l:ProgrammingLanguage)  =
-    let Declare_Integer     =  match l with  C  -> header_c.Declare_Integer  | Ada   -> header_a.Declare_Integer 
+    let Declare_Integer     =  match l with  C  -> header_c.Declare_Integer     | Ada   -> header_a.Declare_Integer     | Python  -> types_p.Declare_Integer
     Declare_Integer ()
 
 let createAcnInteger (r:Asn1AcnAst.AstRoot) (l:ProgrammingLanguage) (a:Asn1AcnAst.AcnInteger) =
-    let Declare_Integer     =  match l with  C  -> header_c.Declare_Integer  | Ada   -> header_a.Declare_Integer 
-    let Declare_PosInteger  =  match l with  C  -> header_c.Declare_PosInteger  | Ada   -> header_a.Declare_PosInteger  
+    let Declare_Integer     =  match l with  C  -> header_c.Declare_Integer     | Ada   -> header_a.Declare_Integer     | Python  -> types_p.Declare_Integer
+    let Declare_PosInteger  =  match l with  C  -> header_c.Declare_PosInteger  | Ada   -> header_a.Declare_PosInteger  | Python  -> types_p.Declare_Integer
     match a.isUnsigned with
     | true     -> Declare_PosInteger ()
     | false    -> Declare_Integer ()
@@ -100,12 +116,14 @@ let createAcnInteger (r:Asn1AcnAst.AstRoot) (l:ProgrammingLanguage) (a:Asn1AcnAs
 let createAcnBoolean (r:Asn1AcnAst.AstRoot) (l:ProgrammingLanguage) =
     match l with
     | C                      -> header_c.Declare_Boolean ()
-    | Ada                    -> header_a.Declare_BOOLEAN ()    
+    | Ada                    -> header_a.Declare_BOOLEAN ()
+    | Python                 -> types_p.Declare_Boolean ()
 
 let createAcnNull (r:Asn1AcnAst.AstRoot) (l:ProgrammingLanguage) =
     match l with
     | C                      -> header_c.Declare_NullType ()
     | Ada                    -> header_a.Declare_NULL ()
+    | Python                 -> types_p.Declare_NullType ()
 
 let createBoolean (r:Asn1AcnAst.AstRoot) (l:ProgrammingLanguage) (t:Asn1AcnAst.Asn1Type) (o:Asn1AcnAst.Boolean)   (us:State) =
     let typeDefinitionName = getTypeDefinitionName r l t.id
@@ -117,6 +135,7 @@ let createBoolean (r:Asn1AcnAst.AstRoot) (l:ProgrammingLanguage) (t:Asn1AcnAst.A
                         match l with
                         | C                      -> header_c.Declare_Boolean ()
                         | Ada                    -> header_a.Declare_BOOLEAN ()
+                        | Python                 -> types_p.Declare_Boolean ()
 
     {
         TypeDefinitionCommon.name                = typeDefinitionName
@@ -138,6 +157,7 @@ let createReal (r:Asn1AcnAst.AstRoot) (l:ProgrammingLanguage) (t:Asn1AcnAst.Asn1
                         match l with
                         |C                      -> header_c.Declare_Real ()
                         |Ada                    -> header_a.Declare_REAL ()
+                        |Python                 -> types_p.Declare_Real ()
     {
         TypeDefinitionCommon.name                = typeDefinitionName
         typeOrSubsType                           = SUBTYPE
@@ -169,6 +189,13 @@ let createString (r:Asn1AcnAst.AstRoot) (l:ProgrammingLanguage) (t:Asn1AcnAst.As
             //| Some baseTypeName     ->
             //    let typeDefinitionBody = baseTypeName.name
             //    getCompleteDefinition l SUBTYPE typeDefinitionBody typeDefinitionName arraySize [], typeDefinitionBody, None
+        | Python                 -> 
+            let typeDefinitionBody                       = 
+                match t.Kind with
+                | Asn1AcnAst.IA5String _        -> types_p.Declare_IA5String ()
+                | Asn1AcnAst.NumericString _    -> types_p.Declare_NumericString ()
+                | _                             -> ""
+            getCompleteDefinition l SUBTYPE typeDefinitionBody typeDefinitionName arraySize [], typeDefinitionBody, None
 
     {
         TypeDefinitionCommon.name                = typeDefinitionName
@@ -202,6 +229,10 @@ let createOctet (r:Asn1AcnAst.AstRoot) (l:ProgrammingLanguage) (t:Asn1AcnAst.Asn
             //| Some baseTypeName     ->
             //    let typeDefinitionBody = baseTypeName.name
             //    getCompleteDefinition l SUBTYPE typeDefinitionBody typeDefinitionName None [], typeDefinitionBody, None
+        | Python                 -> 
+                let typeDefinitionBody = types_p.Declare_OctetString (o.minSize=o.maxSize) (BigInteger o.maxSize)
+                let completeDefintion = getCompleteDefinition l SUBTYPE typeDefinitionBody typeDefinitionName None []
+                completeDefintion, typeDefinitionBody, Some completeDefintion
     {
         TypeDefinitionCommon.name                = typeDefinitionName
         typeOrSubsType                           = SUBTYPE
@@ -234,6 +265,10 @@ let createBitString (r:Asn1AcnAst.AstRoot) (l:ProgrammingLanguage) (t:Asn1AcnAst
             //| Some baseTypeName     ->
             //    let typeDefinitionBody = baseTypeName.name
             //    getCompleteDefinition l SUBTYPE typeDefinitionBody typeDefinitionName None [], typeDefinitionBody, None
+        | Python                 ->
+                let typeDefinitionBody = types_p.Declare_BitString ()
+                let completeDefintion = getCompleteDefinition l SUBTYPE typeDefinitionBody typeDefinitionName None []
+                completeDefintion, typeDefinitionBody, Some completeDefintion
     {
         TypeDefinitionCommon.name                = typeDefinitionName
         typeOrSubsType                           = SUBTYPE
@@ -254,6 +289,7 @@ let createNull (r:Asn1AcnAst.AstRoot) (l:ProgrammingLanguage) (t:Asn1AcnAst.Asn1
                         match l with
                         | C                      -> header_c.Declare_NullType ()
                         | Ada                    -> header_a.Declare_NULL ()
+                        | Python                 -> types_p.Declare_NullType ()
 
     {
         TypeDefinitionCommon.name                = typeDefinitionName
@@ -294,6 +330,12 @@ let createEnumerated (r:Asn1AcnAst.AstRoot) (l:ProgrammingLanguage) (t:Asn1AcnAs
             //| Some baseTypeName     ->
             //    let typeDefinitionBody = baseTypeName.name
             //    getCompleteDefinition l SUBTYPE typeDefinitionBody typeDefinitionName None [], typeDefinitionBody, None
+         | Python                -> 
+            let items = o.items |> List.map( fun i -> types_p.PrintEnumItem (i.getBackendName l) i.definitionValue)
+            let itemNames = o.items |> List.map( fun i -> (i.getBackendName l))
+            let typeDefinitionBody                       =
+                types_p.Declare_Enumerated items itemNames
+            getCompleteDefinition l SUBTYPE typeDefinitionBody typeDefinitionName None [], typeDefinitionBody, None
     {
         TypeDefinitionCommon.name                = typeDefinitionName
         typeOrSubsType                           = SUBTYPE
@@ -351,7 +393,28 @@ let createSequenceOf (r:Asn1AcnAst.AstRoot) (l:ProgrammingLanguage) (t:Asn1AcnAs
             //| Some baseTypeName     ->
             //    let typeDefinitionBody = baseTypeName.name
             //    getCompleteDefinition l SUBTYPE typeDefinitionBody typeDefinitionName None [], typeDefinitionBody, None
+        | Python                 -> 
+                let rec getBaseType (c:Asn1AcnAst.Asn1Type) =
+                    match c.Kind with
+                    | Asn1AcnAst.Asn1TypeKind.ReferenceType ti  -> getBaseType ti.resolvedType
+                    | _ -> c.Kind
 
+                let typingHint =
+                    match getBaseType o.child with
+                    | Asn1AcnAst.Asn1TypeKind.Integer       ti      -> "int"
+                    | Asn1AcnAst.Asn1TypeKind.Real          ti      -> "float"
+                    | Asn1AcnAst.Asn1TypeKind.Boolean       ti      -> "bool"
+                    | Asn1AcnAst.Asn1TypeKind.Enumerated    ti      -> "asn1.Enum"
+                    | Asn1AcnAst.Asn1TypeKind.IA5String     ti
+                    | Asn1AcnAst.Asn1TypeKind.NumericString ti      -> "str"
+                    | Asn1AcnAst.Asn1TypeKind.BitString     ti      -> "asn1.bitarray"
+                    | Asn1AcnAst.Asn1TypeKind.OctetString   ti      -> "bytearray"
+                    | _                                             -> "'" + typeDefinitionName + ".ElementType'"
+
+                let childTypeDefinition = childDefinition.typeDefinitionBodyWithinSeq
+                let typeDefinitionBody = types_p.Declare_SequenceOf childTypeDefinition typingHint
+                let completeDefintion = getCompleteDefinition l SUBTYPE typeDefinitionBody typeDefinitionName None childldrenCompleteDefintions
+                completeDefintion, typeDefinitionBody, (Some completeDefintion)
 
     {
         TypeDefinitionCommon.name                = typeDefinitionName
@@ -371,6 +434,8 @@ let createSequence (r:Asn1AcnAst.AstRoot) (l:ProgrammingLanguage) (t:Asn1AcnAst.
             Some (header_c.PrintSeq_ChoiceChild o.Type.typeDefinition.typeDefinitionBodyWithinSeq o.c_name typeDefinitionArrayPostfix)
         | Ada  ->
             Some (header_a.SEQUENCE_tas_decl_child o.c_name o.Type.typeDefinition.typeDefinitionBodyWithinSeq)
+        | Python ->
+            Some (types_p.PrintChoiceSeq_Child o.Type.typeDefinition.typeDefinitionBodyWithinSeq o.c_name)
 
     let typeDefinitionName = getTypeDefinitionName r l t.id
     let childldrenCompleteDefintions =
@@ -411,7 +476,13 @@ let createSequence (r:Asn1AcnAst.AstRoot) (l:ProgrammingLanguage) (t:Asn1AcnAst.
             //| Some baseTypeName     ->
             //    let typeDefinitionBody = baseTypeName.name
             //    getCompleteDefinition l SUBTYPE typeDefinitionBody typeDefinitionName None [], typeDefinitionBody, None
-
+        | Python                 -> 
+                let childrenBodies = children |> List.choose handleChild
+                let childrenNames = children |> List.map(fun c -> ToCPy (c.Name.Value))
+                let optChildNames  = children |> List.choose(fun c -> match c.Optionality with Some _ -> Some (ToCPy (c.Name.Value)) | None -> None)
+                let typeDefinitionBody = types_p.Declare_Sequence childrenBodies optChildNames childrenNames
+                let completeDefintion = getCompleteDefinition l SUBTYPE typeDefinitionBody typeDefinitionName None childldrenCompleteDefintions
+                completeDefintion, typeDefinitionBody, (Some completeDefintion)
 
     {
         TypeDefinitionCommon.name                = typeDefinitionName
@@ -431,6 +502,8 @@ let createChoice (r:Asn1AcnAst.AstRoot) (l:ProgrammingLanguage) (t:Asn1AcnAst.As
             header_c.PrintSeq_ChoiceChild o.chType.typeDefinition.typeDefinitionBodyWithinSeq o.c_name typeDefinitionArrayPostfix
         | Ada                    -> 
             header_a.CHOICE_tas_decl_child o.c_name  o.chType.typeDefinition.typeDefinitionBodyWithinSeq o.presentWhenName
+        | Python                 -> 
+            types_p.PrintChoiceSeq_Child o.chType.typeDefinition.typeDefinitionBodyWithinSeq o.c_name
 
     let childldrenCompleteDefintions =
         match createInnerTypes l with
@@ -474,6 +547,12 @@ let createChoice (r:Asn1AcnAst.AstRoot) (l:ProgrammingLanguage) (t:Asn1AcnAst.As
             //| Some baseTypeName     ->
             //    let typeDefinitionBody = baseTypeName.name
             //    getCompleteDefinition l SUBTYPE typeDefinitionBody typeDefinitionName None [], typeDefinitionBody, None
+        | Python                 -> 
+                let childrenBodies = children |> List.map handleChild
+                let childrenNames = children |> List.map(fun c -> ToCPy (c.Name.Value))
+                let typeDefinitionBody = types_p.Declare_Choice childrenBodies childrenNames
+                let completeDefintion = getCompleteDefinition l SUBTYPE typeDefinitionBody typeDefinitionName None childldrenCompleteDefintions
+                completeDefintion, typeDefinitionBody, (Some completeDefintion)
 
 
 
@@ -489,21 +568,40 @@ let createChoice (r:Asn1AcnAst.AstRoot) (l:ProgrammingLanguage) (t:Asn1AcnAst.As
 
 
 let createReferenceType (r:Asn1AcnAst.AstRoot) (l:ProgrammingLanguage) (t:Asn1AcnAst.Asn1Type) (o:Asn1AcnAst.ReferenceType)  (baseType:Asn1Type ) (us:State) =
-    match o.resolvedType.Kind with
-    | Asn1AcnAst.Integer ii   when ii.isUnsigned ->
-        createInteger r l o.resolvedType  ii   us
-    | _             ->
+    match l with
+    | C 
+    | Ada   ->
+        match o.resolvedType.Kind with
+        | Asn1AcnAst.Integer ii   when ii.isUnsigned ->
+            createInteger r l o.resolvedType  ii   us
+        | _             ->
+            let typeDefinitionName = 
+                match t.tasInfo with
+                | Some tasInfo    -> ToC2(r.args.TypePrefix + tasInfo.tasName)
+                | None            -> ToC2(r.args.TypePrefix + o.tasName.Value)
+            let refTypeAssignment = ToC2(r.args.TypePrefix + o.tasName.Value)
+            let completeDefinition                       = getCompleteDefinition l SUBTYPE refTypeAssignment typeDefinitionName None []
+            {
+                TypeDefinitionCommon.name                = typeDefinitionName
+                typeOrSubsType                           = SUBTYPE
+                arraySize                                = None
+                completeDefinition                       = completeDefinition
+                typeDefinitionBodyWithinSeq              = typeDefinitionName
+                completeDefinitionWithinSeq              = None
+            } 
+    | Python ->  
+        let refTypeName = ToCPy(r.args.TypePrefix + o.tasName.Value)            
         let typeDefinitionName = 
-            match t.tasInfo with
-            | Some tasInfo    -> ToC2(r.args.TypePrefix + tasInfo.tasName)
-            | None            -> ToC2(r.args.TypePrefix + o.tasName.Value)
-        let refTypeAssignment = ToC2(r.args.TypePrefix + o.tasName.Value)
-        let completeDefinition                       = getCompleteDefinition l SUBTYPE refTypeAssignment typeDefinitionName None []
+                match t.tasInfo with
+                | Some tasInfo    -> ToCPy(r.args.TypePrefix + tasInfo.tasName)
+                | None            -> ToCPy(r.args.TypePrefix + o.tasName.Value)      
+        let typeDefinitionBody = types_p.Declare_Ref refTypeName
+        let completeDefinition                       = getCompleteDefinition l SUBTYPE typeDefinitionBody typeDefinitionName None []
         {
             TypeDefinitionCommon.name                = typeDefinitionName
             typeOrSubsType                           = SUBTYPE
             arraySize                                = None
             completeDefinition                       = completeDefinition
-            typeDefinitionBodyWithinSeq              = typeDefinitionName
+            typeDefinitionBodyWithinSeq              = typeDefinitionBody
             completeDefinitionWithinSeq              = None
         } 

@@ -12,26 +12,29 @@ open DAstUtilFunctions
 // TODO
 // 1 In sequences with default components, default value must be taken into account when component not present.
 
-let callBaseTypeFunc l = match l with C -> equal_c.call_base_type_func | Ada -> equal_c.call_base_type_func
-let makeExpressionToStatement l = match l with C -> equal_c.makeExpressionToStatement | Ada -> equal_a.makeExpressionToStatement
+let callBaseTypeFunc l          = match l with C -> equal_c.call_base_type_func         | Ada -> equal_c.call_base_type_func        | Python -> (fun _ _ _ -> "")  // Don't need Ptyhon equal function
+let makeExpressionToStatement l = match l with C -> equal_c.makeExpressionToStatement   | Ada -> equal_a.makeExpressionToStatement  | Python -> (fun _ -> "")
 
 let getAddres l p=
     match l with
-    | Ada -> p
+    | Ada                       -> p
     | C  when p="pVal"          -> p
     | C  when p.Contains "&"    -> p
-    | C                -> sprintf "(&(%s))" p
+    | C                         -> sprintf "(&(%s))" p
+    | Python                    -> p
 
 
 let isEqualBodyPrimitive (l:ProgrammingLanguage) v1 v2 =
     match l with
     | C         -> Some (sprintf "%s == %s" v1 v2  , [])
     | Ada       -> Some (sprintf "%s = %s" v1 v2   , [])
+    | Python    -> Some (sprintf "%s == %s" v1 v2  , [])
 
 let isEqualBodyString (l:ProgrammingLanguage) v1 v2 =
     match l with
     | C         -> Some (sprintf "strcmp(%s, %s) == 0" v1 v2  , [])
     | Ada       -> Some (sprintf "%s = %s" v1 v2   , [])
+    | Python    -> Some (sprintf "%s == %s" v1 v2   , [])
 
 let isEqualBodyOctetString (l:ProgrammingLanguage) sMin sMax (childAccess: string) v1 v2 =
     let v1 = sprintf "%s%s" v1 childAccess
@@ -39,6 +42,7 @@ let isEqualBodyOctetString (l:ProgrammingLanguage) sMin sMax (childAccess: strin
     match l with
     | C         -> Some (equal_c.isEqual_OctetString v1 v2 (sMin = sMax) sMax, [])
     | Ada       -> Some (equal_a.isEqual_OctetString v1 v2 (sMin = sMax) sMax, [])
+    | Python    -> Some ("", [])
 
 let isEqualBodyBitString (l:ProgrammingLanguage) sMin sMax (childAccess: string) v1 v2 =
     let v1 = sprintf "%s%s" v1 childAccess
@@ -46,6 +50,7 @@ let isEqualBodyBitString (l:ProgrammingLanguage) sMin sMax (childAccess: string)
     match l with
     | C         -> Some (equal_c.isEqual_BitString v1 v2 (sMin = sMax) sMax, [])
     | Ada       -> Some (equal_a.isEqual_BitString v1 v2 (sMin = sMax) sMax, [])
+    | Python    -> Some ("", [])
 
 let isEqualBodySequenceOf  (childType:Asn1Type) (t:Asn1AcnAst.Asn1Type) (o:Asn1AcnAst.SequenceOf)  (l:ProgrammingLanguage) (childAccess: string) v1 v2  =
     let getInnerStatement i = 
@@ -65,6 +70,7 @@ let isEqualBodySequenceOf  (childType:Asn1Type) (t:Asn1AcnAst.Asn1Type) (o:Asn1A
         match l with
         | C    -> Some (equal_c.isEqual_SequenceOf v1 v2 childAccess i (o.minSize = o.maxSize) (BigInteger o.minSize) None, lv::[])
         | Ada  -> Some (equal_a.isEqual_SequenceOf_var_size v1 v2 i None, lv::[])
+        | Python-> Some ("", lv::[])
     | Some (innerStatement, lvars)           ->
         match l with
         | C    -> Some (equal_c.isEqual_SequenceOf v1 v2 childAccess i (o.minSize = o.maxSize) (BigInteger o.minSize) (Some innerStatement), lv::lvars)
@@ -72,6 +78,7 @@ let isEqualBodySequenceOf  (childType:Asn1Type) (t:Asn1AcnAst.Asn1Type) (o:Asn1A
             match (o.minSize = o.maxSize) with
             | true  -> Some (equal_a.isEqual_SequenceOf_fix_size v1 v2 i  (BigInteger o.minSize) innerStatement, lv::lvars)
             | false -> Some (equal_a.isEqual_SequenceOf_var_size v1 v2 i  (Some innerStatement), lv::lvars)
+        | Python-> Some ("", lv::lvars)
 
     
 
@@ -96,6 +103,9 @@ let isEqualBodySequenceChild   (l:ProgrammingLanguage)  (o:Asn1AcnAst.Asn1Child)
         | None  when  o.Optionality.IsSome  -> Some (equal_a.isEqual_Sequence_Child v1  v2  o.Optionality.IsSome c_name None, [])
         | None                              -> None
         | Some (sInnerStatement, lvars)     -> Some (equal_a.isEqual_Sequence_Child v1  v2  o.Optionality.IsSome c_name (Some sInnerStatement), lvars)
+    | Python    -> 
+        Some ("", [])
+
 
 
 let isEqualBodySequence  (l:ProgrammingLanguage) (children:SeqChildInfo list) (childAccess: string) (v1:string) (v2:string)  = 
@@ -106,6 +116,7 @@ let isEqualBodySequence  (l:ProgrammingLanguage) (children:SeqChildInfo list) (c
             match l with
             | C        -> equal_c.JoinItems content sNestedContent, lvars
             | Ada      -> equal_a.JoinItems content sNestedContent, lvars
+            | Python   -> "", lvars
     let rec printChildren children : Option<string*list<LocalVariable>> = 
         match children with
         |[]     -> None
@@ -133,6 +144,8 @@ let isEqualBodyChoiceChild  (choiceTypeDefName:string) (l:ProgrammingLanguage) (
                 (v1 + childAccess + o.c_name), (v2 + childAccess + o.c_name)
             | Ada  ->
                 (v1 + childAccess + o.c_name), (v2 + childAccess + o.c_name)
+            | Python->
+                (v1 + childAccess + o.c_name), (v2 + childAccess + o.c_name)
         match newChild.equalFunction.isEqualBody with
         | EqualBodyExpression func  ->  
             match func p1 p2 with
@@ -148,6 +161,8 @@ let isEqualBodyChoiceChild  (choiceTypeDefName:string) (l:ProgrammingLanguage) (
         equal_c.isEqual_Choice_Child o.presentWhenName sInnerStatement, lvars
     | Ada       ->
         equal_a.isEqual_Choice_Child o.presentWhenName sInnerStatement, lvars
+    | Python    -> 
+        "", lvars
 
 let isEqualBodyChoice  (typeDefinitionCmn:TypeDefinitionCommon) (l:ProgrammingLanguage) (children:ChChildInfo list) (childAccess: string) (v1:string) (v2:string)  = 
     let childrenConent,lvars =   
@@ -158,12 +173,15 @@ let isEqualBodyChoice  (typeDefinitionCmn:TypeDefinitionCommon) (l:ProgrammingLa
                 c.isEqualBodyStats "." (v1+childAccess+"u") (v2+childAccess+"u") 
             |Ada   ->
                 c.isEqualBodyStats "." v1 v2 
+            |Python->
+                c.isEqualBodyStats "." (v1+childAccess+"u") (v2+childAccess+"u") 
         )  |>
         List.unzip
     let lvars = lvars |> List.collect id
     match l with
     |C   -> Some(equal_c.isEqual_Choice v1 v2 childAccess childrenConent, lvars)
     |Ada -> Some(equal_a.isEqual_Choice v1 v2 typeDefinitionCmn.name childrenConent, lvars)
+    |Python-> Some("", lvars)
 
 
 let getEqualFuncName (r:Asn1AcnAst.AstRoot) (l:ProgrammingLanguage) (id : ReferenceToType) =
@@ -206,14 +224,17 @@ let createEqualFunction_primitive (r:Asn1AcnAst.AstRoot) (l:ProgrammingLanguage)
 let stgPrintEqualPrimitive = function
     | C    -> equal_c.PrintEqualPrimitive
     | Ada  -> equal_a.PrintEqualPrimitive
+    | Python-> (fun _ _ _ -> "")
 
 let stgMacroPrimDefFunc = function
     | C    -> equal_c.PrintEqualDefintionPrimitive
     | Ada  -> equal_a.PrintEqualDefintion
+    | Python-> (fun _ _ -> "")
 
 let stgMacroCompDefFunc = function
     | C    -> equal_c.PrintEqualDefintionComposite
     | Ada  -> equal_a.PrintEqualDefintion
+    | Python-> (fun _ _ -> "")
 
 let createIntegerEqualFunction (r:Asn1AcnAst.AstRoot) (l:ProgrammingLanguage) (t:Asn1AcnAst.Asn1Type) (o:Asn1AcnAst.Integer) (typeDefinition:TypeDefinitionCommon) =
     let isEqualBody         = EqualBodyExpression (isEqualBodyPrimitive l)
@@ -241,6 +262,7 @@ let createOctetOrBitStringEqualFunction (r:Asn1AcnAst.AstRoot) (l:ProgrammingLan
         match l with 
         | C -> "->", "pVal1", "pVal2" 
         | Ada -> ".", "val1", "val2"
+        | Python-> ".", "val1", "val2"
 
     let    isEqualFuncName, isEqualFunc, isEqualFuncDef, isEqualBody                   = 
             //match baseTypeEqFunc with
@@ -254,6 +276,7 @@ let createOctetOrBitStringEqualFunction (r:Asn1AcnAst.AstRoot) (l:ProgrammingLan
                     match l with
                     | C    -> Some funcName, Some (equal_c.PrintEqualOctBit funcName typeDefinition.name funcBody), Some (stgMacroDefFunc funcName typeDefinition.name),eqBody
                     | Ada  -> Some funcName, Some (equal_a.PrintEqualPrimitive funcName typeDefinition.name funcBody), Some (stgMacroDefFunc funcName typeDefinition.name),eqBody
+                    | Python-> Some funcName, None, None, eqBody
                 | None     -> None, None, None, isEqualBody
 (*            | Some baseEqFunc              -> 
                 match baseEqFunc.isEqualFuncName with
@@ -280,7 +303,7 @@ let createBitStringEqualFunction (r:Asn1AcnAst.AstRoot) (l:ProgrammingLanguage) 
 
 
 let createCompositeEqualFunction (r:Asn1AcnAst.AstRoot) (l:ProgrammingLanguage)  (typeDefinition:TypeDefinitionCommon) isEqualBody stgMacroDefFunc  =
-    let topLevAcc, val1, val2 =  match l with | C -> "->", "pVal1", "pVal2" | Ada -> ".", "val1", "val2"
+    let topLevAcc, val1, val2 =  match l with | C -> "->", "pVal1", "pVal2" | Ada -> ".", "val1", "val2" | Python -> ".", "val1", "val2"
 
     let    isEqualFuncName, isEqualFunc, isEqualFuncDef, isEqualBody                   = 
             //match baseTypeEqFunc with
@@ -295,6 +318,7 @@ let createCompositeEqualFunction (r:Asn1AcnAst.AstRoot) (l:ProgrammingLanguage) 
                     match l with
                     | C    -> Some funcName, Some (equal_c.PrintEqualComposite funcName typeDefinition.name funcBody lvars), Some (stgMacroDefFunc funcName typeDefinition.name),eqBody
                     | Ada  -> Some funcName, Some (equal_a.PrintEqualComposite funcName typeDefinition.name funcBody lvars), Some (stgMacroDefFunc funcName typeDefinition.name),eqBody
+                    | Python-> Some funcName, None, None, eqBody
                 | None     -> None, None, None, isEqualBody
           (*  | Some baseEqFunc              -> 
                 match baseEqFunc.isEqualFuncName with
