@@ -62,12 +62,12 @@ let getPotentialTypedefName (r:AstRoot) (t:Asn1Type)  (potentialTypedefName:stri
     
 
 let createPrmAcnInteger (r:Asn1AcnAst.AstRoot) (l:ProgrammingLanguage)  =
-    let Declare_Integer     =  match l with  C  -> header_c.Declare_Integer  | Ada   -> header_a.Declare_Integer 
+    let Declare_Integer     =  match l with  C  -> header_c.Declare_Integer  | Ada   -> header_a.Declare_Integer    | Python -> types_p.Declare_Integer
     Declare_Integer ()
 
 let createAcnInteger (r:Asn1AcnAst.AstRoot) (l:ProgrammingLanguage) (a:Asn1AcnAst.AcnInteger) =
-    let Declare_Integer     =  match l with  C  -> header_c.Declare_Integer  | Ada   -> header_a.Declare_Integer 
-    let Declare_PosInteger  =  match l with  C  -> header_c.Declare_PosInteger  | Ada   -> header_a.Declare_PosInteger  
+    let Declare_Integer     =  match l with  C  -> header_c.Declare_Integer  | Ada   -> header_a.Declare_Integer        | Python -> types_p.Declare_Integer
+    let Declare_PosInteger  =  match l with  C  -> header_c.Declare_PosInteger  | Ada   -> header_a.Declare_PosInteger  | Python -> types_p.Declare_PosInteger 
     match a.isUnsigned with
     | true     -> Declare_PosInteger ()
     | false    -> Declare_Integer ()
@@ -76,12 +76,14 @@ let createAcnInteger (r:Asn1AcnAst.AstRoot) (l:ProgrammingLanguage) (a:Asn1AcnAs
 let createAcnBoolean (r:Asn1AcnAst.AstRoot) (l:ProgrammingLanguage) =
     match l with
     | C                      -> header_c.Declare_Boolean ()
-    | Ada                    -> header_a.Declare_BOOLEAN ()    
+    | Ada                    -> header_a.Declare_BOOLEAN ()
+    | Python                 -> types_p.Declare_Boolean ()    
 
 let createAcnNull (r:Asn1AcnAst.AstRoot) (l:ProgrammingLanguage) =
     match l with
     | C                      -> header_c.Declare_NullType ()
     | Ada                    -> header_a.Declare_NULL ()
+    | Python                 -> types_p.Declare_NullType ()
 
 
 
@@ -121,8 +123,8 @@ let getTypedefName (r:Asn1AcnAst.AstRoot) (pi : Asn1Fold.ParentInfo<ParentInfoDa
 
 let private createTypeGeneric (r:Asn1AcnAst.AstRoot)  l (pi : Asn1Fold.ParentInfo<ParentInfoData> option) (t:Asn1AcnAst.Asn1Type) (defineNewType:DefineTypeAux)   =
     let programUnit = ToC t.id.ModName
-    let rtlModuleName  = match l with C -> None                                          | Ada -> Some (header_a.rtlModuleName())
-    let defineSubType l = match l with C -> header_c.Define_SubType | Ada -> header_a.Define_SubType
+    let rtlModuleName  = match l with C -> None                     | Ada -> Some (header_a.rtlModuleName())    | Python -> None
+    let defineSubType l = match l with C -> header_c.Define_SubType | Ada -> header_a.Define_SubType            | Python -> types_p.Define_SubType
     
     let defineSubTypeAux (programUnit:string) (typedefName:string) (inheritInfo : InheritanceInfo option) (subAux:DefineSubTypeAux) (innerType:bool) =
         let soInheritParentTypePackage, sInheritParentType = 
@@ -135,6 +137,7 @@ let private createTypeGeneric (r:Asn1AcnAst.AstRoot)  l (pi : Asn1Fold.ParentInf
                     match ToC(inhInfo.modName) = programUnit with
                     | true  -> None, (ToC2(r.args.TypePrefix + inhInfo.tasName))
                     | false -> Some (ToC inhInfo.modName), (ToC2(r.args.TypePrefix + inhInfo.tasName))
+                | Python->  None, (ToC2(r.args.TypePrefix + inhInfo.tasName))
         let soNewRange = subAux.getNewRange soInheritParentTypePackage sInheritParentType
         match soNewRange with
         | None when  innerType    -> (*If there is no new range and is an inner type, then just make a reference to existing type*)
@@ -202,9 +205,9 @@ These types are defined as sub types.
 *)
     
 let createInteger (r:Asn1AcnAst.AstRoot) (l:ProgrammingLanguage) (pi : Asn1Fold.ParentInfo<ParentInfoData> option) (t:Asn1AcnAst.Asn1Type)  (o:Asn1AcnAst.Integer)   (us:State) =
-    let declare_IntegerNoRTL            = match l with C -> header_c.Declare_Integer                    | Ada -> header_a.Declare_IntegerNoRTL
-    let declare_PosIntegerNoRTL         = match l with C -> header_c.Declare_PosInteger                 | Ada -> header_a.Declare_PosIntegerNoRTL
-    let define_SubType_int_range        = match l with C -> (fun _ _ _ _  -> "")                        | Ada -> header_a.Define_SubType_int_range
+    let declare_IntegerNoRTL            = match l with C -> header_c.Declare_Integer                    | Ada -> header_a.Declare_IntegerNoRTL      | Python -> types_p.Declare_Integer
+    let declare_PosIntegerNoRTL         = match l with C -> header_c.Declare_PosInteger                 | Ada -> header_a.Declare_PosIntegerNoRTL   | Python -> types_p.Declare_PosInteger
+    let define_SubType_int_range        = match l with C -> (fun _ _ _ _  -> "")                        | Ada -> header_a.Define_SubType_int_range  | Python -> (fun _ _ _ _  -> "")
 
     let getNewRange soInheritParentTypePackage sInheritParentType = 
         match o.uperRange with
@@ -217,15 +220,15 @@ let createInteger (r:Asn1AcnAst.AstRoot) (l:ProgrammingLanguage) (pi : Asn1Fold.
     createTypeGeneric r l pi t (DefineSubTypeAux {DefineSubTypeAux.getNewRange = getNewRange; getRtlTypeName = getRtlTypeName})
 
 let createBoolean (r:Asn1AcnAst.AstRoot) (l:ProgrammingLanguage) (pi : Asn1Fold.ParentInfo<ParentInfoData> option) (t:Asn1AcnAst.Asn1Type)  (o:Asn1AcnAst.Boolean)   (us:State) =
-    let getRtlTypeName  = match l with C -> header_c.Declare_Boolean  | Ada -> header_a.Declare_BOOLEANNoRTL 
+    let getRtlTypeName  = match l with C -> header_c.Declare_Boolean  | Ada -> header_a.Declare_BOOLEANNoRTL  | Python -> types_p.Declare_Boolean
     createTypeGeneric r l pi t (DefineSubTypeAux {DefineSubTypeAux.getNewRange = (fun _ _ -> None); getRtlTypeName = getRtlTypeName})
 
 let createReal (r:Asn1AcnAst.AstRoot) (l:ProgrammingLanguage) (pi : Asn1Fold.ParentInfo<ParentInfoData> option) (t:Asn1AcnAst.Asn1Type)  (o:Asn1AcnAst.Real)   (us:State) =
-    let getRtlTypeName  = match l with C -> header_c.Declare_Real  | Ada -> header_a.Declare_REALNoRTL 
+    let getRtlTypeName  = match l with C -> header_c.Declare_Real  | Ada -> header_a.Declare_REALNoRTL  | Python -> types_p.Declare_Real
     createTypeGeneric r l pi t (DefineSubTypeAux {DefineSubTypeAux.getNewRange = (fun _ _ -> None); getRtlTypeName = getRtlTypeName})
 
 let createNull (r:Asn1AcnAst.AstRoot) (l:ProgrammingLanguage) (pi : Asn1Fold.ParentInfo<ParentInfoData> option) (t:Asn1AcnAst.Asn1Type)  (o:Asn1AcnAst.NullType)   (us:State) =
-    let getRtlTypeName  = match l with C -> header_c.Declare_NullType  | Ada -> header_a.Declare_NULLNoRTL 
+    let getRtlTypeName  = match l with C -> header_c.Declare_NullType  | Ada -> header_a.Declare_NULLNoRTL  | Python -> types_p.Declare_NullType
     createTypeGeneric r l pi t (DefineSubTypeAux {DefineSubTypeAux.getNewRange = (fun _ _ -> None); getRtlTypeName = getRtlTypeName})
 
 (*
@@ -242,6 +245,13 @@ let createString (r:Asn1AcnAst.AstRoot) (l:ProgrammingLanguage) (pi : Asn1Fold.P
             header_c.Define_Type typeDefinitionBody typeDefinitionName (Some (BigInteger (o.maxSize+1))) []
         | Ada                    -> 
             header_a.IA5STRING_OF_tas_decl typeDefinitionName (BigInteger o.minSize) (BigInteger o.maxSize) (BigInteger (o.maxSize + 1)) (o.uperCharSet |> Array.map(fun c -> (BigInteger (int c))))
+        | Python                 -> 
+            let typeDefinitionBody                       = 
+                match t.Kind with
+                | Asn1AcnAst.IA5String _        -> types_p.Declare_IA5String ()
+                | Asn1AcnAst.NumericString _    -> types_p.Declare_NumericString ()
+                | _                             -> ""
+            types_p.Define_Type typeDefinitionBody typeDefinitionName (Some (BigInteger (o.maxSize+1))) []
     createTypeGeneric r l pi t (DefineNewTypeAux {DefineNewTypeAux.getCompleteDefintion = getCompleteDefinition})
 
 let createOctet (r:Asn1AcnAst.AstRoot) (l:ProgrammingLanguage) (pi : Asn1Fold.ParentInfo<ParentInfoData> option) (t:Asn1AcnAst.Asn1Type) (o:Asn1AcnAst.OctetString)  (us:State) =
@@ -252,6 +262,9 @@ let createOctet (r:Asn1AcnAst.AstRoot) (l:ProgrammingLanguage) (pi : Asn1Fold.Pa
             header_c.Define_Type typeDefinitionBody typeDefinitionName None []
         | Ada                    -> 
             header_a.OCTET_STRING_tas_decl typeDefinitionName (BigInteger o.minSize) (BigInteger o.maxSize) (o.maxSize=o.minSize)
+        | Python                 -> 
+            let typeDefinitionBody = types_p.Declare_OctetString (o.minSize=o.maxSize) (BigInteger o.maxSize)
+            types_p.Define_Type typeDefinitionBody typeDefinitionName None []
     createTypeGeneric r l pi t (DefineNewTypeAux {DefineNewTypeAux.getCompleteDefintion = getCompleteDefinition})
 
 let createBitString (r:Asn1AcnAst.AstRoot) (l:ProgrammingLanguage) (pi : Asn1Fold.ParentInfo<ParentInfoData> option) (t:Asn1AcnAst.Asn1Type) (o:Asn1AcnAst.BitString)   (us:State) =
@@ -262,6 +275,9 @@ let createBitString (r:Asn1AcnAst.AstRoot) (l:ProgrammingLanguage) (pi : Asn1Fol
             header_c.Define_Type typeDefinitionBody typeDefinitionName None []
         | Ada                    -> 
             header_a.BIT_STRING_tas_decl typeDefinitionName (BigInteger o.minSize) (BigInteger o.maxSize) (o.maxSize=o.minSize)
+        | Python                 -> 
+            let typeDefinitionBody = types_p.Declare_BitString ()
+            types_p.Define_Type typeDefinitionBody typeDefinitionName None []
     createTypeGeneric r l pi t (DefineNewTypeAux {DefineNewTypeAux.getCompleteDefintion = getCompleteDefinition})
 
 let createEnumerated (r:Asn1AcnAst.AstRoot) (l:ProgrammingLanguage) (pi : Asn1Fold.ParentInfo<ParentInfoData> option)  (t:Asn1AcnAst.Asn1Type) (o:Asn1AcnAst.Enumerated)  (us:State) =
@@ -280,6 +296,11 @@ let createEnumerated (r:Asn1AcnAst.AstRoot) (l:ProgrammingLanguage) (pi : Asn1Fo
             let arrsEnumNamesAndValues = orderedItems |> List.map( fun i -> header_a.ENUMERATED_tas_decl_item (i.getBackendName l) i.definitionValue)
             let nIndexMax = BigInteger ((Seq.length o.items)-1)
             header_a.ENUMERATED_tas_decl typeDefinitionName arrsEnumNames arrsEnumNamesAndValues nIndexMax
+        | Python                 -> 
+            let items = o.items |> List.map( fun i -> types_p.PrintEnumItem (i.getBackendName l) i.definitionValue)
+            let itemNames = o.items |> List.map( fun i -> (i.getBackendName l))
+            let typeDefinitionBody = types_p.Declare_Enumerated items itemNames
+            types_p.Define_Type typeDefinitionBody typeDefinitionName None []
     createTypeGeneric r l pi t (DefineNewTypeAux {DefineNewTypeAux.getCompleteDefintion = getCompleteDefinition})
 
 (*
@@ -300,6 +321,9 @@ let createSequenceOf (r:Asn1AcnAst.AstRoot) (l:ProgrammingLanguage) (pi : Asn1Fo
             header_c.Define_Type typeDefinitionBody typeDefinitionName None (getChildDefinition childDefinition)
         | Ada                    -> 
             header_a.SEQUENCE_OF_tas_decl typeDefinitionName (BigInteger o.minSize) (BigInteger o.maxSize) (o.minSize = o.maxSize) (childDefinition.longTypedefName l) (getChildDefinition childDefinition)
+        | Python                 -> 
+            let typeDefinitionBody = types_p.Declare_SequenceOf (childDefinition.longTypedefName l) ""
+            types_p.Define_Type typeDefinitionBody typeDefinitionName None (getChildDefinition childDefinition)
     createTypeGeneric r l pi t (DefineNewTypeAux {DefineNewTypeAux.getCompleteDefintion = getCompleteDefinition})
 
 
@@ -319,6 +343,13 @@ let createSequence (r:Asn1AcnAst.AstRoot) (l:ProgrammingLanguage) (pi : Asn1Fold
             let childrenBodies = children |> List.map handleChild
             let optChildren  = children |> List.choose(fun c -> match c.Optionality with Some _ -> Some(header_a.SEQUENCE_tas_decl_child_bit c.Name.Value) | None -> None)
             header_a.SEQUENCE_tas_decl typeDefinitionName childrenBodies optChildren childldrenCompleteDefintions
+        | Python                 ->
+            let handleChild (o:Asn1Child) = types_p.PrintChoiceSeq_Child (o.Type.typeDefintionOrReference.longTypedefName l ) o.c_name
+            let childrenBodies = children |> List.map handleChild
+            let childrenNames = children |> List.map(fun c -> ToCPy (c.Name.Value))
+            let optChildNames  = children |> List.choose(fun c -> match c.Optionality with Some _ -> Some c.Name.Value | None -> None)
+            let typeDefinitionBody = types_p.Declare_Sequence childrenBodies optChildNames childrenNames
+            types_p.Define_Type typeDefinitionBody typeDefinitionName None childldrenCompleteDefintions
     createTypeGeneric r l pi t (DefineNewTypeAux {DefineNewTypeAux.getCompleteDefintion = getCompleteDefinition})
 
 let createChoice (r:Asn1AcnAst.AstRoot) (l:ProgrammingLanguage) (pi : Asn1Fold.ParentInfo<ParentInfoData> option) (t:Asn1AcnAst.Asn1Type) (o:Asn1AcnAst.Choice)  (children:ChChildInfo list) (us:State) =
@@ -337,6 +368,12 @@ let createChoice (r:Asn1AcnAst.AstRoot) (l:ProgrammingLanguage) (pi : Asn1Fold.P
             let childrenBodies = children |> List.map handleChild
             let nIndexMax = BigInteger ((Seq.length children)-1)
             header_a.CHOICE_tas_decl typeDefinitionName children.Head.presentWhenName childrenBodies chEnms nIndexMax childldrenCompleteDefintions
+        | Python                 ->
+            let handleChild (o:ChChildInfo) = types_p.PrintChoiceSeq_Child (o.chType.typeDefintionOrReference.longTypedefName l) o.c_name
+            let childrenBodies = children |> List.map handleChild
+            let childrenNames = children |> List.map(fun c -> ToCPy (c.Name.Value))
+            let typeDefinitionBody = types_p.Declare_Choice childrenBodies childrenNames 
+            types_p.Define_Type typeDefinitionBody typeDefinitionName None childldrenCompleteDefintions
     createTypeGeneric r l pi t (DefineNewTypeAux {DefineNewTypeAux.getCompleteDefintion = getCompleteDefinition})
 
 let createReferenceType (r:Asn1AcnAst.AstRoot) (l:ProgrammingLanguage) (t:Asn1AcnAst.Asn1Type) (o:Asn1AcnAst.ReferenceType)  (baseType:Asn1Type ) (us:State) =
