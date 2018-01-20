@@ -99,6 +99,10 @@
       <Project>{a35cb9d7-70b4-41e3-bba8-7f8263aa3498}</Project>
       <Private>True</Private>
     </ProjectReference>
+    <ProjectReference Include="..\StgPython\StgPython.fsproj">
+      <Project>{d3f4f3f0-65f1-4458-8cf5-8cf542d709cb}</Project>
+      <Name>StgPython</Name>
+    </ProjectReference>
     <ProjectReference Include="..\StgVarious\StgVarious.fsproj">
       <Name>StgVarious</Name>
       <Project>{44920b63-4f4d-40e2-a652-66ea7ebd5e80}</Project>

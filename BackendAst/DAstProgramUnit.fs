@@ -147,5 +147,22 @@ let internal createProgramUnits (files: Asn1File list)  (l:ProgrammingLanguage) 
             let importedProgramUnits = m.Imports |> List.map (fun im -> ToC im.Name.Value)
             let tetscase_name = ToC (m.Name.Value.ToLower()+"_auto_tcs")
             {ProgramUnit.name = ToC m.Name.Value; specFileName = specFileName; bodyFileName=bodyFileName; sortedTypeAssignments = sortedTypes; valueAssignments = valueAssignments; importedProgramUnits = importedProgramUnits; tetscase_specFileName=tetscase_specFileName; tetscase_bodyFileName=tetscase_bodyFileName; tetscase_name=tetscase_name})
-
-
+    | Python     ->
+        files |>
+        List.collect(fun f -> f.Modules |> List.map (fun m -> f,m)) |>
+        List.map(fun (f,m) ->
+            let typesMap = m.TypeAssignments |> List.map(fun tas -> tas.AsTypeAssignmentInfo m.Name.Value, tas) |> Map.ofList
+            let moduTypes = m.TypeAssignments |> List.map(fun x -> x.Type)
+            let valueAssignments = m.ValueAssignments
+            let importedTypes = 
+                m.Imports |>
+                Seq.collect(fun imp -> imp.Types |> List.map (fun impType ->{TypeAssignmentInfo.modName = imp.Name.Value; tasName = impType.Value})) |> 
+                Seq.distinct |> Seq.toList        
+            let sortedTypes = sortTypes moduTypes importedTypes |> List.map(fun ref -> typesMap.[ref])
+            let specFileName = "__init__." + l.SpecExtention
+            let bodyFileName = ToC (m.Name.Value.ToLower()) + "." + l.BodyExtention
+            let tetscase_specFileName = Path.Combine("tests", "__init__." + l.SpecExtention)
+            let tetscase_bodyFileName = Path.Combine("tests", ToC (m.Name.Value.ToLower()) + "_auto_tcs." + l.BodyExtention)
+            let importedProgramUnits = m.Imports |> List.map (fun im -> ToC im.Name.Value)
+            let tetscase_name = ToC (m.Name.Value.ToLower() + "_auto_tcs")
+            {ProgramUnit.name = ToC m.Name.Value; specFileName = specFileName; bodyFileName=bodyFileName; sortedTypeAssignments = sortedTypes; valueAssignments = valueAssignments; importedProgramUnits = importedProgramUnits; tetscase_specFileName=tetscase_specFileName; tetscase_bodyFileName=tetscase_bodyFileName; tetscase_name=tetscase_name})

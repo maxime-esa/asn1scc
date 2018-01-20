@@ -21,7 +21,7 @@ let private mapAcnParameter (r:Asn1AcnAst.AstRoot) (deps:Asn1AcnAst.AcnInsertedF
         name = prm.name; 
         loc = prm.loc
         id = prm.id
-        c_name = DAstACN.getAcnDeterminantName prm.id
+        c_name = DAstACN.getAcnDeterminantName l prm.id
         typeDefinitionBodyWithinSeq = DAstACN.getDeterminantTypeDefinitionBodyWithinSeq r l (Asn1AcnAst.AcnParameterDeterminant prm)
 
         funcUpdateStatement = funcUpdateStatement 
@@ -51,7 +51,7 @@ let private createAcnChild (r:Asn1AcnAst.AstRoot) (deps:Asn1AcnAst.AcnInsertedFi
         
             AcnChild.Name  = ch.Name
             id             = ch.id
-            c_name         = DAstACN.getAcnDeterminantName ch.id
+            c_name         = DAstACN.getAcnDeterminantName l ch.id
             Type           = ch.Type
             typeDefinitionBodyWithinSeq = DAstACN.getDeterminantTypeDefinitionBodyWithinSeq r l (Asn1AcnAst.AcnChildDeterminant ch)
             funcBody = fun codec -> match codec with Codec.Encode -> funcBodyEncode | Codec.Decode -> funcBodyDecode
@@ -416,6 +416,7 @@ let private createAsn1Child (r:Asn1AcnAst.AstRoot) (l:ProgrammingLanguage) (m:As
             Asn1Child.Name     = ch.Name
             c_name             = ch.c_name
             ada_name           = ch.ada_name
+            py_name            = ch.py_name
             Type               = newChildType
             Optionality        = ch.Optionality
             Comments           = ch.Comments
@@ -512,15 +513,16 @@ let private createChoiceChild (r:Asn1AcnAst.AstRoot) (l:ProgrammingLanguage) (m:
     let ret = 
         {
         
-            ChChildInfo.Name     = ch.Name
-            c_name             = ch.c_name
-            ada_name           = ch.ada_name
+            ChChildInfo.Name            = ch.Name
+            c_name                      = ch.c_name
+            ada_name                    = ch.ada_name
+            py_name                     = ch.py_name
             _present_when_name_private  = ch.present_when_name
-            acnPresentWhenConditions = ch.acnPresentWhenConditions
-            chType              = newChildType
-            Comments            = ch.Comments
-            isEqualBodyStats    = DAstEqual.isEqualBodyChoiceChild typeDefinitionName l ch newChildType
-            isValidBodyStats    = DAstValidate.isValidChoiceChild l ch newChildType
+            acnPresentWhenConditions    = ch.acnPresentWhenConditions
+            chType                      = newChildType
+            Comments                    = ch.Comments
+            isEqualBodyStats            = DAstEqual.isEqualBodyChoiceChild typeDefinitionName l ch newChildType
+            isValidBodyStats            = DAstValidate.isValidChoiceChild l ch newChildType
         }
     ret, us
 
@@ -619,6 +621,7 @@ let private mapTas (r:Asn1AcnAst.AstRoot) (deps:Asn1AcnAst.AcnInsertedFieldDepen
         TypeAssignment.Name = tas.Name
         c_name = tas.c_name
         ada_name = tas.ada_name
+        py_name = tas.py_name
         Type = newType
         Comments = tas.Comments
     },ns
@@ -638,6 +641,7 @@ let private mapVas (r:Asn1AcnAst.AstRoot) (allNewTypeAssignments : TypeAssignmen
         ValueAssignment.Name = vas.Name
         c_name = vas.c_name
         ada_name = vas.ada_name
+        py_name = vas.py_name
         Type = newType
         Value = mapValue vas.Value
     },ns
@@ -677,9 +681,10 @@ let DoWork (r:Asn1AcnAst.AstRoot) (deps:Asn1AcnAst.AcnInsertedFieldDependencies)
         | CommonTypes.ProgrammingLanguage.C     -> DAst.ProgrammingLanguage.C
         | CommonTypes.ProgrammingLanguage.Ada   
         | CommonTypes.ProgrammingLanguage.Spark -> DAst.ProgrammingLanguage.Ada
-        | _                             -> raise(System.Exception "Unsupported programming language")
+        | CommonTypes.ProgrammingLanguage.Python-> DAst.ProgrammingLanguage.Python
+        | _                                     -> raise(System.Exception "Unsupported programming language")
 
-    
+
     let initialState = {curSeqOfLevel=0; currErrorCode = 1; curErrCodeNames = Set.empty}
     //first map all type assignments and then value assignments
     let files0, ns = r.Files |> foldMap (fun cs f -> mapFile r deps l f cs) initialState

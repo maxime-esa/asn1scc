@@ -15,79 +15,97 @@ type ProgrammingLanguage with
         match this with
         |C      -> "h"
         |Ada    -> "ads"
+        |Python -> "py"
     member this.BodyExtention =
         match this with
         |C      -> "c"
         |Ada    -> "adb"
+        |Python -> "py"
     member this.ArrName =
         match this with
         |C      -> "arr"
         |Ada    -> "Data"
+        |Python -> ""
     member this.AssignOperator =
         match this with
         |C      -> "="
         |Ada    -> ":="
+        |Python -> "="
     member this.ArrayAccess idx =
         match this with
         |C      -> "[" + idx + "]"
         |Ada    -> "(" + idx + ")"
+        |Python -> "[" + idx + "]"
     member this.ExpOr e1 e2 =
         match this with
         |C      -> isvalid_c.ExpOr e1 e2
         |Ada    -> isvalid_a.ExpOr e1 e2
+        |Python -> isvalid_p.ExpOr e1 e2
     member this.ExpAnd e1 e2 =
         match this with
         |C      -> isvalid_c.ExpAnd e1 e2
         |Ada    -> isvalid_a.ExpAnd e1 e2
+        |Python -> isvalid_p.ExpAnd e1 e2
     member this.ExpAndMulti expList =
         match this with
         |C      -> isvalid_c.ExpAndMulit expList
         |Ada    -> isvalid_a.ExpAndMulit expList
+        |Python -> isvalid_p.ExpAndMulit expList
     member this.ExpNot e  =
         match this with
         |C      -> isvalid_c.ExpNot e
         |Ada    -> isvalid_a.ExpNot e
+        |Python -> isvalid_p.ExpNot e
     member this.ExpEqual e1 e2  =
         match this with
         |C      -> isvalid_c.ExpEqual e1 e2
         |Ada    -> isvalid_a.ExpEqual e1 e2
+        |Python -> isvalid_p.ExpEqual e1 e2
     member this.ExpStringEqual e1 e2  =
         match this with
         |C      -> isvalid_c.ExpStringEqual e1 e2
         |Ada    -> isvalid_a.ExpStringEqual e1 e2
+        |Python -> isvalid_p.ExpStringEqual e1 e2
     member this.ExpGt e1 e2  =
         match this with
         |C      -> isvalid_c.ExpGt e1 e2
         |Ada    -> isvalid_a.ExpGt e1 e2
+        |Python -> isvalid_p.ExpGt e1 e2
     member this.ExpGte e1 e2  =
         match this with
         |C      -> isvalid_c.ExpGte e1 e2
         |Ada    -> isvalid_a.ExpGte e1 e2
+        |Python -> isvalid_p.ExpGte e1 e2
     member this.ExpLt e1 e2  =
         match this with
         |C      -> isvalid_c.ExpLt e1 e2
         |Ada    -> isvalid_a.ExpLt e1 e2
+        |Python -> isvalid_p.ExpLt e1 e2
     member this.ExpLte e1 e2  =
         match this with
         |C      -> isvalid_c.ExpLte e1 e2
         |Ada    -> isvalid_a.ExpLte e1 e2
+        |Python -> isvalid_p.ExpLte e1 e2
     member this.StrLen exp =
         match this with
         |C      -> isvalid_c.StrLen exp
         |Ada    -> isvalid_a.StrLen exp
+        |Python -> isvalid_p.StrLen exp
     member this.Length exp sAcc =
         match this with
         |C      -> isvalid_c.ArrayLen exp sAcc
         |Ada    -> isvalid_a.ArrayLen exp sAcc
+        |Python -> isvalid_p.ArrayLen exp sAcc
     member this.ArrayStartIndex =
         match this with
         |C      -> 0
         |Ada    -> 1
+        |Python -> 0
     member this.boolean =
         match this with
         |C      -> "flag"
         |Ada    -> "Boolean"
-
+        |Python -> "bool"
 
 
 
@@ -102,6 +120,9 @@ type FuncParamType  with
         | C, VALUE x        -> sprintf "(&(%s))" x
         | C, POINTER x      -> x
         | C, FIXARRAY x     -> x
+        | Python, VALUE x   -> x
+        | Python, POINTER x -> x
+        | Python, FIXARRAY x-> x
     member this.getValue (l:ProgrammingLanguage) =
         match l, this with
         | Ada, VALUE x      -> x
@@ -110,6 +131,9 @@ type FuncParamType  with
         | C, VALUE x        -> x
         | C, POINTER x      -> sprintf "(*(%s))" x
         | C, FIXARRAY x     -> x
+        | Python, VALUE x   -> x
+        | Python, POINTER x -> x
+        | Python, FIXARRAY x-> x
     member this.p  =
         match this with
         | VALUE x      -> x
@@ -123,6 +147,9 @@ type FuncParamType  with
         | C, VALUE x        -> "."
         | C, POINTER x      -> "->"
         | C, FIXARRAY x     -> ""
+        | Python, VALUE x   -> "."
+        | Python, POINTER x -> "."
+        | Python, FIXARRAY x-> "."
         
     member this.getStar (l:ProgrammingLanguage) =
         match l, this with
@@ -132,6 +159,9 @@ type FuncParamType  with
         | C, VALUE x        -> ""
         | C, POINTER x      -> "*"
         | C, FIXARRAY x     -> ""
+        | Python, VALUE x   -> ""
+        | Python, POINTER x -> ""
+        | Python, FIXARRAY x-> ""
     member this.getAmber (l:ProgrammingLanguage) =
         if this.getStar l = "*" then "&" else ""        
     member this.getArrayItem (l:ProgrammingLanguage) (idx:string) (childTypeIsString: bool) =
@@ -142,6 +172,9 @@ type FuncParamType  with
         | C     -> 
             let newPath = sprintf "%s%sarr[%s]" this.p (this.getAcces l) idx
             if childTypeIsString then (FIXARRAY newPath) else (VALUE newPath)
+        | Python-> 
+            let newPath = sprintf "%s[%s]" this.p idx
+            if childTypeIsString then (FIXARRAY newPath) else (VALUE newPath)
     member this.getSeqChild (l:ProgrammingLanguage) (childName:string) (childTypeIsString: bool) =
         match l with
         | Ada   -> 
@@ -149,6 +182,9 @@ type FuncParamType  with
             if childTypeIsString then (FIXARRAY newPath) else (VALUE newPath)
         | C     -> 
             let newPath = sprintf "%s%s%s" this.p (this.getAcces l) childName
+            if childTypeIsString then (FIXARRAY newPath) else (VALUE newPath)
+        | Python-> 
+            let newPath = sprintf "%s.%s" this.p childName
             if childTypeIsString then (FIXARRAY newPath) else (VALUE newPath)
 
     member this.getChChild (l:ProgrammingLanguage) (childName:string) (childTypeIsString: bool) =
@@ -159,6 +195,9 @@ type FuncParamType  with
         | C     -> 
             let newPath = sprintf "%s%su.%s" this.p (this.getAcces l) childName
             if childTypeIsString then (FIXARRAY newPath) else (VALUE newPath)
+        | Python-> 
+            let newPath = sprintf "%s.%s" this.p childName
+            if childTypeIsString then (FIXARRAY newPath) else (VALUE newPath)
 
     member this.getChChildIsPresent (l:ProgrammingLanguage) (childPresentName:string)  =
         match l with
@@ -166,6 +205,8 @@ type FuncParamType  with
             sprintf "%s.kind = %s_PRESENT" this.p childPresentName
         | C     -> 
             sprintf "%s%skind == %s_PRESENT" this.p (this.getAcces l) childPresentName
+        | Python-> 
+            sprintf "%s.get_attribute_exists('%s')" this.p childPresentName
 
 
 let getAccessFromScopeNodeList (ReferenceToType nodes)  (childTypeIsString: bool) (l:ProgrammingLanguage) (pVal : FuncParamType) =
@@ -215,28 +256,41 @@ type LocalVariable with
         | C,    SequenceOfIndex (i,Some iv)               -> sprintf "int i%d=%d;" i iv
         | Ada,  SequenceOfIndex (i,None)                  -> sprintf "i%d:Integer;" i
         | Ada,  SequenceOfIndex (i,Some iv)               -> sprintf "i%d:Integer:=%d;" i iv
+        | Python, SequenceOfIndex (i,None)                -> sprintf "i%d: int" i
+        | Python, SequenceOfIndex (i,Some iv)             -> sprintf "i%d: int = %d" i iv
         | C,    IntegerLocalVariable (name,None)          -> sprintf "int %s;" name
         | C,    IntegerLocalVariable (name,Some iv)       -> sprintf "int %s=%d;" name iv
         | Ada,  IntegerLocalVariable (name,None)          -> sprintf "%s:Integer;" name
         | Ada,  IntegerLocalVariable (name,Some iv)       -> sprintf "%s:Integer:=%d;" name iv
+        | Python, IntegerLocalVariable (name,None)        -> sprintf "%s: int" name
+        | Python, IntegerLocalVariable (name,Some iv)     -> sprintf "%s: int = %d" name iv
         | C,    Asn1SIntLocalVariable (name,None)         -> sprintf "asn1SccSint %s;" name
         | C,    Asn1SIntLocalVariable (name,Some iv)      -> sprintf "asn1SccSint %s=%d;" name iv
         | Ada,  Asn1SIntLocalVariable (name,None)         -> sprintf "%s:adaasn1rtl.Asn1Int;" name
         | Ada,  Asn1SIntLocalVariable (name,Some iv)      -> sprintf "%s:adaasn1rtl.Asn1Int:=%d;" name iv
+        | Python, Asn1SIntLocalVariable (name,None)       -> sprintf "%s: int" name
+        | Python, Asn1SIntLocalVariable (name,Some iv)    -> sprintf "%s: int = %d" name iv
         | C,    Asn1UIntLocalVariable (name,None)         -> sprintf "asn1SccUint %s;" name
         | C,    Asn1UIntLocalVariable (name,Some iv)      -> sprintf "asn1SccUint %s=%d;" name iv
         | Ada,  Asn1UIntLocalVariable (name,None)         -> sprintf "%s:adaasn1rtl.Asn1UInt;" name
         | Ada,  Asn1UIntLocalVariable (name,Some iv)      -> sprintf "%s:adaasn1rtl.Asn1UInt:=%d;" name iv
+        | Python, Asn1UIntLocalVariable (name,None)       -> sprintf "%s: int" name
+        | Python, Asn1UIntLocalVariable (name,Some iv)    -> sprintf "%s: int = %d" name iv
         | C,    FlagLocalVariable (name,None)             -> sprintf "flag %s;" name
         | C,    FlagLocalVariable (name,Some iv)          -> sprintf "flag %s=%d;" name iv
         | Ada,  FlagLocalVariable (name,None)             -> sprintf "%s:adaasn1rtl.BIT;" name
         | Ada,  FlagLocalVariable (name,Some iv)          -> sprintf "%s:adaasn1rtl.BIT:=%d;" name iv
+        | Python, FlagLocalVariable (name,None)            -> sprintf "%s: bool" name
+        | Python, FlagLocalVariable (name,Some iv)         -> sprintf "%s: bool = %d" name iv
         | C,    BooleanLocalVariable (name,None)          -> sprintf "flag %s;" name
         | C,    BooleanLocalVariable (name,Some iv)       -> sprintf "flag %s=%s;" name (if iv then "TRUE" else "FALSE")
         | Ada,  BooleanLocalVariable (name,None)          -> sprintf "%s:Boolean;" name
         | Ada,  BooleanLocalVariable (name,Some iv)       -> sprintf "%s:Boolean:=%s;" name (if iv then "True" else "False")
+        | Python, BooleanLocalVariable (name,None)        -> sprintf "%s: bool" name
+        | Python, BooleanLocalVariable (name,Some iv)     -> sprintf "%s: bool = %s" name (if iv then "True" else "False")
         | C,    AcnInsertedChild(name, vartype)           -> sprintf "%s %s;" vartype name
         | Ada,    AcnInsertedChild(name, vartype)         -> sprintf "%s:%s;" name vartype
+        | Python, AcnInsertedChild(name, vartype)         -> sprintf "%s = None" name
 
 
 type TypeDefintionOrReference with 
@@ -250,6 +304,7 @@ type TypeDefintionOrReference with
                 match l with
                 | Ada   -> pu + "." + ref.typedefName
                 | C     -> ref.typedefName
+                | Python-> ref.typedefName
             | None    -> ref.typedefName
             
 
@@ -259,6 +314,7 @@ type Asn1AcnAst.NamedItem with
         match l with
         | C         -> ToC this.c_name
         | Ada       -> ToC this.ada_name
+        | Python    -> ToCPy this.py_name
 
 type Integer with
     member this.Cons     = this.baseInfo.cons
@@ -349,6 +405,7 @@ type Asn1AcnAst.NamedItem      with
         match l with
         | C     -> this.c_name
         | Ada   -> this.ada_name
+        | Python-> this.py_name
 
 
 type Asn1AcnAst.Asn1Type with
@@ -387,6 +444,19 @@ type Asn1AcnAst.Asn1Type with
                 | Asn1AcnAst.Sequence     _ -> POINTER "pVal"
                 | Asn1AcnAst.Choice       _ -> POINTER "pVal"
                 | Asn1AcnAst.ReferenceType r -> r.resolvedType.getParamType l c
+        | Python -> 
+            match c with
+            | Encode    -> 
+                match this.Kind with
+                | Asn1AcnAst.SequenceOf   _ -> VALUE "self"
+                | Asn1AcnAst.Sequence     _ 
+                | Asn1AcnAst.Choice       _ -> VALUE "self"
+                | _                         -> VALUE "self._value"
+            | Decode    ->
+                match this.Kind with
+                | Asn1AcnAst.Sequence     _ 
+                | Asn1AcnAst.Choice       _ -> VALUE "self"
+                | _                         -> VALUE "value"
     member this.getParamValue (p:FuncParamType) (l:ProgrammingLanguage) (c:Codec) =
         match l with
         | Ada   -> p.p
@@ -413,6 +483,7 @@ type Asn1AcnAst.Asn1Type with
                 | Asn1AcnAst.NumericString _ -> p.getValue l// FIXARRAY "val"
                 | Asn1AcnAst.ReferenceType r -> r.resolvedType.getParamValue p l c
                 | _                          -> p.getPointer l
+        | Python-> p.p
         
 
 
@@ -727,6 +798,19 @@ with
                 | Sequence     _ -> POINTER "pVal"
                 | Choice       _ -> POINTER "pVal"
                 | ReferenceType r -> r.resolvedType.getParamType l c
+        | Python -> 
+            match c with
+            | Encode -> 
+                match this.Kind with
+                | SequenceOf    _   -> VALUE "self"
+                | Sequence      _ 
+                | Choice        _   -> VALUE "self"
+                | _                 -> VALUE "self._value"
+            | Decode    ->
+                match this.Kind with
+                | Sequence     _ 
+                | Choice       _    -> VALUE "self"
+                | _                 -> VALUE "value"
     member this.tasInfo =
         match this.typeAssignmentInfo with
         | Some (TypeAssignmentInfo tasInfo)  -> Some tasInfo

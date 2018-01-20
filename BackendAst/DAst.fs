@@ -68,6 +68,7 @@ and Asn1ValueKind =
 type ProgrammingLanguage =
     |C
     |Ada
+    |Python
 
 
 type FuncParamType =
@@ -509,6 +510,7 @@ and Asn1Child = {
     Name                        : StringLoc
     c_name                      : string
     ada_name                    : string                     
+    py_name                     : string 
     isEqualBodyStats            : string -> string  -> string -> (string*(LocalVariable list)) option  // 
     isValidBodyStats            : State -> (SeqChoiceChildInfoIsValid option * State)
     Type                        : Asn1Type
@@ -550,6 +552,7 @@ and ChChildInfo = {
     Name                        : StringLoc
     c_name                      : string
     ada_name                    : string                     
+    py_name                     : string
     _present_when_name_private  : string // Does not contain the "_PRESENT". Not to be used directly by backends. Backends should use presentWhenName
     acnPresentWhenConditions    : Asn1AcnAst.AcnPresentWhenConditionChoiceChild list
     Comments                    : string array
@@ -676,6 +679,7 @@ type TypeAssignment = {
     Name:StringLoc
     c_name:string
     ada_name:string
+    py_name:string
     Type:Asn1Type
     Comments: string array
 
@@ -685,6 +689,7 @@ type ValueAssignment = {
     Name    :StringLoc
     c_name  :string
     ada_name:string
+    py_name :string
     Type    :Asn1Type
     Value   :Asn1Value
 }
@@ -708,7 +713,7 @@ type Asn1File = {
 }
 
 type ProgramUnit = {
-    name                    : string
+    name    : string
     tetscase_name           : string
     specFileName            : string
     bodyFileName            : string
@@ -741,5 +746,3 @@ type AstRoot = {
     acnLinks                : AcnLink list
 }
 *)
-
-

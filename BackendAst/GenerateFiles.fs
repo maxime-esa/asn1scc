@@ -28,14 +28,29 @@ let getTypeDecl (r:DAst.AstRoot) (vas:ValueAssignment) =
 let printValueAssignment (r:DAst.AstRoot) (l:ProgrammingLanguage)  (vas:ValueAssignment) =
     let sName = vas.c_name
     let t = vas.Type
-    let sTypeDecl= getTypeDecl r vas
-
-
+    let sTypeDecl= 
+        match l with 
+        | C 
+        | Ada                   -> getTypeDecl r vas 
+        | Python                -> 
+            match t.tasInfo with
+            | Some tasInfo      -> getTypeDecl r vas
+            | None              ->
+                match t.Kind with
+                | Integer _     -> types_p.printInteger()
+                | Real _        -> types_p.printReal()
+                | Boolean _     -> types_p.printBoolean()
+                | BitString _   -> types_p.printBitString()
+                | OctetString _ -> types_p.printOctetString()
+                | IA5String _   -> types_p.printIA5String()
+                | NullType _    -> types_p.printNullType()
+                | _             -> getTypeDecl r vas
 
     let sVal = DAstVariables.printValue r l  vas.Type None vas.Value.kind
     match l with
     | C     -> variables_c.PrintValueAssignment sTypeDecl sName sVal
     | Ada   -> header_a.PrintValueAssignment sName sTypeDecl sVal
+    | Python   -> variables_p.PrintValueAssignment sTypeDecl sName sVal
 
 
 let rec collectEqualFuncs (t:Asn1Type) =
@@ -86,7 +101,7 @@ let private printUnit (r:DAst.AstRoot) (l:ProgrammingLanguage) (encodings: Commo
                 match tas.Type.typeDefintionOrReference with
                 | TypeDefinition td -> td.typedefBody ()      
                 | ReferenceToExistingDefinition _   -> raise(BugErrorException "Type Assignment with no Type Defintion")
-            let init_def        = match l with C -> tas.Type.initFunction.initFuncDef | Ada -> None
+            let init_def        = match l with C -> tas.Type.initFunction.initFuncDef | Ada -> None | Python -> None
             let equal_defs      = collectEqualFuncs tas.Type |> List.choose(fun ef -> ef.isEqualFuncDef)
             let isValid        = 
                 match tas.Type.isValidFunction with
@@ -109,7 +124,8 @@ let private printUnit (r:DAst.AstRoot) (l:ProgrammingLanguage) (encodings: Commo
             let allProcs = equal_defs@([init_def;isValid;uPerEncFunc;uPerDecFunc;acnEncFunc; acnDecFunc] |> List.choose id)
             match l with
             |C     -> header_c.Define_TAS type_defintion allProcs 
-            |Ada   -> header_a.Define_TAS type_defintion allProcs 
+            |Ada   -> header_a.Define_TAS type_defintion allProcs
+            |Python-> ""
         )
     let arrsValues = 
         vases |>
@@ -130,16 +146,19 @@ let private printUnit (r:DAst.AstRoot) (l:ProgrammingLanguage) (encodings: Commo
                 | _             -> 
                     let typeDefinitionName = match t.tasInfo with| Some tasInfo    -> ToC2(r.args.TypePrefix + tasInfo.tasName) | None    -> t.typeDefinition.name
                     header_c.PrintValueAssignment (typeDefinitionName) gv.c_name
-            | Ada   -> printValueAssignment r l gv)
+            | Ada   -> printValueAssignment r l gv
+            | Python     -> ""
+        )
     let arrsHeaderAnonymousValues =
         arrsAnonymousValues |>
         List.map(fun av -> 
             match l with
             | C     -> header_c.PrintValueAssignment av.typeDefinitionName av.valueName
             | Ada   -> 
-                header_a.PrintValueAssignment av.valueName av.typeDefinitionName av.valueExpresion)
+                header_a.PrintValueAssignment av.valueName av.typeDefinitionName av.valueExpresion
+            | Python-> ""
+        )
     
-
     let arrsPrototypes = []
     let defintionsContntent =
         match l with
@@ -149,6 +168,10 @@ let private printUnit (r:DAst.AstRoot) (l:ProgrammingLanguage) (encodings: Commo
         | Ada   -> 
             let arrsPrivateChoices = []
             header_a.PrintPackageSpec pu.name pu.importedProgramUnits typeDefs (arrsValues@arrsHeaderAnonymousValues) arrsPrivateChoices
+        | Python     -> 
+            if not <| System.IO.Directory.Exists(Path.Combine(outDir, "tests")) then
+                System.IO.Directory.CreateDirectory(Path.Combine(outDir, "tests")) |> ignore
+            ""
 
     let fileName = Path.Combine(outDir, pu.specFileName)
     File.WriteAllText(fileName, defintionsContntent.Replace("\r",""))
@@ -168,33 +191,70 @@ let private printUnit (r:DAst.AstRoot) (l:ProgrammingLanguage) (encodings: Commo
         match l with
         | C     -> test_cases_c.PrintAutomaticTestCasesHeaderFile (ToC pu.tetscase_specFileName) pu.name typeDefs
         | Ada   -> test_cases_a.PrintCodecsFile_spec pu.name pu.importedProgramUnits typeDefs
+        | Python -> ""
     File.WriteAllText(tetscase_specFileName, tstCasesHdrContent.Replace("\r",""))
         
     //sourse file
     let arrsTypeAssignments = 
         tases |> List.map(fun t -> 
-            let initialize        = match l with C -> t.Type.initFunction.initFunc | Ada -> None
-            //let eqFuncs = collectEqualDeffinitions t |> List.choose(fun ef -> ef.isEqualFunc)
-            let eqFuncs = collectEqualFuncs t.Type |> List.choose(fun ef -> ef.isEqualFunc)
-            let isValid = match t.Type.isValidFunction with None -> None | Some isVal -> isVal.func
-            let uperEncDec codec         =  
-                match requiresUPER with
-                | true  ->
-                    match codec with
-                    | CommonTypes.Encode    -> t.Type.uperEncFunction.func
-                    | CommonTypes.Decode    -> t.Type.uperDecFunction.func
-                | false -> None
-            let ancEncDec codec         = 
-                match requiresAcn with
-                | true ->
-                    match codec with
-                    | CommonTypes.Encode    -> match t.Type.acnEncFunction with None -> None | Some x -> x.func
-                    | CommonTypes.Decode    -> match t.Type.acnDecFunction with None -> None | Some x -> x.func
-                | false     -> None
-            let allProcs =  eqFuncs@([initialize; isValid;(uperEncDec CommonTypes.Encode); (uperEncDec CommonTypes.Decode);(ancEncDec CommonTypes.Encode); (ancEncDec CommonTypes.Decode)] |> List.choose id)
-            match l with
-            | C     ->  body_c.printTass allProcs 
-            | Ada   ->  body_a.printTass allProcs )
+            match l with 
+            | C 
+            | Ada ->
+                let initialize        = match l with C -> t.Type.initFunction.initFunc | Ada -> None | Python -> None
+                //let eqFuncs = collectEqualDeffinitions t |> List.choose(fun ef -> ef.isEqualFunc)
+                let eqFuncs = collectEqualFuncs t.Type |> List.choose(fun ef -> ef.isEqualFunc)
+                let isValid = match t.Type.isValidFunction with None -> None | Some isVal -> isVal.func
+                let uperEncDec codec         =  
+                    match requiresUPER with
+                    | true  ->
+                        match codec with
+                        | CommonTypes.Encode    -> t.Type.uperEncFunction.func
+                        | CommonTypes.Decode    -> t.Type.uperDecFunction.func
+                    | false -> None
+                let ancEncDec codec         = 
+                    match requiresAcn with
+                    | true ->
+                        match codec with
+                        | CommonTypes.Encode    -> match t.Type.acnEncFunction with None -> None | Some x -> x.func
+                        | CommonTypes.Decode    -> match t.Type.acnDecFunction with None -> None | Some x -> x.func
+                    | false     -> None
+                let allProcs =  eqFuncs@([initialize; isValid;(uperEncDec CommonTypes.Encode); (uperEncDec CommonTypes.Decode);(ancEncDec CommonTypes.Encode); (ancEncDec CommonTypes.Decode)] |> List.choose id)
+                match l with
+                | C     ->  body_c.printTass allProcs 
+                | Ada   ->  body_a.printTass allProcs
+                | Python->  ""
+            | Python->
+                let getComposedDefinition (t:Asn1Type) =
+                    let initialize = t.initFunction.initFunc
+                    let isValid = match t.isValidFunction with None -> None | Some x -> x.func
+                    let uperEnc = if requiresUPER then match t.uperEncFunction.func with None -> None | Some x -> Some x else None
+                    let uperDec = if requiresUPER then match t.uperDecFunction.func with None -> None | Some x -> Some x else None
+                    let acnEnc = if requiresAcn then match t.acnEncFunction with None -> None | Some x -> x.func else None
+                    let acnDec = if requiresAcn then match t.acnDecFunction with None -> None | Some x -> x.func else None
+                            
+                    let allProcs = ([initialize; isValid;uperEnc; uperDec;acnEnc; acnDec] |> List.choose id)
+                    body_p.printTass allProcs t.typeDefinition.typeDefinitionBodyWithinSeq
+
+                let rec getCompleteTypeDefinition (t:Asn1Type) =
+                    match t.Kind with 
+                    | Asn1TypeKind.Sequence t1      -> 
+                        let children = t1.children |> List.choose (fun c -> match c with Asn1Child z -> Some z | _ -> None)
+                        let childrenDefinitions = 
+                            children |> List.map(fun c -> 
+                            body_p.printTassComplete (ToCPy c.Name.Value + "Type") (getCompleteTypeDefinition c.Type))
+                        body_p.printTypeDefinition (getComposedDefinition t) childrenDefinitions
+                    | Asn1TypeKind.Choice t1         ->
+                        let childrenDefinitions = 
+                            t1.children |> List.map(fun c -> 
+                            body_p.printTassComplete (ToCPy c.Name.Value + "Type") (getCompleteTypeDefinition c.chType))
+                        body_p.printTypeDefinition (getComposedDefinition t) childrenDefinitions
+                    | Asn1TypeKind.SequenceOf t1     -> 
+                        let childDefinition = body_p.printTassComplete ("ElementType") (getCompleteTypeDefinition t1.childType)
+                        body_p.printTypeDefinition (getComposedDefinition t) [childDefinition]
+                    | _                             -> getComposedDefinition t
+                
+                body_p.printTassComplete (ToCPy t.Name.Value) (getCompleteTypeDefinition t.Type)
+        )
     let eqContntent = 
         match l with
         | C     ->
@@ -210,6 +270,14 @@ let private printUnit (r:DAst.AstRoot) (l:ProgrammingLanguage) (encodings: Commo
             let arrsChoiceValueAssignments = []
             let rtl = [body_a.rtlModuleName()]
             body_a.PrintPackageBody pu.name  (rtl@pu.importedProgramUnits) arrsNegativeReals arrsBoolPatterns arrsTypeAssignments arrsChoiceValueAssignments
+        | Python     ->
+            let arrsUnnamedVariables = []
+            let arrsValueAssignments = vases |> List.map (printValueAssignment r l )
+            let arrsSourceAnonymousValues = 
+                arrsAnonymousValues |>
+                List.map (fun av -> variables_p.PrintValueAssignment av.typeDefinitionName av.valueName av.valueExpresion)
+            let arrsUtilityDefines = []
+            body_p.printSourceFile pu.name arrsUnnamedVariables (arrsValueAssignments@arrsSourceAnonymousValues) arrsTypeAssignments
     let fileName = Path.Combine(outDir, pu.bodyFileName)
     File.WriteAllText(fileName, eqContntent.Replace("\r",""))
 
@@ -229,6 +297,7 @@ let private printUnit (r:DAst.AstRoot) (l:ProgrammingLanguage) (encodings: Commo
         match l with
         | C     -> test_cases_c.PrintAutomaticTestCasesSourceFile pu.tetscase_specFileName pu.importedProgramUnits encDecFuncs
         | Ada   -> test_cases_a.PrintCodecsFile_body pu.name pu.importedProgramUnits [] encDecFuncs
+        | Python-> test_cases_p.PrintAutomaticTestCasesSourceFile (ToC (pu.name.ToLower())) pu.importedProgramUnits encDecFuncs
     File.WriteAllText(tetscase_SrcFileName, tstCasesHdrContent.Replace("\r",""))
 
 let TestSuiteFileName = "testsuite"
@@ -236,7 +305,7 @@ let TestSuiteFileName = "testsuite"
 
 let CreateCMainFile (r:AstRoot)  (l:ProgrammingLanguage) outDir  =
     //Main file for test cass    
-    let printMain = match l with C -> test_cases_c.PrintMain | Ada -> test_cases_c.PrintMain
+    let printMain = match l with C -> test_cases_c.PrintMain | Ada -> test_cases_c.PrintMain | Python -> test_cases_c.PrintMain
     let content = printMain TestSuiteFileName
     let outFileName = Path.Combine(outDir, "mainprogram.c")
     File.WriteAllText(outFileName, content.Replace("\r",""))
@@ -256,6 +325,7 @@ let CreateMakeFile (r:AstRoot) (l:ProgrammingLanguage) outDir  =
         let content = aux_a.PrintMakeFile  mods
         let outFileName = Path.Combine(outDir, "Makefile")
         File.WriteAllText(outFileName, content.Replace("\r",""))
+    | Python -> ()
 
 
 let private CreateAdaIndexFile (r:AstRoot) bGenTestCases outDir =
@@ -277,14 +347,19 @@ let private CreateAdaMain (r:AstRoot) bGenTestCases outDir =
     let outFileName = Path.Combine(outDir, "mainprogram.adb")
     File.WriteAllText(outFileName, content.Replace("\r",""))
 
+let private CreatePythonMain (r:AstRoot) bGenTestCases outDir =
+    let content = test_cases_p.PrintMain (r.programUnits |> List.map(fun x -> (ToC x.name).ToLower()))
+    let outFileName = Path.Combine(outDir, "main.py")
+    File.WriteAllText(outFileName, content.Replace("\r",""))
+
 
 
 let CreateTestSuiteFile (r:AstRoot) (l:ProgrammingLanguage) outDir vasName =
-    let generate_dat_file  = match l with C -> test_cases_c.PrintSuite_call_codec_generate_dat_file | Ada -> test_cases_a.PrintMain_call_codec_generate_dat_file
-    let call_codec =         match l with C -> test_cases_c.PrintSuite_call_codec                   | Ada -> test_cases_a.PrintMain_call_codec
+    let generate_dat_file   = match l with C -> test_cases_c.PrintSuite_call_codec_generate_dat_file | Ada -> test_cases_a.PrintMain_call_codec_generate_dat_file    | Python -> (fun _ _ _ _ _ -> "")
+    let call_codec          = match l with C -> test_cases_c.PrintSuite_call_codec                   | Ada -> test_cases_a.PrintMain_call_codec                      | Python -> (fun _ _ _ _ _ _ _ _ _ _ _ -> "")
 
     let GetEncodingString = function    
-        | UPER  -> match l with C -> "" | Ada -> "UPER_"
+        | UPER  -> match l with C -> "" | Ada -> "UPER_" | Python -> ""
         | ACN   -> "ACN_"
         | BER   -> "BER_"
         | XER   -> "XER_"
@@ -293,6 +368,7 @@ let CreateTestSuiteFile (r:AstRoot) (l:ProgrammingLanguage) outDir vasName =
         match l with
         | C     -> r.programUnits |> Seq.map(fun x -> x.tetscase_specFileName)
         | Ada   -> r.programUnits |> Seq.collect(fun x -> [x.name; x.tetscase_name])
+        | Python-> r.programUnits |> Seq.map(fun x -> x.tetscase_specFileName)
     let PrintTestCase (v:ValueAssignment) (m:Asn1Module) (sTasName : string)  (idx :int) initFuncName (uperEncDecTestFunc  : EncodeDecodeTestFunc option) (acnEncDecTestFunc   : EncodeDecodeTestFunc option) =
         let modName = ToC m.Name.Value
         let rec gAmber (t:Asn1Type) = 
@@ -354,7 +430,7 @@ let CreateTestSuiteFile (r:AstRoot) (l:ProgrammingLanguage) outDir vasName =
                         let hasEncodeFunc = hasAcnEncodeFunction t.Type.acnEncFunction t.Type.acnParameters 
                         if hasEncodeFunc then
                             for v in t.Type.automaticTestCasesValues do
-                                let vas = {ValueAssignment.Name = StringLoc.ByValue ""; c_name = ""; ada_name = ""; Type = t.Type; Value = v}
+                                let vas = {ValueAssignment.Name = StringLoc.ByValue ""; c_name = ""; ada_name = ""; py_name = ""; Type = t.Type; Value = v}
                                 idx <- idx + 1
                                 let initFuncName = t.Type.initFunction.initFuncName
                                 yield PrintTestCase vas m (ToC2(r.args.TypePrefix + t.Name.Value) ) idx initFuncName t.Type.uperEncDecTestFunc t.Type.acnEncDecTestFunc
@@ -374,6 +450,7 @@ let CreateTestSuiteFile (r:AstRoot) (l:ProgrammingLanguage) outDir vasName =
         let contentC = test_cases_a.PrintMain includedPackages funcs [] [] false
         let outCFileName = Path.Combine(outDir, "mainprogram." + l.BodyExtention)
         File.WriteAllText(outCFileName, contentC.Replace("\r",""))
+    | Python -> ()
         
 
 
@@ -406,4 +483,6 @@ let generateAll outDir (r:DAst.AstRoot) (encodings: CommonTypes.Asn1Encoding lis
         CreateTestSuiteFile r ProgrammingLanguage.Ada outDir "ALL"
 
         CreateAdaIndexFile r false outDir
+    | Python    -> 
+        CreatePythonMain r ProgrammingLanguage.C outDir
 
