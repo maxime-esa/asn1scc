@@ -456,6 +456,7 @@ let CreateValueAssigment (astRoot:list<ITree>) (tree:ITree) =
         Scope = ParameterizedAsn1Ast.GlobalScope
         c_name = ToC2 name.Value
         ada_name = ToC2 name.Value
+        py_name = ToC2 name.Value
     }
 
 let CreateAsn1Module (astRoot:list<ITree>) (tree:ITree)   (fileTokens:array<IToken>) (alreadyTakenComments:System.Collections.Generic.List<IToken>)= 
@@ -497,6 +498,7 @@ let CreateAsn1Module (astRoot:list<ITree>) (tree:ITree)   (fileTokens:array<ITok
                                         Scope = scope
                                         c_name = c_name
                                         ada_name = c_name
+                                        py_name = c_name
                                     }
                     } |> Seq.toList
             namedItems)

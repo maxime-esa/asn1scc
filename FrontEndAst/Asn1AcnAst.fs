@@ -265,6 +265,7 @@ type NamedItem = {
     Name:StringLoc
     c_name:string
     ada_name:string
+    py_name:string
     definitionValue : BigInteger          // the value in the header file
     
     // the value encoded by ACN. It can (a) the named item index (i.e. like uper), (b) The definition value, (c) The redefined value from acn properties
@@ -579,7 +580,8 @@ and SeqChildInfo =
 and Asn1Child = {
     Name                        : StringLoc
     c_name                      : string
-    ada_name                    : string                     
+    ada_name                    : string  
+    py_name                     : string
     Type                        : Asn1Type
     Optionality                 : Asn1Optionality option
     Comments                    : string array
@@ -605,6 +607,7 @@ and ChChildInfo = {
     Name                        : StringLoc
     c_name                      : string
     ada_name                    : string                     
+    py_name                    : string
     present_when_name           : string // Does not contain the "_PRESENT". Not to be used directly by backends.
     Type                        : Asn1Type
     acnPresentWhenConditions    : AcnPresentWhenConditionChoiceChild list
@@ -624,6 +627,7 @@ type TypeAssignment = {
     Name:StringLoc
     c_name:string
     ada_name:string
+    py_name:string
     Type:Asn1Type
     Comments: string array
 
@@ -633,6 +637,7 @@ type ValueAssignment = {
     Name:StringLoc
     c_name:string
     ada_name:string
+    py_name:string
     Type:Asn1Type
     Value:Asn1Value
 }
@@ -690,6 +695,3 @@ type AcnDependency = {
 type AcnInsertedFieldDependencies = {
     acnDependencies                         : AcnDependency list
 }
-
-
-

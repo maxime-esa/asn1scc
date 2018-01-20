@@ -342,6 +342,7 @@ let private exportType (t:Asn1Type) =
                             XAttribute(xname "present_when_name", ch.present_when_name),
                             XAttribute(xname "ada_name", ch.ada_name),
                             XAttribute(xname "c_name", ch.c_name),
+                            XAttribute(xname "py_name", ch.py_name),
                             (ch.acnPresentWhenConditions |> List.map exportChoiceChildPresentWhenCondition),
                             nt), us )
         (fun ref nt us -> XElement(xname "REFERENCE_TYPE",

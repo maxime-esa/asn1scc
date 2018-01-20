@@ -191,6 +191,7 @@ and MapChildInfo (r:ParameterizedAsn1Ast.AstRoot)  typeScope (isSequence) (c:Par
         Asn1Ast.ChildInfo.Name = c.Name
         ada_name = ToC2 c.Name.Value
         c_name = ToC2 c.Name.Value
+        py_name = ToC2 c.Name.Value
         present_when_name = ToC2 c.Name.Value
         Type = MapAsn1Type r  (if isSequence then (visitSeqChild typeScope c) else (visitChoiceChild typeScope c)) c.Type
         Optionality = match c.Optionality with
@@ -204,6 +205,7 @@ and MapNamedItem (r:ParameterizedAsn1Ast.AstRoot) typeScope (n:ParameterizedAsn1
         Asn1Ast.NamedItem.Name = n.Name
         c_name = ToC n.Name.Value
         ada_name = ToC n.Name.Value
+        py_name = ToC n.Name.Value
         _value = match n._value with
                  | None -> None
                  | Some(x)  -> Some (MapAsn1Value r ParameterizedAsn1Ast.Integer typeScope (visitNamedItemValue n) x)
@@ -319,6 +321,7 @@ let MapTypeAssignment (r:ParameterizedAsn1Ast.AstRoot) (m:ParameterizedAsn1Ast.A
         Type = MapAsn1Type r ([MD m.Name.Value; TA tas.Name.Value]) tas.Type
         c_name = ToC2 tas.Name.Value
         ada_name = ToC2 tas.Name.Value
+        py_name = ToC2 tas.Name.Value
         Comments = tas.Comments
     }
 
@@ -338,6 +341,7 @@ let MapValueAssignment (r:ParameterizedAsn1Ast.AstRoot) (m:ParameterizedAsn1Ast.
         //    | ParameterizedAsn1Ast.TypeScope(m,t)   ->  Asn1Ast.TypeScope(m,t)
         c_name = vas.c_name
         ada_name = vas.ada_name
+        py_name = vas.py_name
     }
 
 

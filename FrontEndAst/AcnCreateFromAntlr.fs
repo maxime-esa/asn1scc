@@ -745,7 +745,7 @@ let private mergeEnumerated (asn1:Asn1Ast.AstRoot) (items: Asn1Ast.NamedItem lis
         match acnType with
         | None  ->
             let acnEncodeValue = (BigInteger i)
-            {NamedItem.Name = itm.Name; Comments = itm.Comments; c_name = itm.c_name; ada_name = itm.ada_name; definitionValue = definitionValue; acnEncodeValue = acnEncodeValue}        
+            {NamedItem.Name = itm.Name; Comments = itm.Comments; c_name = itm.c_name; ada_name = itm.ada_name; py_name = itm.py_name; definitionValue = definitionValue; acnEncodeValue = acnEncodeValue}        
         | Some acnType ->
             let acnEncodeValue = 
                 match tryGetProp props (fun x -> match x with ENCODE_VALUES -> Some true | _ -> None) with
@@ -757,7 +757,7 @@ let private mergeEnumerated (asn1:Asn1Ast.AstRoot) (items: Asn1Ast.NamedItem lis
                         | None          -> definitionValue
                     | None      -> definitionValue
                 | None      -> (BigInteger i)
-            {NamedItem.Name = itm.Name; Comments = itm.Comments; c_name = itm.c_name; ada_name = itm.ada_name; definitionValue = definitionValue; acnEncodeValue = acnEncodeValue}        
+            {NamedItem.Name = itm.Name; Comments = itm.Comments; c_name = itm.c_name; ada_name = itm.ada_name; py_name = itm.py_name; definitionValue = definitionValue; acnEncodeValue = acnEncodeValue}        
 
     let items0, userDefinedValues = 
         match items |> Seq.exists (fun nm -> nm._value.IsSome) with
@@ -1129,12 +1129,12 @@ let rec private mergeType (asn1:Asn1Ast.AstRoot) (acn:AcnAst) (m:Asn1Ast.Asn1Mod
                 match cc with
                 | None      ->  
                     let newChild = mergeType asn1 acn m c.Type (curPath@[SEQ_CHILD c.Name.Value]) None [] childWithCons [] [] None  None
-                    Asn1Child ({Asn1Child.Name = c.Name; c_name = c.c_name; ada_name = c.ada_name; Type  = newChild; Optionality = newOptionality;Comments = c.Comments})
+                    Asn1Child ({Asn1Child.Name = c.Name; c_name = c.c_name; ada_name = c.ada_name; py_name = c.py_name; Type  = newChild; Optionality = newOptionality;Comments = c.Comments})
                 | Some cc   ->
                     match cc.asn1Type with
                     | None  -> 
                         let newChild = mergeType asn1 acn m c.Type (curPath@[SEQ_CHILD c.Name.Value]) (Some cc.childEncodingSpec) [] childWithCons cc.argumentList [] None  None
-                        Asn1Child ({Asn1Child.Name = c.Name; c_name = c.c_name; ada_name = c.ada_name; Type  = newChild; Optionality = newOptionality; Comments = c.Comments})
+                        Asn1Child ({Asn1Child.Name = c.Name; c_name = c.c_name; ada_name = c.ada_name; py_name = c.py_name; Type  = newChild; Optionality = newOptionality; Comments = c.Comments})
                     | Some xx  ->
                         AcnChild({AcnChild.Name = c.Name; id = ReferenceToType(curPath@[SEQ_CHILD c.Name.Value]); Type = mapAcnParamTypeToAcnAcnInsertedType asn1 acn xx cc.childEncodingSpec.acnProperties})
 
@@ -1210,10 +1210,10 @@ let rec private mergeType (asn1:Asn1Ast.AstRoot) (acn:AcnAst) (m:Asn1Ast.Asn1Mod
                 match cc with
                 | None      ->  
                     let newChild = mergeType asn1 acn m c.Type (curPath@[CH_CHILD (c.Name.Value, c.present_when_name)]) None [] childWithCons [] [] None  None
-                    {ChChildInfo.Name = c.Name; c_name = c.c_name; ada_name = c.ada_name; Type  = newChild; acnPresentWhenConditions = acnPresentWhenConditions; Comments = c.Comments;present_when_name = c.present_when_name}
+                    {ChChildInfo.Name = c.Name; c_name = c.c_name; ada_name = c.ada_name; py_name = c.py_name; Type  = newChild; acnPresentWhenConditions = acnPresentWhenConditions; Comments = c.Comments;present_when_name = c.present_when_name}
                 | Some cc   ->
                     let newChild = mergeType asn1 acn m c.Type (curPath@[CH_CHILD (c.Name.Value, c.present_when_name)]) (Some cc.childEncodingSpec) [] childWithCons cc.argumentList [] None  None
-                    {ChChildInfo.Name = c.Name; c_name = c.c_name; ada_name = c.ada_name; Type  = newChild; acnPresentWhenConditions = acnPresentWhenConditions; Comments = c.Comments; present_when_name = c.present_when_name}
+                    {ChChildInfo.Name = c.Name; c_name = c.c_name; ada_name = c.ada_name; py_name = c.py_name; Type  = newChild; acnPresentWhenConditions = acnPresentWhenConditions; Comments = c.Comments; present_when_name = c.present_when_name}
             let mergedChildren = 
                 match acnType with
                 | None            -> children |> List.map (mergeChild None)
@@ -1287,6 +1287,7 @@ let private mergeTAS (asn1:Asn1Ast.AstRoot) (acn:AcnAst) (m:Asn1Ast.Asn1Module) 
         TypeAssignment.Name = tas.Name
         c_name = tas.c_name
         ada_name = tas.ada_name
+        py_name = tas.py_name; 
         //Type = mergeType asn1 acn m tas.Type [MD m.Name.Value; TA tas.Name.Value] (acnTas |> Option.map(fun x -> x.typeEncodingSpec)) [] [] [] acnParameters (Some {TypeAssignmentInfo.modName = m.Name.Value; tasName = tas.Name.Value})
         Type = mergeType asn1 acn m tas.Type [MD m.Name.Value; TA tas.Name.Value] (acnTas |> Option.map(fun x -> x.typeEncodingSpec)) [] [] [] acnParameters None (Some (TypeAssignmentInfo {TypeAssignmentInfo.modName = m.Name.Value; tasName = tas.Name.Value}))
         Comments = tas.Comments
@@ -1297,6 +1298,7 @@ let private mergeValueAssigment (asn1:Asn1Ast.AstRoot) (acn:AcnAst) (m:Asn1Ast.A
         ValueAssignment.Name = vas.Name
         c_name = vas.c_name
         ada_name = vas.ada_name
+        py_name = vas.py_name
         Type = mergeType asn1 acn m vas.Type [MD m.Name.Value; VA vas.Name.Value] None [] [] [] [] None (Some (ValueAssignmentInfo {ValueAssignmentInfo.modName = m.Name.Value; vasName = vas.Name.Value}))
         Value = ValuesMapping.mapValue asn1 vas.Type vas.Value
     }

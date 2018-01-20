@@ -98,6 +98,7 @@ type NamedItem = {
     Name:StringLoc
     c_name:string
     ada_name:string
+    py_name:string
     _value:Asn1Value option
     Comments: string array
 }
@@ -145,7 +146,8 @@ and ReferenceType = {
 and ChildInfo = {
     Name                        : StringLoc;
     c_name                      : string
-    ada_name                    : string                     
+    ada_name                    : string
+    py_name                    : string      
     present_when_name           : string // used only by choices. Does not contain the "_PRESENT". Not to be used directly by backends.
     Type                        : Asn1Type
     Optionality                 : Asn1Optionality option
@@ -157,6 +159,7 @@ type TypeAssignment = {
     Name:StringLoc
     c_name:string
     ada_name:string
+    py_name:string
     Type:Asn1Type
     Comments: string array
 }
@@ -165,6 +168,7 @@ type ValueAssignment = {
     Name:StringLoc
     c_name:string
     ada_name:string
+    py_name:string
     Type:Asn1Type
     Value:Asn1Value
 }
@@ -364,6 +368,7 @@ type ChildInfo with
         match lang with
         | Ada   | Spark     -> c.ada_name
         | C                 -> c.c_name
+        | Python            -> c.py_name
         | Html              -> raise(BugErrorException "invalid language")
         | Unknown           -> raise(BugErrorException "invalid language")
 
@@ -373,12 +378,14 @@ type NamedItem with
         |Ada
         |Spark  -> ToC2 (r.args.TypePrefix + c.ada_name)
         |C      -> ToC2 (r.args.TypePrefix + c.c_name)
+        |Python -> ToC2 (r.args.TypePrefix + c.py_name)
         | _     -> raise(BugErrorException "invalid language")
     member c.EnumName (lang:ProgrammingLanguage) = 
         match lang with
         |Ada
         |Spark  -> c.ada_name
         |C      -> c.c_name
+        |Python -> c.py_name
         | _     -> raise(BugErrorException "invalid language")
 
 let foldConstraint 

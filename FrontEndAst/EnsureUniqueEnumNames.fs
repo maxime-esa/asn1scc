@@ -24,6 +24,8 @@ let private c_keyworkds =  [ "auto"; "break"; "case"; "char"; "const"; "continue
 
 let private ada_keyworkds =  [ "abort"; "else"; "new"; "return"; "abs"; "elsif"; "not"; "reverse"; "abstract"; "end"; "null"; "accept"; "entry"; "select"; "access"; "exception"; "of"; "separate"; "aliased"; "exit"; "or"; "some"; "all"; "others"; "subtype"; "and"; "for"; "out"; "synchronized"; "array"; "function"; "overriding"; "at"; "tagged"; "generic"; "package"; "task"; "begin"; "goto"; "pragma"; "terminate"; "body"; "private"; "then"; "if"; "procedure"; "type"; "case"; "in"; "protected"; "constant"; "interface"; "until"; "is"; "raise"; "use"; "declare"; "range"; "delay"; "limited"; "record"; "when"; "delta"; "loop"; "rem"; "while"; "digits"; "renames"; "with"; "do"; "mod"; "requeue"; "xor" ]
 
+let private py_keyworkds = ["False"; "None"; "True"; "and"; "as"; "assert"; "break"; "class"; "continue"; "def"; "del"; "elif"; "else"; "except"; "finally"; "for"; "from"; "global"; "if"; "import"; "in"; "is"; "lambda"; "nonlocal"; "not"; "or"; "pass"; "raise"; "return"; "try"; "while"; "with"; "yield"]
+
 let rec private handleEnumChoices (r:AstRoot) (renamePolicy:EnumRenamePolicy)=
     let doubleEnumNames = seq {
         for m in r.Modules do
@@ -103,6 +105,7 @@ let rec private handleSequencesAndChoices (r:AstRoot) (lang:ProgrammingLanguage)
                 match lang with
                 | ProgrammingLanguage.C-> {ch with Type = t; c_name = ToC2 newUniqueName},ns
                 | ProgrammingLanguage.Ada | ProgrammingLanguage.Spark   -> {ch with Type = t; ada_name = ToC2 newUniqueName},ns
+                | ProgrammingLanguage.Python -> {ch with Type = t; py_name = ToC2 newUniqueName},ns
                 | _                                                     -> ch, state
 
             match old.Kind with
@@ -121,6 +124,8 @@ let rec private handleSequencesAndChoices (r:AstRoot) (lang:ProgrammingLanguage)
                                 children |> List.map(fun ch -> {ch with c_name = newPrefix + ch.c_name})
                             | ProgrammingLanguage.Ada | ProgrammingLanguage.Spark   -> 
                                 children |> List.map(fun ch -> {ch with ada_name = newPrefix + ch.ada_name})
+                            | ProgrammingLanguage.Python-> 
+                                children |> List.map(fun ch -> {ch with py_name = newPrefix + ch.py_name})
                             | _                                                     -> raise(BugErrorException "handleSequences")
                             
                         newChildren, finalState
@@ -154,6 +159,7 @@ let rec private handleEnums (r:AstRoot) (renamePolicy:EnumRenamePolicy) (lang:Pr
         | ProgrammingLanguage.C     -> doubleEnumNames0 @ c_keyworkds|> List.keepDuplicates
         | ProgrammingLanguage.Ada   
         | ProgrammingLanguage.Spark -> doubleEnumNames0 @ ada_keyworkds |> List.keepDuplicatesI
+        | ProgrammingLanguage.Python-> doubleEnumNames0 @ py_keyworkds  |> List.keepDuplicates
         | _                         -> doubleEnumNames0
 
 
@@ -173,6 +179,7 @@ let rec private handleEnums (r:AstRoot) (renamePolicy:EnumRenamePolicy) (lang:Pr
                     match lang with
                     | ProgrammingLanguage.C     ->      {old with c_name=newUniqueName}
                     | ProgrammingLanguage.Ada | ProgrammingLanguage.Spark   -> {old with ada_name=newUniqueName}
+                    | ProgrammingLanguage.Python   ->      {old with py_name=newUniqueName}
                     | _                                                     -> raise(BugErrorException "handleEnums")
                 let newItems = 
                     match renamePolicy with
@@ -184,6 +191,7 @@ let rec private handleEnums (r:AstRoot) (renamePolicy:EnumRenamePolicy) (lang:Pr
                         | ProgrammingLanguage.C->  itesm|> List.map (fun itm -> {itm with c_name = newPrefix + itm.c_name})
                         | ProgrammingLanguage.Ada | ProgrammingLanguage.Spark   -> 
                             itesm|> List.map (fun itm -> {itm with ada_name = newPrefix + itm.ada_name})
+                        | ProgrammingLanguage.Python ->  itesm|> List.map (fun itm -> {itm with py_name = newPrefix + itm.py_name})
                         | _ -> raise(BugErrorException "handleEnums")
 
                 {old with Kind =  Enumerated(newItems)}, state
@@ -201,8 +209,10 @@ let DoWork (ast:AstRoot)   =
         let r1 = handleEnumChoices ast  renamePolicy
         let r2_c = handleEnums r1 renamePolicy ProgrammingLanguage.C
         let r2_ada = handleEnums r2_c renamePolicy ProgrammingLanguage.Ada
+        let r2_py = handleEnums r2_c renamePolicy ProgrammingLanguage.Python
         let r3_c = handleSequencesAndChoices r2_ada ProgrammingLanguage.C renamePolicy
         let r3_ada = handleSequencesAndChoices r3_c ProgrammingLanguage.Ada renamePolicy
+        let r3_py = handleSequencesAndChoices r3_c ProgrammingLanguage.Python renamePolicy
 
         r3_ada
 
