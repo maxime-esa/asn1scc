@@ -31,9 +31,10 @@ def mysystem(cmd, bCanFail):
     f = open("log.txt", 'a')
     f.write(cmd + "\n")
     f.close()
-    ret = subprocess.call(cmd, shell=True)
-    if ret != 0 and not bCanFail:
-        PrintFailed(cmd)
+    ret = subprocess.run(cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+
+    if ret.returncode != 0 and not bCanFail:
+        PrintFailed("{}\n{}".format(cmd, ret.stderr.decode()))
         mysystem("cat tmp.err", True)
         sys.exit(1)
     return ret
@@ -68,24 +69,24 @@ def RunTestCase(asn1, acn, behavior, expErrMsg):
 
     asn1File = targetDir + os.sep + "sample1.asn1"
     acnFile = targetDir + os.sep + "sample1.acn"
-    launcher = '' if sys.platform == 'cygwin' else 'mono '
+    launcher = '' if sys.platform in ['cygwin', 'win32'] else 'mono '
     path_to_asn1scc = spawn.find_executable('Asn1f4.exe')
     res = mysystem(
         launcher + path_to_asn1scc +
         " -" + language + " -uPER -ACN -typePrefix gmamais_ " +
-        "-renamePolicy 2 " + "-equal -atc -o '" + resolvedir(targetDir) +
-        "' '" + resolvedir(asn1File) + "' '" + resolvedir(acnFile) +
-        "' >tmp.err 2>&1", True)
+        # "-renamePolicy 2 " + "-equal -atc -o '" + resolvedir(targetDir) +
+        " " + resolvedir(asn1File) + " " + resolvedir(acnFile) +
+        " >tmp.err 2>&1", True)
     ferr = open("tmp.err", 'r')
     err_msg = ferr.read().replace("\r\n", "").replace("\n", "")
     ferr.close()
     if behavior == 0 or behavior == 2:
-        if res != 0 or err_msg != "":
+        if res.returncode != 0 or err_msg != "":
             PrintFailed("Asn.1 compiler failed")
             print("Asn.1 compiler error is: " + err_msg)
             sys.exit(1)
     else:
-        if res == 0 or err_msg != expErrMsg:
+        if res.returncode == 0 or err_msg != expErrMsg:
             PrintFailed(
                 "Asn.1 compiler didn't fail or failed with "
                 "different error message")
@@ -111,7 +112,7 @@ def RunTestCase(asn1, acn, behavior, expErrMsg):
                 #sys.exit(1)
         except FileNotFoundError as err:
             pass;
-    else:
+    elif language =='Ada':
         prevDir = os.getcwd()
         os.chdir(targetDir)
         # mysystem("chmod +x ./runSpark.sh", False)
@@ -127,18 +128,18 @@ def RunTestCase(asn1, acn, behavior, expErrMsg):
         #
         # res = mysystem("CC=gcc make coverage >covlog.txt 2>&1", True)
         res = mysystem("make coverage >covlog.txt 2>&1", True)
-        if res != 0 and behavior != 2:
+        if res.returncode != 0 and behavior != 2:
             PrintFailed("run time failure")
             PrintFailed("see covlog.txt")
             sys.exit(1)
-        elif behavior == 2 and res == 2:
+        elif behavior == 2 and res.returncode == 2:
             PrintSucceededAsExpected(
                 "Test cases failed at run-time as expected")
-        elif behavior == 2 and res == 0:
+        elif behavior == 2 and res.returncode == 0:
             PrintFailed(
                 "ERROR: Executable didn't fail as it was expected to do...")
             sys.exit(1)
-        elif behavior == 0 and res == 0:
+        elif behavior == 0 and res.returncode == 0:
             # -- NOCOVERAGE
             doCoverage = "-- NOCOVERAGE" not in \
                 open("sample1.asn1", 'r').readlines()[0]
@@ -166,6 +167,20 @@ def RunTestCase(asn1, acn, behavior, expErrMsg):
                 "BUG in python script, Unexpected combination "
                 "of res, behavior")
         os.chdir(prevDir)
+
+    elif language == 'py':
+        prevDir = os.getcwd()
+
+        os.chdir(targetDir)
+        res = mysystem("python -m unittest discover -p \"*auto_tcs.py\"", False)
+        output = (res.stdout.decode() + res.stderr.decode())
+        if "fail" in output.lower():
+            PrintFailed("Tests failed {}".format("\n".join(output)))
+        else:
+            PrintSucceededAsExpected("Tests passed")
+
+        os.chdir(prevDir)
+
     nTests += 1
 
 
@@ -372,7 +387,7 @@ def main():
         submain("c", "ACN", "")
         submain("Ada", "ACN", "")
     else:
-        if lang not in ["c", "Ada"]:
+        if lang not in ["c", "Ada", "py"]:
             print("Invalid language argument")
             usage()
 
