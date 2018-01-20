@@ -1,0 +1,52 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Settings>
+    <run mode="single">
+        <input>types_p.stg</input>
+        <output>types_p.stg.fs</output>
+        <modName>types_p</modName>
+        <lang>python</lang>
+    </run>
+    <run mode="single">
+        <input>body_p.stg</input>
+        <output>body_p.stg.fs</output>
+        <modName>body_p</modName>
+        <lang>python</lang>
+    </run>
+    <run mode="single">
+        <input>variables_p.stg</input>
+        <output>variables_p.stg.fs</output>
+        <modName>variables_p</modName>
+        <lang>python</lang>
+    </run>
+    <run mode="single">
+        <input>isvalid_p.stg</input>
+        <output>isvalid_p.stg.fs</output>
+        <modName>isvalid_p</modName>
+        <lang>python</lang>
+    </run>
+    <run mode="single">
+        <input>init_p.stg</input>
+        <output>init_p.stg.fs</output>
+        <modName>init_p</modName>
+        <lang>python</lang>
+    </run>
+    <run mode="single">
+        <input>uper_p.stg</input>
+        <output>uper_p.stg.fs</output>
+        <modName>uper_p</modName>
+        <lang>python</lang>
+    </run>
+    <run mode="single">
+        <input>acn_p.stg</input>
+        <output>acn_p.stg.fs</output>
+        <modName>acn_p</modName>
+        <lang>python</lang>
+    </run>
+    <run mode="single">
+        <input>test_cases_p.stg</input>
+        <output>test_cases_p.stg.fs</output>
+        <modName>test_cases_p</modName>
+        <lang>python</lang>
+    </run>
+
+</Settings>

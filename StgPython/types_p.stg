@@ -1,0 +1,174 @@
+group p_types;
+
+printInteger() ::= "asn1.Integer"
+printPosInteger() ::= "asn1.PosInteger"
+printBoolean() ::= "asn1.Boolean"
+printReal() ::= "asn1.Real"
+printIA5String() ::= "asn1.IA5String"
+printNumericString() ::= "asn1.NumericString"
+printNullType() ::= "asn1.Null"
+printBitString() ::= "asn1.BitString"
+printOctetString() ::= "asn1.OctetString"
+
+
+Define_Type(sTypeDefinitionBody, sTypeDefinitionName, noArrLength, arrsChildldrenDefintions) ::= <<
+class <sTypeDefinitionName><sTypeDefinitionBody>
+>>
+
+Define_SubType(sTypeDefinitionName, soParentTypePackage, sParentType, soNewRange) ::= <<
+class <sTypeDefinitionName>(<sParentType>):
+    """Derived from <sParentType>"""
+>>
+
+Declare_Ref(sBase) ::= <<
+(<sBase>):
+    """Ref from <sBase>"""
+>>
+
+/* SIMPLE TYPES */
+Declare_Simple(sBase) ::= <<
+(asn1.<sBase>):
+    """Derived from <sBase>"""
+>>
+
+Declare_Integer() ::=<<
+<Declare_Simple("Integer")>
+>>
+
+Declare_PosInteger() ::=<<
+<Declare_Simple("PosInteger")>
+>>
+
+Declare_Boolean() ::= <<
+<Declare_Simple("Boolean")>
+>>
+
+Declare_Real() ::= <<
+<Declare_Simple("Real")>
+>>
+
+Declare_IA5String() ::= <<
+<Declare_Simple("IA5String")>
+>>
+
+Declare_NumericString() ::= <<
+<Declare_Simple("NumericString")>
+>>
+
+Declare_NullType() ::= <<
+<Declare_Simple("Null")>
+>>
+
+Declare_BitString() ::= <<
+<Declare_Simple("BitString")>
+>>
+
+Declare_OctetString(bIsFixeSize, nMaxOctets) ::= <<
+<Declare_Simple("OctetString")>
+>>
+
+/* ENUMERATED */
+PrintNamedItem(sName, nValue) ::= "<sName> = <nValue>"
+
+PrintEnumItem(sName, nValue) ::= "<sName> = <nValue>"
+
+PrintEnumValueItem(sName) ::= "<sName> = Value.<sName>"
+
+Declare_Enumerated(arrsItems, arrsItemNames) ::= <<
+<Declare_Simple("Enumerated")>
+
+    class Value(asn1.Enumerated.Value):
+        NONE = None
+        <arrsItems:{it|<it>}; separator="\n">
+
+    __simple__ = Value
+
+    <arrsItemNames:{it|<PrintEnumValueItem(it)>}; separator="\n">
+>>
+
+/* SEQUENCE AND CHOICE */
+PrintChoiceSeq_Child(sTypeDecl, sName) ::= <<
+@property
+def <sName>(self):
+    self._assert_attribute_present('<sName>')
+    return self._<sName>.get()
+
+@<sName>.setter
+def <sName>(self, value):
+    self._<sName>.set(value)
+
+@<sName>.deleter
+def <sName>(self):
+    pass
+>>
+
+Print_Children_Def(arrsChildren) ::= <<
+<arrsChildren:{ch|<ch>}; separator="\n\n">
+>>
+
+Print_Attribute(sName, sValue) ::= <<
+<sName>=<sValue>
+>>
+
+Print_Attributes(arrsChildrenNames, sValue) ::= <<
+<arrsChildrenNames:{ch|<Print_Attribute(sName=ch, sValue=sValue)>}; separator=",\n">
+>>
+
+Print_Sq_Attribute_Def(sName) ::= <<
+self._<sName> = self.<sName>Type(init_values['<sName>'])
+>>
+
+Print_Sq_Attributes_Def(arrsChildrenNames) ::= <<
+<arrsChildrenNames:{ch|<Print_Sq_Attribute_Def(ch)>}; separator="\n">
+>>
+
+Print_Ch_Attribute_Def(sName) ::= <<
+self._<sName> = self.<sName>Type()
+>>
+
+Print_Ch_Attributes_Def(arrsChildrenNames) ::= <<
+<arrsChildrenNames:{ch|<Print_Ch_Attribute_Def(ch)>}; separator="\n">
+>>
+
+Declare_Choice(arrsChildren, arrsChildrenNames) ::= <<
+<Declare_Simple("Choice")>
+
+    <Print_Children_Def(arrsChildren)>
+
+    def __init__(self, source=None):
+        self.__attributes__ = dict(
+            <Print_Attributes(arrsChildrenNames=arrsChildrenNames, sValue="False")>
+        )
+
+        <Print_Ch_Attributes_Def(arrsChildrenNames)>
+
+        self.__initialized__ = True
+        self.set(source or self.init_value())
+>>
+
+Declare_Sequence(arrsChildren, arrsOptionalChildren, arrsChildrenNames) ::= <<
+<Declare_Simple("Sequence")>
+
+    __optionals__ = [<arrsOptionalChildren:{ch|"<ch>"}; separator=", ">]
+
+    <Print_Children_Def(arrsChildren)>
+
+    def __init__(self, source=None):
+        self.__attributes__ = dict(
+            <Print_Attributes(arrsChildrenNames=arrsChildrenNames, sValue="True")>
+        )
+        init_values = self.init_value()
+
+        <Print_Sq_Attributes_Def(arrsChildrenNames)>
+
+        self.__initialized__ = True
+        
+        if source:
+            self.set(source)
+>>
+
+/* SEQUENCE OF */
+Declare_SequenceOf(sTypeDecl, sTypingHint) ::= <<
+(asn1.SequenceOf[<sTypingHint>]):
+    """Derived from SequenceOf"""
+>>

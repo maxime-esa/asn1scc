@@ -1,0 +1,390 @@
+﻿group c_uper;
+
+JoinItems(sPart, soNestedPart) ::= <<
+<sPart>
+<if(soNestedPart)>
+<soNestedPart>
+<endif>
+>>
+
+getStringSize(p) ::= "len(<p>)"
+getSizeableSize(p, sAcc) ::= "len(<p>)"
+
+call_base_type_func_encode(p, sBaseName) ::= "super().uper_encode(bit_stream)"
+call_base_type_func_decode(p, sBaseName) ::= "super().uper_decode(bit_stream)"
+
+/*******************************************************/
+/*   U P E R                                           */
+/*******************************************************/
+
+EmitTypeWithRequiredBytesAndBits(nMaxBytesInPER, nMaxBitsInPER, sFuncDeclaration) ::= <<
+REQUIRED_BYTES_FOR_ENCODING = <nMaxBytesInPER> 
+REQUIRED_BITS_FOR_ENCODING = <nMaxBitsInPER>
+
+<sFuncDeclaration>
+>>
+
+EmitTypeAssignment_primitive_def_encode(sVarName, sStar, sFuncName, sTypeDefName, arrsErrcodes, bEmptyEncodingSpace, nMaxBytesInPER, nMaxBitsInPER) ::= <<
+def uper_encode(self, bit_stream): pass
+>>
+
+EmitTypeAssignment_primitive_encode(sVarName, sStar, sFuncName, soIValidFuncName, sTypeDefName, arrsLocalVariables, sContent, soSparkAnnotations, sInitilialExp) ::= <<
+def uper_encode(self, bit_stream):
+    <sContent>
+>>
+
+EmitTypeAssignment_primitive_no_set_encode(sVarName, sStar, sFuncName, soIValidFuncName, sTypeDefName, arrsLocalVariables, sContent, soSparkAnnotations, sInitilialExp) ::= <<
+def uper_encode(self, bit_stream):
+    <sContent>
+>>
+
+EmitTypeAssignment_primitive_def_decode(sVarName, sStar, sFuncName, sTypeDefName, arrsErrcodes, bEmptyEncodingSpace, nMaxBytesInPER, nMaxBitsInPER) ::= <<
+def uper_decode(self, bit_stream): pass
+>>
+
+EmitTypeAssignment_primitive_decode(sVarName, sStar, sFuncName, soIValidFuncName, sTypeDefName, arrsLocalVariables, sContent, soSparkAnnotations, sInitilialExp) ::= <<
+def uper_decode(self, bit_stream):
+    <sContent>
+
+    self.set(value)
+>>
+
+EmitTypeAssignment_primitive_no_set_decode(sVarName, sStar, sFuncName, soIValidFuncName, sTypeDefName, arrsLocalVariables, sContent, soSparkAnnotations, sInitilialExp) ::= <<
+def uper_decode(self, bit_stream):
+    <sContent>
+>>
+
+/* INTERNAL ITEMS */
+
+InternalItem_oct_str_encode(p, sAcc, i, sErrCode) ::=<<
+bit_stream.append_byte(<p>[<i>])
+>>
+
+InternalItem_oct_str_decode(p, sAcc, i, sErrCode) ::=<<
+byte = bit_stream.read_byte()
+value_<i>.append(byte)
+>>
+
+PrintAlphabet2(arrnCharSet) ::= <<
+allowed_charset = [<arrnCharSet:{ch|'\x<ch;format="X2">'}; wrap, anchor, separator=", ">] 
+>>
+
+InternalItem_string_with_alpha_encode(p, sTasName, i, nLastItemIndex, arrnAlphabetAsciiCodes, nAlphabetLength, nCharIndexSize) ::=<<
+<PrintAlphabet2(arrnAlphabetAsciiCodes)>
+index = allowed_charset.index(<p>[<i>])
+bit_stream.encode_constraint_number(index, 0, <nAlphabetLength>)
+>>
+
+InternalItem_string_with_alpha_decode(p, sTasName, i, nLastItemIndex, arrnAlphabetAsciiCodes, nAlphabetLength, nCharIndexSize) ::=<<
+<PrintAlphabet2(arrnAlphabetAsciiCodes)>
+index = bit_stream.decode_constraint_number(0, <nAlphabetLength>)
+char = allowed_charset[index]
+value_<i> += char
+>>
+
+InternalItem_string_no_alpha_encode(p, i) ::=<<
+bit_stream.encode_constraint_number(ord(<p>[<i>]), 0, 127)
+>>
+
+InternalItem_string_no_alpha_decode(p, i) ::=<<
+char = bit_stream.decode_constraint_number(0, 127)
+value_<i> += chr(char)
+>>
+
+
+/* INTETEGER START*/
+
+/*case: A:: = INTEGER (-5..20) */
+IntFullyConstraint_encode(p, nMin, nMax, nBits, sErrCode) ::= "bit_stream.encode_constraint_number(<p>, <nMin>, <nMax>)"
+IntFullyConstraint_decode(p, nMin, nMax, nBits, sErrCode) ::= <<
+<p> = bit_stream.decode_constraint_number(<nMin>, <nMax>)
+>>
+
+/*case: Positive fully constraint A:: = INTEGER (5..20) */
+IntFullyConstraintPos_encode(p, nMin, nMax, nBits, sErrCode) ::= "bit_stream.encode_constraint_number(<p>, <nMin>, <nMax>)"
+IntFullyConstraintPos_decode(p, nMin, nMax, nBits, sErrCode) ::= <<
+<p> = bit_stream.decode_constraint_number(<nMin>, <nMax>)
+>>
+
+
+/*case: A :: = INTEGER */
+IntUnconstraint_encode(p, sErrCode, bCoverageIgnore) ::= "bit_stream.encode_number(<p>)"
+IntUnconstraint_decode(p, sErrCode, bCoverageIgnore) ::= <<
+<p> = bit_stream.decode_number()  <if(bCoverageIgnore)># COVERAGE_IGNORE<endif>
+>>
+
+/*case: A :: = INTEGER(MIN..5) */
+IntUnconstraintMax_encode(p, nMax, soCheckExp, sErrCode) ::= "bit_stream.encode_number(<p>)"
+IntUnconstraintMax_decode(p, nMax, soCheckExp, sErrCode) ::= <<
+<p> = bit_stream.decode_number()
+>>
+
+/*case: A:: = INTEGER (-5..MAX) */
+IntSemiConstraint_encode(p, nMin, sErrCode) ::= "bit_stream.encode_semi_constraint_number(<p>, <nMin>)"
+IntSemiConstraint_decode(p, nMin, sErrCode) ::= <<
+<p> = bit_stream.decode_semi_constraint_number(<nMin>)
+>>
+
+/*case: A:: = INTEGER (5..MAX) */
+IntSemiConstraintPos_encode(p, nMin, sErrCode) ::= "bit_stream.encode_semi_constraint_number(<p>, <nMin>)"
+IntSemiConstraintPos_decode(p, nMin, sErrCode) ::= <<
+<p> = bit_stream.decode_semi_constraint_number(<nMin>)
+>>
+
+/*case: A:: = INTEGER (5..5) */
+IntNoneRequired_encode(p, nConst, sErrCode) ::= <<"""No need to encode value since it will always be <nConst>""">>
+IntNoneRequired_decode(p, nConst, sErrCode) ::= "<p> = <nConst>"
+
+/*case: A:: = INTEGER (5..40,...) */
+IntRootExt_encode(p, nMin, sRootBaseConstraint, sIntBody, sErrCode) ::=<<
+bit_stream.append_bit_zero()
+<sIntBody>
+>>
+
+
+IntRootExt_decode(p, nMin, sRootBaseConstraint, sIntBody, sErrCode) ::=<<
+ext_bit = bit_stream.read_bit()
+if ext_bit:
+    <IntUnconstraint_decode(p=p, sErrCode = sErrCode, bCoverageIgnore="true")>
+else:
+    <sIntBody>
+>>
+
+
+/*case: A:: = INTEGER (5..40,..., 60..70) */
+IntRootExt2_encode(p, nMin, sRootBaseConstraint, sIntBody, sErrCode) ::=<<
+if <sRootBaseConstraint>:
+    bit_stream.append_bit_zero()  # write extension bit, value within root range, so ext bit is zero
+    <sIntBody>
+else:
+    # value is not within root range, so ext bit is one and value is encoded as uncostraint
+    bit_stream.append_bit_one()
+    <IntUnconstraint_encode(p=p, sErrCode=sErrCode)>
+>>
+
+IntRootExt2_decode(p, nMin, sRootBaseConstraint, sIntBody, sErrCode) ::= "<IntRootExt_decode(p=p, nMin=nMin, sRootBaseConstraint = sRootBaseConstraint, sIntBody = sIntBody, sErrCode=sErrCode)>"
+
+/* INTETEGER END*/
+
+Boolean_encode(p, sErrCode) ::= "bit_stream.append_bit(int(<p>))"
+
+Boolean_decode(p, sErrCode) ::= <<
+<p> = bit_stream.read_bit()
+>>
+
+Real_encode(p, sErrCode) ::= "bit_stream.encode_real(<p>)"
+Real_decode(p, sErrCode) ::= <<
+<p> = bit_stream.decode_real()
+>>
+
+Enumerated_item_encode(p, sName, nIndex, nLastItemIndex) ::= <<
+if <p> == self.Value.<sName>:
+    bit_stream.encode_constraint_number(<nIndex>, 0, <nLastItemIndex>)
+>>
+
+Enumerated_item_decode(p, sName, nIndex, nLastItemIndex) ::= <<
+if enum_index == <nIndex>:
+    <p> = self.Value.<sName>
+>>
+
+Enumerated_encode(p, sTypeName, arrsItem, nMin, nMax, nBits, sErrCode, nLastItemIndex, sFirstItemName) ::= <<
+<arrsItem; separator="\nel">
+>>
+
+Enumerated_decode(p, sTypeName, arrsItem, nMin, nMax, nBits, sErrCode, nLastItemIndex, sFirstItemName) ::= <<
+enum_index = bit_stream.decode_constraint_number(0, <nLastItemIndex>)
+<arrsItem; separator="\nel">
+else:
+    raise asn1.UnexpectedOptionIndex(type(self), enum_index)
+>>
+
+/* CHOICE START*/
+
+choice_child_encode(p, sAcc, sChildID, nChildIndex, nIndexSizeInBits, nLastItemIndex, sChildContent, sChildName, sChildTypeDef, sChoiceTypeName) ::= <<
+if self.get_attribute_exists('<sChildName>'):
+    bit_stream.encode_constraint_number(<nChildIndex>, 0, <nLastItemIndex>)
+    self._<sChildName>.uper_encode(bit_stream)
+>>
+choice_child_decode(p, sAcc, sChildID, nChildIndex, nIndexSizeInBits, nLastItemIndex, sChildContent, sChildName, sChildTypeDef, sChoiceTypeName) ::= <<
+if child_index == <nChildIndex>:
+    self._<sChildName>.uper_decode(bit_stream)
+>>
+
+choice_null_child_encode(nChildIndex, sChildName) ::= <<
+if self.get_attribute_exists('<sChildName>'):
+    pass  # no encoding required
+>>
+choice_null_child_decode(nChildIndex, sChildName) ::= <<
+if child_index == <nChildIndex>:
+    pass  # no decoding required
+>>
+
+choice_encode(p, sAcc, arrsChildren, nLastItemIndex, sChoiceIndexName, sErrCode, sTasName, nIndexSizeInBits) ::= <<
+<arrsChildren: {ch|<ch>}; separator="\nel">
+else:
+    raise asn1.UnexpectedValue(type(self), 'NONE')
+>>
+
+choice_decode(p, sAcc, arrsChildren, nLastItemIndex, sChoiceIndexName, sErrCode, sTasName, nIndexSizeInBits) ::= <<
+child_index = bit_stream.decode_constraint_number(0, <nLastItemIndex>)
+<arrsChildren: {ch|<ch>}; separator="\nel">
+else:
+    raise asn1.UnexpectedOptionIndex(type(self), child_index)
+>>
+
+/* CHOICE END*/
+
+/* SEQUENCE START */
+sequence_presence_bit_encode(p, sAcc, sChName, sErrCode) ::= "bit_stream.append_bit(self.get_attribute_exists('<sChName>'))"
+sequence_presence_bit_decode(p, sAcc, sChName, sErrCode) ::= "self.set_attribute_exists('<sChName>', bool(bit_stream.read_bit()))"
+
+sequence_presence_bit_fix_encode(p, sAcc, sChName, sErrCode, sVal) ::= "bit_stream.append_bit(<sVal>)"
+
+sequence_presence_bit_fix_decode(p, sAcc, sChName, sErrCode, sVal) ::= <<
+<sequence_presence_bit_decode(p=p, sAcc=sAcc, sChName=sChName, sErrCode=sErrCode)>
+>>
+
+
+sequence_mandatory_child_encode(sChName, sChildContent) ::= <<
+# Encode <sChName>
+self._<sChName>.uper_encode(bit_stream)
+>>
+
+sequence_mandatory_child_decode(sChName, sChildContent) ::= <<
+# Decode <sChName>
+self._<sChName>.uper_decode(bit_stream)
+>>
+
+
+sequence_optional_child_encode(p, sAcc, sChName, sChildContent) ::= <<
+# Encode <sChName>
+if self.get_attribute_exists('<sChName>'):
+    self._<sChName>.uper_encode(bit_stream)
+>>
+
+sequence_optional_child_decode(p, sAcc, sChName, sChildContent) ::= <<
+# Decode <sChName>
+if self.get_attribute_exists('<sChName>'):
+    self._<sChName>.uper_decode(bit_stream)
+>>
+
+
+sequence_default_child_encode(p, sAcc, sChName, sChildContent, sInitWithDefaultValue) ::= <<
+<sequence_optional_child_encode(p=p, sAcc=sAcc, sChName=sChName, sChildContent=sChildContent)>
+>>
+
+
+sequence_default_child_decode(p, sAcc, sChName, sChildContent, sInitWithDefaultValue) ::= <<
+# Decode <sChName>
+if self.get_attribute_exists('<sChName>'):
+    self._<sChName>.uper_decode(bit_stream)
+else:
+    self._<sChName> = self.<sChName>Type()
+>>
+
+/* SEQUENCE END */
+
+loopFixedItem (i, fixedSize,  sInternalItem)::= <<
+for <i> in range(<fixedSize>):
+    <sInternalItem>
+>>
+
+/* IA5String & Numeric String */
+
+str_FixedSize_encode(p, sTasName, i, sInternalItem, nFixedSize, nIntItemMinSize, nIntItemMaxSize, nAlignSize) ::= <<
+<loopFixedItem(i=i, sInternalItem=sInternalItem, fixedSize=nFixedSize)>
+>>
+
+str_FixedSize_decode(p, sTasName, i, sInternalItem, nFixedSize, nIntItemMinSize, nIntItemMaxSize, nAlignSize) ::= <<
+value_<i> = ''
+<loopFixedItem(i=i, sInternalItem=sInternalItem, fixedSize=nFixedSize)>
+<p> = value_<i>
+>>
+
+str_VarSize_encode(p, sTasName, i, sInternalItem, nSizeMin, nSizeMax, nSizeInBits, nIntItemMinSize, nIntItemMaxSize, nAlignSize) ::= <<
+bit_stream.encode_constraint_number(<getStringSize(p)>, <nSizeMin>, <nSizeMax>)
+<loopFixedItem(i=i, sInternalItem=sInternalItem, fixedSize=getStringSize(p))>
+>>
+
+str_VarSize_decode(p, sTasName, i, sInternalItem, nSizeMin, nSizeMax, nSizeInBits, nIntItemMinSize, nIntItemMaxSize, nAlignSize) ::= <<
+value_<i> = ''
+length = bit_stream.decode_constraint_number(<nSizeMin>, <nSizeMax>)
+<loopFixedItem(i=i, sInternalItem=sInternalItem, fixedSize="length")>
+<p> = value_<i>
+>>
+
+
+
+/* SEQUENCE OF & OCTET STRING*/
+octect_FixedSize_encode(p, sTasName, i, sInternalItem, nFixedSize, nIntItemMinSize, nIntItemMaxSize, nAlignSize) ::= <<
+<loopFixedItem(i=i, sInternalItem=sInternalItem, fixedSize=nFixedSize)>
+>>
+
+octect_FixedSize_decode(p, sTasName, i, sInternalItem, nFixedSize, nIntItemMinSize, nIntItemMaxSize, nAlignSize) ::= <<
+value_<i> = bytearray()
+<loopFixedItem(i=i, sInternalItem=sInternalItem, fixedSize=nFixedSize)>
+<p> = value_<i>
+>>
+
+octect_VarSize_encode(p, sAcc, sTasName, i, sInternalItem, nSizeMin, nSizeMax, nSizeInBits, nIntItemMinSize, nIntItemMaxSize, nAlignSize, sErrCode) ::= <<
+bit_stream.encode_constraint_number(<getStringSize(p)>, <nSizeMin>, <nSizeMax>)
+<loopFixedItem(i=i, sInternalItem=sInternalItem, fixedSize=getStringSize(p))>
+>>
+
+octect_VarSize_decode(p, sAcc, sTasName, i, sInternalItem, nSizeMin, nSizeMax, nSizeInBits, nIntItemMinSize, nIntItemMaxSize, nAlignSize, sErrCode) ::= <<
+value_<i> = bytearray()
+length = bit_stream.decode_constraint_number(<nSizeMin>, <nSizeMax>)
+<loopFixedItem(i=i, sInternalItem=sInternalItem, fixedSize="length")>
+<p> = value_<i>
+>>
+
+InternalArrayItem_Encode() ::= "self._list[<i>].uper_encode(bit_stream)"
+InternalArrayItem_Decode() ::= <<
+elem = self.ElementType()
+elem.uper_decode(bit_stream)
+value_<i>.append(elem)
+>>
+
+
+sequenceOf_FixedSize_encode(p, sTasName, i, sInternalItem, nFixedSize, nIntItemMinSize, nIntItemMaxSize, nAlignSize) ::= <<
+<loopFixedItem(i=i, sInternalItem=InternalArrayItem_Encode(), fixedSize=nFixedSize)>
+>>
+
+sequenceOf_FixedSize_decode(p, sTasName, i, sInternalItem, nFixedSize, nIntItemMinSize, nIntItemMaxSize, nAlignSize) ::= <<
+value_<i> = list()
+<loopFixedItem(i=i, sInternalItem=InternalArrayItem_Decode(), fixedSize=nFixedSize)>
+<p> = value_<i>
+>>
+
+sequenceOf_VarSize_encode(p, sAcc, sTasName, i, sInternalItem, nSizeMin, nSizeMax, nSizeInBits, nIntItemMinSize, nIntItemMaxSize, nAlignSize, sErrCode) ::= <<
+bit_stream.encode_constraint_number(<getStringSize(p)>, <nSizeMin>, <nSizeMax>)
+<loopFixedItem(i=i, sInternalItem=InternalArrayItem_Encode(), fixedSize=getStringSize(p))>
+>>
+
+sequenceOf_VarSize_decode(p, sAcc, sTasName, i, sInternalItem, nSizeMin, nSizeMax, nSizeInBits, nIntItemMinSize, nIntItemMaxSize, nAlignSize, sErrCode) ::= <<
+length = bit_stream.decode_constraint_number(<nSizeMin>, <nSizeMax>)
+value_<i> = list()
+<loopFixedItem(i=i, sInternalItem=InternalArrayItem_Decode(), fixedSize="length")>
+<p> = value_<i>
+>>
+
+
+/* BIT STRING*/
+bitString_FixSize_encode(p, sAcc, nFixedSize, sErrCode) ::= "bit_stream.append_bits(<p>, <nFixedSize>)"
+bitString_FixSize_decode(p, sAcc, nFixedSize, sErrCode) ::= "<p> = bit_stream.read_bitarray(<nFixedSize>)"
+
+bitString_VarSize_encode(p, sAcc, nSizeMin, nSizeMax, sErrCode) ::= <<
+bit_stream.encode_constraint_number(<getStringSize(p)>, <nSizeMin>, <nSizeMax>)
+<bitString_FixSize_encode(p=p, sAcc=sAcc, nFixedSize=getStringSize(p), sErrCode=sErrCode)>
+>>
+
+bitString_VarSize_decode(p, sAcc, nSizeMin, nSizeMax, sErrCode) ::= <<
+length = bit_stream.decode_constraint_number(<nSizeMin>, <nSizeMax>)
+<bitString_FixSize_decode(p=p, sAcc=sAcc, nFixedSize="length", sErrCode=sErrCode)>
+>>
+
+Fragmentation_sqf_encode(p, bIsBitStringType, nLevel, sInternalItem, sCount, nUperMax, bIsAsciiString, bIsFixedSize) ::= <<
+>>
+
+Fragmentation_sqf_decode(p, bIsBitStringType, nLevel, sInternalItem, sCount, nUperMax, bIsAsciiString, bIsFixedSize) ::= <<
+>>

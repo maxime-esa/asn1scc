@@ -1,0 +1,57 @@
+﻿group p_init;
+
+initTypeAssignment_def(sVarName, sStar, sFuncName, sTypeDefName) ::= <<
+def init_value(self): pass
+>>
+
+initTypeAssignment(sVarName, sStar, sFuncName, sTypeDefName, sContent) ::= <<
+def init_value(self):
+    return <sContent>
+>>
+
+/* SIMPLE TYPES */
+initInteger(sVal, nValue) ::= "<nValue>"
+initReal(sVal, dValue) ::= "<dValue>"
+initBoolean(sVal, bValue) ::= "<if(bValue)>True<else>False<endif>"
+initIA5String(sPtr, sValue, arrsNullChars) ::= "'<sValue>'"
+initEnumerated(sVal, sValue) ::= "<sValue>"
+initNull(sVal) ::= "None"
+
+
+/* BIT AND OCTET STRINGS */
+initFixSizeBitString_bytei(p, sAcc, sI, sByteHexVal) ::= "<sByteHexVal>"
+initFixSizeBitString(p, sAcc,arrsBytes) ::= "'<arrsBytes>'"
+initFixVarSizeBitString(p, sAcc, nSize, arrsBytes) ::= "'<arrsBytes>'"
+
+initFixSizeOctString_bytei(p, sAcc, sI, sByteHexVal) ::= "<sByteHexVal>"
+initFixSizeOctString(p, sAcc,arrsBytes) ::= "b'<arrsBytes>'"
+initFixVarSizeOctString(p, sAcc, nSize, arrsBytes) ::= "b'<arrsBytes>'"
+
+
+/*SEQUENCE OF */
+initFixedSequenceOf(arrsInnerValues) ::= <<
+[<arrsInnerValues:{ch|<ch>}; wrap, anchor, separator=", ">]
+>>
+
+initVarSizeSequenceOf(p, sAcc, nSize, arrsInnerValues) ::= <<
+[<arrsInnerValues:{ch|<ch>}; wrap, anchor, separator=", ">]
+>>
+
+/*SEQUENCE AND CHOICE*/
+initSequence_optionalChild(p, sAcc, sChName, sPresentFlag, sChildContent) ::=<<
+<sChName>=<sChildContent>
+>>
+
+initSequence(arrsInnerValues) ::= <<
+dict(
+        <arrsInnerValues; separator=",\n">
+    )
+>>
+
+initChoice(p1, sAccess, sChildContent, sChildKind) ::= <<
+dict(
+        <sChildKind>=<sChildContent>
+    )
+>>
+
+

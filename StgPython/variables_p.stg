@@ -1,0 +1,40 @@
+﻿group p_variables;
+
+PrintIntValue(nValue) ::= "<nValue>"
+PrintRealValue(dValue) ::= "<dValue>"
+PrintEnumValue(sValue) ::= "<sValue>"
+PrintRefValue1(sValue) ::= "<sValue>"
+PrintRefValue2(sModName,sValue) ::= "<sModName>.<sValue>"
+
+PrintStringValue(sValue) ::= "'<sValue>'"
+PrintCharValue(cValue)    ::= "'<cValue>'"
+PrintBooleanValue(bValue)    ::= "<if(bValue)>True<else>False<endif>"
+PrintNullValue()    ::= "None"
+
+PrintOctetStringValue(bIsFixedSize, arruBytes, nCount) ::= <<
+b'<arruBytes:{b|\x<b;format="X2">}; separator="">'
+>>
+
+PrintBitStringValue(bIsFixedSize, arruBytes, nCount) ::= <<
+'<arruBytes; separator="">'
+>>
+
+PrintSequenceValueChild(sName, sInnerValue) ::= "<sName>=<sInnerValue>"
+
+PrintSequenceValue(arrsChildren) ::= <<
+dict(
+        <arrsChildren:{ch|<ch>}; separator=",\n">
+    )
+>>
+
+PrintChoiceValue(sAltNamePresent, sAltName, sInnerValue) ::= <<
+dict(
+        <sAltName>=<sInnerValue>
+    )
+>>
+
+PrintSequenceOfValue(bIsFixedSize, arrsInnerValues) ::= <<
+[<arrsInnerValues:{ch|<ch>}; wrap, anchor, separator=", ">]
+>>
+
+PrintValueAssignment(sTypeDecl, sName, sValue) ::= "<sName> = <sTypeDecl>(<sValue>)"

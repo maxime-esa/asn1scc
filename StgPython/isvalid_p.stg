@@ -1,0 +1,69 @@
+﻿group p_isvalid;
+
+
+getStringSize(p) ::= "len(<p>)"
+
+Print_AlphabetCheckFunc_str(p) ::= "<p>[i]"
+
+
+EmitTypeAssignment_primitive_def(sFuncName, sTypeDefName, sErrCode, nErrValue) ::= <<
+def check_constraints(self, value): pass
+>>
+
+EmitTypeAssignment_primitive(sFuncName, sTypeDefName, sContent, arrsAlphaFuncs) ::= <<
+__constraints__ = '<sContent>'
+
+<if(arrsAlphaFuncs)>
+<arrsAlphaFuncs; separator="\n">
+
+
+<endif>
+def check_constraints(self, value):
+    return <sContent>
+>>
+
+ExpEqual(sExp1, sExp2) ::= "<sExp1> == <sExp2>"
+ExpStringEqual(sExp1, sExp2) ::= "<sExp1> == <sExp2>"
+ExpGt(sExp1, sExp2) ::= "<sExp1> \> <sExp2>"
+ExpGte(sExp1, sExp2) ::= "<sExp1> \>= <sExp2>"
+ExpLt(sExp1, sExp2) ::= "<sExp1> \< <sExp2>"
+ExpLte(sExp1, sExp2) ::= "<sExp1> \<= <sExp2>"
+ExpOr(sExp1, sExp2) ::= "(<sExp1> or <sExp2>)"
+ExpAnd(sExp1, sExp2) ::= "(<sExp1> and <sExp2>)"
+ExpAndMulit(arrsExp) ::= <<
+<arrsExp; separator=" and ">
+>>
+ExpNot(sExp) ::= "not <sExp>"
+StrLen(sExp) ::= "len(<sExp>)"
+ArrayLen(sExp, sAcc) ::= "len(<sExp>)"
+
+
+Print_AlphabetCheckFunc(sFuncName, arrsAlphaConBody) ::= <<
+def _check_alphabet(self, value):
+    for char in value:
+        if not <arrsAlphaConBody>:
+            return False
+    return True
+>>
+
+call_base_type_func(p, sFuncName) ::= "# base call not used"
+
+call_base_type_func_exp(p, sFuncName) ::= "# base call not used"
+
+makeExpressionToStatement(sIsValidExp, sErrCode) ::= <<
+<sIsValidExp>
+>>
+
+sequenceOf(p,sAcc, i, bIsFixedSize, nFixedSize, soIsValidSizeExp, soErrCode, soInnerStatement) ::= <<
+<if(!bIsFixedSize)>
+<soIsValidSizeExp>
+<else>
+len(value) == <nFixedSize>
+<endif>
+>>
+
+
+
+
+
+

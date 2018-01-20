@@ -1,0 +1,738 @@
+group p_acn;
+
+EmitAcnParameter(sName, sType) ::= "<sName>"
+
+EmitTypeWithRequiredBytesAndBits(nMaxBytesInACN, nMaxBitsInACN, sFuncDeclaration) ::= <<
+REQUIRED_BYTES_FOR_ACN_ENCODING = <nMaxBytesInACN> 
+REQUIRED_BITS_FOR_ACN_ENCODING = <nMaxBitsInACN>
+
+<sFuncDeclaration>
+>>
+
+EmitTypeAssignment_primitive_def_encode(sVarName, sStar, sFuncName, sTypeDefName, arrsErrcodes, bEmptyEncodingSpace, nMaxBytesInACN, nMaxBitsInACN, arrsAcnPrms) ::= <<
+def acn_encode(self, bit_stream<if(arrsAcnPrms)>, <arrsAcnPrms:{p|<p>=None}; separator=", "><endif>, *args): pass
+>>
+
+EmitTypeAssignment_primitive_encode(sVarName, sStar, sFuncName, soIValidFuncName, sTypeDefName, arrsLocalVariables, sContent, soSparkAnnotations, sInitilialExp, arrsAcnPrms, arrsAcnParamNames) ::= <<
+def acn_encode(self, bit_stream<if(arrsAcnPrms)>, <arrsAcnPrms:{p|<p>=None}; separator=", "><endif>, *args):
+    <sContent>
+>>
+
+EmitTypeAssignment_primitive_no_set_encode(sVarName, sStar, sFuncName, soIValidFuncName, sTypeDefName, arrsLocalVariables, sContent, soSparkAnnotations, sInitilialExp, arrsAcnPrms, arrsAcnParamNames) ::= <<
+def acn_encode(self, bit_stream<if(arrsAcnPrms)>, <arrsAcnPrms:{p|<p>=None}; separator=", "><endif>, *args):
+    <sContent>
+>>
+
+EmitTypeAssignment_primitive_sqf_encode(sVarName, sStar, sFuncName, soIValidFuncName, sTypeDefName, arrsLocalVariables, sContent, soSparkAnnotations, sInitilialExp, arrsAcnPrms, arrsAcnParamNames) ::= <<
+def acn_encode(self, bit_stream<if(arrsAcnPrms)>, <arrsAcnPrms:{p|<p>=None}; separator=", "><endif>, *args):
+    <sContent>
+>>
+
+EmitTypeAssignment_primitive_def_decode(sVarName, sStar, sFuncName, sTypeDefName, arrsErrcodes, bEmptyEncodingSpace, nMaxBytesInACN, nMaxBitsInACN, arrsAcnPrms) ::= <<
+def acn_decode(self, bit_stream<if(arrsAcnPrms)>, <arrsAcnPrms:{p|<p>=None}; separator=", "><endif>, *args): pass
+>>
+
+EmitTypeAssignment_primitive_decode(sVarName, sStar, sFuncName, soIValidFuncName, sTypeDefName, arrsLocalVariables, sContent, soSparkAnnotations, sInitilialExp, arrsAcnPrms, arrsAcnParamNames) ::= <<
+def acn_decode(self, bit_stream<if(arrsAcnPrms)>, <arrsAcnPrms:{p|<p>=None}; separator=", "><endif>, *args):
+    <sContent>
+
+    self.set(value)
+>>
+
+EmitTypeAssignment_primitive_no_set_decode(sVarName, sStar, sFuncName, soIValidFuncName, sTypeDefName, arrsLocalVariables, sContent, soSparkAnnotations, sInitilialExp, arrsAcnPrms, arrsAcnParamNames) ::= <<
+def acn_decode(self, bit_stream<if(arrsAcnPrms)>, <arrsAcnPrms:{p|<p>=None}; separator=", "><endif>, *args):
+    <sContent>
+>>
+
+EmitTypeAssignment_primitive_sqf_decode(sVarName, sStar, sFuncName, soIValidFuncName, sTypeDefName, arrsLocalVariables, sContent, soSparkAnnotations, sInitilialExp, arrsAcnPrms, arrsAcnParamNames) ::= <<
+def acn_decode(self, bit_stream<if(arrsAcnPrms)>, <arrsAcnPrms:{p|<p>=None}; separator=", "><endif>, *args):
+    value = self
+    <sContent>
+
+    self.set(value)
+>>
+
+loopFixedItem (i, fixedSize,  sInternalItem)::= <<
+for <i> in range(<fixedSize>):
+    <sInternalItem>
+>>
+
+
+PositiveInteger_ConstSize_encode(p, nFixedSize, soMF, soMFM, nUperMin, nUperMax) ::= "bit_stream.acn_encode_positive_integer_const_size(<p>, <nFixedSize>)"
+PositiveInteger_ConstSize_decode(p, nFixedSize, soMF, soMFM, nUperMin, nUperMax) ::= <<
+<p> = bit_stream.acn_decode_positive_integer_const_size(<nFixedSize>)
+>>
+
+PositiveInteger_ConstSize_8_encode(p, soMF, soMFM, nUperMin, nUperMax) ::= "bit_stream.acn_encode_positive_integer_const_size_8(<p>)"
+PositiveInteger_ConstSize_8_decode(p, soMF, soMFM, nUperMin, nUperMax) ::= <<
+<p> = bit_stream.acn_decode_positive_integer_const_size_8()
+>>
+
+PositiveInteger_ConstSize_big_endian_16_encode(p, soMF, soMFM, nUperMin, nUperMax) ::= "bit_stream.acn_encode_positive_integer_const_size_16_big_endian(<p>)"
+PositiveInteger_ConstSize_big_endian_16_decode(p, soMF, soMFM, nUperMin, nUperMax) ::= <<
+<p> = bit_stream.acn_decode_positive_integer_const_size_16_big_endian()
+>>
+
+PositiveInteger_ConstSize_big_endian_32_encode(p, soMF, soMFM, nUperMin, nUperMax) ::= "bit_stream.acn_encode_positive_integer_const_size_32_big_endian(<p>)"
+PositiveInteger_ConstSize_big_endian_32_decode(p, soMF, soMFM, nUperMin, nUperMax) ::= <<
+<p> = bit_stream.acn_decode_positive_integer_const_size_32_big_endian()
+>>
+
+PositiveInteger_ConstSize_big_endian_64_encode(p, soMF, soMFM, nUperMin, nUperMax) ::= "bit_stream.acn_encode_positive_integer_const_size_64_big_endian(<p>)"
+PositiveInteger_ConstSize_big_endian_64_decode(p, soMF, soMFM, nUperMin, nUperMax) ::= <<
+<p> = bit_stream.acn_decode_positive_integer_const_size_64_big_endian()
+>>
+
+PositiveInteger_ConstSize_little_endian_16_encode(p, soMF, soMFM, nUperMin, nUperMax) ::= "bit_stream.acn_encode_positive_integer_const_size_16_little_endian(<p>)"
+PositiveInteger_ConstSize_little_endian_16_decode(p, soMF, soMFM, nUperMin, nUperMax) ::= <<
+<p> = bit_stream.acn_decode_positive_integer_const_size_16_little_endian()
+>>
+
+PositiveInteger_ConstSize_little_endian_32_encode(p, soMF, soMFM, nUperMin, nUperMax) ::= "bit_stream.acn_encode_positive_integer_const_size_32_little_endian(<p>)"
+PositiveInteger_ConstSize_little_endian_32_decode(p, soMF, soMFM, nUperMin, nUperMax) ::= <<
+<p> = bit_stream.acn_decode_positive_integer_const_size_32_little_endian()
+>>
+
+PositiveInteger_ConstSize_little_endian_64_encode(p, soMF, soMFM, nUperMin, nUperMax) ::= "bit_stream.acn_encode_positive_integer_const_size_64_little_endian(<p>)"
+PositiveInteger_ConstSize_little_endian_64_decode(p, soMF, soMFM, nUperMin, nUperMax) ::= <<
+<p> = bit_stream.acn_decode_positive_integer_const_size_64_little_endian()
+>>
+
+PositiveInteger_VarSize_LengthEmbedded_encode(p, soMF, soMFM, nUperMin) ::= "bit_stream.acn_encode_positive_integer_var_size_length_embedded(<p>)"
+PositiveInteger_VarSize_LengthEmbedded_decode(p, soMF, soMFM, nUperMin) ::= <<
+<p> = bit_stream.acn_decode_positive_integer_var_size_length_embedded()
+>>
+
+
+TwosComplement_ConstSize_encode(p, soMF, soMFM, nFixedSize, nUperMin, nUperMax) ::= "bit_stream.acn_encode_integer_twos_complement_const_size(<p>, <nFixedSize>)"
+TwosComplement_ConstSize_decode(p, soMF, soMFM, nFixedSize, nUperMin, nUperMax) ::= <<
+<p> = bit_stream.acn_decode_integer_twos_complement_const_size(<nFixedSize>)
+>>
+
+TwosComplement_ConstSize_8_encode(p, soMF, soMFM, nUperMin, nUperMax) ::= "bit_stream.acn_encode_integer_twos_complement_const_size_8(<p>)"
+TwosComplement_ConstSize_8_decode(p, soMF, soMFM, nUperMin, nUperMax) ::= <<
+<p> = bit_stream.acn_decode_integer_twos_complement_const_size_8()
+>>
+
+TwosComplement_ConstSize_big_endian_16_encode(p, soMF, soMFM, nUperMin, nUperMax) ::= "bit_stream.acn_encode_integer_twos_complement_const_size_16_big_endian(<p>)"
+TwosComplement_ConstSize_big_endian_16_decode(p, soMF, soMFM, nUperMin, nUperMax) ::= <<
+<p> = bit_stream.acn_decode_integer_twos_complement_const_size_16_big_endian()
+>>
+
+TwosComplement_ConstSize_big_endian_32_encode(p, soMF, soMFM, nUperMin, nUperMax) ::= "bit_stream.acn_encode_integer_twos_complement_const_size_32_big_endian(<p>)"
+TwosComplement_ConstSize_big_endian_32_decode(p, soMF, soMFM, nUperMin, nUperMax) ::= <<
+<p> = bit_stream.acn_decode_integer_twos_complement_const_size_32_big_endian()
+>>
+
+TwosComplement_ConstSize_big_endian_64_encode(p, soMF, soMFM, nUperMin, nUperMax) ::= "bit_stream.acn_encode_integer_twos_complement_const_size_64_big_endian(<p>)"
+TwosComplement_ConstSize_big_endian_64_decode(p, soMF, soMFM, nUperMin, nUperMax) ::= <<
+<p> = bit_stream.acn_decode_integer_twos_complement_const_size_64_big_endian()
+>>
+
+TwosComplement_ConstSize_little_endian_16_encode(p, soMF, soMFM, nUperMin, nUperMax) ::= "bit_stream.acn_encode_integer_twos_complement_const_size_16_little_endian(<p>)"
+TwosComplement_ConstSize_little_endian_16_decode(p, soMF, soMFM, nUperMin, nUperMax) ::= <<
+<p> = bit_stream.acn_decode_integer_twos_complement_const_size_16_little_endian()
+>>
+
+TwosComplement_ConstSize_little_endian_32_encode(p, soMF, soMFM, nUperMin, nUperMax) ::= "bit_stream.acn_encode_integer_twos_complement_const_size_32_little_endian(<p>)"
+TwosComplement_ConstSize_little_endian_32_decode(p, soMF, soMFM, nUperMin, nUperMax) ::= <<
+<p> = bit_stream.acn_decode_integer_twos_complement_const_size_32_little_endian()
+>>
+
+TwosComplement_ConstSize_little_endian_64_encode(p, soMF, soMFM, nUperMin, nUperMax) ::= "bit_stream.acn_encode_integer_twos_complement_const_size_64_little_endian(<p>)"
+TwosComplement_ConstSize_little_endian_64_decode(p, soMF, soMFM, nUperMin, nUperMax) ::= <<
+<p> = bit_stream.acn_decode_integer_twos_complement_const_size_64_little_endian()
+>>
+
+TwosComplement_VarSize_LengthEmbedded_encode(p,soMF, soMFM) ::= "bit_stream.acn_encode_integer_twos_complement_var_size_length_embedded(<p>)"
+TwosComplement_VarSize_LengthEmbedded_decode(p,soMF, soMFM) ::= <<
+<p> = bit_stream.acn_decode_integer_twos_complement_var_size_length_embedded()
+>>
+
+
+BCD_ConstSize_encode(p, soMF, soMFM, nUperMin, nUperMax, nNibbles) ::= "bit_stream.acn_encode_integer_bcd_const_size(<p>, <nNibbles>)"
+BCD_ConstSize_decode(p, soMF, soMFM, nUperMin, nUperMax, nNibbles) ::= <<
+<p> = bit_stream.acn_decode_integer_bcd_const_size(<nNibbles>)
+>>
+
+BCD_VarSize_LengthEmbedded_encode(p, soMF, soMFM) ::= "bit_stream.acn_encode_integer_bcd_var_size_length_embedded(<p>)"
+BCD_VarSize_LengthEmbedded_decode(p, soMF, soMFM) ::= <<
+<p> = bit_stream.acn_decode_integer_bcd_var_size_length_embedded()
+>>
+
+BCD_VarSize_NullTerminated_encode(p, soMF, soMFM, nUperMin, nUperMax) ::= "bit_stream.acn_encode_integer_bcd_var_size_null_terminated(<p>)"
+BCD_VarSize_NullTerminated_decode(p, soMF, soMFM, nUperMin, nUperMax) ::= <<
+<p> = bit_stream.acn_decode_integer_bcd_var_size_null_terminated()
+>>
+
+ASCII_ConstSize_encode(p, soMF, soMFM, nUperMin, nUperMax, nSizeInBytes) ::= "bit_stream.acn_encode_signed_integer_ascii_const_size(<p>, <nSizeInBytes>)"
+ASCII_ConstSize_decode(p, soMF, soMFM, nUperMin, nUperMax, nSizeInBytes) ::= <<
+<p> = bit_stream.acn_decode_signed_integer_ascii_const_size(<nSizeInBytes>)
+>>
+
+ASCII_VarSize_LengthEmbedded_encode(p, soMF, soMFM) ::= "bit_stream.acn_encode_signed_integer_ascii_var_size_length_embedded(<p>)"
+ASCII_VarSize_LengthEmbedded_decode(p, soMF, soMFM) ::= <<
+<p> = bit_stream.acn_decode_signed_integer_ascii_var_size_length_embedded()
+>>
+
+ASCII_VarSize_NullTerminated_encode(p, soMF, soMFM, nUperMin, nUperMax) ::= "bit_stream.acn_encode_signed_integer_ascii_var_size_null_terminated(<p>)"
+ASCII_VarSize_NullTerminated_decode(p, soMF, soMFM, nUperMin, nUperMax) ::= <<
+<p> = bit_stream.acn_decode_signed_integer_ascii_var_size_null_terminated()
+>>
+
+ASCII_UINT_ConstSize_encode(p, soMF, soMFM, nUperMin, nUperMax, nSizeInBytes) ::= "bit_stream.acn_encode_unsigned_integer_ascii_const_size(<p>, <nSizeInBytes>)"
+ASCII_UINT_ConstSize_decode(p, soMF, soMFM, nUperMin, nUperMax, nSizeInBytes) ::= <<
+<p> = bit_stream.acn_decode_unsigned_integer_ascii_const_size(<nSizeInBytes>)
+>>
+
+ASCII_UINT_VarSize_LengthEmbedded_encode(p, soMF) ::= "bit_stream.acn_encode_unsigned_integer_ascii_var_size_length_embedded(<p>)"
+ASCII_UINT_VarSize_LengthEmbedded_decode(p, soMF) ::= <<
+<p> = bit_stream.acn_decode_unsigned_integer_ascii_var_size_length_embedded()
+>>
+
+ASCII_UINT_VarSize_NullTerminated_encode(p, soMF, soMFM, nUperMin, nUperMax) ::= "bit_stream.acn_encode_unsigned_integer_ascii_var_size_null_terminated(<p>)"
+ASCII_UINT_VarSize_NullTerminated_decode(p, soMF, soMFM, nUperMin, nUperMax) ::= <<
+<p> = bit_stream.acn_decode_unsigned_integer_ascii_var_size_null_terminated()
+>>
+
+
+Real_32_big_endian_encode(p) ::= "bit_stream.acn_encode_real_ieee745_32_big_endian(<p>)"
+Real_32_big_endian_decode(p) ::= <<
+<p> = bit_stream.acn_decode_real_ieee745_32_big_endian()
+>>
+
+Real_64_big_endian_encode(p) ::= "bit_stream.acn_encode_real_ieee745_64_big_endian(<p>)"
+Real_64_big_endian_decode(p) ::= <<
+<p> = bit_stream.acn_decode_real_ieee745_64_big_endian()
+>>
+
+Real_32_little_endian_encode(p) ::= "bit_stream.acn_encode_real_ieee745_32_little_endian(<p>)"
+Real_32_little_endian_decode(p) ::= <<
+<p> = bit_stream.acn_decode_real_ieee745_32_little_endian()
+>>
+
+Real_64_little_endian_encode(p) ::= "bit_stream.acn_encode_real_ieee745_64_little_endian(<p>)"
+Real_64_little_endian_decode(p) ::= <<
+<p> = bit_stream.acn_decode_real_ieee745_64_little_endian()
+>>
+
+
+Boolean_encode(p, ptr, bEncValIsTrue, nSize, arruTrueValueAsByteArray, arruFalseValueAsByteArray, arrsBits, sErrCode) ::= <<
+pattern = (
+    b'<arruTrueValueAsByteArray:{b|\x<b;format="X2">}>',  # true pattern
+    b'<arruFalseValueAsByteArray:{b|\x<b;format="X2">}>'  # false pattern
+)
+bit_stream.append_bits(pattern[<p>], <nSize>)
+>>
+
+
+Boolean_decode(p, ptr, bEncValIsTrue, nSize, arruTrueValueAsByteArray, arruFalseValueAsByteArray, arrsBits, sErrCode) ::= <<
+pattern = (
+    b'<arruTrueValueAsByteArray:{b|\x<b;format="X2">}>',  # true pattern
+    b'<arruFalseValueAsByteArray:{b|\x<b;format="X2">}>'  # false pattern
+)
+<p> = bit_stream.read_bit_pattern(pattern[<if(bEncValIsTrue)>True<else>False<endif>], <nSize>)
+<if(!bEncValIsTrue)><p> = not <p><endif>
+>>
+
+
+Null_encode(p, arruNullValueAsByteArray, nSize, arrsBits, sErrCode) ::= <<
+<if(arruNullValueAsByteArray)>
+pattern = b'<arruNullValueAsByteArray:{b|\x<b;format="X2">}>'
+bit_stream.append_bits(pattern, <nSize>)
+<endif>
+>>
+
+Null_decode(p, arruNullValueAsByteArray, nSize, arrsBits, sErrCode) ::= <<
+<if(arruNullValueAsByteArray)>
+pattern = b'<arruNullValueAsByteArray:{b|\x<b;format="X2">}>'
+if not bit_stream.read_bit_pattern(pattern, <nSize>):
+    raise ValueError('Wrong Null pattern decoded!')
+
+<endif>
+<p> = None
+>>
+
+Null_empty_pattern() ::= "# NullType, nothing to do"
+
+Enumerated_item_encode(p, sName, nItemIdxOrVal) ::= <<
+if <p> == <sName>:
+    enum_index = <nItemIdxOrVal>
+>>
+
+Enumerated_item_decode(p, sName, nItemIdxOrVal) ::= <<
+if enum_index == <nItemIdxOrVal>:
+    <p> = <sName>
+>>
+
+EnumeratedEncIdx_encode(p, sTasName, arrsItem, sActualCodecFunc) ::= <<
+<sActualCodecFunc>
+>>
+
+EnumeratedEncIdx_decode(p, sTasName, arrsItem, sActualCodecFunc) ::= <<
+<sActualCodecFunc>
+>>
+
+
+EnumeratedEncValues_encode(p, sTasName, arrsItem, sActualCodecFunc, sErrCode, sFirstItemName) ::= <<
+<arrsItem; separator="\nel">
+else:
+    raise asn1.UnexpectedOptionIndex(type(self), '')
+<sActualCodecFunc>
+>>
+
+EnumeratedEncValues_decode(p, sTasName, arrsItem, sActualCodecFunc, sErrCode, sFirstItemName) ::= <<
+<sActualCodecFunc>
+<arrsItem; separator="\nel">
+else:
+    raise asn1.UnexpectedOptionIndex(type(self), enum_index)
+>>
+
+/* Strings */
+Acn_String_Ascii_FixSize_encode(p, nAsn1Max) ::= "bit_stream.acn_encode_string_ascii_fix_size(<p>, <nAsn1Max>)"
+Acn_String_Ascii_FixSize_decode(p, nAsn1Max) ::= <<
+<p> = bit_stream.acn_decode_string_ascii_fix_size(<nAsn1Max>)
+>>
+
+Acn_String_Ascii_Null_Teminated_encode(p, nAsn1Max, sNull) ::= "bit_stream.acn_encode_string_ascii_null_terminated(<p>, <sNull>, <nAsn1Max>)"
+Acn_String_Ascii_Null_Teminated_decode(p, nAsn1Max, sNull) ::= <<
+<p> = bit_stream.acn_decode_string_ascii_null_terminated(<sNull>, <nAsn1Max>)
+>>
+
+Acn_String_Ascii_External_Field_Determinant_encode(p, nAsn1Max, sExtFld) ::= "bit_stream.acn_encode_string_ascii_external_field_determinant(<p>, <nAsn1Max>)"
+Acn_String_Ascii_External_Field_Determinant_decode(p, nAsn1Max, sExtFld) ::= <<
+<p> = bit_stream.acn_decode_string_ascii_external_field_determinant(<nAsn1Max>, <sExtFld>)
+>>
+
+Acn_String_Ascii_Internal_Field_Determinant_encode(p, nAsn1Max, nAsn1Min, nInternalLengthDeterminantSizeInBits) ::= "bit_stream.acn_encode_string_ascii_internal_field_determinant(<p>, <nAsn1Min>, <nAsn1Max>)"
+Acn_String_Ascii_Internal_Field_Determinant_decode(p, nAsn1Max, nAsn1Min, nInternalLengthDeterminantSizeInBits) ::= <<
+<p> = bit_stream.acn_decode_string_ascii_internal_field_determinant(<nAsn1Min>, <nAsn1Max>)
+>>
+
+PrintAlphabet2(arrnCharSet) ::= <<
+allowed_charset = [<arrnCharSet:{ch|'\x<ch;format="X2">'}; wrap, anchor, separator=", ">]
+>>
+
+Acn_String_CharIndex_FixSize_encode(p, nAsn1Max, arrnAlphabetAsciiCodes, nCharSetSize, sTasName, nCharSize) ::= <<
+<PrintAlphabet2(arrnAlphabetAsciiCodes)>
+bit_stream.acn_encode_string_char_index_fix_size(<p>, allowed_charset, <nAsn1Max>)
+>>
+
+Acn_String_CharIndex_FixSize_decode(p, nAsn1Max, arrnAlphabetAsciiCodes, nCharSetSize, sTasName, nCharSize) ::= <<
+<PrintAlphabet2(arrnAlphabetAsciiCodes)>
+<p> = bit_stream.acn_decode_string_char_index_fix_size(<nAsn1Max>, allowed_charset)
+>>
+
+Acn_String_CharIndex_External_Field_Determinant_encode(p, nAsn1Max, arrnAlphabetAsciiCodes, nCharSetSize, sExtFld, sTasName, nCharSize) ::= <<
+<PrintAlphabet2(arrnAlphabetAsciiCodes)>
+bit_stream.acn_encode_string_char_index_external_field_determinant(<p>, allowed_charset, <nAsn1Max>)
+>>
+
+Acn_String_CharIndex_External_Field_Determinant_decode(p, nAsn1Max, arrnAlphabetAsciiCodes, nCharSetSize, sExtFld, sTasName, nCharSize) ::= <<
+<PrintAlphabet2(arrnAlphabetAsciiCodes)>
+<p> = bit_stream.acn_decode_string_char_index_external_field_determinant(<nAsn1Max>, allowed_charset, <sExtFld>)
+>>
+
+Acn_String_CharIndex_Internal_Field_Determinant_encode(p, nAsn1Max, arrnAlphabetAsciiCodes, nCharSetSize, nAsn1Min) ::= <<
+<PrintAlphabet2(arrnAlphabetAsciiCodes)>
+bit_stream.acn_encode_string_char_index_internal_field_determinant(<p>, allowed_charset, <nAsn1Min>, <nAsn1Max>)
+>>
+
+Acn_String_CharIndex_Internal_Field_Determinant_decode(p, nAsn1Max, arrnAlphabetAsciiCodes, nCharSetSize, nAsn1Min) ::= <<
+<PrintAlphabet2(arrnAlphabetAsciiCodes)>
+<p> = bit_stream.acn_decode_string_char_index_internal_field_determinant(<nAsn1Min>, <nAsn1Max>, allowed_charset)
+>>
+
+string_InternalItem_encode(p, i, nCharSetMaxIndex) ::=<<
+char_index = <p>[<i>]
+bit_stream.encode_constraint_number(char_index, 0, <nCharSetMaxIndex>)
+>>
+
+string_InternalItem_decode(p, i, nCharSetMaxIndex) ::=<<
+char_index = bit_stream.decode_constraint_number(0, <nCharSetMaxIndex>)
+value_<i> = chr(char_index)
+>>
+
+str_VarSize_null_terminated_encode(p, nSizeMax, sNullCharacter) ::= <<
+bit_stream.acn_encode_string_ascii_null_terminated(<p>, '<sNullCharacter>', <nSizeMax>)
+>>
+
+str_VarSize_null_terminated_decode(p, nSizeMax, sNullCharacter) ::= <<
+<p> = bit_stream.acn_decode_string_ascii_null_terminated('<sNullCharacter>', <nSizeMax>)
+>>
+
+str_external_field_encode(p, i, sInternalItem, nSizeMin, nSizeMax, sExtFld) ::= <<
+length = len(<p>)
+assert(<nSizeMin> \<= length \<= <nSizeMax>)
+<loopFixedItem(i=i, sInternalItem=sInternalItem, fixedSize="length")>
+>>
+
+str_external_field_decode(p, i, sInternalItem, nSizeMin, nSizeMax,  sExtFld) ::= <<
+value_<i> = ''
+assert(<nSizeMin> \<= <sExtFld> \<= <nSizeMax>)
+<loopFixedItem(i=i, sInternalItem=sInternalItem, fixedSize=sExtFld)>
+<p> = value_<i>
+>>
+                       
+oct_external_field_encode(p, sAcc, i, sInternalItem, noSizeMin, nSizeMax, sExtFld, nAlignSize, sErrCode, nIntItemMinSize, nIntItemMaxSize) ::= <<
+length = len(<p>)
+assert(<if(noSizeMin)><noSizeMin> \<= <endif>length \<= <nSizeMax>)
+<loopFixedItem(i=i, sInternalItem=sInternalItem, fixedSize="length")>
+>>
+
+oct_external_field_decode(p, sAcc, i, sInternalItem, noSizeMin, nSizeMax, sExtFld, nAlignSize, sErrCode, nIntItemMinSize, nIntItemMaxSize) ::= <<
+value_<i> = bytearray()
+assert(<if(noSizeMin)><noSizeMin> \<= <endif><sExtFld> \<= <nSizeMax>)
+<loopFixedItem(i=i, sInternalItem=sInternalItem, fixedSize=sExtFld)>
+<p> = value_<i>
+>>
+
+InternalArrayItem_Encode() ::= "<p>[<i>].acn_encode(bit_stream)"
+InternalArrayItem_Decode() ::= <<
+elem = self.ElementType()
+elem.acn_decode(bit_stream)
+value_<i>.append(elem)
+>>
+
+sequenceOf_external_field_encode(p, sAcc, i, sInternalItem, noSizeMin, nSizeMax, sExtFld, nAlignSize, sErrCode, nIntItemMinSize, nIntItemMaxSize) ::= <<
+length = len(<p>)
+assert(<if(noSizeMin)><noSizeMin> \<= <endif>length \<= <nSizeMax>)
+<loopFixedItem(i=i, sInternalItem=sInternalItem, fixedSize="length")>
+>>
+
+
+sequenceOf_external_field_decode(p, sAcc, i, sInternalItem, noSizeMin, nSizeMax, sExtFld, nAlignSize, sErrCode, nIntItemMinSize, nIntItemMaxSize) ::= <<
+<p> = <p>._get_new_list(<sExtFld>)
+assert(<if(noSizeMin)><noSizeMin> \<= <endif><sExtFld> \<= <nSizeMax>)
+<loopFixedItem(i=i, sInternalItem=sInternalItem, fixedSize=sExtFld)>
+>>
+
+sequenceOf_FixedSize_encode(p, sTasName, i, sInternalItem, nFixedSize, nIntItemMinSize, nIntItemMaxSize, nAlignSize) ::= <<
+<loopFixedItem(i=i, sInternalItem=sInternalItem, fixedSize=nFixedSize)>
+>>
+
+sequenceOf_FixedSize_decode(p, sTasName, i, sInternalItem, nFixedSize, nIntItemMinSize, nIntItemMaxSize, nAlignSize) ::= <<
+<p> = <p>._get_new_list(<nFixedSize>)
+<loopFixedItem(i=i, sInternalItem=sInternalItem, fixedSize=nFixedSize)>
+>>
+
+getLen(p) ::= "len(<p>)"
+
+sequenceOf_VarSize_encode(p, sAcc, sTasName, i, sInternalItem, nSizeMin, nSizeMax, nSizeInBits, nIntItemMinSize, nIntItemMaxSize, nAlignSize, sErrCode) ::= <<
+bit_stream.encode_constraint_number(len(<p>), <nSizeMin>, <nSizeMax>)
+<loopFixedItem(i=i, sInternalItem=sInternalItem, fixedSize=getLen(p))>
+>>
+
+sequenceOf_VarSize_decode(p, sAcc, sTasName, i, sInternalItem, nSizeMin, nSizeMax, nSizeInBits, nIntItemMinSize, nIntItemMaxSize, nAlignSize, sErrCode) ::= <<
+length = bit_stream.decode_constraint_number(<nSizeMin>, <nSizeMax>)
+<p> = <p>._get_new_list(length)
+<loopFixedItem(i=i, sInternalItem=sInternalItem, fixedSize="length")>
+>>
+
+bit_string_external_field_encode(p, sAcc, noSizeMin, nSizeMax, sExtFld) ::= <<
+bit_stream.append_bits(<p>, len(<p>))
+>>
+
+bit_string_external_field_decode(p, sAcc, noSizeMin, nSizeMax, sExtFld) ::= <<
+assert(<if(noSizeMin)><noSizeMin> \<= <endif><sExtFld> \<= <nSizeMax>)
+<p> = bit_stream.read_bitarray(<sExtFld>)
+>>
+
+/* SEQUENCE*/
+
+
+sequence_presense_optChild_encode(p, sAcc, sChName, sErrCode) ::= "bit_stream.append_bit(<p>.get_attribute_exists('<sChName>'))"
+sequence_presense_optChild_decode(p, sAcc, sChName, sErrCode) ::= <<
+<p>.set_attribute_exists('<sChName>', bool(bit_stream.read_bit()))
+>>
+
+sequence_presense_optChild_pres_bool_encode(p, sAcc, sChName, sExtFldName) ::= ""
+sequence_presense_optChild_pres_bool_decode(p, sAcc, sChName, sExtFldName) ::= <<
+<p>.set_attribute_exists('<sChName>', bool(<sExtFldName>))
+>>
+
+sequence_presense_optChild_pres_int_encode(p, sAcc, sChName, sExtFldName, nIntVal) ::= ""
+sequence_presense_optChild_pres_int_decode(p, sAcc, sChName, sExtFldName, nIntVal) ::= <<
+<p>.set_attribute_exists('<sChName>', <sExtFldName> == <nIntVal>)
+>>
+
+sequence_presense_optChild_pres_str_encode(p, sAcc, sChName, sExtFldName, sVal) ::= ""
+sequence_presense_optChild_pres_str_decode(p, sAcc, sChName, sExtFldName, sVal) ::= <<
+<p>.set_attribute_exists('<sChName>', <sExtFldName> == '<sVal>')
+>>
+
+
+sequence_mandatory_child_encode(sChName, sChildContent) ::= <<
+# Encode <sChName>
+<sChildContent>
+>>
+sequence_mandatory_child_decode(sChName, sChildContent) ::= <<
+# Decode <sChName>
+<sChildContent>
+>>
+
+sequence_acn_child_encode(sChName, sChildContent, sErrCode) ::= <<
+# Encode <sChName>
+if <sChName>_is_initialized:
+    <sChildContent>
+else:
+    raise ValueError("Cannot update ACN child - <sChName>!")
+>>
+sequence_acn_child_decode(sChName, sChildContent, sErrCode) ::= <<
+# Decode <sChName>
+<sChildContent>
+>>
+
+sequence_optional_child_encode(p, sAcc, sChName, sChildContent) ::= <<
+# Encode <sChName>
+if <p>.get_attribute_exists('<sChName>'):
+    <sChildContent>
+>>
+
+sequence_optional_child_decode(p, sAcc, sChName, sChildContent) ::= <<
+# Decode <sChName>
+if <p>.get_attribute_exists('<sChName>'):
+    <sChildContent>
+>>
+
+sequence_optional_always_present_child_encode(p, sAcc, sChName, sChildContent) ::= <<
+# Encode <sChName>
+<sChildContent>
+>>
+
+sequence_optional_always_present_child_decode(p, sAcc, sChName, sChildContent) ::= <<
+# Decode <sChName>
+self.set_attribute_exists('<sChName>', True)
+<sChildContent>
+>>
+
+sequence_default_child_encode(p, sAcc, sChName, sChildContent, sInitWithDefaultValue) ::= <<
+<sequence_optional_child_encode(p=p, sAcc=sAcc, sChName=sChName, sChildContent=sChildContent)>
+>>
+
+sequence_default_child_decode(p, sAcc, sChName, sChildContent, sInitWithDefaultValue) ::= <<
+#  Decode <sChName>
+if <p>.get_attribute_exists('<sChName>'):
+    <sChildContent>
+else:
+    <p>._<sChName> = self.<sChName>Type()
+>>
+
+/* SEQUENCE END */
+
+
+/* Choice like uper*/
+
+ChoiceChild_encode(p, sAcc, sChildID, nChildIndex, nIndexSizeInBits, nLastItemIndex, sChildContent, sChildName, sChildTypeDef, sChoiceTypeName) ::= <<
+if <p>.get_attribute_exists('<sChildName>'):
+    bit_stream.encode_constraint_number(<nChildIndex>, 0, <nLastItemIndex>)
+    <sChildContent>
+>>
+
+ChoiceChild_decode(p, sAcc, sChildID, nChildIndex, nIndexSizeInBits, nLastItemIndex, sChildContent, sChildName, sChildTypeDef, sChoiceTypeName) ::= <<
+if child_index == <nChildIndex>:
+    <p>.set_attribute_exists('<sChildName>', True)
+    <sChildContent>
+>>
+
+Choice_encode(p, sAcc, arrsChildren, nLastItemIndex, sChoiceIndexName, sChoiceTypeDef, nIndexSizeInBits, sErrCode) ::= <<
+<arrsChildren: {ch|<ch>}; separator="\nel">
+else:
+    raise asn1.UnexpectedValue(type(self), 'NONE')
+>>
+
+Choice_decode(p, sAcc, arrsChildren, nLastItemIndex, sChoiceIndexName, sChoiceTypeDef, nIndexSizeInBits, sErrCode) ::= <<
+child_index = bit_stream.decode_constraint_number(0, <nLastItemIndex>)
+<arrsChildren: {ch|<ch>}; separator="\nel">
+else:
+    raise asn1.UnexpectedOptionIndex(type(self), child_index)
+>>
+
+/* Choice with presense determinants */
+
+ChoiceChild_preWhen_encode(p, sAcc, sChildID, sChildBody, arrsConditions, bFirst, sChildName, sChildTypeDef, sChoiceTypeName) ::= <<
+if <p>.get_attribute_exists('<sChildName>'):
+    <sChildBody>
+>>
+
+
+ChoiceChild_preWhen_bool_condition(sExtFld) ::= "bool(<sExtFld>)"
+ChoiceChild_preWhen_int_condition(sExtFld, nVal) ::= "<sExtFld> == <nVal>"
+ChoiceChild_preWhen_str_condition(sExtFld, sVal) ::= "<sExtFld> == '<sVal>'"
+
+ChoiceChild_preWhen_decode(p, sAcc, sChildID, sChildBody, arrsConditions, bFirst, sChildName, sChildTypeDef, sChoiceTypeName) ::= <<
+<if(!bFirst)>el<endif>if <arrsConditions; separator=" and ">:
+    <p>.set_attribute_exists('<sChildName>', True)
+    <sChildBody>
+>>
+
+
+Choice_preWhen_encode(p, sAcc, arrsChildren, sErrCode) ::= <<
+<arrsChildren: {ch|<ch>}; separator="\nel">
+else:
+    raise asn1.UnexpectedValue(type(self), 'NONE')
+>>
+
+Choice_preWhen_decode(p, sAcc, arrsChildren, sErrCode) ::= <<
+<arrsChildren; separator="\n">
+else:
+    raise asn1.UnexpectedOptionIndex(type(self), 'present-when')
+>>
+
+/* Choice with Enum determinant */
+
+ChoiceChild_Enum_encode(p, sAcc, sEnmName, sChildID, sChildBody, sChildName, sChildTypeDef, sChoiceTypeName) ::= <<
+<sEnmName>: 
+    <sChildBody>
+>>
+
+ChoiceChild_Enum_decode(p, sAcc, sEnmName, sChildID, sChildBody, sChildName, sChildTypeDef, sChoiceTypeName) ::= <<
+<sEnmName>:
+    <p>.set_attribute_exists('<sChildName>', True)
+    <sChildBody>
+>>
+
+
+Choice_Enum_encode(p, sAcc, arrsChildren, sEnmExtFld, sErrCode) ::= <<
+<arrsChildren: {ch|if <sEnmExtFld> == <ch>}; separator="\nel">
+else:
+    raise asn1.UnexpectedValue(type(self), 'NONE')
+>>
+
+Choice_Enum_decode(p, sAcc, arrsChildren, sEnmExtFld, sErrCode) ::= <<
+<arrsChildren: {ch|if <sEnmExtFld> == <ch>}; separator="\nel">
+else:
+    raise ValueError('Unacceptable present-when condition!')
+>>
+
+
+/* Updates */
+SizeDependency(v, sCount) ::= <<
+<v>_is_initialized = True
+<v> = <sCount>
+>>
+
+ChoiceDependencyEnum_Item(v, sChildCID, sEnumCName) ::= <<
+.get_attribute_exists('<sChildCID>'):
+    <v>_is_initialized = True
+    <v> = <sEnumCName>
+>>
+
+ChoiceDependencyEnum(sChPath, sAcc, arrsChoiceEnumItems) ::= <<
+# Encode dependency enum
+<arrsChoiceEnumItems:{e|if <sChPath><e>}; separator="\nel">
+else:
+    raise ValueError('Invalid determinant enum!')
+>>
+
+PresenceDependency(v, sSeqPath, sAcc, sChildName) ::= <<
+<v>_is_initialized = True
+<v> = <sSeqPath>.get_attribute_exists('<sChildName>')
+>>
+
+ChoiceDependencyIntPres_child(v, sChildNamePrese, nChildRetVal) ::= <<
+if dependency_path.get_attribute_exists('<sChildNamePrese>'):
+    <v>_is_initialized = True
+    <v> = <nChildRetVal>
+>>
+
+ChoiceDependencyStrPres_child(v, sChildNamePrese, sChildRetVal) ::= <<
+if dependency_path.get_attribute_exists('<sChildNamePrese>'):
+    <v>_is_initialized = True
+    <v> = <nChildRetVal>
+>>
+
+ChoiceDependencyPresInner(arrsChoiceItems) ::= <<
+<arrsChoiceItems:{e|<e>}; separator="\nel">
+else:
+    raise ValueError('Cannot determine present-when dependency')
+
+>>
+
+ChoiceDependencyPres(sChPath, sAcc, arrsChoiceItems) ::= <<
+# Encode present-when name
+dependency_path = <sChPath>
+<ChoiceDependencyPresInner(arrsChoiceItems)>
+>>
+
+
+MultiAcnUpdate_checkEqual_pri0(p1,p2) ::= "<p1>, <p2>"
+MultiAcnUpdate_checkEqual_str0(p1,p2) ::= "<MultiAcnUpdate_checkEqual_pri0(p1=p1,p2=p2)>"
+
+MultiAcnUpdate_get_first_init_value_pri(sV0, sVi, bIsFirst) ::= <<
+<if(!bIsFirst)>el<endif>if <sVi>_is_initialized:
+    <sV0> = <sVi>
+>>
+
+MultiAcnUpdate_get_first_init_value_str(sV0, sVi, bIsFirst) ::= <<
+<MultiAcnUpdate_get_first_init_value_pri(sV0=sV0,sVi=sVi,bIsFirst=bIsFirst)>
+>>
+
+MultiAcnUpdate_checkEqual_pri(sV0, sVi) ::= "((<sVi>_is_initialized and <sV0> == <sVi>) or not <sVi>_is_initialized)"
+MultiAcnUpdate_checkEqual_str(sV0, sVi) ::= "<MultiAcnUpdate_checkEqual_pri(sV0=sV0,sVi=sVi)>"
+
+
+MultiAcnUpdate(v, v0, sErrCode, arrsLocalDeclarations, arrsLocalUpdateStatements, arrsGetFirstIntValue, arrsLocalCheckEquality) ::= <<
+# Update <v>
+<arrsLocalDeclarations; separator="\n">
+
+<arrsLocalUpdateStatements; separator="\n">
+<arrsGetFirstIntValue; separator="\n">
+else:
+    raise ValueError('Cannot determine present-when dependency - <v>!')
+
+<v>_is_initialized = False
+if (
+    <arrsLocalCheckEquality; separator="\nand ">
+):
+    <v>_is_initialized = True
+>>
+
+MultiUpdateCheckWithFirstValue(sCurValue, sFirstValue) ::= <<
+assert(<sCurValue> == <sFirstValue>)
+>>
+
+MultiUpdateCheckWithFirstValueInteger(sCurValue, sFirstValue) ::= <<
+assert(<sCurValue> == <sFirstValue>)
+>>
+
+MultiParamUpdateCheckWithFirstValue(sCurValue, sFirstValue) ::= <<
+assert(<sCurValue> == <sFirstValue>)
+>>
+
+CheckBeforeAssignToIntField_min_max(sTmpVar0, nMin, nMax) ::= <<
+assert(<sTmpVar0> >= <nMin> and <sTmpVar0>\<=<nMax>)
+>>
+
+CheckBeforeAssignToIntField_max(sTmpVar0, nMax) ::= <<
+assert(<sTmpVar0> \<= <nMax>)
+>>
+
+CheckBeforeAssignToIntField_min(sTmpVar0, nMin) ::= <<
+assert(<sTmpVar0> >= <nMin>)
+>>
+
+UpdateAsn1Field(sAcnField, sTmpVar) ::= <<
+<sAcnField> = <sTmpVar>  # 23945
+>>
+
+
+UpdateAsn1IntegerField(sAcnField, sTmpVar0, sAsn1FieldType) ::= <<
+<sAcnField> = <sTmpVar0>  # 23946
+>>
+
+
+MultiUpdateCheckWithFirstValue2(sCurValue, sFirstValue) ::= <<
+assert(<sCurValue> == <sFirstValue>)
+>>
+
+MultiParamUpdateCheckWithFirstValue2(sCurValue, sFirstValue) ::= <<
+assert(<sCurValue> == <sFirstValue>)
+>>
+
+checkAccessPath(arrsCheckPaths, sUpdateStatement) ::= <<
+if <arrsCheckPaths; separator=" and ">:
+    <sUpdateStatement>
+>>
+
+
