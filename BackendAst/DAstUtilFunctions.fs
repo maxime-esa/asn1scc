@@ -597,6 +597,36 @@ with
         | ReferenceType ref -> ref.baseInfo.resolvedType.uperMinSizeInBits
 
 
+    member this.acnMaxSizeInBits =
+        match this.Kind with
+        | Integer      t -> t.baseInfo.acnMaxSizeInBits
+        | Real         t -> t.baseInfo.acnMaxSizeInBits
+        | IA5String    t -> t.baseInfo.acnMaxSizeInBits
+        | OctetString  t -> t.baseInfo.acnMaxSizeInBits
+        | NullType     t -> t.baseInfo.acnMaxSizeInBits
+        | BitString    t -> t.baseInfo.acnMaxSizeInBits
+        | Boolean      t -> t.baseInfo.acnMaxSizeInBits
+        | Enumerated   t -> t.baseInfo.acnMaxSizeInBits
+        | SequenceOf   t -> t.baseInfo.acnMaxSizeInBits
+        | Sequence     t -> t.baseInfo.acnMaxSizeInBits
+        | Choice       t -> t.baseInfo.acnMaxSizeInBits
+        | ReferenceType ref -> ref.baseInfo.resolvedType.acnMaxSizeInBits
+
+    member this.acnMinSizeInBits =
+        match this.Kind with
+        | Integer      t -> t.baseInfo.acnMinSizeInBits
+        | Real         t -> t.baseInfo.acnMinSizeInBits
+        | IA5String    t -> t.baseInfo.acnMinSizeInBits
+        | OctetString  t -> t.baseInfo.acnMinSizeInBits
+        | NullType     t -> t.baseInfo.acnMinSizeInBits
+        | BitString    t -> t.baseInfo.acnMinSizeInBits
+        | Boolean      t -> t.baseInfo.acnMinSizeInBits
+        | Enumerated   t -> t.baseInfo.acnMinSizeInBits
+        | SequenceOf   t -> t.baseInfo.acnMinSizeInBits
+        | Sequence     t -> t.baseInfo.acnMinSizeInBits
+        | Choice       t -> t.baseInfo.acnMinSizeInBits
+        | ReferenceType ref -> ref.baseInfo.resolvedType.acnMinSizeInBits
+
     member this.acnEncFunction : AcnFunction option =
         match this.Kind with
         | Integer      t -> Some (t.acnEncFunction)

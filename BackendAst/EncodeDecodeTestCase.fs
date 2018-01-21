@@ -303,8 +303,9 @@ let BooleanAutomaticTestCaseValues (r:Asn1AcnAst.AstRoot)  (t:Asn1AcnAst.Asn1Typ
     | _  -> allItems |> List.filter (isValidValueGeneric o.AllCons (=))
     
 
-let maxItems = 1000
+
 let StringAutomaticTestCaseValues (r:Asn1AcnAst.AstRoot)  (t:Asn1AcnAst.Asn1Type) (o:Asn1AcnAst.StringType) =
+    let maxItems = 32767
     match o.minSize > maxItems with
     | true  -> []   // the generated string will be very large
     | false ->  
@@ -320,6 +321,7 @@ let StringAutomaticTestCaseValues (r:Asn1AcnAst.AstRoot)  (t:Asn1AcnAst.Asn1Type
 
 let OctetStringAutomaticTestCaseValues (r:Asn1AcnAst.AstRoot)  (t:Asn1AcnAst.Asn1Type) (o:Asn1AcnAst.OctetString) =
     let valsFromSingleValueConstraints = o.AllCons |> List.collect (foldSizableConstraint ) |> Seq.toList |> List.map(fun (z,_) -> z |> List.map(fun a -> a.Value)) |> Seq.distinct |> Seq.toList
+    let maxItems = 70000
     match valsFromSingleValueConstraints with
     | []    ->
         match o.minSize > maxItems with
@@ -335,6 +337,7 @@ let OctetStringAutomaticTestCaseValues (r:Asn1AcnAst.AstRoot)  (t:Asn1AcnAst.Asn
 
 let BitStringAutomaticTestCaseValues (r:Asn1AcnAst.AstRoot)  (t:Asn1AcnAst.Asn1Type) (o:Asn1AcnAst.BitString) =
     let valsFromSingleValueConstraints = o.AllCons |> List.collect (foldSizableConstraint ) |> Seq.toList |> List.map(fun (z,_) -> z.Value) |> Seq.distinct |> Seq.toList
+    let maxItems = 70000
     match valsFromSingleValueConstraints with
     | []    ->
         match o.minSize > maxItems with
@@ -348,6 +351,7 @@ let BitStringAutomaticTestCaseValues (r:Asn1AcnAst.AstRoot)  (t:Asn1AcnAst.Asn1T
                 [s1;s2]
     | _     -> valsFromSingleValueConstraints
 let SequenceOfAutomaticTestCaseValues (r:Asn1AcnAst.AstRoot)  (t:Asn1AcnAst.Asn1Type) (o:Asn1AcnAst.SequenceOf) (childType:Asn1Type) =
+    let maxItems = 1000
     match o.minSize > maxItems with
     | true  -> []   // the generated string will be very large
     | false ->  

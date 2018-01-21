@@ -617,8 +617,8 @@ Declare_len2()::="len2:Integer;"
 
 /*
     -- set1
-    --# assert  K~+1>= S'First and K~ + <nRequiredBitsForUPerEncoding> \<= S'Last and <if(bHasLength)><p><sAcc>Length<else><nSizeMax><endif>\<=<nSizeMax> and
-    --#         <sCurOffset> = <if(bHasLength)><p><sAcc>Length<else><nSizeMax><endif> - <sRemainingItemsVar> + 1  and <sRemainingItemsVar>>= <sCurBlockSize> and <sCurOffset>+<sCurBlockSize>-1\<=<nSizeMax> and
+    --# assert  K~+1>= S'First and K~ + <nRequiredBitsForUPerEncoding> \<= S'Last and <if(bIsVariableSize)><p><sAcc>Length<else><nSizeMax><endif>\<=<nSizeMax> and
+    --#         <sCurOffset> = <if(bIsVariableSize)><p><sAcc>Length<else><nSizeMax><endif> - <sRemainingItemsVar> + 1  and <sRemainingItemsVar>>= <sCurBlockSize> and <sCurOffset>+<sCurBlockSize>-1\<=<nSizeMax> and
     --#         K >= K~ and K\<=K~+<sBlockIndex>*8+ (<sCurOffset>-1)*<nIntItemMaxSize>;
         
         --set2
@@ -635,12 +635,11 @@ Declare_len2()::="len2:Integer;"
 
 */
 
-
-Fragmentation_sqf_encode(p, sAcc, sInternalItem, nIntItemMaxSize, nSizeMin, nSizeMax, nRequiredBitsForUPerEncoding, bHasLength, sErrCodeName, sRemainingItemsVar, sCurBlockSize, sBlockIndex, sCurOffset, sBLJ, sBLI, sLengthTmp) ::= <<
+Fragmentation_sqf_encode(p, sAcc, sInternalItem, nIntItemMaxSize, nSizeMin, nSizeMax, nRequiredBitsForUPerEncoding, bIsVariableSize, sErrCodeName, sRemainingItemsVar, sCurBlockSize, sBlockIndex, sCurOffset, sBLJ, sBLI, sLengthTmp, bIsBitStringType, bIsAsciiString) ::= <<
 <sCurOffset> := 1;
-<sRemainingItemsVar> := <if(bHasLength)><p><sAcc>Length<else><nSizeMax><endif>;
+<sRemainingItemsVar> := <if(bIsAsciiString)><rtlModuleName()>.getStringSize(<p>)<else><if(bIsVariableSize)><p><sAcc>Length<else><nSizeMax><endif><endif>;
 <sBlockIndex>:=1;
-while <sRemainingItemsVar> >= 16#4000# and <sBlockIndex> \< <if(bHasLength)><p><sAcc>Length<else><nSizeMax><endif> loop
+while <sRemainingItemsVar> >= 16#4000# and <sBlockIndex> \< <if(bIsAsciiString)><rtlModuleName()>.getStringSize(<p>)<else><if(bIsVariableSize)><p><sAcc>Length<else><nSizeMax><endif><endif> loop
     if <sRemainingItemsVar> >= 16#10000# then
         <sCurBlockSize> := 16#10000#;
         <rtlModuleName()>.UPER_Enc_ConstraintWholeNumber(S, K, 16#C4#, 0, 8);
@@ -691,8 +690,8 @@ end loop;
 
 
 
-Fragmentation_sqf_decode(p, sAcc, sInternalItem, nIntItemMaxSize, nSizeMin, nSizeMax, nRequiredBitsForUPerEncoding, bHasLength, sErrCodeName, sRemainingItemsVar, sCurBlockSize, sBlockIndex, sCurOffset, sBLJ, sBLI, sLengthTmp) ::= <<
-<if(bHasLength)><sLengthTmp> := 0;<endif>
+Fragmentation_sqf_decode(p, sAcc, sInternalItem, nIntItemMaxSize, nSizeMin, nSizeMax, nRequiredBitsForUPerEncoding, bIsVariableSize, sErrCodeName, sRemainingItemsVar, sCurBlockSize, sBlockIndex, sCurOffset, sBLJ, sBLI, sLengthTmp, bIsBitStringType, bIsAsciiString) ::= <<
+<if(bIsVariableSize)><sLengthTmp> := 0;<endif>
 <sCurBlockSize> := 0;
 result.ErrorCode := <sErrCodeName>; 
 -- decode blockSize
@@ -718,7 +717,7 @@ while result.Success AND (<sRemainingItemsVar> = 16#C4# OR <sRemainingItemsVar> 
         <sInternalItem>
         <sBLI> := <sBLI> + 1;
     end loop;
-    <if(bHasLength)><sLengthTmp> := <sLengthTmp> + <sCurBlockSize>;<endif>
+    <if(bIsVariableSize)><sLengthTmp> := <sLengthTmp> + <sCurBlockSize>;<endif>
     <sCurOffset> := <sCurOffset> + <sCurBlockSize>;
     <rtlModuleName()>.UPER_Dec_ConstraintWholeNumberInt(S, K, <sRemainingItemsVar>, 0, 255, 8, result.Success);
 end loop;
@@ -743,16 +742,36 @@ if <sCurOffset> + <sRemainingItemsVar> -1 \<= <nSizeMax> THEN
         <sInternalItem>
         <sBLI> := <sBLI> + 1;
     end loop;
-    <if(bHasLength)><sLengthTmp> := <sLengthTmp> + <sRemainingItemsVar>;<endif>
+    <if(bIsVariableSize)><sLengthTmp> := <sLengthTmp> + <sRemainingItemsVar>;<endif>
 end if;
 
-<if(bHasLength)>
+<if(bIsVariableSize)>
     
 if <sLengthTmp> >= <nSizeMin> and <sLengthTmp> \<= <nSizeMax> then
+    <if(!bIsAsciiString)>
     <p><sAcc>Length := <sLengthTmp>;
+
+    <else>
+    <p>(<sLengthTmp> + 1) := adaasn1rtl.NUL;
+
+    --add nulls until the end
+    while <sBLI>\<= <nSizeMax> + 1  loop
+        pragma Loop_Invariant (<sBLI> >=1 and <sBLI>\<=<nSizeMax> + 1);
+        <p>(<sBLI>) := adaasn1rtl.NUL;
+        <sBLI> := <sBLI> + 1;
+    end loop;
+
+
+    <endif>
 else
     result.Success := false;
 end if;
+
+<else>
+<if(bIsAsciiString)>
+<p>(<nSizeMax> + 1) := adaasn1rtl.NUL;
+
+<endif>
     
 <endif>
 >>

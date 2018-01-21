@@ -559,143 +559,158 @@ ret = BitStream_DecodeConstraintWholeNumber(pBitStrm, &nCount, <nSizeMin>, <nSiz
 
 
 
-
-Fragmentation_sqf_encode(p, bIsBitStringType, nLevel, sInternalItem, sCount, nUperMax, bIsAsciiString, bIsFixedSize) ::= <<
+Fragmentation_sqf_encode(p, sAcc, sInternalItem, nIntItemMaxSize, nSizeMin, nSizeMax, nRequiredBitsForUPerEncoding, bIsVariableSize, sErrCodeName, sRemainingItemsVar, sCurBlockSize, sBlockIndex, sCurOffset, sBLJ, sBLI, sLengthTmp, bIsBitStringType, bIsAsciiString) ::= <<
+<sRemainingItemsVar> = <if(bIsAsciiString)>strlen(<p>)<else><if(bIsVariableSize)><p><sAcc>nCount<else><nSizeMax><endif><endif>;
+<sCurBlockSize> = 0;
+<sCurOffset> = 0;
+<sBlockIndex> = 0;
+while (<sRemainingItemsVar> >= 0x4000 && <sBlockIndex> \< <if(bIsAsciiString)>strlen(<p>)<else><if(bIsVariableSize)><p><sAcc>nCount<else><nSizeMax><endif><endif>) 
 {
-	asn1SccSint nCount<nLevel> = <sCount>;
-	asn1SccSint curBlockSize<nLevel> = 0;
-	asn1SccSint curItem<nLevel> = 0;
-	while (nCount<nLevel> >= 0x4000) 
+	if (<sRemainingItemsVar> >= 0x10000)
 	{
-		if (nCount<nLevel> >= 0x10000)
-		{
-			curBlockSize<nLevel> = 0x10000;
-			BitStream_EncodeConstraintWholeNumber(pBitStrm, 0xC4, 0, 0xFF); 
-		}
-		else if (nCount<nLevel> >= 0xC000)
-		{
-			curBlockSize<nLevel> = 0xC000;
-			BitStream_EncodeConstraintWholeNumber(pBitStrm, 0xC3, 0, 0xFF); 
-		}
-		else if (nCount<nLevel> >= 0x8000)
-		{
-			curBlockSize<nLevel> = 0x8000;
-			BitStream_EncodeConstraintWholeNumber(pBitStrm, 0xC2, 0, 0xFF); 
-		}
-		else 
-		{
-			curBlockSize<nLevel> = 0x4000;
-			BitStream_EncodeConstraintWholeNumber(pBitStrm, 0xC1, 0, 0xFF); 
-		}
+		<sCurBlockSize> = 0x10000;
+		BitStream_EncodeConstraintWholeNumber(pBitStrm, 0xC4, 0, 0xFF); 
+	}
+	else if (<sRemainingItemsVar> >= 0xC000)
+	{
+		<sCurBlockSize> = 0xC000;
+		BitStream_EncodeConstraintWholeNumber(pBitStrm, 0xC3, 0, 0xFF); 
+	}
+	else if (<sRemainingItemsVar> >= 0x8000)
+	{
+		<sCurBlockSize> = 0x8000;
+		BitStream_EncodeConstraintWholeNumber(pBitStrm, 0xC2, 0, 0xFF); 
+	}
+	else 
+	{
+		<sCurBlockSize> = 0x4000;
+		BitStream_EncodeConstraintWholeNumber(pBitStrm, 0xC1, 0, 0xFF); 
+	}
 	
-		<if(bIsBitStringType)>
-		BitStream_AppendBits(pBitStrm, &<p>arr[curItem<nLevel>/8], (int)curBlockSize<nLevel>);
-		<else>
-		for(i<nLevel>=(int)curItem<nLevel>; i<nLevel> \< curBlockSize<nLevel> + curItem<nLevel>; i<nLevel>++)
-		{
-			<sInternalItem>
-		}
-		<endif>
-		curItem<nLevel> += curBlockSize<nLevel>;
-		nCount<nLevel> -= curBlockSize<nLevel>;
-	}
-
-	if (nCount<nLevel> \<= 0x7F)
-		BitStream_EncodeConstraintWholeNumber(pBitStrm, nCount<nLevel>, 0, 0xFF);
-	else
-	{
-		BitStream_AppendBit(pBitStrm, 1);
-		BitStream_EncodeConstraintWholeNumber(pBitStrm, nCount<nLevel>, 0, 0x7FFF);
-	}
-
 	<if(bIsBitStringType)>
-	BitStream_AppendBits(pBitStrm, &<p>arr[curItem<nLevel>/8], (int)nCount<nLevel>);
+	BitStream_AppendBits(pBitStrm, &<p><sAcc>arr[<sCurOffset>/8], (int)<sCurBlockSize>);
 	<else>
-	for(i<nLevel>=(int)curItem<nLevel>; i<nLevel> \< curItem<nLevel> + nCount<nLevel>; i<nLevel>++)
+	for(<sBLI>=(int)<sCurOffset>; <sBLI> \< <sCurBlockSize> + <sCurOffset>; <sBLI>++)
 	{
 		<sInternalItem>
 	}
 	<endif>
+	<sCurOffset> += <sCurBlockSize>;
+	<sRemainingItemsVar> -= <sCurBlockSize>;
+    <sBlockIndex> = <sBlockIndex>+1;
 }
+
+if (<sRemainingItemsVar> \<= 0x7F)
+	BitStream_EncodeConstraintWholeNumber(pBitStrm, <sRemainingItemsVar>, 0, 0xFF);
+else
+{
+	BitStream_AppendBit(pBitStrm, 1);
+	BitStream_EncodeConstraintWholeNumber(pBitStrm, <sRemainingItemsVar>, 0, 0x7FFF);
+}
+
+<if(bIsBitStringType)>
+BitStream_AppendBits(pBitStrm, &<p><sAcc>arr[<sCurOffset>/8], (int)<sRemainingItemsVar>);
+<else>
+for(<sBLI>=(int)<sCurOffset>; <sBLI> \< <sCurOffset> + <sRemainingItemsVar>; <sBLI>++)
+{
+	<sInternalItem>
+}
+<endif>
 >>
 
-Fragmentation_sqf_decode(p, bIsBitStringType, nLevel, sInternalItem, sCount, nUperMax, bIsAsciiString, bIsFixedSize) ::= <<
-{
-	asn1SccSint nCount<nLevel> = 0;
-	asn1SccSint curBlockSize<nLevel> = 0;
-	asn1SccSint curItem<nLevel> = 0;
-    <if(!bIsFixedSize)><sCount> = 0;<endif>
-	ret = BitStream_DecodeConstraintWholeNumber(pBitStrm, &nCount<nLevel>, 0, 0xFF);
-    *pErrCode = ret ? 0 : ERR_INSUFFICIENT_DATA;
-    if (ret) {
-	    while(ret && (nCount<nLevel> & 0xC0)==0xC0) 
-	    {
-		    if (nCount<nLevel> == 0xC4)
-			    curBlockSize<nLevel> = 0x10000;
-		    else if (nCount<nLevel> == 0xC3)
-			    curBlockSize<nLevel> = 0xC000;
-		    else if (nCount<nLevel> == 0xC2)
-			    curBlockSize<nLevel> = 0x8000;
-		    else if (nCount<nLevel> == 0xC1)
-			    curBlockSize<nLevel> = 0x4000;
-		    else {
-			    *pErrCode = ERR_INCORRECT_PER_STREAM;
-			    return FALSE;
-		    }
-		    if (curItem<nLevel> + curBlockSize<nLevel> > <nUperMax>)
-		    {
-			    *pErrCode = ERR_INSUFFICIENT_DATA;
-			    return FALSE;
-		    }
+Fragmentation_sqf_decode(p, sAcc, sInternalItem, nIntItemMaxSize, nSizeMin, nSizeMax, nRequiredBitsForUPerEncoding, bIsVariableSize, sErrCodeName, sRemainingItemsVar, sCurBlockSize, sBlockIndex, sCurOffset, sBLJ, sBLI, sLengthTmp, bIsBitStringType, bIsAsciiString) ::= <<
+<sRemainingItemsVar> = 0;
+<sCurBlockSize> = 0;
+<sCurOffset> = 0;
+<if(bIsVariableSize)><sLengthTmp> = 0;<endif>
+ret = BitStream_DecodeConstraintWholeNumber(pBitStrm, &<sRemainingItemsVar>, 0, 0xFF);
+*pErrCode = ret ? 0 : <sErrCodeName>;
+if (ret) {
+	while(ret && (<sRemainingItemsVar> & 0xC0)==0xC0) 
+	{
+		if (<sRemainingItemsVar> == 0xC4)
+			<sCurBlockSize> = 0x10000;
+		else if (<sRemainingItemsVar> == 0xC3)
+			<sCurBlockSize> = 0xC000;
+		else if (<sRemainingItemsVar> == 0xC2)
+			<sCurBlockSize> = 0x8000;
+		else if (<sRemainingItemsVar> == 0xC1)
+			<sCurBlockSize> = 0x4000;
+		else {
+			*pErrCode = <sErrCodeName>;
+			return FALSE;
+		}
+		if (<sCurOffset> + <sCurBlockSize> > <nSizeMax>)
+		{
+			*pErrCode = <sErrCodeName>;
+			return FALSE;
+		}
 
-		    <if(bIsBitStringType)>
-		    ret = BitStream_ReadBits(pBitStrm, &<p>arr[curItem<nLevel>/8], (int)curBlockSize<nLevel>);
-            *pErrCode = ret ? 0 : ERR_INSUFFICIENT_DATA;
-		    <else>
-		    for(i<nLevel>=curItem<nLevel>; ret && (i<nLevel> \< curItem<nLevel> + curBlockSize<nLevel>) ; i<nLevel>++)
-		    {
-			    <sInternalItem>
-		    }
-		    <endif>
+		<if(bIsBitStringType)>
+		ret = BitStream_ReadBits(pBitStrm, &<p><sAcc>arr[<sCurOffset>/8], (int)<sCurBlockSize>);
+        *pErrCode = ret ? 0 : <sErrCodeName>;
+		<else>
+		for(<sBLI>=<sCurOffset>; ret && (<sBLI> \< <sCurOffset> + <sCurBlockSize>) ; <sBLI>++)
+		{
+			<sInternalItem>
+		}
+		<endif>
 	
+        if (ret) {
+		    <if(bIsVariableSize)><sLengthTmp> += (long)<sCurBlockSize>;<endif>
+		    <sCurOffset> += <sCurBlockSize>;
+		    ret = BitStream_DecodeConstraintWholeNumber(pBitStrm, &<sRemainingItemsVar>, 0, 0xFF);
+            *pErrCode = ret ? 0 : <sErrCodeName>;
+        }
+	}
+    if (ret) {
+	    if ( (<sRemainingItemsVar> & 0x80)>0) 
+	    {
+		    asn1SccSint len2;
+		    <sRemainingItemsVar> \<\<= 8;
+		    ret = BitStream_DecodeConstraintWholeNumber(pBitStrm, &len2, 0, 0xFF);
+            *pErrCode = ret ? 0 : <sErrCodeName>;
             if (ret) {
-		        <if(!bIsAsciiString)>
-		        <if(!bIsFixedSize)><sCount> += (long)curBlockSize<nLevel>;<endif>
-		        <endif>
-		        curItem<nLevel> += curBlockSize<nLevel>;
-		        ret = BitStream_DecodeConstraintWholeNumber(pBitStrm, &nCount<nLevel>, 0, 0xFF);
-                *pErrCode = ret ? 0 : ERR_INSUFFICIENT_DATA;
+		        <sRemainingItemsVar> |= len2;
+		        <sRemainingItemsVar> &= 0x7FFF;
             }
 	    }
+        ret = ret && (<sCurOffset> + <sRemainingItemsVar> \<= <nSizeMax>);
+        *pErrCode = ret ? 0 : <sErrCodeName>;
         if (ret) {
-	        if ( (nCount<nLevel> & 0x80)>0) 
+	        <if(bIsBitStringType)>
+            ret = BitStream_ReadBits(pBitStrm, &<p><sAcc>arr[<sCurOffset>/8], (int)<sRemainingItemsVar>);
+            *pErrCode = ret ? 0 : <sErrCodeName>;
+	        <else>
+	        for(<sBLI>=<sCurOffset>; ret && (<sBLI> \< <sCurOffset> + <sRemainingItemsVar>) ; <sBLI>++)
 	        {
-		        asn1SccSint len2;
-		        nCount<nLevel> \<\<= 8;
-		        ret = BitStream_DecodeConstraintWholeNumber(pBitStrm, &len2, 0, 0xFF);
-                *pErrCode = ret ? 0 : ERR_INSUFFICIENT_DATA;
-                if (ret) {
-		            nCount<nLevel> |= len2;
-		            nCount<nLevel> &= 0x7FFF;
-                }
+		        <sInternalItem>
 	        }
-            ret = ret && (curItem<nLevel> + nCount<nLevel> \<= <nUperMax>);
-            *pErrCode = ret ? 0 : ERR_INSUFFICIENT_DATA;
+	        <endif>
             if (ret) {
-	            <if(bIsBitStringType)>
-                ret = BitStream_ReadBits(pBitStrm, &<p>arr[curItem<nLevel>/8], (int)nCount<nLevel>);
-                *pErrCode = ret ? 0 : ERR_INSUFFICIENT_DATA;
-	            <else>
-	            for(i<nLevel>=curItem<nLevel>; ret && (i<nLevel> \< curItem<nLevel> + nCount<nLevel>) ; i<nLevel>++)
-	            {
-		            <sInternalItem>
-	            }
-	            <endif>
-                if (ret) {
+	            <if(bIsVariableSize)><sLengthTmp> += (long)<sRemainingItemsVar>;<endif>
+
+                <if(bIsVariableSize)>
+                if ((<sLengthTmp> >= <nSizeMin>) && (<sLengthTmp> \<= <nSizeMax>)) {
 	                <if(!bIsAsciiString)>
-	                <if(!bIsFixedSize)><sCount> += (long)nCount<nLevel>;<endif>
+	                <p><sAcc>nCount = <sLengthTmp>;
+
+                    <else>
+                    <p>[<sLengthTmp>] = 0x0;
+
 	                <endif>
+                } else {
+                    ret = FALSE;
+                    *pErrCode = <sErrCodeName>;
                 }
+
+                <else>
+	                <if(bIsAsciiString)>
+                    <p>[<nSizeMax>] = 0x0;
+
+                    <endif>
+
+                <endif>
             }
         }
     }
