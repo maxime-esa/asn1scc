@@ -264,6 +264,11 @@ module List =
             | []    -> keepDuplicatesI xs
             | _     -> x::(keepDuplicatesI (xs |> List.filter (fun l -> not (l.icompare x))))
 
+    let addIf condition itm lst =
+        match condition with
+        | true  -> itm::lst
+        | false -> lst
+
 let mutable _globalID = 1000
 let GetGlobalID() =
     _globalID <- _globalID + 1

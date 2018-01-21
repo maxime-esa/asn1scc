@@ -184,7 +184,7 @@ begin
     if result.Success THEN
         if extBit=0 THEN --extBit is zero ==> value is expecteted within root range
             <sIntBody>
-        ELSE
+        else
             <IntUnconstraint_decode(p=p, sErrCode=sErrCode, bCoverageIgnore="true")>
         end if;
     end if;
@@ -197,7 +197,7 @@ IntRootExt2_encode(p, nMin, sRootBaseConstraint, sIntBody, sErrCode) ::=<<
 if <sRootBaseConstraint> THEN
     <rtlModuleName()>.BitStream_AppendBit(S, K, 0); -- value within root range, so ext bit is zero
     <sIntBody>
-ELSE
+else
     -- value is not within root range, so ext bit is one and value is encoded as uncostraint
     <rtlModuleName()>.BitStream_AppendBit(S, K, 1);
     <IntUnconstraint_encode(p=p, sErrCode=sErrCode)>
@@ -615,164 +615,144 @@ Declare_len2()::="len2:Integer;"
 
 
 
-
-
-Tas_fragmentation_encode(sName, arrsLocalVariables, sContent, bIsFixedSize, bResDependsOnData, bKDependsOnData, nIntItemMaxSize, sInternalItem,nUperMax, bAcnEncodeFuncRequiresResult) ::= <<
-procedure <sName>_uPER_Encode_aux(val:in <sName>; S : in out <rtlModuleName()>.BitArray; K : in out Natural<if(bAcnEncodeFuncRequiresResult)>; result : OUT <rtlModuleName()>.ASN1_RESULT<endif>)
-IS
-    --# hide <sName>_uPER_Encode_aux;
-    J:INTEGER:=1;
-    <arrsLocalVariables; separator="\n">
-    procedure ENCODE_BLOCK(val:in <sName>; S : in out <rtlModuleName()>.BitArray; K : in out Natural; startOffset: IN INTEGER; curBlockSize:INTEGER)
-    --# derives S from S, K, val, startOffset, curBlockSize &
-    --#        K from K, curBlockSize;
-    --# pre curBlockSize>=0 and startOffset>=1 and startOffset+curBlockSize-1\<=<nUperMax> and
-    --#     K+1 >= S'First AND K + (startOffset+curBlockSize-1)*<nIntItemMaxSize> \<= S'Last;
-    --# post K>=K~ and K\<=K~ + curBlockSize*<nIntItemMaxSize>;
-    IS 
-        I1:INTEGER;
-        J: INTEGER:=0;
-    begin
-        while J \<= curBlockSize-1 loop
-            I1 := startOffset + J;
-        --# assert  curBlockSize>=0 and startOffset>=1 and startOffset+curBlockSize-1\<=<nUperMax> and
-        --#         K~+1 >= S'First AND K~ + (startOffset+curBlockSize-1)*<nIntItemMaxSize> \<= S'Last and
-        --#         I1 >=startOffset and I1\<=startOffset + curBlockSize-1  and 
-        --#         K>=K~ and K\<=K~+ <nIntItemMaxSize>*J and I1= startOffset + J;
-            <sInternalItem>
-            J := J + 1;
-        end loop;
-    end ENCODE_BLOCK;
-begin
-    <if(bAcnEncodeFuncRequiresResult)>
-    result := <sName>_IsConstraintValid(val);
-    if result.success THEN
-        --result.ErrorCode := <rtlModuleName()>.ERR_INCORRECT_DATA;
-        <sContent>
-    end if;
-    <else>
-    <sContent>
-    <endif>
-end <sName>_uPER_Encode_aux;
-
-<TasEncodeMain(sName=sName, bAcnEncodeFuncRequiresResult=bAcnEncodeFuncRequiresResult)>
->>
-
-
-
-
-
 /*
-Fragmentation_FixedSize_Fragment_encode(nLenDetValue, nLenDetSize, nOffset, nBlockSize) ::= <<
-<rtlModuleName()>.UPER_Enc_ConstraintWholeNumber(S, K, <nLenDetValue>, 0, <nLenDetSize>);
-ENCODE_BLOCK(val,S,K,<nOffset>,<nBlockSize>);
->>
+    -- set1
+    --# assert  K~+1>= S'First and K~ + <nRequiredBitsForUPerEncoding> \<= S'Last and <if(bHasLength)><p><sAcc>Length<else><nSizeMax><endif>\<=<nSizeMax> and
+    --#         <sCurOffset> = <if(bHasLength)><p><sAcc>Length<else><nSizeMax><endif> - <sRemainingItemsVar> + 1  and <sRemainingItemsVar>>= <sCurBlockSize> and <sCurOffset>+<sCurBlockSize>-1\<=<nSizeMax> and
+    --#         K >= K~ and K\<=K~+<sBlockIndex>*8+ (<sCurOffset>-1)*<nIntItemMaxSize>;
+        
+        --set2
+		--# assert  <sCurBlockSize>>=0 and <sCurOffset> >= 1 and <sCurOffset>+<sCurBlockSize>-1\<=<nSizeMax> and
+		--#         K~+1 >= S'First and K~ + (<sCurOffset>+<sCurBlockSize>-1)*<nIntItemMaxSize> \<= S'Last and
+		--#         <sBLI> >=<sCurOffset> and <sBLI>\<=<sCurOffset> + <sCurBlockSize>-1  and 
+		--#         K>=K~ and K\<=K~+ <nIntItemMaxSize>*<sBLJ> and <sBLI>= <sCurOffset> + <sBLJ>;
 
-Fragmentation_FixedSize_encode(arrsFragments) ::= <<
-<arrsFragments; separator="\n">
->>
+    --set3
+	--# assert  <sCurBlockSize>>=0 and <sCurOffset>>=1 and <sCurOffset>+<sCurBlockSize>-1\<=<nSizeMax> and
+	--#         K~+1 >= S'First and K~ + (<sCurOffset>+<sCurBlockSize>-1)*<nIntItemMaxSize> \<= S'Last and
+	--#         <sBLI> >=<sCurOffset> and <sBLI>\<=<sCurOffset> + <sCurBlockSize>-1  and 
+	--#         K>=K~ and K\<=K~+ <nIntItemMaxSize>*<sBLJ> and <sBLI>= <sCurOffset> + <sBLJ>;
+
 */
 
-Fragmentation_sqf_encode(sCount, sInternalItem, nIntItemMaxSize, nUperMax, bHasLength, sTasName) ::= <<
-nCount := <sCount>;
-while nCount >= 16#4000# AND J\<<sCount> loop
-    if nCount >= 16#10000# THEN
-        curBlockSize := 16#10000#;
+
+Fragmentation_sqf_encode(p, sAcc, sInternalItem, nIntItemMaxSize, nSizeMin, nSizeMax, nRequiredBitsForUPerEncoding, bHasLength, sErrCodeName, sRemainingItemsVar, sCurBlockSize, sBlockIndex, sCurOffset, sBLJ, sBLI, sLengthTmp) ::= <<
+<sCurOffset> := 1;
+<sRemainingItemsVar> := <if(bHasLength)><p><sAcc>Length<else><nSizeMax><endif>;
+<sBlockIndex>:=1;
+while <sRemainingItemsVar> >= 16#4000# and <sBlockIndex> \< <if(bHasLength)><p><sAcc>Length<else><nSizeMax><endif> loop
+    if <sRemainingItemsVar> >= 16#10000# then
+        <sCurBlockSize> := 16#10000#;
         <rtlModuleName()>.UPER_Enc_ConstraintWholeNumber(S, K, 16#C4#, 0, 8);
-    ELSIF nCount >= 16#C000# THEN
-        curBlockSize := 16#C000#;
+    elsif <sRemainingItemsVar> >= 16#C000# then
+        <sCurBlockSize> := 16#C000#;
         <rtlModuleName()>.UPER_Enc_ConstraintWholeNumber(S, K, 16#C3#, 0, 8);
-    ELSIF nCount >= 16#8000# THEN
-        curBlockSize := 16#8000#;
+    elsif <sRemainingItemsVar> >= 16#8000# then
+        <sCurBlockSize> := 16#8000#;
         <rtlModuleName()>.UPER_Enc_ConstraintWholeNumber(S, K, 16#C2#, 0, 8);
-    ELSE 
-        curBlockSize := 16#4000#;
+    else 
+        <sCurBlockSize> := 16#4000#;
         <rtlModuleName()>.UPER_Enc_ConstraintWholeNumber(S, K, 16#C1#, 0, 8);
     end if;
 
-    --# assert  K~+1>= S'First and K~ + <sTasName>_REQUIRED_BITS_FOR_ENCODING \<= S'Last AND <sCount>\<=<nUperMax> AND
-    --#         curOffset = <sCount> - nCount + 1  AND nCount>= curBlockSize AND curOffset+curBlockSize-1\<=<nUperMax> and
-    --#         K >= K~ AND K\<=K~+J*8+ (curOffset-1)*<nIntItemMaxSize>;
+    -- set1
 
-    ENCODE_BLOCK(val,S,K,curOffset,curBlockSize);
+	<sBLJ> := 0;
+	while <sBLJ> \<= <sCurBlockSize>-1 loop
+		<sBLI> := <sCurOffset> + <sBLJ>;
+        -- set2
+		<sInternalItem>
+		<sBLJ> := <sBLJ> + 1;
+	end loop;
+    <sCurOffset> := <sCurOffset> + <sCurBlockSize>;
+    <sRemainingItemsVar> := <sRemainingItemsVar> - <sCurBlockSize>;
 
-    curOffset := curOffset + curBlockSize;
-    nCount := nCount - curBlockSize;
-
-    J:=J+1;
+    <sBlockIndex>:=<sBlockIndex>+1;
 end loop;
 
-if nCount \<= 16#7F# THEN
-    <rtlModuleName()>.UPER_Enc_ConstraintWholeNumber(S, K, <rtlModuleName()>.Asn1Int(nCount), 0, 8);
-ELSE
+if <sRemainingItemsVar> \<= 16#7F# then
+    <rtlModuleName()>.UPER_Enc_ConstraintWholeNumber(S, K, <rtlModuleName()>.Asn1Int(<sRemainingItemsVar>), 0, 8);
+else
     <rtlModuleName()>.BitStream_AppendBit(S, K, 1);
-    <rtlModuleName()>.UPER_Enc_ConstraintWholeNumber(S, K, <rtlModuleName()>.Asn1Int(nCount), 0, 15);
+    <rtlModuleName()>.UPER_Enc_ConstraintWholeNumber(S, K, <rtlModuleName()>.Asn1Int(<sRemainingItemsVar>), 0, 15);
 end if;
 
-ENCODE_BLOCK(val,S,K,curOffset,nCount);
->>
-
-Tas_fragmentation_decode(sName, arrsLocalVariables, sContent, bIsFixedSize, bResDependsOnData, bKDependsOnData, nIntItemMaxSize, sInternalItem,nUperMax, bAcnEncodeFuncRequiresResult) ::= <<
-procedure <sName>_uPER_Decode_aux(val:out <sName>; S : in <rtlModuleName()>.BitArray; K : in out <rtlModuleName()>.DECODE_PARAMS; result : OUT <rtlModuleName()>.ASN1_RESULT)
-IS
-    --# hide <sName>_uPER_Decode_aux;
-    <arrsLocalVariables; separator="\n">
-begin
-    <sContent>
-end <sName>_uPER_Decode_aux;
-
-<TasDecodeMain(sName=sName)>
->>
-
-
-Fragmentation_sqf_decode(sCount, sInternalItem, nIntItemMaxSize, nUperMax, bHasLength, sTasName) ::= <<
-val := <sTasName>_Init;
-<if(bHasLength)>length := 0;<endif>
-curBlockSize := 0;
-result.ErrorCode := <rtlModuleName()>.ERR_INSUFFICIENT_DATA; 
-<rtlModuleName()>.UPER_Dec_ConstraintWholeNumberInt(S, K, nCount, 0, 255, 8, result.Success);
-
-while result.Success AND (nCount = 16#C4# OR nCount = 16#C3# OR nCount = 16#C2# OR nCount = 16#C1#)  loop
-    --# assert I1 >=curOffset and I1\<=curOffset + nCount ;
-    if nCount = 16#C4# THEN
-        curBlockSize := 16#10000#;
-    ELSIF nCount = 16#C3# THEN
-        curBlockSize := 16#C000#;
-    ELSIF nCount = 16#C2# THEN
-        curBlockSize := 16#8000#;
-    ELSE 
-        curBlockSize := 16#4000#;
-    end if;
-
-    I1 := curOffset;
-    while I1\<= curOffset + curBlockSize - 1 AND result.Success loop
-    --# assert  I1 >=curOffset and I1\<=curOffset + nCount  and 
-    --#        K.K>=K~.K and K.K\<=K~.K+8+ <nIntItemMaxSize>*(I1-1);
-        <sInternalItem>
-        I1 := I1 + 1;
-    end loop;
-    <if(bHasLength)>length := length + curBlockSize;<endif>
-    curOffset := curOffset + curBlockSize;
-    <rtlModuleName()>.UPER_Dec_ConstraintWholeNumberInt(S, K, nCount, 0, 255, 8, result.Success);
+<sBLJ> := 0;
+<sCurBlockSize> := <sRemainingItemsVar>;
+while <sBLJ> \<= <sCurBlockSize>-1 loop
+	<sBLI> := <sCurOffset> + <sBLJ>;
+    --set3
+	<sInternalItem>
+	<sBLJ> := <sBLJ> + 1;
 end loop;
 
-if nCount > 16#80# THEN
-    nCount := (nCount - 16#80#) * 16#100#;
-    <rtlModuleName()>.UPER_Dec_ConstraintWholeNumberInt(S, K, len2, 0, 255, 8, result.Success);
-    if result.Success THEN
-         nCount := nCount + len2;
-    end if;
-end if;
-
-if curOffset + nCount -1 \<= <nUperMax> THEN
-    I1 := curOffset;
-    while I1\<= curOffset + nCount -1 loop
-    --# assert  I1 >=curOffset and I1\<=curOffset + nCount  and 
-    --#        K.K>=K~.K and K.K\<=K~.K+8+ <nIntItemMaxSize>*(I1-1);
-        <sInternalItem>
-        I1 := I1 + 1;
-    end loop;
-    <if(bHasLength)><sCount> := length + nCount;<endif>
-end if;
 >>
 
+
+
+
+Fragmentation_sqf_decode(p, sAcc, sInternalItem, nIntItemMaxSize, nSizeMin, nSizeMax, nRequiredBitsForUPerEncoding, bHasLength, sErrCodeName, sRemainingItemsVar, sCurBlockSize, sBlockIndex, sCurOffset, sBLJ, sBLI, sLengthTmp) ::= <<
+<if(bHasLength)><sLengthTmp> := 0;<endif>
+<sCurBlockSize> := 0;
+result.ErrorCode := <sErrCodeName>; 
+-- decode blockSize
+<rtlModuleName()>.UPER_Dec_ConstraintWholeNumberInt(S, K, <sRemainingItemsVar>, 0, 255, 8, result.Success);
+<sCurOffset> := 1;
+
+while result.Success AND (<sRemainingItemsVar> = 16#C4# OR <sRemainingItemsVar> = 16#C3# OR <sRemainingItemsVar> = 16#C2# OR <sRemainingItemsVar> = 16#C1#)  loop
+    --# assert <sBLI> >=<sCurOffset> and <sBLI>\<=<sCurOffset> + <sRemainingItemsVar> ;
+    if <sRemainingItemsVar> = 16#C4# THEN
+        <sCurBlockSize> := 16#10000#;
+    elsif <sRemainingItemsVar> = 16#C3# THEN
+        <sCurBlockSize> := 16#C000#;
+    elsif <sRemainingItemsVar> = 16#C2# THEN
+        <sCurBlockSize> := 16#8000#;
+    else 
+        <sCurBlockSize> := 16#4000#;
+    end if;
+
+    <sBLI> := <sCurOffset>;
+    while <sBLI>\<= <sCurOffset> + <sCurBlockSize> - 1 AND result.Success loop
+    --# assert  <sBLI> >=<sCurOffset> and <sBLI>\<=<sCurOffset> + <sRemainingItemsVar>  and 
+    --#        K.K>=K~.K and K.K\<=K~.K+8+ <nIntItemMaxSize>*(<sBLI>-1);
+        <sInternalItem>
+        <sBLI> := <sBLI> + 1;
+    end loop;
+    <if(bHasLength)><sLengthTmp> := <sLengthTmp> + <sCurBlockSize>;<endif>
+    <sCurOffset> := <sCurOffset> + <sCurBlockSize>;
+    <rtlModuleName()>.UPER_Dec_ConstraintWholeNumberInt(S, K, <sRemainingItemsVar>, 0, 255, 8, result.Success);
+end loop;
+
+if <sRemainingItemsVar> > 16#80# THEN
+    declare
+        len2:Integer;
+    begin
+        <sRemainingItemsVar> := (<sRemainingItemsVar> - 16#80#) * 16#100#;
+        <rtlModuleName()>.UPER_Dec_ConstraintWholeNumberInt(S, K, len2, 0, 255, 8, result.Success);
+        if result.Success THEN
+             <sRemainingItemsVar> := <sRemainingItemsVar> + len2;
+        end if;
+    end;
+end if;
+
+if <sCurOffset> + <sRemainingItemsVar> -1 \<= <nSizeMax> THEN
+    <sBLI> := <sCurOffset>;
+    while <sBLI>\<= <sCurOffset> + <sRemainingItemsVar> -1 loop
+    --# assert  <sBLI> >=<sCurOffset> and <sBLI>\<=<sCurOffset> + <sRemainingItemsVar>  and 
+    --#        K.K>=K~.K and K.K\<=K~.K+8+ <nIntItemMaxSize>*(<sBLI>-1);
+        <sInternalItem>
+        <sBLI> := <sBLI> + 1;
+    end loop;
+    <if(bHasLength)><sLengthTmp> := <sLengthTmp> + <sRemainingItemsVar>;<endif>
+end if;
+
+<if(bHasLength)>
+    
+if <sLengthTmp> >= <nSizeMin> and <sLengthTmp> \<= <nSizeMax> then
+    <p><sAcc>Length := <sLengthTmp>;
+else
+    result.Success := false;
+end if;
+    
+<endif>
+>>

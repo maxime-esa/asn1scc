@@ -191,7 +191,15 @@ let main0 argv =
                 )
         
         //custom stgs code generation
-        let r = DAstConstruction.DoWork frontEntAst acnDeps CommonTypes.ProgrammingLanguage.C args.encodings
+        
+        // let AST for custom STGs
+        // if there is an AST from Ada or C use it, otherwise create a new one
+
+        let r = 
+            match backends with
+            | []    -> DAstConstruction.DoWork frontEntAst acnDeps CommonTypes.ProgrammingLanguage.C args.encodings
+            | x::_  -> x
+        
 
         cliArgs |> 
             //List.choose (fun a -> match a with | Custom_Stg compFile   -> Some compFile | _ -> None) |>
