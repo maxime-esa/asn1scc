@@ -77,9 +77,13 @@ Then depending on your OS:
         make && sudo make install 
     ```
 
-3. Then execute...
+3. Install `nuget`.
+
+
+4. Then execute...
 
     ```
+    nuget
     xbuild
     ```
 
@@ -93,9 +97,9 @@ Then depending on your OS:
     Also note that on Mono version 5.0 and above, you better use `msbuild`
     instead of `xbuild`.
 
-4. The compiler and supporting files will be built under the `Asn1f2/bin/Debug` folder.
+5. The compiler and supporting files will be built under the `Asn1f2/bin/Debug` folder.
 
-5. You can now run the tests - if you want to:
+6. You can now run the tests - if you want to:
 
     ```
     cd Tests
@@ -119,7 +123,7 @@ You'll need to:
 
 1. Install the [Mono MDK](http://www.mono-project.com).
 
-2. Execute `xbuild` (or `msbuild` in Mono 5.0 and newer) in ASN1SCC's directory.
+2. Execute `nuget restore` and `xbuild` (or `msbuild` in Mono 5.0 and newer) in ASN1SCC's directory.
 
 3. The compiler and supporting files will be built under the `Asn1f2/bin/Debug` folder.
 
