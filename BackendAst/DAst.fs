@@ -74,6 +74,7 @@ and Asn1ValueKind =
 type ProgrammingLanguage =
     |C
     |Ada
+    |Python
 
     
 type FuncParamType =
