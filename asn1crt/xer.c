@@ -550,14 +550,8 @@ flag Xer_EncodeBoolean(ByteStream* pByteStrm, const char* elementTag, flag value
 
 flag Xer_EncodeEnumerated(ByteStream* pByteStrm, const char* elementTag, const char* value, int *pErrCode, int level)
 {
-    char tmp[256];
-    memset(tmp,0x0, sizeof(tmp));
-    strcat(tmp, "<");
-    strcat(tmp, value);
-    strcat(tmp, "/>");
-
     if (elementTag==NULL || strlen(elementTag)==0)
-        return Xer_EncodePrimitiveElement(pByteStrm, value, "", pErrCode, level); 
+        return Xer_EncodePrimitiveElement(pByteStrm, value, "", pErrCode, level);
 
     if (!ByteStream_PutSpace(pByteStrm, level))
         return FALSE;
@@ -574,7 +568,6 @@ flag Xer_EncodeEnumerated(ByteStream* pByteStrm, const char* elementTag, const c
     if (!ByteStream_PutNL(pByteStrm))
         return FALSE;
 
-    
     return TRUE;
 }
 
