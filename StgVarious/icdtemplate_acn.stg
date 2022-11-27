@@ -620,10 +620,51 @@ font.enumeration_name
 {
     font-style: italic;
 }
+
+#toc_container {
+    background: #ffffff none repeat scroll 0 0;
+    border: 0px solid #aaa;
+    display: table;
+    font-size: 95%;
+    margin-bottom: 1em;
+    padding: 20px;
+    width: auto;
+}
+
+.toc_title {
+    font-weight: 700;
+    text-align: center;
+}
+
+#toc_container li, #toc_container ul, #toc_container ul li{
+    list-style: outside none none !important;
+}
+
 >>
 
 
-RootHtml(arrsFiles1, arrsFiles2, bAcnParamsMustBeExplained, arrsFiles3, sCssFileName) ::= <<
+ToC_Module_tas(sTitle, sHref) ::= <<
+    <li><a href="#$sHref$">$sTitle$</a></li>
+>>
+
+ToC_Module(sTitle, sHref, arrsTasses) ::= <<
+<li><a href="#$sHref$">$sTitle$</a>
+    <ul>
+        $arrsTasses;separator="\n"$
+    </ul>
+</li>
+>>
+
+ToC(arrsModules) ::= <<
+<div id="toc_container">
+    <p class="toc_title">Contents</p>
+    <ul class="toc_list">
+        $arrsModules;separator="\n"$
+    </ul>
+</div>
+>>
+
+RootHtml(sToC, arrsFiles1, arrsFiles2, bAcnParamsMustBeExplained, arrsFiles3, sCssFileName) ::= <<
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd"> 
 <html xmlns="http://www.w3.org/1999/xhtml" >
 <head>
@@ -634,6 +675,8 @@ RootHtml(arrsFiles1, arrsFiles2, bAcnParamsMustBeExplained, arrsFiles3, sCssFile
 <body>
 <em>The following tables describe the binary encodings of the data model using the ACN Encoding Rules.
 </em><br/><br/>
+$sToC$
+<br/>
   $arrsFiles1;separator="\n"$
 
   <hr />

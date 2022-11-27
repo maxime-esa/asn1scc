@@ -555,7 +555,22 @@ let emitCss (r:AstRoot) stgFileName   outFileName =
     let cssContent = icd_acn.RootCss stgFileName ()
     File.WriteAllText(outFileName, cssContent.Replace("\r", ""))
 
+let printToC stgFileName  (r:AstRoot)   =
+
+    let arrsModules = 
+        r.Modules |> 
+        List.choose(fun m -> 
+            let icdTasses = GenerateUperIcd.getModuleIcdTasses m |> List.filter(fun z -> not z.isBlue)
+            match icdTasses with
+            | [] -> None
+            | t1::_ -> 
+                let tasses = icdTasses |> List.map (fun tas -> icd_acn.ToC_Module_tas stgFileName tas.name ("ICD_" + ToC(tas.name)))
+                let ret = icd_acn.ToC_Module stgFileName m.Name.Value ("ICD_" + ToC(t1.name)) tasses
+                Some ret)
+    icd_acn.ToC stgFileName arrsModules
+
 let DoWork (r:AstRoot) (deps:Asn1AcnAst.AcnInsertedFieldDependencies) (stgFileName:string) (asn1HtmlStgFileMacros:string option)   outFileName =
+    
     let files1 = r.Files |> Seq.map (fun f -> PrintTasses stgFileName f r ) 
     let bAcnParamsMustBeExplained = true 
     let asn1HtmlMacros =
@@ -565,7 +580,8 @@ let DoWork (r:AstRoot) (deps:Asn1AcnAst.AcnInsertedFieldDependencies) (stgFileNa
     let files2 = r.Files |> Seq.map (GenerateUperIcd.PrintFile2 asn1HtmlMacros)
     let files3 = PrintAcnAsHTML stgFileName r 
     let cssFileName = Path.ChangeExtension(outFileName, ".css")
-    let htmlContent = icd_acn.RootHtml stgFileName files1 files2 bAcnParamsMustBeExplained files3 (Path.GetFileName(cssFileName))
+    let sToC = printToC stgFileName r
+    let htmlContent = icd_acn.RootHtml stgFileName sToC files1 files2 bAcnParamsMustBeExplained files3 (Path.GetFileName(cssFileName))
     
     File.WriteAllText(outFileName, htmlContent.Replace("\r",""))
     let cssFileName = Path.ChangeExtension(outFileName, ".css");

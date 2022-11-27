@@ -2,3 +2,4 @@
 2. update regression scripts : "../asn1scc/bin/Debug/net6.0/asn1scc" to "../asn1scc/bin/Debug/net7.0/asn1scc" in all *.py under v4Tests and v4Tests-32
 3. update Dockerfile and Dockerfile.runtime
 4. update Makefile.debian
+5. make_new_release.sh

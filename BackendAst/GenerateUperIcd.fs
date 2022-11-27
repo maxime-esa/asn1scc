@@ -309,28 +309,50 @@ let PrintTas (stgFileName:string) (m:Asn1Module) (tas:IcdTypeAssignment) (r:AstR
         |false  -> icd_uper.Orange stgFileName ()
     icd_uper.EmmitTass stgFileName (printType stgFileName m tas tas.t r tasColor) 
 
-let getModuleIcdTasses (m:Asn1Module) =
+let getModuleIcdTasses0 (tasses : TypeAssignment list) =
+    let allTypes =tasses |> Seq.collect(fun x ->  GetMySelfAndChildren x.Type) |> Seq.toList
 
-    m.TypeAssignments |> 
-    Seq.collect(fun x ->  GetMySelfAndChildren x.Type) |>
+    let refTypesSet = 
+        allTypes |> 
+        List.choose(fun z -> 
+            match z.Kind with 
+            | ReferenceType o -> Some (o.baseInfo.modName.Value, o.baseInfo.tasName.Value)
+            | _               -> None) |>
+        Set.ofList
+
+    //Remove primitive type assignments which are referenced by composite types
+
+
+    allTypes|>
     //Seq.choose(fun x -> match x.Kind with ReferenceType ref -> Some (ref.baseInfo.modName.Value,ref.baseInfo.tasName.Value) |_ -> None) |> Seq.toList
     Seq.choose(fun x -> 
         let comments =
             match x.tasInfo with
             | Some tas -> 
-                match m.TypeAssignments |> List.tryFind(fun ts -> ts.Name.Value = tas.tasName) with
+                match tasses |> List.tryFind(fun ts -> ts.Name.Value = tas.tasName) with
                 | Some tas -> tas.Comments
                 | None     -> [||]
             | None         -> [||]
         let td = x.FT_TypeDefintion.[CommonTypes.C]
+        let isExported  = 
+            let isNonRefencedTas =
+                match x.tasInfo with
+                | Some (ti) -> not (refTypesSet.Contains (ti.modName, ti.tasName))
+                | None      -> false
+            x.isComplexType || isNonRefencedTas
+
         match td.BaseKind with
-        | NewTypeDefinition       -> Some {IcdTypeAssignment.name = td.asn1Name; comments=comments; t=x; isBlue = x.tasInfo.IsNone}               //type
-        | NewSubTypeDefinition    -> Some {IcdTypeAssignment.name = td.asn1Name; comments=comments; t=x; isBlue = x.tasInfo.IsNone}
+        | NewTypeDefinition    when isExported   -> Some {IcdTypeAssignment.name = td.asn1Name; comments=comments; t=x; isBlue = x.tasInfo.IsNone}               //type
+        | NewSubTypeDefinition when isExported   -> Some {IcdTypeAssignment.name = td.asn1Name; comments=comments; t=x; isBlue = x.tasInfo.IsNone}
+        | NewTypeDefinition    -> None
+        | NewSubTypeDefinition -> None
         | Reference2RTL           -> None
         | Reference2OtherType     -> None
          
         ) 
     |> Seq.toList
+
+let getModuleIcdTasses (m:Asn1Module) = getModuleIcdTasses0 m.TypeAssignments
 
 let PrintModule (stgFileName:string) (m:Asn1Module) (f:Asn1File) (r:AstRoot) =
     //let blueTasses = getModuleBlueTasses m |> Seq.map snd

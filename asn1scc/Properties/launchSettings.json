@@ -2,8 +2,8 @@
   "profiles": {
     "asn1scc": {
       "commandName": "Project",
-      "commandLineArgs": "-c -uPER -ACN -o c_out/ NPAL.asn1 NPAL.acn",
-      "workingDirectory": "C:\\prj\\GitHub\\asn1scc\\tmp\\041"
+      "commandLineArgs": "-icdAcn acn01.html NPAL.asn1 NPAL.acn",
+      "workingDirectory": "C:\\prj\\GitHub\\asn1scc\\tmp\\042"
     }
   }
 }
