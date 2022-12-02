@@ -249,8 +249,8 @@ EmmitChoiceChild(sCssClass, nIndex, sName, sComment,  sType, sConstraint, sMin, 
 </tr>
 >>
 
-EmmitSeqChild_RefType(sRefName, sRefNameC) ::= <<
-<a href="#ICD_$sRefNameC$">$sRefName$</a>
+EmmitSeqChild_RefType(sRefName, soRefNameC) ::= <<
+$if(soRefNameC)$<a href="#ICD_$soRefNameC$">$sRefName$</a>$else$$sRefName$$endif$
 >>
 
 

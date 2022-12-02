@@ -119,6 +119,12 @@ type IcdTypeAssignment = {
     isBlue : bool
 }
 
+type IcdTypeAssignmentExportType =
+    | ExportedIcdTypeAssignment of IcdTypeAssignment
+    | NonExportedIcdTypeAssignment of IcdTypeAssignment
+
+
+
 let rec printType (stgFileName:string) (m:Asn1Module) (tas:IcdTypeAssignment) (t:Asn1Type) (r:AstRoot)  color =
     let enumStg = {
         NewLine                  = icd_uper.NewLine                 
@@ -342,17 +348,22 @@ let getModuleIcdTasses0 (tasses : TypeAssignment list) =
             x.isComplexType || isNonRefencedTas
 
         match td.BaseKind with
-        | NewTypeDefinition    when isExported   -> Some {IcdTypeAssignment.name = td.asn1Name; comments=comments; t=x; isBlue = x.tasInfo.IsNone}               //type
-        | NewSubTypeDefinition when isExported   -> Some {IcdTypeAssignment.name = td.asn1Name; comments=comments; t=x; isBlue = x.tasInfo.IsNone}
-        | NewTypeDefinition    -> None
-        | NewSubTypeDefinition -> None
+        | NewTypeDefinition    when isExported   -> Some (ExportedIcdTypeAssignment {IcdTypeAssignment.name = td.asn1Name; comments=comments; t=x; isBlue = x.tasInfo.IsNone})               //type
+        | NewSubTypeDefinition when isExported   -> Some (ExportedIcdTypeAssignment {IcdTypeAssignment.name = td.asn1Name; comments=comments; t=x; isBlue = x.tasInfo.IsNone})
+        | NewTypeDefinition                      -> Some (NonExportedIcdTypeAssignment {IcdTypeAssignment.name = td.asn1Name; comments=comments; t=x; isBlue = x.tasInfo.IsNone})
+        | NewSubTypeDefinition                   -> Some (NonExportedIcdTypeAssignment {IcdTypeAssignment.name = td.asn1Name; comments=comments; t=x; isBlue = x.tasInfo.IsNone})
         | Reference2RTL           -> None
         | Reference2OtherType     -> None
          
         ) 
     |> Seq.toList
 
-let getModuleIcdTasses (m:Asn1Module) = getModuleIcdTasses0 m.TypeAssignments
+let getModuleIcdTasses (m:Asn1Module) = 
+    getModuleIcdTasses0 m.TypeAssignments |> 
+    List.choose(fun z -> 
+        match z with
+        |ExportedIcdTypeAssignment z -> Some z
+        |NonExportedIcdTypeAssignment _ -> None )
 
 let PrintModule (stgFileName:string) (m:Asn1Module) (f:Asn1File) (r:AstRoot) =
     //let blueTasses = getModuleBlueTasses m |> Seq.map snd
