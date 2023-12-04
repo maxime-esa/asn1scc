@@ -50,6 +50,26 @@ typedef unsigned long long uint64_t;
 #define FP_WORD_SIZE	8
 #endif
 
+#ifndef NO_OF_BITS_IN_BYTE
+#define NO_OF_BITS_IN_BYTE 8
+#endif
+
+#ifndef NO_OF_BYTES_IN_INT16
+#define NO_OF_BYTES_IN_INT16 (sizeof(int16_t))	// 2
+#endif
+
+#ifndef NO_OF_BYTES_IN_INT32
+#define NO_OF_BYTES_IN_INT32 (sizeof(int32_t))	// 4
+#endif
+
+#ifndef NO_OF_BITS_IN_INT16 
+#define NO_OF_BITS_IN_INT16 (NO_OF_BYTES_IN_INT16 * NO_OF_BITS_IN_BYTE)	// 16
+#endif
+
+#ifndef NO_OF_BITS_IN_INT32 
+#define NO_OF_BITS_IN_INT32 (NO_OF_BYTES_IN_INT32 * NO_OF_BITS_IN_BYTE)	// 32
+#endif
+
 #ifndef PRId32
 #define PRId32 "d"
 #endif
@@ -259,7 +279,14 @@ extern const asn1SccUint64 ber_aux[];
 extern const asn1SccUint32 ber_aux[];
 #endif
 
-#define CHECK_BIT_STREAM(pBitStrm)	assert((pBitStrm)->currentByte*8+(pBitStrm)->currentBit<=(pBitStrm)->count*8)
+#define CHECK_BIT_STREAM(pBitStrm)		assert((pBitStrm)->currentByte*8+(pBitStrm)->currentBit<=(pBitStrm)->count*8)
+
+// check if nBits still have space in pBitStrm (only for non streaming mode)
+#ifndef ASN1SCC_STREAMING
+#define CHECK_BIT_STREAM_PRE(pBitStrm, nBits)	assert(((pBitStrm)->currentByte * 8 + (pBitStrm)->currentBit + nBits) <= ((pBitStrm)->count * 8))
+#else
+#define CHECK_BIT_STREAM_PRE(pBitStrm, nBits) ((void)pBitStrm)
+#endif
 
 #ifdef _MSC_VER
 #pragma warning( disable : 4127)
